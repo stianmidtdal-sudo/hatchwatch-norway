@@ -1,0 +1,22 @@
+{
+  "rewrites": [
+    { "source": "/norway",                    "destination": "/index.html" },
+    { "source": "/norway/",                   "destination": "/index.html" },
+    { "source": "/norway/dashboard.html",     "destination": "/dashboard.html" },
+    { "source": "/norway/verify-stations.html","destination": "/verify-stations.html" }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    },
+    {
+      "source": "/(.*\\.html)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=300, stale-while-revalidate=3600" }
+      ]
+    }
+  ]
+}
