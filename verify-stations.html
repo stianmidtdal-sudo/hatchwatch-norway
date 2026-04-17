@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Station Verifier · Hatch Watch Norway</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+               background: #f0f7f4; color: #1a3a2a; padding: 32px 16px; }
+        h1 { font-size: 1.3rem; color: #1B4332; margin-bottom: 6px; }
+        .sub { font-size: 0.84rem; color: #666; margin-bottom: 28px; }
+        table { width: 100%; max-width: 900px; border-collapse: collapse;
+                background: white; border-radius: 12px; overflow: hidden;
+                box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+        th { background: #edf7f2; font-size: 0.7rem; font-weight: 700;
+             text-transform: uppercase; letter-spacing: 0.8px; color: #2D6A4F;
+             padding: 10px 14px; text-align: left; border-bottom: 2px solid #74C69D; }
+        td { padding: 10px 14px; border-bottom: 1px solid #f0f5f2; font-size: 0.88rem; }
+        tr:last-child td { border-bottom: none; }
+        .ok   { color: #155724; font-weight: 700; }
+        .err  { color: #a03020; font-weight: 700; }
+        .wait { color: #aaa; }
+        .station-found { font-size: 0.78rem; color: #2D6A4F; margin-top: 3px; }
+        .fix  { font-size: 0.75rem; color: #856404; background: #fff3cd;
+                padding: 2px 8px; border-radius: 4px; display: inline-block; margin-top: 4px; }
+        button { background: #1B4332; color: white; border: none; padding: 10px 24px;
+                 border-radius: 8px; font-size: 0.9rem; cursor: pointer; margin-bottom: 20px; }
+        button:hover { background: #2D6A4F; }
+        .note { max-width: 900px; margin-top: 20px; font-size: 0.78rem; color: #777;
+                background: white; border-radius: 8px; padding: 14px 18px;
+                border-left: 3px solid #74C69D; line-height: 1.7; }
+    </style>
+</head>
+<body>
+<h1>🔍 Station Verifier · Hatch Watch Norway</h1>
+<div class="sub">Queries the MET Norway Frost API directly to verify that each station ID returns temperature data.</div>
+
+<button onclick="runAll()">▶ Run verification</button>
+
+<table>
+    <thead>
+        <tr>
+            <th>Area</th>
+            <th>Proxy river</th>
+            <th>Station ID (guess)</th>
+            <th>Status</th>
+            <th>Found station name</th>
+        </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+</table>
+
+<div class="note">
+    <strong>How to fix a wrong ID:</strong> Open <code>dashboard.html</code> in a text editor, find the
+    <code>LOCATIONS</code> object at the top of the &lt;script&gt; section, and update the
+    <code>frostStation</code> field for the relevant river. Do the same in <code>index.html</code> when that file exists.<br><br>
+    <strong>Finding the right ID:</strong> Go to
+    <a href="https://frost.met.no/sources" target="_blank">frost.met.no/sources</a> →
+    search by municipality or coordinates → copy the <code>SN…</code> ID.
+</div>
+
+<script>
+// ── Stations to verify ──────────────────────────────────────────────
+const STATIONS = [
+    { id: "kautokeino", area: "Kautokeino",  river: "Suohpatjohka",  station: "SN93700", calibrated: true  },
+    { id: "alta",       area: "Alta",        river: "Altaelva",       station: "SN93900"  },
+    { id: "porsanger",  area: "Porsanger",   river: "Lakselva",       station: "SN97251"  },
+    { id: "roros",      area: "Røros (air: Dombås)",      river: "Glåma", station: "SN16560"  },
+    { id: "oslo",       area: "Oslo (Nordmarka)", river: "Blindern",    station: "SN18700"  },
+    { id: "vestfjella", area: "Østfold (Sarpsborg)", river: "Enningdalselva", station: "SN3190" },
+];
+
+// ── Build table rows ────────────────────────────────────────────────
+function buildTable() {
+    const tbody = document.getElementById("tbody");
+    tbody.innerHTML = "";
+    for (const s of STATIONS) {
+        const tr = document.createElement("tr");
+        tr.id = "row-" + s.id;
+        tr.innerHTML = `
+            <td>${s.calibrated ? "⭐ " : ""}${s.area}</td>
+            <td style="color:#888;font-size:0.82rem">${s.river}</td>
+            <td><code>${s.station}</code></td>
+            <td id="status-${s.id}" class="wait">–</td>
+            <td id="name-${s.id}" class="wait">–</td>`;
+        tbody.appendChild(tr);
+    }
+}
+
+// ── Query Frost API for a single station ───────────────────────────
+async function checkStation(s) {
+    const statusEl = document.getElementById("status-" + s.id);
+    const nameEl   = document.getElementById("name-"   + s.id);
+    statusEl.className = "wait";
+    statusEl.textContent = "⏳ checking…";
+    nameEl.textContent = "";
+
+    // All requests go through the local server proxy (avoids CORS / auth issues)
+    const today = new Date().toISOString().slice(0, 10);
+
+    // First: check sources endpoint to get station name
+    const srcUrl = `/api/frost-sources?station=${s.station}`;
+    try {
+        const r = await fetch(srcUrl);
+        if (r.ok) {
+            const data = await r.json();
+            const src = data.data?.[0];
+            if (src) {
+                const name   = src.name || "?";
+                const county = src.county || "";
+                const elev   = src.masl != null ? ` · ${src.masl} m` : "";
+                const coords = src.geometry?.coordinates;
+                const lat    = coords ? coords[1].toFixed(2) + "°N" : "";
+                nameEl.innerHTML = `<div class="station-found">${name}${county ? ", " + county : ""}${elev}${lat ? " · " + lat : ""}</div>`;
+            }
+        }
+    } catch(e) { /* ignore sources error, proceed to obs check */ }
+
+    // Second: check if we can get actual observations (air temperature, last 7 days)
+    const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const obsStart = sevenDaysAgo.toISOString().slice(0, 10);
+    const obsUrl = `/api/frost`
+        + `?station=${s.station}`
+        + `&elements=${encodeURIComponent("mean(air_temperature P1D)")}`
+        + `&start=${obsStart}`
+        + `&end=${today}`;
+
+    try {
+        const r = await fetch(obsUrl);
+        if (!r.ok) {
+            const err = await r.json().catch(() => ({}));
+            statusEl.className = "err";
+            statusEl.innerHTML = `❌ HTTP ${r.status}<br><small style="font-weight:400">${err?.error?.message || ""}</small>`;
+            if (nameEl.innerHTML === "") {
+                nameEl.innerHTML = `<span class="fix">Station not found — update ID in dashboard.html</span>`;
+            }
+            return;
+        }
+        const data = await r.json();
+        const nObs = data.data?.length ?? 0;
+        if (nObs === 0) {
+            statusEl.className = "err";
+            statusEl.textContent = "⚠ No recent data";
+            if (nameEl.innerHTML === "") {
+                nameEl.innerHTML = `<span class="fix">Station exists but no air temp data — try nearby station</span>`;
+            }
+        } else {
+            statusEl.className = "ok";
+            statusEl.textContent = `✅ OK (${nObs} obs)`;
+        }
+    } catch(e) {
+        statusEl.className = "err";
+        statusEl.textContent = `❌ Network error`;
+        nameEl.textContent = e.message;
+    }
+}
+
+// ── Run all ─────────────────────────────────────────────────────────
+async function runAll() {
+    buildTable();
+    // Run sequentially to avoid hammering the API
+    for (const s of STATIONS) {
+        await checkStation(s);
+        await new Promise(r => setTimeout(r, 300)); // small delay
+    }
+}
+
+// Build table on load
+buildTable();
+</script>
+</body>
+</html>
