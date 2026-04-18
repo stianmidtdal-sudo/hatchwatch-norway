@@ -23,23 +23,6 @@
         header h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.3px; }
         header .sub { font-size: 0.85rem; color: #74C69D; margin-top: 4px; }
 
-        /* ── Search ──────────────────────────────────── */
-        .search-wrap {
-            padding: 22px 32px 0;
-            max-width: 860px;
-        }
-        .search-wrap input {
-            width: 100%;
-            padding: 10px 16px;
-            border: 2px solid #74C69D;
-            border-radius: 10px;
-            font-size: 0.95rem;
-            background: white;
-            color: #1a3a2a;
-            outline: none;
-        }
-        .search-wrap input:focus { border-color: #2D6A4F; }
-
         /* ── Latitude strip ──────────────────────────── */
         .lat-strip {
             display: flex;
@@ -114,10 +97,6 @@
             color: #856404;
         }
 
-        /* ── Hidden cards (search) ───────────────────── */
-        .card.hidden { display: none; }
-        .region-section.hidden { display: none; }
-
         /* ── Footer note ─────────────────────────────── */
         .footnote {
             max-width: 860px;
@@ -173,10 +152,6 @@
     <div class="sub">Aquatic insect emergence forecasting · Dual Trigger Model</div>
 </header>
 
-<div class="search-wrap">
-    <input type="text" id="search" placeholder="Search rivers or locations…" oninput="filterCards()" autocomplete="off">
-</div>
-
 <div class="lat-strip">
     <span class="lat-label">70°N · Finnmark</span>
     <div class="lat-line"></div>
@@ -195,8 +170,10 @@
     </p>
     <p>
         Ice-out dates are predicted using <strong>Stefan's law</strong> — a physical ice growth/melt model
-        calibrated against satellite-observed isgang records from each location.
-        Snow cover, river hydrology, and air temperature from nearby met stations all feed in.
+        calibrated against satellite-observed ice-out records from each location.
+        Snow cover, river hydrology, and air temperature from nearby MET stations all feed in.
+    </p>
+    <p style="font-style:italic;color:#2D6A4F;font-weight:600">
         It's either very clever, or deeply unnecessary. Possibly both.
     </p>
     <p>
@@ -278,22 +255,6 @@ function buildCards() {
         section.appendChild(grid);
         main.appendChild(section);
     }
-}
-
-// ── Search filter ─────────────────────────────────────────────────────
-function filterCards() {
-    const q = document.getElementById("search").value.toLowerCase().trim();
-    const cards    = document.querySelectorAll(".card");
-    const sections = document.querySelectorAll(".region-section");
-
-    cards.forEach(c => {
-        c.classList.toggle("hidden", q !== "" && !c.dataset.search.includes(q));
-    });
-
-    sections.forEach(s => {
-        const anyVisible = [...s.querySelectorAll(".card")].some(c => !c.classList.contains("hidden"));
-        s.classList.toggle("hidden", !anyVisible);
-    });
 }
 
 buildCards();
