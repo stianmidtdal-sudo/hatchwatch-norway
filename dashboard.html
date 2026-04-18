@@ -377,4 +377,1043 @@
                 <table>
                     <thead><tr>
                         <th>Year</th>
-                   
+                        <th>Ice Breakup</th>
+                        <th>Snow Free</th>
+                        <th>Winter Snow (cm)</th>
+                        <th>Est. Ice Thickness (cm)</th>
+                        <th>First Hatch</th>
+                        <th>Notes</th>
+                    </tr></thead>
+                    <tbody id="histBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ═══ NO HATCH DATA NOTE (uncalibrated) ═══ -->
+        <section id="noHatchSection" style="display:none">
+            <h2>Historical Hatch Data</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr>
+                        <th>Status</th>
+                        <th>Note</th>
+                    </tr></thead>
+                    <tbody>
+                        <tr><td>⚠ No data</td><td style="color:#777">No systematic hatch observations available for this location. Weather history (below) is fetched live from MET Norway. If you have observed hatching here, contact us to contribute calibration data.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ═══ WATER TEMPERATURE CHART ═══ -->
+        <section id="wtSection">
+            <h2>Water Temperature May–July · Year-by-Year</h2>
+            <div class="chart-wrap">
+                <canvas id="wtChart"></canvas>
+            </div>
+            <div id="wtNote" style="font-size:0.74rem;color:#888;margin-top:6px;padding:0 4px"></div>
+        </section>
+
+        <!-- ═══ SNOW DEPTH CHART ═══ -->
+        <section>
+            <h2 id="snowHeading">Snow Depth Nov–May · Year-by-Year</h2>
+            <div class="chart-wrap">
+                <canvas id="snowChart"></canvas>
+            </div>
+        </section>
+
+        <!-- ═══ ICE THICKNESS CHART (Kautokeino only) ═══ -->
+        <section id="iceSection" style="display:none">
+            <h2>Estimated Ice Thickness · Historical peak per winter &amp; live · Stefan Equation (α = 0.6)</h2>
+            <div class="chart-wrap" style="height:260px">
+                <canvas id="iceChart"></canvas>
+            </div>
+            <div style="font-size:0.74rem;color:#888;margin-top:6px;padding:0 4px">
+                Historical bars = peak ice thickness that winter. Current bar = live estimate based on frost degree-days so far.
+            </div>
+        </section>
+
+        <!-- ═══ SEASON INDICATORS ═══ -->
+        <section>
+            <h2>Season Indicators</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr>
+                        <th>Indicator</th>
+                        <th id="yearCol">2026</th>
+                        <th>Historical Average</th>
+                        <th>Signal</th>
+                    </tr></thead>
+                    <tbody id="indBody"></tbody>
+                </table>
+            </div>
+            <div style="font-size:0.74rem;color:#999;margin-top:8px;padding:0 4px;">
+                ⚠ All indicators based on available years of data. For uncalibrated locations, historical averages are derived from weather data only.
+            </div>
+        </section>
+
+    </div><!-- /dashboard -->
+</div><!-- /container -->
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+//  LOCATION CONFIGURATION
+//  Shared with index.html — if you update one, update both.
+// ═══════════════════════════════════════════════════════════════════
+const LOCATIONS = {
+    kautokeino: {
+        id: 'kautokeino',
+        area: 'Kautokeino',          // fishing area (user-facing)
+        name: 'Suohpatjohka',        // river used as temperature proxy
+        place: 'Kautokeino',
+        region: 'Finnmark',
+        lat: 69.01, lon: 23.04, altitude: 307, stationAltitude: 307,
+        frostStation: 'SN93700',
+        nveStation:   '212.26.0',
+        calibrated: true,
+        gddThreshold: 520,
+        uncertaintyDays: 2.1,
+        biofixLabel: 'Snow-melt / 1 Jan',
+    },
+    alta: {
+        id: 'alta',
+        area: 'Alta',
+        name: 'Altaelva',
+        place: 'Alta',
+        region: 'Finnmark',
+        lat: 69.97, lon: 23.27, altitude: 10, stationAltitude: 382,  // Sihccajavri 382m, fishing area ~10m
+        frostStation: 'SN93900',
+        nveStation:   '212.11.0',   // Kista — Alta
+        calibrated: false,
+        gddThreshold: 520,
+        uncertaintyDays: 10,
+        biofixLabel: 'Snow-melt',
+    },
+    porsanger: {
+        id: 'porsanger',
+        area: 'Porsanger',
+        name: 'Lakselva',
+        place: 'Lakselv',
+        region: 'Finnmark',
+        lat: 70.07, lon: 25.00, altitude: 10, stationAltitude: 131,  // Karasjok 131m, Lakselv ~5m
+        frostStation: 'SN97251',     // Karasjok — nearest verified station
+        nveStation:   '223.2.0',    // Lombola — Porsanger
+        calibrated: false,
+        gddThreshold: 520,
+        uncertaintyDays: 10,
+        biofixLabel: 'Snow-melt',
+    },
+    roros: {
+        id: 'roros',
+        area: 'Røros',
+        name: 'Glåma',
+        place: 'Røros',
+        region: 'Trøndelag',
+        lat: 62.57, lon: 11.39, altitude: 628, stationAltitude: 638,  // Dombås-Nordigard 638m (verified), Røros town ~628m
+        frostStation: 'SN16560',     // Dombås — nearest verified air temp station (~50 km NW)
+        nveStation:   '2.61.0',     // Orva — sideelv til Glåma ved Røros, aktiv siden 1995
+        calibrated: false,
+        gddThreshold: 520,
+        uncertaintyDays: 12,
+        biofixLabel: 'Dynamic (7-day avg >3°C)',
+    },
+    oslo: {
+        id: 'oslo',
+        area: 'Oslo',                // Nordmarka
+        name: 'Blindern',
+        place: 'Oslo',
+        region: 'Østlandet',
+        lat: 59.94, lon: 10.72, altitude: 250, stationAltitude: 94,  // Blindern 94m, Nordmarka/Sinnerdammen ~250m
+        frostStation: 'SN18700',     // Oslo-Blindern — long record, very reliable
+        nveStation:   '6.71.0',     // Sinnerdammen — Nordmarka
+        calibrated: false,
+        gddThreshold: 520,
+        uncertaintyDays: 14,
+        biofixLabel: 'Dynamic (7-day avg >3°C)',
+    },
+    vestfjella: {
+        id: 'vestfjella',
+        area: 'Østfold',             // Halden-området / Vestfjella
+        name: 'Enningdalselva',
+        place: 'Sarpsborg',
+        region: 'Østlandet',
+        lat: 59.10, lon: 11.40, altitude: 180, stationAltitude: 57,  // Sarpsborg 57m, Østfold/Vestfjella ~180m
+        frostStation: 'SN3190',      // Sarpsborg
+        nveStation:   '2.1236.0',   // Tverråa — Østfold/Halden
+        calibrated: false,
+        gddThreshold: 520,
+        uncertaintyDays: 14,
+        biofixLabel: 'Dynamic (7-day avg >3°C)',
+    },
+};
+
+// ─── Kautokeino historical hatch data ─────────────────────────────
+const KAUTOKEINO_HIST = [
+    { year:2025, isgang:"28 May",  snowFree:"18 May", snowCm:64, iceCm:23.2, hatch:null,     comment:"Grandis trip 19–29 Jun" },
+    { year:2024, isgang:"26 May",  snowFree:"15 May", snowCm:69, iceCm:26.8, hatch:"20 Jun", comment:"Vulgata at Grandistrasket" },
+    { year:2023, isgang:"23 May",  snowFree:"9 May",  snowCm:55, iceCm:26.7, hatch:"20 Jun", comment:"Third week June – earliest in years" },
+    { year:2022, isgang:"26 May",  snowFree:"14 May", snowCm:78, iceCm:25.7, hatch:"27 Jun", comment:"Last week of June" },
+    { year:2021, isgang:"30 May",  snowFree:"19 May", snowCm:60, iceCm:23.7, hatch:"3 Jul",  comment:"First week of July" },
+    { year:2020, isgang:"–",       snowFree:"27 May", snowCm:86, iceCm:23.4, hatch:"13 Jul", comment:"Mid-July – very late year" },
+];
+
+// ═══════════════════════════════════════════════════════════════════
+//  INIT — resolve location from URL
+// ═══════════════════════════════════════════════════════════════════
+const URL_LOC = new URLSearchParams(location.search).get('loc') || 'kautokeino';
+const LOC = LOCATIONS[URL_LOC] || LOCATIONS.kautokeino;
+const YEAR = new Date().getFullYear();
+const TODAY = new Date().toISOString().slice(0, 10);
+
+// Update page title
+document.title = `Hatch Watch · ${LOC.area}`;
+document.getElementById('headerTitle').textContent = `🎣 Hatch Watch · ${LOC.area}`;
+document.getElementById('headerSub').textContent =
+    `${LOC.area} · ${LOC.region} · GDD Hatch Model`;
+document.getElementById('yearCol').textContent = YEAR;
+
+// Location info strip
+document.getElementById('locStrip').innerHTML = [
+    { key: 'Area',        val: `${LOC.area}, ${LOC.region}` },
+    { key: 'Lufttemp',    val: `${LOC.name} (${LOC.frostStation})` },
+    { key: 'Altitude',    val: `${LOC.altitude} m a.s.l.` },
+    { key: 'Coordinates', val: `${LOC.lat.toFixed(2)}°N, ${LOC.lon.toFixed(2)}°E` },
+    { key: 'Biofix',      val: LOC.biofixLabel },
+    { key: 'GDD Target',  val: `${LOC.gddThreshold} (base 0°C)` },
+    { key: 'Model',       val: LOC.calibrated ? '✅ Calibrated' : `⚠ Prior (±${LOC.uncertaintyDays} d)` },
+].map(i => `<div class="loc-item"><div class="loc-key">${i.key}</div><div class="loc-val">${i.val}</div></div>`).join('');
+
+// Show/hide sections based on calibration
+if (!LOC.calibrated) {
+    document.getElementById('priorNotice').style.display = '';
+    document.getElementById('priorUncDays').textContent = `±${LOC.uncertaintyDays} days`;
+    document.getElementById('noHatchSection').style.display = '';
+} else {
+    document.getElementById('histSection').style.display = '';
+    document.getElementById('iceSection').style.display  = '';
+}
+
+// Water sections
+if (!LOC.nveStation) {
+    document.getElementById('kpiFlowCard').classList.add('na');
+    document.getElementById('kpiWtCard').classList.add('na');
+    document.getElementById('kpiFlow').classList.add('na-val');
+    document.getElementById('kpiFlow').textContent = 'N/A';
+    document.getElementById('kpiFlowUnit').textContent = 'No NVE station configured';
+    document.getElementById('kpiWaterTemp').classList.add('na-val');
+    document.getElementById('kpiWaterTemp').textContent = 'N/A';
+    document.getElementById('kpiWtUnit').textContent = 'No NVE station configured';
+    document.getElementById('wL2Date').textContent = 'N/A';
+    document.getElementById('wL2Unc').textContent = 'Requires NVE water temp data';
+    document.getElementById('wL2Badge').textContent = '— No water temp data';
+    document.getElementById('wL2Badge').className = 'badge';
+    document.getElementById('wtSection').style.display = 'none';
+    document.getElementById('wtNote').textContent = '';
+} else {
+    document.getElementById('wtNote').textContent =
+        `Water temperature data from NVE HydAPI station ${LOC.nveStation}.`;
+}
+
+// Model heading
+document.getElementById('modelHeading').textContent =
+    LOC.calibrated
+        ? `Dual Trigger Model · GDD ≥ ${LOC.gddThreshold} (bt = 0°C, from 1 Jan) + Water Temp ≥ 12°C · MAE = ±${LOC.uncertaintyDays} days`
+        : `GDD Prior Model · Threshold ${LOC.gddThreshold} GDD (bt = 0°C) · Prior uncertainty ±${LOC.uncertaintyDays} days`;
+
+document.getElementById('snowHeading').textContent =
+    `Snow Depth Nov–May · Year-by-Year · ${LOC.place}`;
+
+// ═══════════════════════════════════════════════════════════════════
+//  DATE HELPERS
+// ═══════════════════════════════════════════════════════════════════
+function parseDate(str) {
+    const [y, m, d] = str.split('-').map(Number);
+    return new Date(y, m - 1, d);
+}
+function doy(date) {
+    const start = new Date(date.getFullYear(), 0, 1);
+    return Math.floor((date - start) / 86400000) + 1;
+}
+function dateFromDoy(year, d) {
+    const dt = new Date(year, 0, 1);
+    dt.setDate(d);
+    return dt;
+}
+function fmt(date) {
+    if (!date) return '–';
+    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+}
+function addDays(dateStr, n) {
+    const d = parseDate(dateStr);
+    d.setDate(d.getDate() + n);
+    return d;
+}
+function isoDate(date) {
+    return date.toISOString().slice(0, 10);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  API FETCHERS — now pass station IDs dynamically
+// ═══════════════════════════════════════════════════════════════════
+async function fetchFrost(element, start, end) {
+    const url = `api/frost?elements=${encodeURIComponent(element)}&start=${start}&end=${end}&station=${LOC.frostStation}`;
+    const res = await fetch(url);
+    if (!res.ok) {
+        const txt = await res.text().catch(() => '');
+        throw new Error(`MET Frost API error ${res.status}: ${txt.slice(0, 120)}`);
+    }
+    const json = await res.json();
+    const sums = {}, counts = {};
+    for (const item of (json.data || [])) {
+        const date = item.referenceTime.slice(0, 10);
+        const val  = item.observations?.[0]?.value;
+        if (val == null) continue;
+        sums[date]   = (sums[date]   || 0) + val;
+        counts[date] = (counts[date] || 0) + 1;
+    }
+    const out = {};
+    for (const d of Object.keys(sums)) out[d] = sums[d] / counts[d];
+    return out;
+}
+
+async function fetchNVE(parameter, start, end) {
+    if (!LOC.nveStation) return {};
+    const url = `api/nve?parameter=${parameter}&start=${start}&end=${end}&station=${LOC.nveStation}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`NVE HydAPI error ${res.status}`);
+    const json = await res.json();
+    const out = {};
+    for (const station of (json.data || [])) {
+        for (const obs of (station.observations || [])) {
+            const date = (obs.time || '').slice(0, 10);
+            if (date && obs.value != null) out[date] = obs.value;
+        }
+    }
+    return out;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  DATA PROCESSING
+// ═══════════════════════════════════════════════════════════════════
+function latest(data) {
+    const dates = Object.keys(data).sort();
+    if (!dates.length) return { date: null, value: null };
+    return { date: dates.at(-1), value: data[dates.at(-1)] };
+}
+
+function calcADG(airData, fromDate) {
+    let adg = 0;
+    for (const [d, v] of Object.entries(airData)) {
+        if (d >= fromDate) adg += Math.max(0, v);
+    }
+    return Math.round(adg * 10) / 10;
+}
+
+function histAvgADG(airData, toDoy) {
+    // Use the same dynamic biofix logic for each historical year so the comparison
+    // is apples-to-apples with currentADG (which also starts from dynamic biofix).
+    const years = [2021, 2022, 2023, 2024, 2025];
+    const adgs = years.map(yr => {
+        const biofix = findWarmingOnset(airData, yr);
+        let sum = 0;
+        for (const [d, v] of Object.entries(airData)) {
+            if (!d.startsWith(String(yr))) continue;
+            if (d < biofix) continue;
+            if (doy(parseDate(d)) > toDoy) continue;
+            sum += Math.max(0, v);
+        }
+        return sum;
+    });
+    return Math.round(adgs.reduce((a, b) => a + b, 0) / adgs.length * 10) / 10;
+}
+
+function buildDoyAvgTemp(airData) {
+    const sums = {}, cnts = {};
+    const histYears = [2016,2017,2018,2019,2020,2021,2022,2023,2024,2025];
+    for (const [d, v] of Object.entries(airData)) {
+        const yr = parseInt(d.slice(0, 4));
+        if (!histYears.includes(yr)) continue;
+        const k = doy(parseDate(d));
+        sums[k] = (sums[k] || 0) + v;
+        cnts[k] = (cnts[k] || 0) + 1;
+    }
+    const avg = {};
+    for (const k of Object.keys(sums)) avg[k] = sums[k] / cnts[k];
+    return avg;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  MODEL v2 — ALTITUDE CORRECTION + HISTORICAL STATS + DYNAMIC BIOFIX
+// ═══════════════════════════════════════════════════════════════════
+
+// A. Altitude lapse-rate correction (0.6°C per 100m)
+// Station may be at different altitude than fishing area.
+// Higher station → colder readings → need to warm-correct for area.
+function applyAltitudeCorrection(rawData) {
+    const stationAlt = LOC.stationAltitude ?? LOC.altitude;
+    const areaAlt    = LOC.altitude;
+    const delta = (stationAlt - areaAlt) * 0.6 / 100;  // °C to add
+    if (Math.abs(delta) < 0.05) return { data: rawData, correction: 0 };
+    const corrected = {};
+    for (const [d, v] of Object.entries(rawData)) corrected[d] = v + delta;
+    return { data: corrected, correction: Math.round(delta * 10) / 10 };
+}
+
+// B. Dynamic biofix — first date when 7-day rolling average exceeds 3°C.
+// More accurate than fixed Jan 1 for locations with actual snow cover.
+function findWarmingOnset(airData, year) {
+    const dates = Object.keys(airData)
+        .filter(d => d >= `${year}-02-01` && d < `${year}-07-01`)
+        .sort();
+    for (let i = 6; i < dates.length; i++) {
+        const window = dates.slice(i - 6, i + 1)
+            .map(d => airData[d]).filter(v => v != null);
+        if (window.length < 5) continue;
+        const avg = window.reduce((a, b) => a + b, 0) / window.length;
+        if (avg > 3.0) return dates[Math.max(0, i - 3)];
+    }
+    return `${year}-01-01`;
+}
+
+// C. Calculate day-of-year when cumulative GDD crosses threshold for a given year
+function calcGDDCrossingYear(airData, year, threshold) {
+    const biofix = findWarmingOnset(airData, year);
+    const dates = Object.keys(airData)
+        .filter(d => d.startsWith(String(year)) && d >= biofix)
+        .sort();
+    let gdd = 0;
+    for (const d of dates) {
+        const v = airData[d];
+        if (v != null) gdd += Math.max(0, v);
+        if (gdd >= threshold) return { doy: doy(parseDate(d)), dateStr: d, gdd };
+    }
+    return null;
+}
+
+// D. Historical statistics — run model on last N complete years
+function computeHistoricalStats(airData, threshold) {
+    const histYears = [2019, 2020, 2021, 2022, 2023, 2024, 2025];
+    const crossings = [];
+    for (const yr of histYears) {
+        if (yr >= YEAR) continue;
+        const result = calcGDDCrossingYear(airData, yr, threshold);
+        if (result) crossings.push({ year: yr, doy: result.doy, dateStr: result.dateStr });
+    }
+    if (crossings.length < 2) return null;
+    const doys = crossings.map(c => c.doy).sort((a, b) => a - b);
+    const n = doys.length;
+    const mean = doys.reduce((a, b) => a + b, 0) / n;
+    const std  = Math.sqrt(doys.reduce((s, d) => s + (d - mean) ** 2, 0) / n);
+    const median = n % 2 === 0
+        ? (doys[Math.floor(n / 2) - 1] + doys[Math.floor(n / 2)]) / 2
+        : doys[Math.floor(n / 2)];
+    return { crossings, earliest: doys[0], latest: doys[n - 1],
+             median: Math.round(median), mean: Math.round(mean),
+             std: Math.round(std * 10) / 10, n };
+}
+
+function renderHistoricalGDDSection(stats, correctionDelta) {
+    if (!stats || stats.n < 2) {
+        document.getElementById('gddHistSection').style.display = 'none';
+        return;
+    }
+    const e = fmt(dateFromDoy(YEAR, stats.earliest));
+    const l = fmt(dateFromDoy(YEAR, stats.latest));
+    const m = fmt(dateFromDoy(YEAR, stats.median));
+
+    let html = `<div class="hist-gdd-summary">
+        <div class="hist-gdd-stat">
+            <div class="hist-gdd-label">Earliest (${stats.n} yrs)</div>
+            <div class="hist-gdd-val yr-early">${e}</div>
+        </div>
+        <div class="hist-gdd-stat hist-gdd-median">
+            <div class="hist-gdd-label">Median</div>
+            <div class="hist-gdd-val">${m}</div>
+        </div>
+        <div class="hist-gdd-stat">
+            <div class="hist-gdd-label">Latest</div>
+            <div class="hist-gdd-val yr-late">${l}</div>
+        </div>
+        <div class="hist-gdd-stat">
+            <div class="hist-gdd-label">Std deviation</div>
+            <div class="hist-gdd-val">± ${stats.std} days</div>
+        </div>
+    </div>
+    <div class="table-wrap" style="margin-top:14px"><table>
+        <thead><tr>
+            <th>Year</th><th>GDD threshold crossed</th>
+            <th>Day of year</th><th>vs. median</th>
+        </tr></thead><tbody>`;
+
+    for (const c of [...stats.crossings].sort((a, b) => b.year - a.year)) {
+        const diff = c.doy - stats.median;
+        const sign = diff >= 0 ? '+' : '';
+        const cls  = diff <= -5 ? 'yr-early' : diff >= 5 ? 'yr-late' : '';
+        const col  = diff < 0 ? '#2D6A4F' : diff > 0 ? '#a03020' : '#555';
+        html += `<tr>
+            <td><strong>${c.year}</strong></td>
+            <td class="${cls}">${fmt(dateFromDoy(c.year, c.doy))}</td>
+            <td style="color:#888">${c.doy}</td>
+            <td style="color:${col}">${sign}${diff} days</td>
+        </tr>`;
+    }
+    html += `</tbody></table></div>`;
+
+    if (Math.abs(correctionDelta) >= 0.1) {
+        const sign = correctionDelta > 0 ? '+' : '';
+        html += `<div style="font-size:0.74rem;color:#888;margin-top:8px;padding:0 4px">
+            🏔 Altitude correction: ${sign}${correctionDelta}°C on all daily temperatures
+            (station ${LOC.stationAltitude}m · fishing area ~${LOC.altitude}m · lapse rate 0.6°C/100m)
+        </div>`;
+    }
+    html += `<div style="font-size:0.74rem;color:#888;margin-top:4px;padding:0 4px">
+        Dynamic biofix: GDD accumulation starts from first sustained warming (7-day avg > 3°C), not fixed Jan 1.
+    </div>`;
+
+    document.getElementById('gddHistContent').innerHTML = html;
+}
+
+function projectADGDate(airData, currentADG) {
+    const avgTemp = buildDoyAvgTemp(airData);
+    let adg = currentADG;
+    const todayDoy = doy(new Date());
+    for (let d = todayDoy + 1; d <= 300; d++) {
+        adg += Math.max(0, avgTemp[d] || 0);
+        if (adg >= LOC.gddThreshold) return dateFromDoy(YEAR, d);
+    }
+    return null;
+}
+
+function findSnowFreeDate(snowData, year) {
+    const dates = Object.keys(snowData).filter(d => d.startsWith(String(year))).sort();
+    // Primary: 3 consecutive recorded observations with snow ≤ 1 cm (handles sparse reporting)
+    let streak = 0, first = null;
+    for (const d of dates) {
+        if (d < `${year}-03-01`) continue;
+        if (snowData[d] <= 1) {
+            streak++;
+            if (!first) first = d;
+            if (streak >= 3) return first;
+        } else { streak = 0; first = null; }
+    }
+    // Fallback: latest recorded value is ≤ 1 cm — return first zero after last snow event.
+    // After April 1 we trust any gap (stations don't report daily); before April 1 require 14 days.
+    if (dates.length > 0) {
+        const lastDate = dates.at(-1);
+        if (lastDate >= `${year}-03-10` && snowData[lastDate] <= 1) {
+            const lastSnowDate = [...dates].reverse().find(d => snowData[d] > 1);
+            if (!lastSnowDate) {
+                const firstMarch = dates.find(d => d >= `${year}-03-01`);
+                if (firstMarch) return firstMarch;
+            } else {
+                const idx = dates.indexOf(lastSnowDate);
+                const nextDate = dates[idx + 1] || lastDate;
+                const daysSince = (parseDate(lastDate) - parseDate(lastSnowDate)) / 86400000;
+                const lateSpring = lastDate >= `${year}-04-01`;
+                if (lateSpring || daysSince >= 14) return nextDate;
+            }
+        }
+    }
+    return null;
+}
+
+function extrapolateWT(waterTempData) {
+    const recent = Object.entries(waterTempData)
+        .filter(([d]) => d.startsWith(String(YEAR)))
+        .sort(([a],[b]) => a < b ? -1 : 1)
+        .slice(-14);
+    if (recent.length < 4) return null;
+    const temps = recent.map(([,v]) => v);
+    const currentWT = temps.at(-1);
+    if (currentWT < 3) return null;
+    const n = temps.length;
+    const xs = temps.map((_, i) => i);
+    const xm = xs.reduce((a,b) => a+b, 0) / n;
+    const ym = temps.reduce((a,b) => a+b, 0) / n;
+    const slope = xs.reduce((s, x, i) => s + (x - xm) * (temps[i] - ym), 0)
+                / xs.reduce((s, x) => s + (x - xm) ** 2, 0);
+    if (slope <= 0) return null;
+    const daysNeeded = (12 - currentWT) / slope;
+    if (daysNeeded < 0 || daysNeeded > 60) return null;
+    const result = new Date();
+    result.setDate(result.getDate() + Math.round(daysNeeded));
+    return result;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  RENDERING
+// ═══════════════════════════════════════════════════════════════════
+function renderKPIs(airData, snowData, flowData, wtData) {
+    const at = latest(airData), sn = latest(snowData),
+          fl = latest(flowData), wt = latest(wtData);
+    const set = (id, val, dec = 1) =>
+        document.getElementById(id).textContent = val != null ? val.toFixed(dec) : '–';
+    set('kpiAir',  at.value);
+    set('kpiSnow', sn.value, 0);
+    if (LOC.nveStation) {
+        set('kpiFlow',      fl.value, 2);
+        set('kpiWaterTemp', wt.value);
+    }
+    document.getElementById('kpiAirUnit').textContent  = `°C · ${LOC.place} (${LOC.frostStation})`;
+    document.getElementById('kpiSnowUnit').textContent = `cm · ${LOC.place}`;
+    if (LOC.nveStation) {
+        document.getElementById('kpiFlowUnit').textContent = `m³/s · ${LOC.place} (${LOC.nveStation})`;
+        document.getElementById('kpiWtUnit').textContent   = `°C · ${LOC.place} (${LOC.nveStation})`;
+    }
+    const dateStr = at.date || TODAY;
+    document.getElementById('lastUpdated').innerHTML =
+        `Updated: ${parseDate(dateStr).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}<br>
+         ${LOC.frostStation}${LOC.nveStation ? ' · ' + LOC.nveStation : ''}`;
+}
+
+function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
+    const remaining = Math.max(0, LOC.gddThreshold - currentADG);
+    const pct = Math.min(100, currentADG / LOC.gddThreshold * 100);
+
+    document.getElementById('adgNow').textContent  = currentADG.toFixed(1);
+    document.getElementById('adgLeft').textContent = remaining.toFixed(1);
+    document.getElementById('adgBar').style.width  = pct + '%';
+    document.getElementById('adgPct').textContent  = `${pct.toFixed(1)}% of ${LOC.gddThreshold} GDD target`;
+
+    const diff = currentADG - histADG;
+    const sign = diff >= 0 ? '+' : '';
+    document.getElementById('adgCompareBand').textContent =
+        `5-year average same date: ${histADG.toFixed(1)} GDD  (${sign}${diff.toFixed(1)} vs avg)`;
+
+    // Uncertainty band — data-driven when histStats available, prior fallback otherwise
+    const uncDays   = histStats ? histStats.std.toFixed(1) : LOC.uncertaintyDays;
+    const uncSource = histStats
+        ? `data-driven from ${histStats.n} years of GDD model (2019–${histStats.crossings.at(-1)?.year ?? ''})`
+        : `prior estimate — calibrate by reporting observed hatch dates`;
+    const unc = document.getElementById('uncertaintyBand');
+    unc.style.display = '';
+    if (LOC.calibrated) {
+        unc.innerHTML = `✅ Calibrated model · MAE ±${uncDays} days · Kautokeino GDD parameters verified against field observations.`;
+        unc.style.background = '#edf7f2';
+        unc.style.borderColor = '#74C69D';
+        unc.style.color = '#1B4332';
+    } else {
+        unc.innerHTML = `⚠ Model uncertainty: <strong>±${uncDays} days</strong> (${uncSource}).`;
+    }
+
+    // Update loc-strip Model entry with actual data-driven uncertainty
+    const locModelEl = document.querySelector('#locStrip .loc-item:last-child .loc-val');
+    if (locModelEl) {
+        locModelEl.textContent = LOC.calibrated
+            ? `✅ Calibrated (±${uncDays} d)`
+            : `⚠ Prior · ±${uncDays} d${histStats ? ` (${histStats.n} yrs)` : ''}`;
+    }
+
+    // Update model heading with actual uncertainty
+    document.getElementById('modelHeading').textContent = LOC.calibrated
+        ? `Dual Trigger Model · GDD ≥ ${LOC.gddThreshold} (bt = 0°C) + Water Temp ≥ 12°C · ±${uncDays} days MAE`
+        : `GDD Prior Model · Threshold ${LOC.gddThreshold} GDD (bt = 0°C) · ±${uncDays} days${histStats ? ` (${histStats.n}-yr data)` : ' prior'}`;
+
+    document.getElementById('adgDate').textContent = adgDate ? fmt(adgDate) : '–';
+
+    let hatchDate = adgDate;
+    let hatchNote = '';
+    if (LOC.calibrated && adgDate && wtDate) {
+        hatchDate = adgDate > wtDate ? adgDate : wtDate;
+        hatchNote = 'latest of: GDD ≥ 520 + water temp ≥ 12°C';
+    } else if (adgDate) {
+        hatchNote = LOC.calibrated
+            ? 'GDD trigger only (water temp unknown)'
+            : `Estimate ±${uncDays} days${histStats ? ` (${histStats.n}-yr data)` : ' (prior)'}`;
+    }
+    document.getElementById('hatchDate').textContent = hatchDate ? fmt(hatchDate) : '–';
+    document.getElementById('hatchNote').textContent = hatchNote;
+    document.getElementById('adgDateNote').textContent = `when GDD reaches ${LOC.gddThreshold}`;
+}
+
+function renderHistorical() {
+    if (!LOC.calibrated) return;
+    const tbody = document.getElementById('histBody');
+    KAUTOKEINO_HIST.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><strong>${r.year}</strong></td>
+            <td>${r.isgang || '–'}</td>
+            <td>${r.snowFree || '–'}</td>
+            <td>${r.snowCm ?? '–'}</td>
+            <td>${r.iceCm ? r.iceCm.toFixed(1) : '–'}</td>
+            <td>${r.hatch ? `<strong>${r.hatch}</strong>` : '<span class="yr-na">–</span>'}</td>
+            <td style="font-size:0.78rem;color:#666">${r.comment||''}</td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+function renderWaterTempChart(wtData) {
+    if (!LOC.nveStation) return;
+    const may1  = doy(new Date(YEAR, 4,  1));
+    const jul15 = doy(new Date(YEAR, 6, 15));
+    const doys  = Array.from({ length: jul15 - may1 + 1 }, (_, i) => may1 + i);
+    const labels = doys.map(d => fmt(dateFromDoy(YEAR, d)));
+    const byYear = {};
+    for (const [dateStr, val] of Object.entries(wtData)) {
+        const yr = parseInt(dateStr.slice(0, 4));
+        const mo = parseInt(dateStr.slice(5, 7));
+        if (mo < 5 || mo > 7) continue;
+        if (!byYear[yr]) byYear[yr] = {};
+        byYear[yr][doy(parseDate(dateStr))] = val;
+    }
+    const YEAR_STYLE = {
+        2016:{ color:'#a8c5da', w:1 }, 2017:{ color:'#7fb3d3', w:1 },
+        2018:{ color:'#5b9ebf', w:1 }, 2019:{ color:'#4a9e8f', w:1.2 },
+        2020:{ color:'#6ab187', w:1.2 }, 2021:{ color:'#a8c97a', w:1.2 },
+        2022:{ color:'#d4b44a', w:1.5 }, 2023:{ color:'#e08c3a', w:1.5 },
+        2024:{ color:'#c0607a', w:2 }, 2025:{ color:'#8e44ad', w:2 },
+    };
+    const histYears = [2016,2017,2018,2019,2020,2021,2022,2023,2024,2025];
+    const datasets = histYears.map(yr => {
+        const s = YEAR_STYLE[yr] || { color:'#aaa', w:1 };
+        return { label: String(yr), data: doys.map(d => byYear[yr]?.[d] ?? null),
+            borderColor: s.color, borderWidth: s.w, pointRadius: 0, tension: 0.35, spanGaps: true };
+    });
+    if (byYear[YEAR]) {
+        datasets.push({ label: `${YEAR} ★`, data: doys.map(d => byYear[YEAR]?.[d] ?? null),
+            borderColor: '#C0392B', borderWidth: 3, pointRadius: 0, tension: 0.35, spanGaps: true });
+    }
+    datasets.push({ label: '12°C threshold', data: doys.map(() => 12),
+        borderColor: 'rgba(230,100,20,0.6)', borderWidth: 1.5, borderDash: [7,4], pointRadius: 0 });
+    const ctx = document.getElementById('wtChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line', data: { labels, datasets },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode:'index', intersect:false },
+            plugins: {
+                legend: { position:'right', labels: { boxWidth:14, font:{size:10}, padding:6 } },
+                tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.parsed.y?.toFixed(1) ?? '–'} °C` } }
+            },
+            scales: {
+                x: { ticks: { maxTicksLimit:12, font:{size:10} } },
+                y: { min:0, suggestedMax:22, title:{display:true,text:'°C',font:{size:11}}, ticks:{font:{size:10}} }
+            }
+        }
+    });
+}
+
+function renderSnowChart(snowData) {
+    const labels = [], winterDoys = [];
+    const anchor = new Date(YEAR - 1, 10, 1);
+    for (let i = 0; i <= 212; i++) {
+        const d = new Date(anchor); d.setDate(anchor.getDate() + i);
+        labels.push(fmt(d)); winterDoys.push(i);
+    }
+    const byWinter = {};
+    for (const [dateStr, val] of Object.entries(snowData)) {
+        const dt = parseDate(dateStr);
+        const mo = dt.getMonth() + 1, yr = dt.getFullYear();
+        const winterYr = mo >= 11 ? yr + 1 : yr;
+        if (!byWinter[winterYr]) byWinter[winterYr] = {};
+        const nov1 = new Date(winterYr - 1, 10, 1);
+        const offset = Math.round((dt - nov1) / 86400000);
+        if (offset >= 0 && offset <= 212) byWinter[winterYr][offset] = val;
+    }
+    const SNOW_STYLE = {
+        2017:{color:'#a8c5da',w:1}, 2018:{color:'#7fb3d3',w:1}, 2019:{color:'#5b9ebf',w:1},
+        2020:{color:'#4a9e8f',w:1.2}, 2021:{color:'#6ab187',w:1.2}, 2022:{color:'#a8c97a',w:1.2},
+        2023:{color:'#d4b44a',w:1.5}, 2024:{color:'#e08c3a',w:1.5}, 2025:{color:'#c0607a',w:2},
+        2026:{color:'#C0392B',w:3},
+    };
+    // Detect sparse/coastal station: if average max snow per winter is < 15 cm,
+    // use stepped (no gap-spanning) to avoid ugly diagonal lines across data gaps.
+    const winterMaxes = Object.values(byWinter).map(d => Math.max(...Object.values(d)));
+    const avgMax = winterMaxes.length ? winterMaxes.reduce((a,b)=>a+b,0)/winterMaxes.length : 0;
+    const isSparseSnow = avgMax < 15;
+
+    const datasets = Object.entries(byWinter)
+        .filter(([yr]) => parseInt(yr) >= 2017)
+        .sort(([a],[b]) => a - b)
+        .map(([yr, d]) => {
+            const s = SNOW_STYLE[parseInt(yr)] || { color:'#aaa', w:1 };
+            return {
+                label: `Winter ${yr}`,
+                data: winterDoys.map(i => d[i] ?? null),
+                borderColor: s.color,
+                borderWidth: isSparseSnow ? s.w + 0.5 : s.w,
+                pointRadius: isSparseSnow ? 2 : 0,
+                tension: 0,
+                spanGaps: false,   // never connect across data gaps
+                stepped: isSparseSnow ? 'before' : false,
+            };
+        });
+    const ctx = document.getElementById('snowChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line', data: { labels, datasets },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode:'index', intersect:false },
+            plugins: {
+                legend: { position:'right', labels:{boxWidth:14,font:{size:10},padding:6} },
+                tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.parsed.y?.toFixed(0) ?? '–'} cm` } }
+            },
+            scales: {
+                x: { ticks:{maxTicksLimit:10,font:{size:10}} },
+                y: { min:0, title:{display:true,text:'cm'}, ticks:{font:{size:10}} }
+            }
+        }
+    });
+    const snowSection = document.getElementById('snowChart').closest('section');
+    if (!snowSection.querySelector('.snow-note')) {
+        const note = document.createElement('div');
+        note.className = 'snow-note';
+        note.style.cssText = 'font-size:0.74rem;color:#888;margin-top:6px;padding:0 4px';
+        if (avgMax < 5) {
+            // Essentially no snow — hide the chart entirely, just show a message
+            document.getElementById('snowChart').style.display = 'none';
+            note.textContent = `⚠ Very low snow area (avg. max ${avgMax.toFixed(0)} cm at ${LOC.place}). Snow depth is not a meaningful seasonal indicator here.`;
+        } else if (isSparseSnow) {
+            note.textContent = `⚠ Lowland station (avg. max ${avgMax.toFixed(0)} cm). Snow is ephemeral — each segment is an isolated snow event, not a continuous season.`;
+        }
+        if (note.textContent) snowSection.appendChild(note);
+    }
+}
+
+function renderIceChart(airData) {
+    if (!LOC.calibrated) return;
+    const ALPHA = 0.6;
+    const results = {}, isCurrent = {};
+    const byWinter = {};
+    for (const [dateStr, temp] of Object.entries(airData)) {
+        const dt = parseDate(dateStr);
+        const mo = dt.getMonth() + 1, yr = dt.getFullYear();
+        const winterYr = mo >= 11 ? yr + 1 : yr;
+        if (!byWinter[winterYr]) byWinter[winterYr] = [];
+        byWinter[winterYr].push({ dt, temp });
+    }
+    const today = parseDate(TODAY);
+    for (const [wYr, entries] of Object.entries(byWinter)) {
+        const wy = parseInt(wYr);
+        if (wy < 2017 || wy > YEAR) continue;
+        entries.sort((a,b) => a.dt - b.dt);
+        const nov1 = new Date(wy - 1, 10, 1);
+        const isCurrentYear = wy === YEAR;
+        const cutoff = isCurrentYear ? today : new Date(wy, 4, 31);
+        let fdd = 0, maxH = 0;
+        for (const { dt, temp } of entries) {
+            if (dt < nov1 || dt > cutoff) continue;
+            if (temp < 0) fdd += Math.abs(temp);
+            const h = ALPHA * Math.sqrt(fdd);
+            if (h > maxH) maxH = h;
+        }
+        results[wYr] = Math.round(maxH * 10) / 10;
+        isCurrent[wYr] = isCurrentYear;
+    }
+    const years = Object.keys(results).sort();
+    const values = years.map(y => results[y]);
+    const colors = years.map(y => isCurrent[y] ? 'rgba(192,57,43,0.75)' : '#52B788');
+    const borderColors = years.map(y => isCurrent[y] ? '#922B21' : '#2D6A4F');
+    const ctx = document.getElementById('iceChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: { labels: years.map(y => isCurrent[y] ? `W${y} ▶` : `W${y}`),
+            datasets: [{ label:'Est. ice thickness (cm)', data: values,
+                backgroundColor: colors, borderColor: borderColors, borderWidth:2,
+                borderRadius:4, borderSkipped:false }] },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend:{display:false},
+                tooltip: { callbacks: { label: c => {
+                    const yr = years[c.dataIndex];
+                    return `${c.parsed.y.toFixed(1)} cm${isCurrent[yr] ? ' (live)' : ' (peak)'}`;
+                }}}},
+            scales: { x:{ticks:{font:{size:11}}}, y:{min:20, title:{display:true,text:'cm (α=0.6)'}, ticks:{font:{size:10}}} }
+        }
+    });
+}
+
+function renderIndicators(snowData, airData, currentADG) {
+    const prevYear = YEAR - 1;
+    const winterSnowVals = Object.entries(snowData)
+        .filter(([d]) => {
+            const mo = parseInt(d.slice(5, 7)), yr = parseInt(d.slice(0, 4));
+            return (yr === prevYear && mo === 12) || (yr === YEAR && mo >= 1 && mo <= 4);
+        }).map(([,v]) => v);
+    const winterSnow = winterSnowVals.length
+        ? Math.round(winterSnowVals.reduce((a,b) => a+b, 0) / winterSnowVals.length) : null;
+    let snowFree = findSnowFreeDate(snowData, YEAR);
+    // Fallback: station may not report daily — if it's April+ and the latest
+    // recorded snow value is 0, infer snow-free from when snow last disappeared.
+    if (!snowFree && Object.keys(snowData).length > 0 && TODAY >= `${YEAR}-04-01`) {
+        const latestSnow = latest(snowData);
+        if (latestSnow.value <= 1) {
+            const allSorted = Object.keys(snowData).sort();
+            const lastSnowDate = [...allSorted].reverse().find(d => snowData[d] > 1);
+            if (lastSnowDate) {
+                const idx = allSorted.indexOf(lastSnowDate);
+                snowFree = allSorted[idx + 1] || latestSnow.date;
+            } else {
+                snowFree = `${YEAR}-04-01`;
+            }
+        }
+    }
+
+    // Only treat snowFree as valid for THIS season if it falls within the current
+    // season window (1 Oct prev year → today). Stale data from earlier years is
+    // not meaningful for current-season indicators or Level 1 warning.
+    const seasonStart = `${YEAR - 1}-10-01`;
+    const snowFreeValid = snowFree && snowFree >= seasonStart ? snowFree : null;
+
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 14);
+    const cutStr = isoDate(cutoff);
+    const recentAir = Object.entries(airData)
+        .filter(([d]) => d >= cutStr && d.startsWith(String(YEAR)));
+    const adgRate = recentAir.length
+        ? (recentAir.reduce((s,[,v]) => s + Math.max(0,v), 0) / recentAir.length).toFixed(1) : '0.0';
+
+    const noSnowData = Object.keys(snowData).length === 0;
+    // "No recent data" = station has data but nothing in current season
+    const noCurrentSnow = !noSnowData && !snowFreeValid &&
+        !Object.keys(snowData).some(d => d >= seasonStart);
+
+    const snowSignal = winterSnow == null ? '–'
+        : winterSnow < 50 ? '🟢 Low snow – early season signal'
+        : winterSnow < 65 ? '🟡 Normal'
+        : '🔴 High snow – late season signal';
+    const snowFreeSignal = noSnowData    ? '— No snow data'
+        : noCurrentSnow                   ? '— No current-season data'
+        : !snowFreeValid                  ? '⏳ Not yet'
+        : snowFreeValid < `${YEAR}-05-10` ? '🟢 Early'
+        : snowFreeValid < `${YEAR}-05-25` ? '🟡 Normal' : '🔴 Late';
+    const snowFreeDisplay = noSnowData    ? 'No data'
+        : noCurrentSnow                   ? 'No data (station)'
+        : snowFreeValid                   ? fmt(parseDate(snowFreeValid))
+        :                                   'Not yet';
+
+    const rateSignal = parseFloat(adgRate) < 0.5 ? '❄️ Winter – normal'
+        : parseFloat(adgRate) < 3.5 ? '🟡 Warming up' : '🟢 Active season';
+    const rows = [
+        { name:'Winter snow average (Dec–Apr)', val: winterSnow != null ? `${winterSnow} cm` : (noSnowData || noCurrentSnow ? 'No data' : '–'), avg:'—', signal:snowSignal },
+        { name:'Snow-free date', val: snowFreeDisplay, avg:'—', signal:snowFreeSignal },
+        { name:'GDD accumulation rate (14-day avg)', val:`${adgRate} GDD/day`, avg:'—', signal:rateSignal },
+    ];
+    const tbody = document.getElementById('indBody');
+    tbody.innerHTML = rows.map(r => `<tr>
+        <td>${r.name}</td><td><strong>${r.val}</strong></td>
+        <td>${r.avg}</td><td class="signal">${r.signal}</td></tr>`).join('');
+    // Pass only current-season snow-free date to renderWarning
+    return { snowFree: snowFreeValid, adgRate };
+}
+
+function renderWarning(snowFree, wtData, adgDate, histStats) {
+    const uncDays   = histStats ? histStats.std.toFixed(1) : LOC.uncertaintyDays;
+    const uncSource = histStats ? `${histStats.n}-yr data` : 'prior';
+    // GDD-based estimate
+    if (adgDate) {
+        document.getElementById('wGddDate').textContent = fmt(adgDate);
+        document.getElementById('wGddUnc').textContent  = `± ${uncDays} days · GDD model (${uncSource})`;
+        const badge = document.getElementById('wGddBadge');
+        badge.textContent = '✅ Active';
+        badge.className   = 'badge badge-active';
+    }
+    // Level 1: snow-free + 32 days (only if snow-free is from current season)
+    const now = new Date();
+    let l1Date = null;
+    if (snowFree) {
+        const candidate = addDays(snowFree, 32);
+        if (candidate > now) {
+            l1Date = candidate;
+            document.getElementById('wL1Date').textContent = fmt(l1Date);
+            const b = document.getElementById('wL1Badge');
+            b.textContent = '✅ Active'; b.className = 'badge badge-active';
+        } else {
+            // L1 date already passed — don't display a past date
+            document.getElementById('wL1Date').textContent = fmt(candidate);
+            const b = document.getElementById('wL1Badge');
+            b.textContent = '⏳ Date passed — awaiting WT'; b.className = 'badge';
+        }
+    } else {
+        document.getElementById('wL1Date').textContent = 'Awaiting snow-free date';
+    }
+    // Level 2: water temp extrapolation
+    let l2Date = null;
+    if (LOC.nveStation) {
+        l2Date = extrapolateWT(wtData);
+        if (l2Date) {
+            document.getElementById('wL2Date').textContent = fmt(l2Date);
+            const b = document.getElementById('wL2Badge');
+            b.textContent = '✅ Active'; b.className = 'badge badge-active';
+        }
+    }
+    // Best estimate: prefer future dates. Priority: L2 > L1 (future only) > GDD
+    let bestDate = null, bestNote = '';
+    if (l2Date && l2Date > now) {
+        bestDate = l2Date;
+        bestNote = `Water temp extrapolation (Level 2) — most precise, ±4–7 days`;
+    } else if (l1Date) {   // l1Date is already guaranteed future-only above
+        bestDate = l1Date;
+        bestNote = `Snow-free date + 32 days (Level 1) — ±11 days`;
+    } else if (adgDate) {
+        bestDate = adgDate;
+        bestNote = `GDD model estimate — ±${uncDays} days${histStats ? ` (${histStats.n}-yr data)` : !LOC.calibrated ? ' (prior, uncalibrated)' : ''}`;
+    }
+    document.getElementById('bestDate').textContent = bestDate ? fmt(bestDate) : '–';
+    document.getElementById('bestNote').textContent = bestNote || 'No estimate available yet';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  MAIN
+// ═══════════════════════════════════════════════════════════════════
+async function main() {
+    const startYear = Math.max(2016, YEAR - 10);
+    const dataStart = `${startYear}-01-01`;
+    const dataEnd   = TODAY;
+
+    try {
+        // Fetch in parallel
+        const [airData, snowData, flowData, wtData] = await Promise.all([
+            fetchFrost('mean(air_temperature P1D)', dataStart, dataEnd),
+            fetchFrost('sum(duration_of_snow_covered_ground P1D)', dataStart, dataEnd)
+                .catch(() => fetchFrost('surface_snow_thickness', dataStart, dataEnd))
+                .catch(() => ({})),   // station may not have snow element — degrade gracefully
+            LOC.nveStation ? fetchNVE(1001, dataStart, dataEnd).catch(() => ({})) : Promise.resolve({}),
+            LOC.nveStation ? fetchNVE(1003, dataStart, dataEnd).catch(() => ({})) : Promise.resolve({}),
+        ]);
+
+        // Apply altitude lapse-rate correction (+0.6°C per 100m station is above fishing area)
+        const { data: airDataCorrected, correction: altCorrection } = applyAltitudeCorrection(airData);
+
+        // Dynamic biofix: GDD starts from first sustained warming (7-day avg > 3°C), not fixed 1 Jan
+        const fromDate   = findWarmingOnset(airDataCorrected, YEAR);
+        const currentADG = calcADG(airDataCorrected, fromDate);
+        const todayDoyN  = doy(new Date());
+        const histADG    = histAvgADG(airDataCorrected, todayDoyN);
+        const adgDate    = projectADGDate(airDataCorrected, currentADG);
+        const wtDate     = LOC.nveStation ? extrapolateWT(wtData) : null;
+
+        // Historical statistics: run GDD model on 2019–2025 → data-driven uncertainty
+        const histStats  = computeHistoricalStats(airDataCorrected, LOC.gddThreshold);
+
+        // Render
+        renderKPIs(airData, snowData, flowData, wtData);   // KPIs show raw station readings
+        renderModel(airDataCorrected, currentADG, histADG, adgDate, wtDate, histStats);
+        renderHistorical();
+        renderHistoricalGDDSection(histStats, altCorrection);
+        renderWaterTempChart(wtData);
+        renderSnowChart(snowData);
+        renderIceChart(airDataCorrected);
+        const { snowFree } = renderIndicators(snowData, airDataCorrected, currentADG);
+        renderWarning(snowFree, wtData, adgDate, histStats);
+
+        // Show dashboard
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('dashboard').style.display    = '';
+
+    } catch (err) {
+        document.getElementById('loadingState').innerHTML = `
+            <div class="error-box">
+                <strong>Failed to load data</strong>
+                ${err.message}<br><br>
+                Station: <code>${LOC.frostStation}</code>${LOC.nveStation ? ` / <code>${LOC.nveStation}</code>` : ''}<br>
+                Verify station ID at <a href="https://frost.met.no/sources" target="_blank">frost.met.no/sources</a>.
+                If the station ID is wrong, update it in <code>dashboard.html</code> → LOCATIONS config.
+            </div>`;
+    }
+}
+
+main();
+</script>
+</body>
+</html>
