@@ -1367,12 +1367,6 @@ function renderSpeciesCalendar(snowFree, vulgataDate) {
         return;
     }
 
-    if (!LOC.calibrated) {
-        grid.innerHTML = '<div style="opacity:0.6;font-size:0.8rem;padding:8px 0;grid-column:1/-1">' +
-            'Species calendar available for calibrated locations only.</div>';
-        return;
-    }
-
     // Estimate isgang: snowFree + 12 days (Kautokeino historical correlation).
     // If snowFree not yet known, fall back to historical mean: 26 May.
     let isgangDate, isgangSource;
