@@ -588,7 +588,8 @@ const LOCATIONS = {
         place: 'Rakkestad',
         region: 'Østlandet',
         lat: 59.10, lon: 11.40, altitude: 180, stationAltitude: 57,  // Sarpsborg 57m, Østfold/Vestfjella ~180m
-        frostStation: 'SN3290',      // Rakkestad
+        frostStation: 'SN3290',      // Rakkestad — air temperature
+        snowStation:  'SN3280',      // Rakkestad — snow depth (separate station)
         nveStation:   '2.1236.0',   // Tverråa — Østfold/Halden
         calibrated: false,
         gddThreshold: 520,
@@ -625,7 +626,7 @@ document.getElementById('yearCol').textContent = YEAR;
 // Location info strip
 document.getElementById('locStrip').innerHTML = [
     { key: 'Area',        val: `${LOC.area}, ${LOC.region}` },
-    { key: 'Lufttemp',    val: `${LOC.name} (${LOC.frostStation})` },
+    { key: 'Air temp',    val: `${LOC.place} (${LOC.frostStation})` + (LOC.snowStation ? ` · Snow: ${LOC.snowStation}` : '') },
     { key: 'Altitude',    val: `${LOC.altitude} m a.s.l.` },
     { key: 'Coordinates', val: `${LOC.lat.toFixed(2)}°N, ${LOC.lon.toFixed(2)}°E` },
     { key: 'Biofix',      val: LOC.biofixLabel },
@@ -705,8 +706,9 @@ function isoDate(date) {
 // ═══════════════════════════════════════════════════════════════════
 //  API FETCHERS — now pass station IDs dynamically
 // ═══════════════════════════════════════════════════════════════════
-async function fetchFrost(element, start, end) {
-    const url = `/api/frost?elements=${encodeURIComponent(element)}&start=${start}&end=${end}&station=${LOC.frostStation}`;
+async function fetchFrost(element, start, end, stationOverride) {
+    const station = stationOverride || LOC.frostStation;
+    const url = `/api/frost?elements=${encodeURIComponent(element)}&start=${start}&end=${end}&station=${station}`;
     const res = await fetch(url);
     if (!res.ok) {
         const txt = await res.text().catch(() => '');
@@ -999,7 +1001,9 @@ function renderKPIs(airData, snowData, flowData, wtData) {
     const set = (id, val, dec = 1) =>
         document.getElementById(id).textContent = val != null ? val.toFixed(dec) : '–';
     set('kpiAir',  at.value);
-    set('kpiSnow', sn.value, 0);
+    // If station reports no snow depth data in spring/summer, assume 0 (snow-free)
+    const snVal = sn.value !== null ? sn.value : (new Date().getMonth() >= 3 ? 0 : null);
+    set('kpiSnow', snVal, 0);
     if (LOC.nveStation) {
         set('kpiFlow',      fl.value, 2);
         set('kpiWaterTemp', wt.value);
@@ -1543,8 +1547,8 @@ async function main() {
         // Fetch in parallel
         const [airData, snowData, flowData, wtData] = await Promise.all([
             fetchFrost('mean(air_temperature P1D)', dataStart, dataEnd),
-            fetchFrost('sum(duration_of_snow_covered_ground P1D)', dataStart, dataEnd)
-                .catch(() => fetchFrost('surface_snow_thickness', dataStart, dataEnd))
+            fetchFrost('sum(duration_of_snow_covered_ground P1D)', dataStart, dataEnd, LOC.snowStation)
+                .catch(() => fetchFrost('surface_snow_thickness', dataStart, dataEnd, LOC.snowStation))
                 .catch(() => ({})),   // station may not have snow element — degrade gracefully
             LOC.nveStation ? fetchNVE(1001, dataStart, dataEnd).catch(() => ({})) : Promise.resolve({}),
             LOC.nveStation ? fetchNVE(1003, dataStart, dataEnd).catch(() => ({})) : Promise.resolve({}),
