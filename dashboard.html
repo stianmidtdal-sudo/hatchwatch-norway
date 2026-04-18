@@ -189,17 +189,26 @@
         .best-wrap {
             background: linear-gradient(135deg, #1B4332, #2D6A4F);
             color: white;
-            border-radius: 12px;
-            padding: 20px 24px;
-            margin-top: 14px;
+            border-radius: 16px;
+            padding: 28px 32px;
+            margin-top: 0;
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 16px;
+            box-shadow: 0 4px 20px rgba(27,67,50,0.25);
         }
-        .best-label { font-size: 0.72rem; opacity: 0.75; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 4px; }
-        .best-date { font-size: 2.1rem; font-weight: 700; }
-        .best-note { font-size: 0.8rem; opacity: 0.7; max-width: 340px; text-align: right; }
+        .best-label { font-size: 0.75rem; opacity: 0.75; text-transform: uppercase; letter-spacing: 1.4px; margin-bottom: 6px; }
+        .best-date { font-size: 2.8rem; font-weight: 700; line-height: 1; }
+        .best-note { font-size: 0.85rem; opacity: 0.75; max-width: 360px; text-align: right; line-height: 1.5; }
+        .kpi-section-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #888;
+            margin: 18px 0 8px;
+        }
 
         /* ── LOCATION INFO STRIP ── */
         .loc-strip {
@@ -272,29 +281,8 @@
         <!-- ═══ LOCATION INFO STRIP ═══ -->
         <div class="loc-strip" id="locStrip"></div>
 
-        <!-- ═══ EARLY WARNING ═══ -->
+        <!-- ═══ HERO: BEST ESTIMATE + TODAY'S STATUS ═══ -->
         <section>
-            <h2>Early Warning · When Will Water Reach 12°C?</h2>
-            <div class="warning-grid">
-                <div class="warning-card">
-                    <div class="w-step">Baseline · GDD model</div>
-                    <div class="w-date" id="wGddDate">–</div>
-                    <div class="w-unc" id="wGddUnc">± ? days · GDD-based estimate</div>
-                    <span class="badge" id="wGddBadge">⏳ Calculating…</span>
-                </div>
-                <div class="warning-card">
-                    <div class="w-step">Level 1 · Snow-free + 32 days</div>
-                    <div class="w-date" id="wL1Date">–</div>
-                    <div class="w-unc">± 11 days</div>
-                    <span class="badge" id="wL1Badge">⏳ Awaiting snow-free date</span>
-                </div>
-                <div class="warning-card">
-                    <div class="w-step">Level 2 · Water temp extrapolation</div>
-                    <div class="w-date" id="wL2Date">–</div>
-                    <div class="w-unc" id="wL2Unc">± 4–7 days · available when WT > 3°C</div>
-                    <span class="badge badge-cold" id="wL2Badge">❄️ Awaiting spring warm-up</span>
-                </div>
-            </div>
             <div class="best-wrap">
                 <div>
                     <div class="best-label">▶ Best Estimate Now</div>
@@ -302,11 +290,7 @@
                 </div>
                 <div class="best-note" id="bestNote">Loading…</div>
             </div>
-        </section>
-
-        <!-- ═══ TODAY'S STATUS ═══ -->
-        <section>
-            <h2>Today's Status</h2>
+            <div class="kpi-section-label">Today's Conditions</div>
             <div class="kpi-grid">
                 <div class="kpi-card">
                     <div class="kpi-label">Air Temperature</div>
@@ -360,6 +344,31 @@
                     <div class="card-label">Estimated Hatch Date</div>
                     <div class="card-value yr-current" id="hatchDate">–</div>
                     <div class="card-note" id="hatchNote">–</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ EARLY WARNING ═══ -->
+        <section>
+            <h2>Early Warning · When Will Water Reach 12°C?</h2>
+            <div class="warning-grid">
+                <div class="warning-card">
+                    <div class="w-step">Baseline · GDD model</div>
+                    <div class="w-date" id="wGddDate">–</div>
+                    <div class="w-unc" id="wGddUnc">± ? days · GDD-based estimate</div>
+                    <span class="badge" id="wGddBadge">⏳ Calculating…</span>
+                </div>
+                <div class="warning-card">
+                    <div class="w-step">Level 1 · Snow-free + 32 days</div>
+                    <div class="w-date" id="wL1Date">–</div>
+                    <div class="w-unc">± 11 days</div>
+                    <span class="badge" id="wL1Badge">⏳ Awaiting snow-free date</span>
+                </div>
+                <div class="warning-card">
+                    <div class="w-step">Level 2 · Water temp extrapolation</div>
+                    <div class="w-date" id="wL2Date">–</div>
+                    <div class="w-unc" id="wL2Unc">± 4–7 days · available when WT > 3°C</div>
+                    <span class="badge badge-cold" id="wL2Badge">❄️ Awaiting spring warm-up</span>
                 </div>
             </div>
         </section>
