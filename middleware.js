@@ -1,13 +1,16 @@
 // Vercel Edge Middleware — cookie-based auth for hatchwatch.no
-// Password-only login via /login.html + /api/login
 
 export const config = {
-    matcher: ['/((?!api/|login\\.html|_next/).*)'],
+    matcher: ['/((?!api/|login.html|_next/).*)'],
 };
 
 export default function middleware(request) {
-    const cookie = request.cookies.get('hw_auth');
-    if (cookie?.value === 'hw_ok') return; // authenticated
+    const cookieHeader = request.headers.get('cookie') || '';
+    const authenticated = cookieHeader
+        .split(';')
+        .some(c => c.trim() === 'hw_auth=hw_ok');
+
+    if (authenticated) return; // pass through
 
     const url = new URL(request.url);
     return Response.redirect(new URL('/login.html', url));
