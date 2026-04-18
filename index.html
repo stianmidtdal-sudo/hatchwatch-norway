@@ -149,8 +149,8 @@
 <main id="main"></main>
 
 <div class="footnote">
-    <strong>⭐ Calibrated</strong> = GDD model verified against observed hatch records at Kautokeino (±2 days accuracy).
-    All other rivers use the same model with regional adjustments, shown with wider uncertainty bands (±10–14 days).
+    <strong>⭐ Calibrated</strong> = GDD model verified against observed hatch records at Kautokeino.
+    All other rivers use the same model with regional adjustments. Exact uncertainty is calculated live inside each dashboard.
 </div>
 
 <script>
@@ -210,7 +210,7 @@ function buildCards() {
                     💧 Vanntemp: ${r.waterRiver}
                 </div>
                 <span class="badge ${r.calibrated ? "badge-calibrated" : "badge-prior"}">
-                    ${r.calibrated ? "Calibrated · " + r.uncertainty : "Prior model · " + r.uncertainty}
+                    ${r.calibrated ? "⭐ Calibrated" : "Prior model"}
                 </span>`;
 
             grid.appendChild(a);
@@ -238,6 +238,6 @@ function filterCards() {
 }
 
 buildCards();
-  </script>  
+</script>
 </body>
 </html>
