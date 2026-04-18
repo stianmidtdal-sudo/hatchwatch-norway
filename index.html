@@ -245,9 +245,7 @@ function buildCards() {
                 <div class="card-meta" style="color:#aaa;font-size:0.7rem;margin-top:2px">
                     💧 Vanntemp: ${r.waterRiver}
                 </div>
-                <span class="badge ${r.calibrated ? "badge-calibrated" : "badge-prior"}">
-                    ${r.calibrated ? "Calibrated · " + r.uncertainty : "Prior model · " + r.uncertainty}
-                </span>`;
+                ${r.calibrated ? '<span class="badge badge-calibrated">Calibrated</span>' : ''}`;
 
             grid.appendChild(a);
         }
