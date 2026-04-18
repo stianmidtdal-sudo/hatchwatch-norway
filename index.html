@@ -127,13 +127,50 @@
             line-height: 1.7;
         }
         .footnote strong { color: #555; }
+
+        /* ── About box ───────────────────────────────── */
+        .about {
+            max-width: 860px;
+            margin: 24px 32px 0;
+            background: white;
+            border-radius: 14px;
+            padding: 20px 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            border-left: 4px solid #2D6A4F;
+        }
+        .about h2 {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #2D6A4F;
+            margin-bottom: 10px;
+        }
+        .about p {
+            font-size: 0.85rem;
+            color: #444;
+            line-height: 1.75;
+            margin-bottom: 8px;
+        }
+        .about p:last-child { margin-bottom: 0; }
+        .about .tag {
+            display: inline-block;
+            background: #d8f3e6;
+            color: #1B4332;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-right: 5px;
+            margin-bottom: 4px;
+        }
     </style>
 </head>
 <body>
 
 <header>
     <h1>🎣 Hatch Watch Norway</h1>
-    <div class="sub">Select a river to see the hatch prediction dashboard</div>
+    <div class="sub">Aquatic insect emergence forecasting · Dual Trigger Model</div>
 </header>
 
 <div class="search-wrap">
@@ -148,9 +185,31 @@
 
 <main id="main"></main>
 
+<div class="about">
+    <h2>How it works</h2>
+    <p>
+        Hatch Watch combines two independent prediction models and picks the winner based on how far out you're looking.
+        Close to the event, real water temperature data extrapolated to hatch threshold wins.
+        Farther out, a Growing Degree Day (GDD) model takes over — accumulating heat from January 1st, crossing a
+        species-specific thermal threshold when the bugs say "it's time."
+    </p>
+    <p>
+        Ice-out dates are predicted using <strong>Stefan's law</strong> — a physical ice growth/melt model
+        calibrated against satellite-observed isgang records from each location.
+        Snow cover, river hydrology, and air temperature from nearby met stations all feed in.
+        It's either very clever, or deeply unnecessary. Possibly both.
+    </p>
+    <p>
+        <span class="tag">GDD · Growing Degree Days</span>
+        <span class="tag">Stefan Ice Model</span>
+        <span class="tag">Water Temp Extrapolation</span>
+        <span class="tag">Frost API · NVE</span>
+    </p>
+</div>
+
 <div class="footnote">
-    <strong>⭐ Calibrated</strong> = GDD model verified against observed hatch records at Kautokeino.
-    All other rivers use the same model with regional adjustments. Exact uncertainty is calculated live inside each dashboard.
+    <strong>⭐ Calibrated</strong> = GDD model verified against observed hatch records at Kautokeino (±2 days accuracy).
+    All other rivers use the same model with regional adjustments, shown with wider uncertainty bands (±10–14 days).
 </div>
 
 <script>
@@ -204,13 +263,13 @@ function buildCards() {
                 <div class="card-river">${r.calibrated ? "⭐ " : ""}${r.area}</div>
                 <div class="card-place">${r.region} · ${r.lat.toFixed(1)}°N</div>
                 <div class="card-meta" style="color:#aaa;font-size:0.7rem;margin-top:4px">
-                    🌡 Lufttemp: ${r.river}
+                    🌡 Air temp: ${r.river}
                 </div>
                 <div class="card-meta" style="color:#aaa;font-size:0.7rem;margin-top:2px">
                     💧 Vanntemp: ${r.waterRiver}
                 </div>
                 <span class="badge ${r.calibrated ? "badge-calibrated" : "badge-prior"}">
-                    ${r.calibrated ? "⭐ Calibrated" : "Prior model"}
+                    ${r.calibrated ? "Calibrated · " + r.uncertainty : "Prior model · " + r.uncertainty}
                 </span>`;
 
             grid.appendChild(a);
