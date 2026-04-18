@@ -996,9 +996,7 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
         unc.innerHTML = `⚠ Model uncertainty: <strong>±${uncDays} days</strong> (${uncSource}).`;
     }
 
-    // Sync prior notice banner with data-driven uncertainty
-    const priorUncEl = document.getElementById('priorUncDays');
-    if (priorUncEl) priorUncEl.textContent = `±${uncDays} days`;
+
 
     // Update loc-strip Model entry with actual data-driven uncertainty
     const locModelEl = document.querySelector('#locStrip .loc-item:last-child .loc-val');
@@ -1355,6 +1353,14 @@ function renderWarning(snowFree, wtData, adgDate, histStats) {
     }
     document.getElementById('bestDate').textContent = bestDate ? fmt(bestDate) : '–';
     document.getElementById('bestNote').textContent = bestNote || 'No estimate available yet';
+
+    // Sync prior notice banner with the active best estimate method's uncertainty
+    const priorUncEl = document.getElementById('priorUncDays');
+    if (priorUncEl) {
+        if (l2Date && l2Date > now)      priorUncEl.textContent = '±4–7 days';
+        else if (l1Date)                 priorUncEl.textContent = '±11 days';
+        else                             priorUncEl.textContent = `±${uncDays} days`;
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════
