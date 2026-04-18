@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hatch Watch</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4SMRL2FQPP"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-4SMRL2FQPP');
+    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -313,7 +321,7 @@
 
         <!-- ═══ PRIOR MODEL NOTICE (shown for uncalibrated) ═══ -->
         <div id="priorNotice" class="prior-notice" style="display:none">
-            ⚠ <strong>Prior model:</strong> No local hatch observations available for this location. Predictions use the Kautokeino (Suohpatjohka) GDD parameters as a Bayesian prior (threshold 520 GDD, base 0 °C). Expected uncertainty is <strong id="priorUncDays">±10 days</strong> vs. ±2.1 days for calibrated Kautokeino. Weather data is fetched live from the nearest MET Norway station. <em>Report your actual hatch observations to calibrate this location.</em>
+            ⚠ <strong>Prior model:</strong> No local hatch data incorporated. Predictions use calibrated GDD parameters with regional adjustments (<strong id="priorUncDays">±6 days</strong> uncertainty). Weather from nearest MET Norway station.
         </div>
 
         <!-- ═══ LOCATION INFO STRIP ═══ -->
