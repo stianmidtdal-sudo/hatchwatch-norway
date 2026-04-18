@@ -408,7 +408,7 @@
                 <div class="warning-card">
                     <div class="w-step">Level 2 · Water temp extrapolation</div>
                     <div class="w-date" id="wL2Date">–</div>
-                    <div class="w-unc" id="wL2Unc">± 4–7 days · available when WT > 3°C</div>
+                    <div class="w-unc" id="wL2Unc">available when WT > 3°C · uncertainty depends on forecast horizon</div>
                     <span class="badge badge-cold" id="wL2Badge">❄️ Awaiting spring warm-up</span>
                 </div>
             </div>
@@ -1630,40 +1630,52 @@ function renderWarning(snowFree, wtData, adgDate, histStats, fromDate, airData) 
         document.getElementById('wL1Date').textContent = 'Awaiting snow-free date';
     }
     // Level 2: water temp extrapolation
-    let l2Date = null;
+    // Uncertainty grows with forecast horizon — only supersedes GDD when close enough
+    let l2Date = null, l2Unc = null, l2DaysOut = null;
     if (LOC.nveStation) {
         l2Date = extrapolateWT(wtData);
         if (l2Date) {
+            l2DaysOut = Math.round((l2Date - now) / 86400000);
+            // ±3d base + 0.1d per day of horizon, min 4, max 14
+            l2Unc = Math.min(14, Math.max(4, Math.round(3 + l2DaysOut * 0.1)));
+            const uncLabel = l2DaysOut <= 14 ? `±${l2Unc} days — precise`
+                           : l2DaysOut <= 30 ? `±${l2Unc} days — reliable`
+                           :                   `±${l2Unc} days — early signal only`;
             document.getElementById('wL2Date').textContent = fmt(l2Date);
+            document.getElementById('wL2Unc').textContent  = uncLabel;
             const b = document.getElementById('wL2Badge');
             b.textContent = '✅ Active'; b.className = 'badge badge-active';
         }
     }
-    // Best estimate: prefer future dates. Priority: L2 > L1 (future only) > GDD
+    // Best estimate priority: L2 (only when ≤30 days out) > L1 > GDD
+    // When L2 horizon > 30 days, GDD model is more reliable — don't let early
+    // water temp readings override a well-calibrated GDD prediction.
     let bestDate = null, bestNote = '';
-    if (l2Date && l2Date > now) {
+    if (l2Date && l2Date > now && l2DaysOut <= 30) {
         bestDate = l2Date;
-        bestNote = `Water temp extrapolation (Level 2) — most precise, ±4–7 days`;
-    } else if (l1Date) {   // l1Date is already guaranteed future-only above
+        bestNote = `Water temp extrapolation — ±${l2Unc} days (${l2DaysOut}d to hatch)`;
+    } else if (l1Date) {
         bestDate = l1Date;
         bestNote = `Snow-free date + 32 days (Level 1) — ±11 days`;
     } else if (adgDate) {
         bestDate = adgDate;
-        bestNote = `GDD model estimate — ±${uncDays} days${histStats ? ` (${histStats.n}-yr data)` : !LOC.calibrated ? ' (prior, uncalibrated)' : ''}`;
+        bestNote = `GDD model — ±${uncDays} days${histStats ? ` (${histStats.n}-yr data)` : !LOC.calibrated ? ' (prior, uncalibrated)' : ''}`;
     }
     document.getElementById('bestDate').textContent = bestDate ? fmt(bestDate) : '–';
     document.getElementById('bestNote').textContent = bestNote || 'No estimate available yet';
 
-    // Render species hatch calendar
-    const isgangResult = resolveIsgang(airData || {}, fromDate, snowFree, bestDate || adgDate);
-    renderSpeciesCalendar(isgangResult, bestDate || adgDate);
+    // Species calendar always anchors Vulgata to the GDD model date (adgDate).
+    // bestDate (water temp / L1) is shown in the best-estimate box above —
+    // keeping the calendar on GDD avoids showing two different Vulgata dates.
+    const isgangResult = resolveIsgang(airData || {}, fromDate, snowFree, adgDate);
+    renderSpeciesCalendar(isgangResult, adgDate);
 
     // Sync prior notice banner with the active best estimate method's uncertainty
     const priorUncEl = document.getElementById('priorUncDays');
     if (priorUncEl) {
-        if (l2Date && l2Date > now)      priorUncEl.textContent = '±4–7 days';
-        else if (l1Date)                 priorUncEl.textContent = '±11 days';
-        else                             priorUncEl.textContent = `±${uncDays} days`;
+        if (l2Date && l2Date > now && l2DaysOut <= 30) priorUncEl.textContent = `±${l2Unc} days`;
+        else if (l1Date)                               priorUncEl.textContent = '±11 days';
+        else                                           priorUncEl.textContent = `±${uncDays} days`;
     }
 }
 
