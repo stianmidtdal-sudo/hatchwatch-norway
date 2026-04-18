@@ -193,13 +193,60 @@
             padding: 20px 24px;
             margin-top: 14px;
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
+            flex-direction: column;
+            gap: 0;
         }
-        .best-label { font-size: 0.72rem; opacity: 0.75; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 4px; }
-        .best-date { font-size: 2.1rem; font-weight: 700; }
-        .best-note { font-size: 0.8rem; opacity: 0.7; max-width: 340px; text-align: right; }
+        .best-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .best-label { font-size: 0.72rem; opacity: 0.75; text-transform: uppercase; letter-spacing: 1.2px; }
+        .best-note { font-size: 0.8rem; opacity: 0.7; max-width: 380px; text-align: right; }
+
+        /* ── SPECIES CALENDAR ── */
+        .species-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 14px;
+        }
+        .sp-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 12px 10px;
+        }
+        .sp-card.sp-anchor {
+            background: rgba(255,255,255,0.2);
+            outline: 1px solid rgba(255,255,255,0.28);
+        }
+        .sp-name {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            opacity: 0.72;
+            margin-bottom: 5px;
+        }
+        .sp-peak {
+            font-size: 1.25rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        .sp-anchor .sp-peak { font-size: 1.5rem; }
+        .sp-window {
+            font-size: 0.72rem;
+            opacity: 0.62;
+            margin-top: 3px;
+        }
+        .sp-sci {
+            font-size: 0.6rem;
+            opacity: 0.44;
+            font-style: italic;
+            margin-top: 6px;
+        }
 
         /* ── LOCATION INFO STRIP ── */
         .loc-strip {
@@ -230,7 +277,7 @@
             .kpi-grid { grid-template-columns: 1fr 1fr; }
             .model-grid { grid-template-columns: 1fr 1fr; }
             .warning-grid { grid-template-columns: 1fr; }
-            .best-wrap { flex-direction: column; align-items: flex-start; }
+            .species-grid { grid-template-columns: repeat(2, 1fr); }
             .best-note { text-align: left; }
         }
         @media (max-width: 520px) {
@@ -296,11 +343,12 @@
                 </div>
             </div>
             <div class="best-wrap">
-                <div>
-                    <div class="best-label">▶ Best Estimate Now</div>
-                    <div class="best-date" id="bestDate">–</div>
+                <div class="best-header">
+                    <div class="best-label">▶ Season Hatch Calendar</div>
+                    <div class="best-note" id="bestNote">Loading…</div>
                 </div>
-                <div class="best-note" id="bestNote">Loading…</div>
+                <div id="speciesCalendar" class="species-grid"></div>
+                <span id="bestDate" style="display:none"></span>
             </div>
         </section>
 
@@ -1299,6 +1347,100 @@ function renderIndicators(snowData, airData, currentADG) {
     return { snowFree: snowFreeValid, adgRate };
 }
 
+function renderSpeciesCalendar(snowFree, vulgataDate) {
+    const grid = document.getElementById('speciesCalendar');
+    if (!grid) return;
+
+    if (!LOC.calibrated) {
+        grid.innerHTML = '<div style="opacity:0.6;font-size:0.8rem;padding:8px 0;grid-column:1/-1">' +
+            'Species calendar available for calibrated locations only.</div>';
+        return;
+    }
+
+    // Estimate isgang: snowFree + 12 days (Kautokeino historical correlation).
+    // If snowFree not yet known, fall back to historical mean: 26 May.
+    let isgangDate, isgangSource;
+    if (snowFree) {
+        const d = parseDate(snowFree);
+        d.setDate(d.getDate() + 12);
+        isgangDate = d;
+        isgangSource = 'est. from snow-free';
+    } else {
+        isgangDate = new Date(YEAR, 4, 26); // May 26
+        isgangSource = 'hist. mean';
+    }
+
+    function dOff(base, n) {
+        const d = new Date(base);
+        d.setDate(d.getDate() + Math.round(n));
+        return d;
+    }
+
+    const species = [
+        {
+            name: 'Mygg',
+            sci: 'Culicidae',
+            onset: isgangDate,
+            peak: null,
+            end: null,
+            endLabel: 'autumn',
+            anchor: isgangSource,
+            isAnchor: false
+        },
+        {
+            name: 'Marginata',
+            sci: 'L. marginata',
+            onset: dOff(isgangDate, 14),
+            peak: dOff(isgangDate, 17),
+            end: dOff(isgangDate, 21),
+            endLabel: null,
+            anchor: isgangSource,
+            isAnchor: false
+        },
+        {
+            name: 'Vespertina',
+            sci: 'L. vespertina',
+            onset: dOff(isgangDate, 21),
+            peak: dOff(isgangDate, 25),
+            end: dOff(isgangDate, 28),
+            endLabel: null,
+            anchor: isgangSource,
+            isAnchor: false
+        },
+        {
+            name: 'Vulgata · Grandis',
+            sci: 'E. vulgata · P. grandis',
+            onset: vulgataDate || null,
+            peak: vulgataDate ? dOff(vulgataDate, 4) : null,
+            end: vulgataDate ? dOff(vulgataDate, 7) : null,
+            endLabel: null,
+            anchor: 'GDD model',
+            isAnchor: true
+        }
+    ];
+
+    grid.innerHTML = species.map(s => {
+        let primaryHtml, windowHtml;
+        if (!s.onset) {
+            primaryHtml = '<div class="sp-peak">–</div>';
+            windowHtml = '';
+        } else if (!s.peak) {
+            // Mygg: show onset date, no window
+            primaryHtml = `<div class="sp-peak">${fmt(s.onset)}</div>`;
+            windowHtml = `<div class="sp-window">→ ${s.endLabel}</div>`;
+        } else {
+            primaryHtml = `<div class="sp-peak">${fmt(s.peak)}</div>`;
+            windowHtml = `<div class="sp-window">${fmt(s.onset)} → ${fmt(s.end)}</div>`;
+        }
+        return `<div class="sp-card${s.isAnchor ? ' sp-anchor' : ''}">
+            <div class="sp-name">${s.name}</div>
+            ${primaryHtml}
+            ${windowHtml}
+            <div class="sp-sci">${s.sci} · ${s.anchor}</div>
+        </div>`;
+    }).join('');
+}
+
 function renderWarning(snowFree, wtData, adgDate, histStats) {
     const uncDays   = histStats ? histStats.std.toFixed(1) : LOC.uncertaintyDays;
     const uncSource = histStats ? `${histStats.n}-yr data` : 'prior';
@@ -1353,6 +1495,9 @@ function renderWarning(snowFree, wtData, adgDate, histStats) {
     }
     document.getElementById('bestDate').textContent = bestDate ? fmt(bestDate) : '–';
     document.getElementById('bestNote').textContent = bestNote || 'No estimate available yet';
+
+    // Render species hatch calendar
+    renderSpeciesCalendar(snowFree, bestDate || adgDate);
 
     // Sync prior notice banner with the active best estimate method's uncertainty
     const priorUncEl = document.getElementById('priorUncDays');
