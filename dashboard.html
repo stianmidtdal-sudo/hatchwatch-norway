@@ -559,13 +559,19 @@ const LOCATIONS = {
         name: 'Glåma',
         place: 'Røros',
         region: 'Trøndelag',
-        lat: 62.57, lon: 11.39, altitude: 628, stationAltitude: 638,  // Dombås-Nordigard 638m (verified), Røros town ~628m
+        lat: 62.57, lon: 11.39, altitude: 628, stationAltitude: 638,
         frostStation: 'SN16560',     // Dombås — nearest verified air temp station (~50 km NW)
         nveStation:   '2.61.0',     // Orva — sideelv til Glåma ved Røros, aktiv siden 1995
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 12,
         biofixLabel: 'Dynamic (7-day avg >3°C)',
+        isgangWater: 'Sætersjøen',
+        isgangHistory: {
+            2025: '2025-05-12', 2024: '2024-05-18', 2023: '2023-06-05',
+            2022: '2022-06-01', 2021: '2021-06-02', 2020: '2020-06-07',
+            2019: '2019-05-24', 2018: '2018-05-15', 2017: '2017-06-01',
+        },
     },
     oslo: {
         id: 'oslo',
@@ -573,13 +579,19 @@ const LOCATIONS = {
         name: 'Blindern',
         place: 'Oslo',
         region: 'Østlandet',
-        lat: 59.94, lon: 10.72, altitude: 250, stationAltitude: 94,  // Blindern 94m, Nordmarka/Sinnerdammen ~250m
+        lat: 59.94, lon: 10.72, altitude: 250, stationAltitude: 94,
         frostStation: 'SN18700',     // Oslo-Blindern — long record, very reliable
         nveStation:   '6.71.0',     // Sinnerdammen — Nordmarka
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 14,
         biofixLabel: 'Dynamic (7-day avg >3°C)',
+        isgangWater: 'Katnosa',
+        isgangHistory: {
+            2025: '2025-04-25', 2024: '2024-05-09', 2023: '2023-05-23',
+            2022: '2022-05-04', 2021: '2021-05-22', 2020: '2020-05-17',
+            2019: '2019-05-10', 2018: '2018-05-13', 2017: '2017-05-16',
+        },
     },
     vestfjella: {
         id: 'vestfjella',
@@ -587,7 +599,7 @@ const LOCATIONS = {
         name: 'Enningdalselva',
         place: 'Rakkestad',
         region: 'Østlandet',
-        lat: 59.10, lon: 11.40, altitude: 180, stationAltitude: 57,  // Sarpsborg 57m, Østfold/Vestfjella ~180m
+        lat: 59.10, lon: 11.40, altitude: 180, stationAltitude: 57,
         frostStation: 'SN3290',      // Rakkestad — air temperature
         snowStation:  'SN3280',      // Rakkestad — snow depth (separate station)
         nveStation:   '2.1236.0',   // Tverråa — Østfold/Halden
@@ -595,6 +607,13 @@ const LOCATIONS = {
         gddThreshold: 520,
         uncertaintyDays: 14,
         biofixLabel: 'Dynamic (7-day avg >3°C)',
+        isgangWater: 'Søndre Ertevannet',
+        isgangHistory: {
+            2026: '2026-03-18',
+            2025: '2025-03-27', 2024: '2024-04-07', 2023: '2023-04-18',
+            2022: '2022-04-12', 2021: '2021-04-10', 2020: '2020-03-15',
+            2019: '2019-04-08', 2018: '2018-04-24', 2017: '2017-04-04',
+        },
     },
 };
 
@@ -1353,7 +1372,140 @@ function renderIndicators(snowData, airData, currentADG) {
     return { snowFree: snowFreeValid, adgRate };
 }
 
-function renderSpeciesCalendar(snowFree, vulgataDate, fromDate) {
+// ─── Ice thickness model for isgang prediction ────────────────────
+// Uses incremental Stefan's law for growth + degree-day model for melt.
+// Calibrates alpha (growth) and beta (melt) per location via grid search
+// against observed isgang dates from isgangHistory.
+
+// Simulate ice thickness day by day for a given year.
+// Returns ISO date string of first spring day when h reaches 0, or null.
+function simulateIce(airData, alpha, beta, year) {
+    const startDate  = (year - 1) + '-11-01';
+    const endDate    = year + '-07-31';
+    const springCutoff = year + '-02-15'; // ignore melt before mid-Feb (noise)
+    const dates = Object.keys(airData).filter(function(d) {
+        return d >= startDate && d <= endDate;
+    }).sort();
+    var h = 0, hadIce = false;
+    for (var i = 0; i < dates.length; i++) {
+        var d = dates[i], T = airData[d];
+        if (T == null) continue;
+        if (T < 0) {
+            // Growth: incremental Stefan  h_new = sqrt(h^2 + alpha^2 * |T|)
+            h = Math.sqrt(h * h + alpha * alpha * Math.abs(T));
+            hadIce = true;
+        } else if (h > 0 && T > 0) {
+            // Melt: degree-day model
+            h = Math.max(0, h - beta * T);
+        }
+        if (hadIce && h === 0 && d >= springCutoff) return d;
+    }
+    return null;
+}
+
+// Grid search: find (alpha, beta) minimising RMSE against observed isgang dates.
+// Returns {alpha, beta, rmse, n} or null if not enough data.
+function calibrateIceModel(history, airData) {
+    var alphas = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0];
+    var betas  = [0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5, 0.6, 0.7, 0.8, 1.0, 1.2];
+    var bestAlpha = null, bestBeta = null, bestRMSE = Infinity, bestN = 0;
+    for (var ai = 0; ai < alphas.length; ai++) {
+        for (var bi = 0; bi < betas.length; bi++) {
+            var alpha = alphas[ai], beta = betas[bi];
+            var sumSq = 0, n = 0;
+            for (var yearStr in history) {
+                var year = parseInt(yearStr);
+                if (year >= YEAR) continue;
+                var observed = history[yearStr];
+                var predicted = simulateIce(airData, alpha, beta, year);
+                if (!predicted) continue;
+                var diffDays = (parseDate(predicted) - parseDate(observed)) / 86400000;
+                sumSq += diffDays * diffDays;
+                n++;
+            }
+            if (n < 2) continue;
+            var rmse = Math.sqrt(sumSq / n);
+            if (rmse < bestRMSE) {
+                bestRMSE = rmse; bestAlpha = alpha; bestBeta = beta; bestN = n;
+            }
+        }
+    }
+    if (bestAlpha === null) return null;
+    return { alpha: bestAlpha, beta: bestBeta, rmse: Math.round(bestRMSE * 10) / 10, n: bestN };
+}
+
+// Run ice model up to today with observed temps, then project forward with
+// historical mean temperatures.  Returns predicted isgang Date or null.
+function predictIsgangIce(airData, alpha, beta) {
+    var avgTemp = buildDoyAvgTemp(airData);
+    var startDate = (YEAR - 1) + '-11-01';
+    var dates = Object.keys(airData).filter(function(d) {
+        return d >= startDate && d <= TODAY;
+    }).sort();
+    var h = 0, hadIce = false;
+    var springCutoff = YEAR + '-02-15';
+    // Phase 1: observed temperatures
+    for (var i = 0; i < dates.length; i++) {
+        var d = dates[i], T = airData[d];
+        if (T == null) continue;
+        if (T < 0) { h = Math.sqrt(h * h + alpha * alpha * Math.abs(T)); hadIce = true; }
+        else if (h > 0 && T > 0) { h = Math.max(0, h - beta * T); }
+        if (hadIce && h === 0 && d >= springCutoff) return parseDate(d);
+    }
+    // Phase 2: project with historical mean temperatures
+    var todayDoy = doy(new Date());
+    for (var day = todayDoy + 1; day <= 212; day++) { // through Jul 31
+        var T2 = avgTemp[day] || 0;
+        if (T2 < 0) { h = Math.sqrt(h * h + alpha * alpha * Math.abs(T2)); hadIce = true; }
+        else if (h > 0 && T2 > 0) { h = Math.max(0, h - beta * T2); }
+        if (hadIce && h <= 0) {
+            var candidate = dateFromDoy(YEAR, day);
+            if (isoDate(candidate) >= springCutoff) return candidate;
+        }
+    }
+    return null;
+}
+
+// Resolve the best isgang date for the species calendar.
+// Priority: 1. Observed this year (isgangHistory[YEAR])
+//           2. Ice model calibrated from observed historical isgang dates
+//           3. Fallback chain: snowFree+12d / fromDate / back-calc / hist.mean
+function resolveIsgang(airData, fromDate, snowFree, vulgataDate) {
+    var hist = LOC.isgangHistory;
+
+    // 1 — directly observed this season
+    if (hist && hist[YEAR]) {
+        return { date: parseDate(hist[YEAR]), source: 'observed (Sentinel Hub)', observed: true };
+    }
+
+    // 2 — calibrated Stefan ice model
+    if (hist && Object.keys(hist).length >= 3) {
+        var cal = calibrateIceModel(hist, airData);
+        if (cal) {
+            var predicted = predictIsgangIce(airData, cal.alpha, cal.beta);
+            if (predicted) {
+                var src = 'ice model \u03b1=' + cal.alpha + ' \u03b2=' + cal.beta + ' (' + cal.n + ' yrs, \u00b1' + cal.rmse + 'd)';
+                return { date: predicted, source: src, calibrated: true, rmse: cal.rmse };
+            }
+        }
+    }
+
+    // 3 — existing fallback chain
+    if (snowFree) {
+        var d1 = parseDate(snowFree); d1.setDate(d1.getDate() + 12);
+        return { date: d1, source: 'est. from snow-free' };
+    }
+    if (fromDate) {
+        return { date: new Date(fromDate), source: 'warming onset' };
+    }
+    if (vulgataDate) {
+        var d2 = new Date(vulgataDate); d2.setDate(d2.getDate() - 35);
+        return { date: d2, source: 'back-calc.' };
+    }
+    return { date: new Date(YEAR, 4, 26), source: 'hist. mean' };
+}
+
+function renderSpeciesCalendar(isgangResult, vulgataDate) {
     const grid = document.getElementById('speciesCalendar');
     const label = document.querySelector('.best-label');
     if (!grid) return;
@@ -1373,29 +1525,8 @@ function renderSpeciesCalendar(snowFree, vulgataDate, fromDate) {
         return;
     }
 
-    // Estimate isgang:
-    //   1. snowFree + 12 days  (best: direct observation)
-    //   2. fromDate (warming onset — 7-day avg > 3°C)  (good: phenological proxy)
-    //   3. vulgata - 35 days fallback so calendar stays coherent
-    let isgangDate, isgangSource;
-    if (snowFree) {
-        const d = parseDate(snowFree);
-        d.setDate(d.getDate() + 12);
-        isgangDate = d;
-        isgangSource = 'est. from snow-free';
-    } else if (fromDate) {
-        isgangDate = new Date(fromDate);
-        isgangSource = 'warming onset';
-    } else if (vulgataDate) {
-        // Last-resort: back-calculate so early species appear before vulgata
-        const d = new Date(vulgataDate);
-        d.setDate(d.getDate() - 35);
-        isgangDate = d;
-        isgangSource = 'back-calc.';
-    } else {
-        isgangDate = new Date(YEAR, 4, 26); // May 26 — only if nothing else known
-        isgangSource = 'hist. mean';
-    }
+    const isgangDate   = isgangResult.date;
+    const isgangSource = isgangResult.source;
 
     function dOff(base, n) {
         const d = new Date(base);
@@ -1468,7 +1599,7 @@ function renderSpeciesCalendar(snowFree, vulgataDate, fromDate) {
     }).join('');
 }
 
-function renderWarning(snowFree, wtData, adgDate, histStats, fromDate) {
+function renderWarning(snowFree, wtData, adgDate, histStats, fromDate, airData) {
     const uncDays   = histStats ? histStats.std.toFixed(1) : LOC.uncertaintyDays;
     const uncSource = histStats ? `${histStats.n}-yr data` : 'prior';
     // GDD-based estimate
@@ -1524,7 +1655,8 @@ function renderWarning(snowFree, wtData, adgDate, histStats, fromDate) {
     document.getElementById('bestNote').textContent = bestNote || 'No estimate available yet';
 
     // Render species hatch calendar
-    renderSpeciesCalendar(snowFree, bestDate || adgDate, fromDate);
+    const isgangResult = resolveIsgang(airData || {}, fromDate, snowFree, bestDate || adgDate);
+    renderSpeciesCalendar(isgangResult, bestDate || adgDate);
 
     // Sync prior notice banner with the active best estimate method's uncertainty
     const priorUncEl = document.getElementById('priorUncDays');
@@ -1577,7 +1709,7 @@ async function main() {
         renderSnowChart(snowData);
         renderIceChart(airDataCorrected);
         const { snowFree } = renderIndicators(snowData, airDataCorrected, currentADG);
-        renderWarning(snowFree, wtData, adgDate, histStats, fromDate);
+        renderWarning(snowFree, wtData, adgDate, histStats, fromDate, airDataCorrected);
 
         // Show dashboard
         document.getElementById('loadingState').style.display = 'none';
