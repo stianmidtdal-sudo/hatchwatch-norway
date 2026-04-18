@@ -1349,7 +1349,7 @@ function renderIndicators(snowData, airData, currentADG) {
     return { snowFree: snowFreeValid, adgRate };
 }
 
-function renderSpeciesCalendar(snowFree, vulgataDate) {
+function renderSpeciesCalendar(snowFree, vulgataDate, fromDate) {
     const grid = document.getElementById('speciesCalendar');
     const label = document.querySelector('.best-label');
     if (!grid) return;
@@ -1369,16 +1369,27 @@ function renderSpeciesCalendar(snowFree, vulgataDate) {
         return;
     }
 
-    // Estimate isgang: snowFree + 12 days (Kautokeino historical correlation).
-    // If snowFree not yet known, fall back to historical mean: 26 May.
+    // Estimate isgang:
+    //   1. snowFree + 12 days  (best: direct observation)
+    //   2. fromDate (warming onset — 7-day avg > 3°C)  (good: phenological proxy)
+    //   3. vulgata - 35 days fallback so calendar stays coherent
     let isgangDate, isgangSource;
     if (snowFree) {
         const d = parseDate(snowFree);
         d.setDate(d.getDate() + 12);
         isgangDate = d;
         isgangSource = 'est. from snow-free';
+    } else if (fromDate) {
+        isgangDate = new Date(fromDate);
+        isgangSource = 'warming onset';
+    } else if (vulgataDate) {
+        // Last-resort: back-calculate so early species appear before vulgata
+        const d = new Date(vulgataDate);
+        d.setDate(d.getDate() - 35);
+        isgangDate = d;
+        isgangSource = 'back-calc.';
     } else {
-        isgangDate = new Date(YEAR, 4, 26); // May 26
+        isgangDate = new Date(YEAR, 4, 26); // May 26 — only if nothing else known
         isgangSource = 'hist. mean';
     }
 
@@ -1453,7 +1464,7 @@ function renderSpeciesCalendar(snowFree, vulgataDate) {
     }).join('');
 }
 
-function renderWarning(snowFree, wtData, adgDate, histStats) {
+function renderWarning(snowFree, wtData, adgDate, histStats, fromDate) {
     const uncDays   = histStats ? histStats.std.toFixed(1) : LOC.uncertaintyDays;
     const uncSource = histStats ? `${histStats.n}-yr data` : 'prior';
     // GDD-based estimate
@@ -1509,7 +1520,7 @@ function renderWarning(snowFree, wtData, adgDate, histStats) {
     document.getElementById('bestNote').textContent = bestNote || 'No estimate available yet';
 
     // Render species hatch calendar
-    renderSpeciesCalendar(snowFree, bestDate || adgDate);
+    renderSpeciesCalendar(snowFree, bestDate || adgDate, fromDate);
 
     // Sync prior notice banner with the active best estimate method's uncertainty
     const priorUncEl = document.getElementById('priorUncDays');
@@ -1562,7 +1573,7 @@ async function main() {
         renderSnowChart(snowData);
         renderIceChart(airDataCorrected);
         const { snowFree } = renderIndicators(snowData, airDataCorrected, currentADG);
-        renderWarning(snowFree, wtData, adgDate, histStats);
+        renderWarning(snowFree, wtData, adgDate, histStats, fromDate);
 
         // Show dashboard
         document.getElementById('loadingState').style.display = 'none';
