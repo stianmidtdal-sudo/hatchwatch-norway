@@ -529,6 +529,8 @@ const LOCATIONS = {
         lat: 69.01, lon: 23.04, altitude: 307, stationAltitude: 307,
         frostStation: 'SN93700',
         nveStation:   '212.26.0',
+        airStationName:   'Kautokeino',
+        waterStationName: 'Suohpatjohka',
         calibrated: true,
         gddThreshold: 520,
         uncertaintyDays: 2.1,
@@ -543,6 +545,8 @@ const LOCATIONS = {
         lat: 69.97, lon: 23.27, altitude: 10, stationAltitude: 382,  // Sihccajavri 382m, fishing area ~10m
         frostStation: 'SN93900',
         nveStation:   '212.11.0',   // Kista — Alta
+        airStationName:   'Alta',
+        waterStationName: 'Kista (Altaelva)',
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 10,
@@ -557,6 +561,8 @@ const LOCATIONS = {
         lat: 70.07, lon: 25.00, altitude: 10, stationAltitude: 131,  // Karasjok 131m, Lakselv ~5m
         frostStation: 'SN97251',     // Karasjok — nearest verified station
         nveStation:   '223.2.0',    // Lombola — Porsanger
+        airStationName:   'Karasjok',
+        waterStationName: 'Lombola (Lakselva)',
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 10,
@@ -571,6 +577,8 @@ const LOCATIONS = {
         lat: 62.57, lon: 11.39, altitude: 628, stationAltitude: 638,
         frostStation: 'SN16560',     // Dombås — nearest verified air temp station (~50 km NW)
         nveStation:   '2.61.0',     // Orva — sideelv til Glåma ved Røros, aktiv siden 1995
+        airStationName:   'Dombås (~50 km NW of Røros)',
+        waterStationName: 'Orva (tributary of Glåma)',
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 12,
@@ -592,6 +600,8 @@ const LOCATIONS = {
         frostStation: 'SN18500',     // Bjørnholt — Nordmarka, better proxy for fishing locations
         snowStation:  'SN18500',     // Bjørnholt — also has snow depth
         nveStation:   '6.71.0',     // Sinnerdammen — Nordmarka
+        airStationName:   'Bjørnholt, Nordmarka',
+        waterStationName: 'Sinnerdammen, Nordmarka',
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 14,
@@ -613,6 +623,8 @@ const LOCATIONS = {
         frostStation: 'SN3290',      // Rakkestad — air temperature
         snowStation:  'SN3280',      // Rakkestad — snow depth (separate station)
         nveStation:   '2.1236.0',   // Tverråa — Østfold/Halden
+        airStationName:   'Rakkestad, Østfold',
+        waterStationName: 'Tverråa, Enningdalselva',
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 14,
@@ -654,9 +666,10 @@ document.getElementById('yearCol').textContent = YEAR;
 
 // Location info strip
 document.getElementById('locStrip').innerHTML = [
-    { key: 'Area',        val: `${LOC.area}, ${LOC.region}` },
-    { key: 'Air temp',    val: `${LOC.place} (${LOC.frostStation})` + (LOC.snowStation ? ` · Snow: ${LOC.snowStation}` : '') },
-    { key: 'Altitude',    val: `${LOC.altitude} m a.s.l.` },
+    { key: 'Area',              val: `${LOC.area}, ${LOC.region}` },
+    { key: 'Air temp station',  val: LOC.airStationName },
+    { key: 'Water temp station',val: LOC.waterStationName },
+    { key: 'Altitude',          val: `${LOC.altitude} m a.s.l.` },
     { key: 'Coordinates', val: `${LOC.lat.toFixed(2)}°N, ${LOC.lon.toFixed(2)}°E` },
     { key: 'Biofix',      val: LOC.biofixLabel },
     { key: 'GDD Target',  val: `${LOC.gddThreshold} (base 0°C)` },
