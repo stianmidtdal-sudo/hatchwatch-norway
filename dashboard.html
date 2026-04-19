@@ -1179,7 +1179,7 @@ function renderWaterTempChart(wtData) {
         type: 'line', data: { labels, datasets },
         options: {
             responsive: true, maintainAspectRatio: false,
-            interaction: { mode:'index', intersect:false },
+            interaction: { mode:'nearest', intersect:true },
             plugins: {
                 legend: { position:'right', labels: { boxWidth:14, font:{size:10}, padding:6 } },
                 tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.parsed.y?.toFixed(1) ?? '–'} °C` } }
