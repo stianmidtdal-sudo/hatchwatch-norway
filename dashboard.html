@@ -1271,7 +1271,6 @@ function renderSnowChart(snowData) {
 
 function renderIceChart(airData) {
     const ALPHA = 0.6;
-    const results = {}, isCurrent = {};
     const byWinter = {};
     for (const [dateStr, temp] of Object.entries(airData)) {
         const dt = parseDate(dateStr);
@@ -1281,46 +1280,82 @@ function renderIceChart(airData) {
         byWinter[winterYr].push({ dt, temp });
     }
     const today = parseDate(TODAY);
-    const todayMo  = today.getMonth();   // 0-indexed
+    const todayMo  = today.getMonth();
     const todayDay = today.getDate();
-    for (const [wYr, entries] of Object.entries(byWinter)) {
-        const wy = parseInt(wYr);
-        if (wy < 2017 || wy > YEAR) continue;
-        entries.sort((a,b) => a.dt - b.dt);
+    const todayLabel = fmt(today);  // e.g. "19 Apr"
+
+    const years = [], toDateVals = [], peakVals = [];
+
+    const winterKeys = Object.keys(byWinter).map(Number).filter(w => w >= 2017 && w <= YEAR).sort();
+    for (const wy of winterKeys) {
+        const entries = byWinter[wy].sort((a,b) => a.dt - b.dt);
         const nov1 = new Date(wy - 1, 10, 1);
         const isCurrentYear = wy === YEAR;
-        // All years cut off at the same point in the season as today — apples to apples
-        const cutoff = new Date(wy, todayMo, todayDay);
+        const sameDateCutoff = new Date(wy, todayMo, todayDay);
+        const fullSeasonCutoff = new Date(wy, 4, 31);  // May 31
+
+        // To-date value (same point in season)
         let fdd = 0, maxH = 0;
         for (const { dt, temp } of entries) {
-            if (dt < nov1 || dt > cutoff) continue;
+            if (dt < nov1 || dt > sameDateCutoff) continue;
             if (temp < 0) fdd += Math.abs(temp);
             const h = ALPHA * Math.sqrt(fdd);
             if (h > maxH) maxH = h;
         }
-        results[wYr] = Math.round(maxH * 10) / 10;
-        isCurrent[wYr] = isCurrentYear;
+        const toDateVal = Math.round(maxH * 10) / 10;
+
+        // Season peak (full season — only for completed winters)
+        let peakVal = null;
+        if (!isCurrentYear) {
+            fdd = 0; maxH = 0;
+            for (const { dt, temp } of entries) {
+                if (dt < nov1 || dt > fullSeasonCutoff) continue;
+                if (temp < 0) fdd += Math.abs(temp);
+                const h = ALPHA * Math.sqrt(fdd);
+                if (h > maxH) maxH = h;
+            }
+            peakVal = Math.round(maxH * 10) / 10;
+        }
+
+        years.push(isCurrentYear ? `W${wy} ▶` : `W${wy}`);
+        toDateVals.push(toDateVal);
+        peakVals.push(peakVal);
     }
-    const years = Object.keys(results).sort();
-    const values = years.map(y => results[y]);
-    const colors = years.map(y => isCurrent[y] ? 'rgba(192,57,43,0.75)' : '#52B788');
-    const borderColors = years.map(y => isCurrent[y] ? '#922B21' : '#2D6A4F');
-    const cutoffLabel = fmt(new Date(YEAR, todayMo, todayDay));
+
     const ctx = document.getElementById('iceChart').getContext('2d');
     new Chart(ctx, {
         type: 'bar',
-        data: { labels: years.map(y => isCurrent[y] ? `W${y} ▶` : `W${y}`),
-            datasets: [{ label:'Est. ice thickness (cm)', data: values,
-                backgroundColor: colors, borderColor: borderColors, borderWidth:2,
-                borderRadius:4, borderSkipped:false }] },
+        data: {
+            labels: years,
+            datasets: [
+                {
+                    label: `As of ${todayLabel}`,
+                    data: toDateVals,
+                    backgroundColor: 'rgba(192,57,43,0.75)',
+                    borderColor: '#922B21',
+                    borderWidth: 2, borderRadius: 4, borderSkipped: false
+                },
+                {
+                    label: 'Season peak',
+                    data: peakVals,
+                    backgroundColor: '#52B788',
+                    borderColor: '#2D6A4F',
+                    borderWidth: 2, borderRadius: 4, borderSkipped: false
+                }
+            ]
+        },
         options: {
             responsive: true, maintainAspectRatio: false,
-            plugins: { legend:{display:false},
-                tooltip: { callbacks: { label: c => {
-                    const yr = years[c.dataIndex];
-                    return `${c.parsed.y.toFixed(1)} cm — accumulated to ${cutoffLabel}`;
-                }}}},
-            scales: { x:{ticks:{font:{size:11}}}, y:{min:0, title:{display:true,text:'cm (α=0.6)'}, ticks:{font:{size:10}}} }
+            plugins: {
+                legend: { position:'top', labels:{ boxWidth:14, font:{size:11}, padding:10 } },
+                tooltip: { callbacks: { label: c =>
+                    c.parsed.y != null ? `${c.dataset.label}: ${c.parsed.y.toFixed(1)} cm` : null
+                }}
+            },
+            scales: {
+                x: { ticks:{ font:{size:11} } },
+                y: { min:0, title:{ display:true, text:'cm (α=0.6)' }, ticks:{ font:{size:10} } }
+            }
         }
     });
 }
