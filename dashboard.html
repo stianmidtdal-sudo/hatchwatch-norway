@@ -1236,7 +1236,7 @@ function renderSnowChart(snowData) {
                 borderColor: s.color,
                 borderWidth: isSparseSnow ? s.w + 0.5 : s.w,
                 pointRadius: isSparseSnow ? 2 : 0,
-                tension: 0,
+                tension: isSparseSnow ? 0 : 0.35,
                 spanGaps: false,   // never connect across data gaps
                 stepped: isSparseSnow ? 'before' : false,
             };
