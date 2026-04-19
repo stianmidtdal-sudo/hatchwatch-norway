@@ -6,12 +6,12 @@
     <title>Hatch Watch Norway · Select River</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎣</text></svg>">
     <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4SMRL2FQPP"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PF7ZGH4PNX"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'G-4SMRL2FQPP');
+      gtag('config', 'G-PF7ZGH4PNX');
     </script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -243,6 +243,16 @@ function buildCards() {
             a.className = "card" + (r.calibrated ? " calibrated" : "");
             a.href = `dashboard.html?loc=${r.id}`;
             a.dataset.search = `${r.area} ${r.river} ${r.waterRiver} ${r.region}`.toLowerCase();
+            a.addEventListener('click', () => {
+                if (typeof gtag === 'function') {
+                    gtag('event', 'select_location', {
+                        location_id:   r.id,
+                        location_name: r.area,
+                        region:        r.region,
+                        calibrated:    r.calibrated ? 'yes' : 'no'
+                    });
+                }
+            });
 
             a.innerHTML = `
                 <div class="card-river">${r.calibrated ? "⭐ " : ""}${r.area}</div>
