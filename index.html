@@ -195,15 +195,6 @@
         }
         .how-note strong { color: #6dbf87; font-style: normal; }
 
-        /* ── Footnote ────────────────────────────────── */
-        .footnote {
-            padding: 20px 48px 0;
-            font-size: 0.75rem;
-            color: #999;
-            line-height: 1.7;
-            max-width: 860px;
-        }
-        .footnote strong { color: #555; }
 
         /* ── Footer ──────────────────────────────────── */
         .page-footer {
@@ -221,7 +212,6 @@
             .hero h1 { font-size: 32px; }
             .cards { padding: 0 20px 40px; }
             .how { padding: 36px 20px; }
-            .footnote { padding: 16px 20px 0; }
         }
     </style>
 </head>
@@ -240,9 +230,6 @@
 
 <div class="cards" id="main"></div>
 
-<div class="footnote">
-    <strong>⭐ Calibrated</strong> = predictions verified against observed hatch records, giving confirmed accuracy. Other locations use the same model adapted to local climate conditions.
-</div>
 
 <div class="how">
     <div class="eyebrow">How it works</div>
@@ -330,7 +317,7 @@ function buildCards() {
                 <div class="card-place">${r.region} · ${r.lat.toFixed(1)}°N</div>
                 <div class="card-meta">🌡 ${r.river}</div>
                 <div class="card-meta">💧 ${r.waterRiver}</div>
-                ${r.calibrated ? '<div class="badge">Calibrated · ' + r.uncertainty + '</div>' : '<div class="badge" style="color:#999">Uncertainty ' + r.uncertainty + '</div>'}
+                ${r.calibrated ? '<div class="badge">⭐ Calibrated</div>' : ''}
                 <div class="card-arrow">View forecast →</div>`;
 
             grid.appendChild(a);
