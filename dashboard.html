@@ -1326,8 +1326,7 @@ function renderIceChart(airData, snowData) {
         }
 
         years.push(isCurrentYear ? `W${wy} ▶` : `W${wy}`);
-        toDateVals.push(toDateVal);
-        peakVals.push(peakVal);
+        peakVals.push(peakLikelyPassed ? toDateVal : peakVal);
     }
 
     const ctx = document.getElementById('iceChart').getContext('2d');
@@ -1341,13 +1340,6 @@ function renderIceChart(airData, snowData) {
                     data: peakVals,
                     backgroundColor: '#52B788',
                     borderColor: '#2D6A4F',
-                    borderWidth: 2, borderRadius: 4, borderSkipped: false
-                },
-                {
-                    label: `As of ${todayLabel}`,
-                    data: toDateVals,
-                    backgroundColor: 'rgba(192,57,43,0.75)',
-                    borderColor: '#922B21',
                     borderWidth: 2, borderRadius: 4, borderSkipped: false
                 }
             ]
