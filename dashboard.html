@@ -483,7 +483,7 @@
 
         <!-- ═══ ICE THICKNESS CHART (Kautokeino only) ═══ -->
         <section id="iceSection" style="display:none">
-            <h2>Estimated Ice Thickness · All winters compared at same point in season · Stefan Equation (α = 0.6)</h2>
+            <h2>Estimated Ice Thickness · Snow-corrected Stefan Equation · h = α(snow) × √FDD</h2>
             <div class="chart-wrap" style="height:260px">
                 <canvas id="iceChart"></canvas>
             </div>
@@ -1269,8 +1269,15 @@ function renderSnowChart(snowData) {
     }
 }
 
-function renderIceChart(airData) {
-    const ALPHA = 0.6;
+function renderIceChart(airData, snowData) {
+    // Snow-corrected Stefan equation — matches Excel model
+    // α_korr = α₀ × (1 – k × (avgSnow – refSnow) / 100)
+    // Less snow → higher α → thicker ice (less insulation)
+    const ALPHA0   = 0.6;   // base coefficient
+    const K_SNOW   = 0.3;   // snow damping factor
+    const REF_SNOW = 65;    // reference snow depth (cm), series average
+
+    // Group air temps by winter year (Nov–Apr)
     const byWinter = {};
     for (const [dateStr, temp] of Object.entries(airData)) {
         const dt = parseDate(dateStr);
@@ -1279,51 +1286,65 @@ function renderIceChart(airData) {
         if (!byWinter[winterYr]) byWinter[winterYr] = [];
         byWinter[winterYr].push({ dt, temp });
     }
+
+    // Group snow depths by winter year (Nov–Apr) for α correction
+    const snowByWinter = {};
+    for (const [dateStr, depth] of Object.entries(snowData || {})) {
+        if (depth == null) continue;
+        const dt = parseDate(dateStr);
+        const mo = dt.getMonth() + 1, yr = dt.getFullYear();
+        const winterYr = mo >= 11 ? yr + 1 : yr;
+        if (!snowByWinter[winterYr]) snowByWinter[winterYr] = [];
+        snowByWinter[winterYr].push(depth);
+    }
+
+    // Compute winter-average snow depth → corrected α per winter
+    function alphaForWinter(wy) {
+        const depths = snowByWinter[wy];
+        if (!depths || depths.length < 5) return ALPHA0; // fallback if no snow data
+        const avg = depths.reduce((a, b) => a + b, 0) / depths.length;
+        return ALPHA0 * (1 - K_SNOW * (avg - REF_SNOW) / 100);
+    }
+
+    function calcIce(entries, nov1, cutoff, alpha) {
+        let fdd = 0, maxH = 0;
+        for (const { dt, temp } of entries) {
+            if (dt < nov1 || dt > cutoff) continue;
+            if (temp < 0) fdd += Math.abs(temp);
+            const h = alpha * Math.sqrt(fdd);
+            if (h > maxH) maxH = h;
+        }
+        return Math.round(maxH * 10) / 10;
+    }
+
     const today = parseDate(TODAY);
     const todayMo  = today.getMonth();
     const todayDay = today.getDate();
-    const todayLabel = fmt(today);  // e.g. "19 Apr"
+    const todayLabel = fmt(today);
 
     const years = [], toDateVals = [], peakVals = [];
 
     const winterKeys = Object.keys(byWinter).map(Number).filter(w => w >= 2017 && w <= YEAR).sort();
     for (const wy of winterKeys) {
         const entries = byWinter[wy].sort((a,b) => a.dt - b.dt);
-        const nov1 = new Date(wy - 1, 10, 1);
-        const isCurrentYear = wy === YEAR;
-        const sameDateCutoff = new Date(wy, todayMo, todayDay);
-        const fullSeasonCutoff = new Date(wy, 4, 31);  // May 31
+        const nov1            = new Date(wy - 1, 10, 1);
+        const isCurrentYear   = wy === YEAR;
+        const sameDateCutoff  = new Date(wy, todayMo, todayDay);
+        const fullSeasonCutoff = new Date(wy, 4, 31);
+        const alpha = alphaForWinter(wy);
 
-        // To-date value (same point in season)
-        let fdd = 0, maxH = 0;
-        for (const { dt, temp } of entries) {
-            if (dt < nov1 || dt > sameDateCutoff) continue;
-            if (temp < 0) fdd += Math.abs(temp);
-            const h = ALPHA * Math.sqrt(fdd);
-            if (h > maxH) maxH = h;
-        }
-        const toDateVal = Math.round(maxH * 10) / 10;
+        const toDateVal = calcIce(entries, nov1, sameDateCutoff, alpha);
 
-        // Season peak: full season for completed winters,
-        // or current-to-date if we're in April+ (peak likely passed)
-        const peakLikelyPassed = isCurrentYear && (todayMo >= 3); // April = month index 3
+        const peakLikelyPassed = isCurrentYear && (todayMo >= 3);
         let peakVal = null;
         if (!isCurrentYear) {
-            fdd = 0; maxH = 0;
-            for (const { dt, temp } of entries) {
-                if (dt < nov1 || dt > fullSeasonCutoff) continue;
-                if (temp < 0) fdd += Math.abs(temp);
-                const h = ALPHA * Math.sqrt(fdd);
-                if (h > maxH) maxH = h;
-            }
-            peakVal = Math.round(maxH * 10) / 10;
+            peakVal = calcIce(entries, nov1, fullSeasonCutoff, alpha);
         } else if (peakLikelyPassed) {
-            peakVal = toDateVal; // treat current value as season peak estimate
+            peakVal = toDateVal;
         }
 
         years.push(isCurrentYear ? `W${wy} ▶` : `W${wy}`);
-        // Hide "as of date" bar for current year when peak is likely passed (green bar takes over)
-        toDateVals.push(peakLikelyPassed ? null : toDateVal);
+        toDateVals.push(toDateVal);
         peakVals.push(peakVal);
     }
 
@@ -1351,6 +1372,7 @@ function renderIceChart(airData) {
         },
         options: {
             responsive: true, maintainAspectRatio: false,
+            interaction: { mode:'nearest', intersect:true },
             plugins: {
                 legend: { position:'top', labels:{ boxWidth:14, font:{size:11}, padding:10 } },
                 tooltip: { callbacks: { label: c =>
@@ -1371,8 +1393,8 @@ function renderIceChart(airData) {
         note.className = 'ice-note';
         note.style.cssText = 'font-size:0.74rem;color:#888;margin-top:6px;padding:0 4px';
         note.textContent = todayMo >= 3
-            ? `W${YEAR} season peak estimated from data accumulated to ${todayLabel} — ice growth assumed complete by April.`
-            : `W${YEAR} shown as "As of ${todayLabel}" — season peak not yet estimated (before April).`;
+            ? `W${YEAR} season peak estimated to ${todayLabel} — ice growth assumed complete by April. α adjusted per winter snow depth (α₀=0.6, k=0.3, ref=65 cm).`
+            : `W${YEAR} shown as "As of ${todayLabel}". α adjusted per winter snow depth (α₀=0.6, k=0.3, ref=65 cm).`;
         iceSection.appendChild(note);
     }
 }
@@ -1797,7 +1819,7 @@ async function main() {
         renderHistoricalGDDSection(histStats, altCorrection);
         renderWaterTempChart(wtData);
         renderSnowChart(snowData);
-        renderIceChart(airDataCorrected);
+        renderIceChart(airDataCorrected, snowData);
         const { snowFree } = renderIndicators(snowData, airDataCorrected, currentADG);
         renderWarning(snowFree, wtData, adgDate, histStats, fromDate, airDataCorrected);
 
