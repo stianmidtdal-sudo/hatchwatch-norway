@@ -483,7 +483,7 @@
 
         <!-- ═══ ICE THICKNESS CHART (Kautokeino only) ═══ -->
         <section id="iceSection" style="display:none">
-            <h2>Estimated Ice Thickness · Historical peak per winter &amp; live · Stefan Equation (α = 0.6)</h2>
+            <h2>Estimated Ice Thickness · All winters compared at same point in season · Stefan Equation (α = 0.6)</h2>
             <div class="chart-wrap" style="height:260px">
                 <canvas id="iceChart"></canvas>
             </div>
@@ -677,13 +677,13 @@ document.getElementById('locStrip').innerHTML = [
 ].map(i => `<div class="loc-item"><div class="loc-key">${i.key}</div><div class="loc-val">${i.val}</div></div>`).join('');
 
 // Show/hide sections based on calibration
+document.getElementById('iceSection').style.display = '';
 if (!LOC.calibrated) {
     document.getElementById('priorNotice').style.display = '';
     document.getElementById('priorUncDays').textContent = `±${LOC.uncertaintyDays} days`;
     document.getElementById('noHatchSection').style.display = '';
 } else {
     document.getElementById('histSection').style.display = '';
-    document.getElementById('iceSection').style.display  = '';
 }
 
 // Water sections
@@ -1242,7 +1242,7 @@ function renderSnowChart(snowData) {
         type: 'line', data: { labels, datasets },
         options: {
             responsive: true, maintainAspectRatio: false,
-            interaction: { mode:'index', intersect:false },
+            interaction: { mode:'nearest', intersect:true },
             plugins: {
                 legend: { position:'right', labels:{boxWidth:14,font:{size:10},padding:6} },
                 tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.parsed.y?.toFixed(0) ?? '–'} cm` } }
@@ -1270,7 +1270,6 @@ function renderSnowChart(snowData) {
 }
 
 function renderIceChart(airData) {
-    if (!LOC.calibrated) return;
     const ALPHA = 0.6;
     const results = {}, isCurrent = {};
     const byWinter = {};
@@ -1282,13 +1281,16 @@ function renderIceChart(airData) {
         byWinter[winterYr].push({ dt, temp });
     }
     const today = parseDate(TODAY);
+    const todayMo  = today.getMonth();   // 0-indexed
+    const todayDay = today.getDate();
     for (const [wYr, entries] of Object.entries(byWinter)) {
         const wy = parseInt(wYr);
         if (wy < 2017 || wy > YEAR) continue;
         entries.sort((a,b) => a.dt - b.dt);
         const nov1 = new Date(wy - 1, 10, 1);
         const isCurrentYear = wy === YEAR;
-        const cutoff = isCurrentYear ? today : new Date(wy, 4, 31);
+        // All years cut off at the same point in the season as today — apples to apples
+        const cutoff = new Date(wy, todayMo, todayDay);
         let fdd = 0, maxH = 0;
         for (const { dt, temp } of entries) {
             if (dt < nov1 || dt > cutoff) continue;
@@ -1303,6 +1305,7 @@ function renderIceChart(airData) {
     const values = years.map(y => results[y]);
     const colors = years.map(y => isCurrent[y] ? 'rgba(192,57,43,0.75)' : '#52B788');
     const borderColors = years.map(y => isCurrent[y] ? '#922B21' : '#2D6A4F');
+    const cutoffLabel = fmt(new Date(YEAR, todayMo, todayDay));
     const ctx = document.getElementById('iceChart').getContext('2d');
     new Chart(ctx, {
         type: 'bar',
@@ -1315,9 +1318,9 @@ function renderIceChart(airData) {
             plugins: { legend:{display:false},
                 tooltip: { callbacks: { label: c => {
                     const yr = years[c.dataIndex];
-                    return `${c.parsed.y.toFixed(1)} cm${isCurrent[yr] ? ' (live)' : ' (peak)'}`;
+                    return `${c.parsed.y.toFixed(1)} cm — accumulated to ${cutoffLabel}`;
                 }}}},
-            scales: { x:{ticks:{font:{size:11}}}, y:{min:20, title:{display:true,text:'cm (α=0.6)'}, ticks:{font:{size:10}}} }
+            scales: { x:{ticks:{font:{size:11}}}, y:{min:0, title:{display:true,text:'cm (α=0.6)'}, ticks:{font:{size:10}}} }
         }
     });
 }
