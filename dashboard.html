@@ -1670,20 +1670,22 @@ function renderWarning(snowFree, wtData, adgDate, histStats, fromDate, airData) 
             b.textContent = '✅ Active'; b.className = 'badge badge-active';
         }
     }
-    // Best estimate priority: L2 (only when ≤30 days out) > L1 > GDD
-    // When L2 horizon > 30 days, GDD model is more reliable — don't let early
-    // water temp readings override a well-calibrated GDD prediction.
-    let bestDate = null, bestNote = '';
-    if (l2Date && l2Date > now && l2DaysOut <= 30) {
-        bestDate = l2Date;
-        bestNote = `Water temp extrapolation — ±${l2Unc} days (${l2DaysOut}d to hatch)`;
-    } else if (l1Date) {
-        bestDate = l1Date;
-        bestNote = `Snow-free date + 32 days (Level 1) — ±11 days`;
-    } else if (adgDate) {
-        bestDate = adgDate;
-        bestNote = `GDD model — ±${uncDays} days${histStats ? ` (${histStats.n}-yr data)` : !LOC.calibrated ? ' (prior, uncalibrated)' : ''}`;
-    }
+    // Dynamic model selection: pick whichever available model has the lowest uncertainty.
+    // L2 (water temp) is only eligible within 30 days — beyond that the extrapolation
+    // becomes unreliable regardless of what the uncertainty formula says.
+    const L1_UNC = 11;
+    const candidates = [];
+    if (l2Date && l2Date > now && l2DaysOut <= 30)
+        candidates.push({ date: l2Date, unc: l2Unc,           note: `Water temp extrapolation — ±${l2Unc} days (${l2DaysOut}d to hatch)` });
+    if (adgDate)
+        candidates.push({ date: adgDate, unc: parseFloat(uncDays), note: `GDD model — ±${uncDays} days${histStats ? ` (${histStats.n}-yr data)` : !LOC.calibrated ? ' (prior, uncalibrated)' : ''}` });
+    if (l1Date)
+        candidates.push({ date: l1Date,  unc: L1_UNC,          note: `Snow-free date + 32 days — ±${L1_UNC} days (early signal)` });
+
+    candidates.sort((a, b) => a.unc - b.unc);
+    const best = candidates[0] ?? null;
+    let bestDate = best ? best.date : null;
+    let bestNote = best ? best.note : '';
     document.getElementById('bestDate').textContent = bestDate ? fmt(bestDate) : '–';
     document.getElementById('bestNote').textContent = bestNote || 'No estimate available yet';
 
@@ -1696,9 +1698,7 @@ function renderWarning(snowFree, wtData, adgDate, histStats, fromDate, airData) 
     // Sync prior notice banner with the active best estimate method's uncertainty
     const priorUncEl = document.getElementById('priorUncDays');
     if (priorUncEl) {
-        if (l2Date && l2Date > now && l2DaysOut <= 30) priorUncEl.textContent = `±${l2Unc} days`;
-        else if (l1Date)                               priorUncEl.textContent = '±11 days';
-        else                                           priorUncEl.textContent = `±${uncDays} days`;
+        priorUncEl.textContent = best ? `±${best.unc} days` : `±${uncDays} days`;
     }
 }
 
