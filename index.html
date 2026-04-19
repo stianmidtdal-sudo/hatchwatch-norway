@@ -17,194 +17,265 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f0f7f4;
-            color: #1a3a2a;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: #f8f9f7;
+            color: #1a2e1a;
             min-height: 100vh;
         }
 
-        /* ── Header ─────────────────────────────────── */
-        header {
-            background: #1B4332;
-            color: white;
-            padding: 28px 32px 22px;
+        /* ── Nav ─────────────────────────────────────── */
+        nav {
+            background: #fff;
+            border-bottom: 1px solid #e8ede8;
+            padding: 15px 48px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        header h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.3px; }
-        header .sub { font-size: 0.85rem; color: #74C69D; margin-top: 4px; }
+        nav .logo {
+            font-weight: 800;
+            font-size: 14px;
+            color: #1B4332;
+            letter-spacing: 1px;
+        }
+        nav .sub {
+            font-size: 11px;
+            color: #aaa;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
 
-        /* ── Latitude strip ──────────────────────────── */
-        .lat-strip {
+        /* ── Hero ────────────────────────────────────── */
+        .hero {
+            padding: 56px 48px 36px;
+            max-width: 860px;
+        }
+        .hero .tag {
+            display: inline-block;
+            background: #e8f5e0;
+            color: #1B4332;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 5px 11px;
+            border-radius: 4px;
+            margin-bottom: 22px;
+        }
+        .hero h1 {
+            font-size: 46px;
+            font-weight: 800;
+            line-height: 1.08;
+            letter-spacing: -1.5px;
+            color: #0d1f17;
+            margin-bottom: 18px;
+        }
+        .hero h1 span { color: #1B4332; }
+        .hero p {
+            font-size: 16px;
+            color: #5a7060;
+            line-height: 1.65;
+            max-width: 480px;
+        }
+
+        /* ── Cards ───────────────────────────────────── */
+        .cards {
+            padding: 0 48px 56px;
+            max-width: 860px;
+        }
+
+        .region-row {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 18px 32px 4px;
-            max-width: 860px;
-            font-size: 0.75rem;
-            color: #888;
+            gap: 12px;
+            margin-bottom: 14px;
+            margin-top: 28px;
         }
-        .lat-line { flex: 1; height: 2px; background: linear-gradient(to right, #1B4332, #74C69D); border-radius: 2px; }
-        .lat-label { white-space: nowrap; }
-
-        /* ── Region sections ─────────────────────────── */
-        main { padding: 8px 32px 40px; max-width: 860px; }
-
-        .region-title {
-            font-size: 0.7rem;
+        .region-row span {
+            font-size: 12px;
             font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #2D6A4F;
-            margin: 22px 0 10px;
-            padding-bottom: 5px;
-            border-bottom: 1px solid #c8e6d8;
+            color: #1B4332;
+            white-space: nowrap;
+        }
+        .region-row .line {
+            flex: 1;
+            height: 1px;
+            background: #dde8dd;
         }
 
-        /* ── River cards ─────────────────────────────── */
         .river-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 10px;
         }
 
         .card {
-            background: white;
-            border-radius: 12px;
-            padding: 16px 18px;
-            border: 2px solid transparent;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            background: #fff;
+            border: 1px solid #e0e8e0;
+            border-radius: 10px;
+            padding: 20px;
             cursor: pointer;
-            transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            position: relative;
+            overflow: hidden;
             text-decoration: none;
             display: block;
             color: inherit;
+            transition: box-shadow 0.15s, transform 0.1s, border-color 0.15s;
         }
         .card:hover {
-            border-color: #2D6A4F;
-            box-shadow: 0 4px 18px rgba(27,67,50,0.15);
+            box-shadow: 0 4px 16px rgba(27,67,50,0.12);
+            border-color: #b0cfb8;
             transform: translateY(-2px);
         }
-        .card.calibrated { border-left: 4px solid #1B4332; }
+        .card.calibrated .top-bar { display: block; }
+        .top-bar {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #1B4332, #4caf7d);
+        }
 
-        .card-river { font-size: 1rem; font-weight: 700; color: #1B4332; }
-        .card-place { font-size: 0.82rem; color: #555; margin-top: 2px; }
-        .card-meta  { font-size: 0.75rem; color: #888; margin-top: 8px; line-height: 1.6; }
+        .card-river { font-size: 15px; font-weight: 700; color: #1a2e1a; margin-bottom: 3px; }
+        .card-place { font-size: 11px; color: #8aaa8a; }
+        .card-meta  { font-size: 11px; color: #aab8aa; margin-top: 8px; line-height: 1.6; }
 
         .badge {
             display: inline-block;
-            font-size: 0.68rem;
+            font-size: 9px;
             font-weight: 700;
-            padding: 2px 7px;
-            border-radius: 4px;
-            margin-top: 6px;
-        }
-        .badge-calibrated {
-            background: #d8f3e6;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-top: 11px;
             color: #1B4332;
+            padding: 0;
+            background: none;
         }
-        .badge-prior {
-            background: #fff3cd;
-            color: #856404;
-        }
+        .card-arrow { margin-top: 10px; font-size: 11px; color: #c0ccc0; font-weight: 500; }
 
-        /* ── Footer note ─────────────────────────────── */
-        .footnote {
+        /* ── How it works ────────────────────────────── */
+        .how {
+            background: #1B4332;
+            padding: 48px 48px 44px;
+        }
+        .how .eyebrow {
+            font-size: 10px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #4caf7d;
+            margin-bottom: 22px;
+        }
+        .how-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 28px;
             max-width: 860px;
-            margin: 12px 32px 0;
+        }
+        .how-grid .item strong {
+            color: #fff;
+            display: block;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+        .how-grid .item p {
+            font-size: 13px;
+            color: #a8d4b8;
+            line-height: 1.65;
+        }
+        .how-note {
+            max-width: 860px;
+            margin-top: 28px;
+            padding-top: 20px;
+            border-top: 1px solid #2d6e45;
+            font-size: 11px;
+            color: #3d7a55;
+            line-height: 1.7;
+            font-style: italic;
+        }
+        .how-note strong { color: #6dbf87; font-style: normal; }
+
+        /* ── Footnote ────────────────────────────────── */
+        .footnote {
+            padding: 20px 48px 0;
             font-size: 0.75rem;
             color: #999;
             line-height: 1.7;
+            max-width: 860px;
         }
         .footnote strong { color: #555; }
 
-        /* ── About box ───────────────────────────────── */
-        .about {
-            max-width: 860px;
-            margin: 24px 32px 0;
-            background: white;
-            border-radius: 14px;
-            padding: 20px 24px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-            border-left: 4px solid #2D6A4F;
+        /* ── Footer ──────────────────────────────────── */
+        .page-footer {
+            text-align: center;
+            padding: 32px 0 24px;
+            font-size: 0.75rem;
+            color: #aaa;
         }
-        .about h2 {
-            font-size: 0.85rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: #2D6A4F;
-            margin-bottom: 10px;
-        }
-        .about p {
-            font-size: 0.85rem;
-            color: #444;
-            line-height: 1.75;
-            margin-bottom: 8px;
-        }
-        .about p:last-child { margin-bottom: 0; }
-        .about .tag {
-            display: inline-block;
-            background: #d8f3e6;
-            color: #1B4332;
-            font-size: 0.72rem;
-            font-weight: 700;
-            padding: 2px 8px;
-            border-radius: 4px;
-            margin-right: 5px;
-            margin-bottom: 4px;
+        .page-footer strong { color: #1B4332; }
+
+        /* ── Responsive ──────────────────────────────── */
+        @media (max-width: 600px) {
+            nav { padding: 14px 20px; }
+            .hero { padding: 36px 20px 24px; }
+            .hero h1 { font-size: 32px; }
+            .cards { padding: 0 20px 40px; }
+            .how { padding: 36px 20px; }
+            .footnote { padding: 16px 20px 0; }
         }
     </style>
 </head>
 <body>
 
-<header>
-    <h1>🎣 Hatch Watch Norway</h1>
-    <div class="sub">Aquatic insect emergence forecasting · Dual Trigger Model</div>
-</header>
+<nav>
+    <span class="logo">HATCH WATCH</span>
+    <span class="sub">Norway</span>
+</nav>
 
-<div class="lat-strip">
-    <span class="lat-label">70°N · Finnmark</span>
-    <div class="lat-line"></div>
-    <span class="lat-label">58°N · Sørlandet</span>
+<div class="hero">
+    <div class="tag">Beta v1.0</div>
+    <h1>Aquatic insect<br><span>emergence forecasting</span></h1>
+    <p>Hatch timing estimated from live water temperature data and accumulated heat units (GDD)</p>
 </div>
 
-<main id="main"></main>
-
-<div class="about">
-    <h2>How it works</h2>
-    <p>
-        Hatch Watch combines two independent prediction models and picks the winner based on how far out you're looking.
-        Close to the event, real water temperature data extrapolated to hatch threshold wins.
-        Farther out, a Growing Degree Day (GDD) model takes over — accumulating heat from January 1st, crossing a
-        species-specific thermal threshold when the bugs say "it's time."
-    </p>
-    <p>
-        Ice-out dates are predicted using <strong>Stefan's law</strong> — a physical ice growth/melt model
-        calibrated against satellite-observed ice-out records from each location.
-        Snow cover, river hydrology, and air temperature from nearby MET stations all feed in.
-    </p>
-    <p style="font-style:italic;color:#2D6A4F;font-weight:600">
-        It's either very clever, or deeply unnecessary. Possibly both.
-    </p>
-    <p>
-        <span class="tag">GDD · Growing Degree Days</span>
-        <span class="tag">Stefan Ice Model</span>
-        <span class="tag">Water Temp Extrapolation</span>
-        <span class="tag">Frost API · NVE</span>
-    </p>
-</div>
+<div class="cards" id="main"></div>
 
 <div class="footnote">
     <strong>⭐ Calibrated</strong> = predictions verified against observed hatch records, giving confirmed accuracy. Other locations use the same model adapted to local climate conditions.
 </div>
 
-<div style="text-align:center; padding: 32px 0 24px; font-size: 0.75rem; color: #aaa;">
-    Built by <strong style="color:#1B4332;">Stian Midtdal</strong> &nbsp;·&nbsp; © 2026 Hatch Watch Norway
+<div class="how">
+    <div class="eyebrow">How it works</div>
+    <div class="how-grid">
+        <div class="item">
+            <strong>Dual Trigger Model</strong>
+            <p>Two independent models run in parallel. Close to the event, live water temperature extrapolated to hatch threshold takes over. Farther out, the GDD model leads.</p>
+        </div>
+        <div class="item">
+            <strong>GDD · Growing Degree Days</strong>
+            <p>Heat accumulates from January 1st. Each species crosses a calibrated thermal threshold — that crossing is the forecast.</p>
+        </div>
+        <div class="item">
+            <strong>Stefan Ice Model</strong>
+            <p>Ice-out is predicted using Stefan's law — a physical growth/melt model calibrated against satellite-observed records from each location.</p>
+        </div>
+        <div class="item">
+            <strong>Data Sources</strong>
+            <p>Air temperature and snow cover from MET Norway's Frost API. Water temperature from NVE HydAPI. Updated daily.</p>
+        </div>
+    </div>
+    <div class="how-note">
+        <strong>It's either very clever, or deeply unnecessary.</strong> Possibly both.
+    </div>
+</div>
+
+<div class="page-footer">
+    Built by <strong>Stian Midtdal</strong> &nbsp;·&nbsp; © 2026 Hatch Watch Norway
 </div>
 
 <script>
 // ── Area data ────────────────────────────────────────────────────────
 // Ordered north → south by latitude.
-// `river` is only the temperature proxy — not shown prominently.
 const RIVERS = [
     { id: "kautokeino", area: "Kautokeino", river: "Suohpatjohka", waterRiver: "Suohpatjohka", region: "Finnmark",   lat: 69.01, calibrated: true,  uncertainty: "±2 days"  },
     { id: "alta",       area: "Alta",       river: "Altaelva",     waterRiver: "Kista",         region: "Finnmark",   lat: 69.97, calibrated: false, uncertainty: "±10 days" },
@@ -230,14 +301,10 @@ function buildCards() {
     }
 
     for (const region of regionOrder) {
-        const section = document.createElement("section");
-        section.className = "region-section";
-        section.dataset.region = region;
-
-        const title = document.createElement("div");
-        title.className = "region-title";
-        title.textContent = region;
-        section.appendChild(title);
+        const row = document.createElement("div");
+        row.className = "region-row";
+        row.innerHTML = `<span>${region}</span><div class="line"></div>`;
+        main.appendChild(row);
 
         const grid = document.createElement("div");
         grid.className = "river-grid";
@@ -246,7 +313,6 @@ function buildCards() {
             const a = document.createElement("a");
             a.className = "card" + (r.calibrated ? " calibrated" : "");
             a.href = `dashboard.html?loc=${r.id}`;
-            a.dataset.search = `${r.area} ${r.river} ${r.waterRiver} ${r.region}`.toLowerCase();
             a.addEventListener('click', () => {
                 if (typeof gtag === 'function') {
                     gtag('event', 'select_location', {
@@ -259,21 +325,18 @@ function buildCards() {
             });
 
             a.innerHTML = `
+                <div class="top-bar"></div>
                 <div class="card-river">${r.calibrated ? "⭐ " : ""}${r.area}</div>
                 <div class="card-place">${r.region} · ${r.lat.toFixed(1)}°N</div>
-                <div class="card-meta" style="color:#aaa;font-size:0.7rem;margin-top:4px">
-                    🌡 Air temp: ${r.river}
-                </div>
-                <div class="card-meta" style="color:#aaa;font-size:0.7rem;margin-top:2px">
-                    💧 Vanntemp: ${r.waterRiver}
-                </div>
-                ${r.calibrated ? '<span class="badge badge-calibrated">Calibrated</span>' : ''}`;
+                <div class="card-meta">🌡 ${r.river}</div>
+                <div class="card-meta">💧 ${r.waterRiver}</div>
+                ${r.calibrated ? '<div class="badge">Calibrated · ' + r.uncertainty + '</div>' : '<div class="badge" style="color:#999">Uncertainty ' + r.uncertainty + '</div>'}
+                <div class="card-arrow">View forecast →</div>`;
 
             grid.appendChild(a);
         }
 
-        section.appendChild(grid);
-        main.appendChild(section);
+        main.appendChild(grid);
     }
 }
 
