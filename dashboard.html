@@ -532,6 +532,7 @@ const LOCATIONS = {
         airStationName:   'Kautokeino',
         waterStationName: 'Suohpatjohka',
         calibrated: true,
+        showIce: true,
         gddThreshold: 520,
         uncertaintyDays: 2.1,
         biofixLabel: 'Snow-melt / 1 Jan',
@@ -548,6 +549,7 @@ const LOCATIONS = {
         airStationName:   'Alta',
         waterStationName: 'Kista (Altaelva)',
         calibrated: false,
+        showIce: true,
         gddThreshold: 520,
         uncertaintyDays: 10,
         biofixLabel: 'Snow-melt',
@@ -564,6 +566,7 @@ const LOCATIONS = {
         airStationName:   'Karasjok',
         waterStationName: 'Lombola (Lakselva)',
         calibrated: false,
+        showIce: true,
         gddThreshold: 520,
         uncertaintyDays: 10,
         biofixLabel: 'Snow-melt',
@@ -580,6 +583,7 @@ const LOCATIONS = {
         airStationName:   'Røros lufthavn',
         waterStationName: 'Orva (tributary of Glåma)',
         calibrated: false,
+        showIce: true,
         gddThreshold: 520,
         uncertaintyDays: 12,
         biofixLabel: 'Dynamic (7-day avg >3°C)',
@@ -677,7 +681,7 @@ document.getElementById('locStrip').innerHTML = [
 ].map(i => `<div class="loc-item"><div class="loc-key">${i.key}</div><div class="loc-val">${i.val}</div></div>`).join('');
 
 // Show/hide sections based on calibration
-document.getElementById('iceSection').style.display = '';
+if (LOC.showIce) document.getElementById('iceSection').style.display = '';
 if (!LOC.calibrated) {
     document.getElementById('priorNotice').style.display = '';
     document.getElementById('priorUncDays').textContent = `±${LOC.uncertaintyDays} days`;
@@ -1270,47 +1274,42 @@ function renderSnowChart(snowData) {
 }
 
 function renderIceChart(airData, snowData) {
-    // Snow-corrected Stefan equation — matches Excel model
-    // α_korr = α₀ × (1 – k × (avgSnow – refSnow) / 100)
-    // Less snow → higher α → thicker ice (less insulation)
-    const ALPHA0   = 0.6;   // base coefficient
-    const K_SNOW   = 0.3;   // snow damping factor
-    const REF_SNOW = 65;    // reference snow depth (cm), series average
+    // Daily snow-corrected Stefan equation
+    // Each day uses that day's actual snow depth to compute α
+    // α_korr(day) = α₀ × (1 – k × (snow_day – refSnow) / 100)
+    // Missing snow values filled with carry-forward (last known value)
+    const ALPHA0   = 0.6;
+    const K_SNOW   = 0.3;
+    const REF_SNOW = 65;   // cm, series reference
 
-    // Group air temps by winter year (Nov–Apr)
+    // Build daily snow lookup (all dates)
+    const snowLookup = {};
+    for (const [d, v] of Object.entries(snowData || {})) {
+        if (v != null) snowLookup[d] = v;
+    }
+
+    // Merge air + snow into daily entries, grouped by winter year
     const byWinter = {};
-    for (const [dateStr, temp] of Object.entries(airData)) {
+    const allDates = Object.keys(airData).sort();
+    let lastSnow = REF_SNOW;  // carry-forward seed
+    for (const dateStr of allDates) {
+        const temp = airData[dateStr];
+        if (temp == null) continue;
+        // Carry-forward snow depth
+        if (snowLookup[dateStr] != null) lastSnow = snowLookup[dateStr];
         const dt = parseDate(dateStr);
         const mo = dt.getMonth() + 1, yr = dt.getFullYear();
         const winterYr = mo >= 11 ? yr + 1 : yr;
         if (!byWinter[winterYr]) byWinter[winterYr] = [];
-        byWinter[winterYr].push({ dt, temp });
+        byWinter[winterYr].push({ dt, temp, snow: lastSnow });
     }
 
-    // Group snow depths by winter year (Nov–Apr) for α correction
-    const snowByWinter = {};
-    for (const [dateStr, depth] of Object.entries(snowData || {})) {
-        if (depth == null) continue;
-        const dt = parseDate(dateStr);
-        const mo = dt.getMonth() + 1, yr = dt.getFullYear();
-        const winterYr = mo >= 11 ? yr + 1 : yr;
-        if (!snowByWinter[winterYr]) snowByWinter[winterYr] = [];
-        snowByWinter[winterYr].push(depth);
-    }
-
-    // Compute winter-average snow depth → corrected α per winter
-    function alphaForWinter(wy) {
-        const depths = snowByWinter[wy];
-        if (!depths || depths.length < 5) return ALPHA0; // fallback if no snow data
-        const avg = depths.reduce((a, b) => a + b, 0) / depths.length;
-        return ALPHA0 * (1 - K_SNOW * (avg - REF_SNOW) / 100);
-    }
-
-    function calcIce(entries, nov1, cutoff, alpha) {
+    function calcIce(entries, nov1, cutoff) {
         let fdd = 0, maxH = 0;
-        for (const { dt, temp } of entries) {
+        for (const { dt, temp, snow } of entries) {
             if (dt < nov1 || dt > cutoff) continue;
             if (temp < 0) fdd += Math.abs(temp);
+            const alpha = ALPHA0 * (1 - K_SNOW * (snow - REF_SNOW) / 100);
             const h = alpha * Math.sqrt(fdd);
             if (h > maxH) maxH = h;
         }
@@ -1327,18 +1326,17 @@ function renderIceChart(airData, snowData) {
     const winterKeys = Object.keys(byWinter).map(Number).filter(w => w >= 2017 && w <= YEAR).sort();
     for (const wy of winterKeys) {
         const entries = byWinter[wy].sort((a,b) => a.dt - b.dt);
-        const nov1            = new Date(wy - 1, 10, 1);
-        const isCurrentYear   = wy === YEAR;
-        const sameDateCutoff  = new Date(wy, todayMo, todayDay);
+        const nov1             = new Date(wy - 1, 10, 1);
+        const isCurrentYear    = wy === YEAR;
+        const sameDateCutoff   = new Date(wy, todayMo, todayDay);
         const fullSeasonCutoff = new Date(wy, 4, 31);
-        const alpha = alphaForWinter(wy);
 
-        const toDateVal = calcIce(entries, nov1, sameDateCutoff, alpha);
+        const toDateVal = calcIce(entries, nov1, sameDateCutoff);
 
         const peakLikelyPassed = isCurrentYear && (todayMo >= 3);
         let peakVal = null;
         if (!isCurrentYear) {
-            peakVal = calcIce(entries, nov1, fullSeasonCutoff, alpha);
+            peakVal = calcIce(entries, nov1, fullSeasonCutoff);
         } else if (peakLikelyPassed) {
             peakVal = toDateVal;
         }
@@ -1381,7 +1379,7 @@ function renderIceChart(airData, snowData) {
             },
             scales: {
                 x: { ticks:{ font:{size:11} } },
-                y: { min:0, title:{ display:true, text:'cm (α=0.6)' }, ticks:{ font:{size:10} } }
+                y: { min:0, title:{ display:true, text:'cm' }, ticks:{ font:{size:10} } }
             }
         }
     });
@@ -1393,8 +1391,8 @@ function renderIceChart(airData, snowData) {
         note.className = 'ice-note';
         note.style.cssText = 'font-size:0.74rem;color:#888;margin-top:6px;padding:0 4px';
         note.textContent = todayMo >= 3
-            ? `W${YEAR} season peak estimated to ${todayLabel} — ice growth assumed complete by April. α adjusted per winter snow depth (α₀=0.6, k=0.3, ref=65 cm).`
-            : `W${YEAR} shown as "As of ${todayLabel}". α adjusted per winter snow depth (α₀=0.6, k=0.3, ref=65 cm).`;
+            ? `Estimated using the Stefan equation with daily snow correction — less snow means faster ice growth. W${YEAR} season peak estimated to ${todayLabel}; ice growth assumed complete by April. Model uncertainty: ±3–5 cm. No local calibration data available.`
+            : `Estimated using the Stefan equation with daily snow correction — less snow means faster ice growth. W${YEAR} shown as "As of ${todayLabel}". Model uncertainty: ±3–5 cm. No local calibration data available.`;
         iceSection.appendChild(note);
     }
 }
