@@ -1304,7 +1304,9 @@ function renderIceChart(airData) {
         }
         const toDateVal = Math.round(maxH * 10) / 10;
 
-        // Season peak (full season — only for completed winters)
+        // Season peak: full season for completed winters,
+        // or current-to-date if we're in April+ (peak likely passed)
+        const peakLikelyPassed = isCurrentYear && (todayMo >= 3); // April = month index 3
         let peakVal = null;
         if (!isCurrentYear) {
             fdd = 0; maxH = 0;
@@ -1315,10 +1317,13 @@ function renderIceChart(airData) {
                 if (h > maxH) maxH = h;
             }
             peakVal = Math.round(maxH * 10) / 10;
+        } else if (peakLikelyPassed) {
+            peakVal = toDateVal; // treat current value as season peak estimate
         }
 
         years.push(isCurrentYear ? `W${wy} ▶` : `W${wy}`);
-        toDateVals.push(toDateVal);
+        // Hide "as of date" bar for current year when peak is likely passed (green bar takes over)
+        toDateVals.push(peakLikelyPassed ? null : toDateVal);
         peakVals.push(peakVal);
     }
 
@@ -1329,17 +1334,17 @@ function renderIceChart(airData) {
             labels: years,
             datasets: [
                 {
-                    label: `As of ${todayLabel}`,
-                    data: toDateVals,
-                    backgroundColor: 'rgba(192,57,43,0.75)',
-                    borderColor: '#922B21',
-                    borderWidth: 2, borderRadius: 4, borderSkipped: false
-                },
-                {
                     label: 'Season peak',
                     data: peakVals,
                     backgroundColor: '#52B788',
                     borderColor: '#2D6A4F',
+                    borderWidth: 2, borderRadius: 4, borderSkipped: false
+                },
+                {
+                    label: `As of ${todayLabel}`,
+                    data: toDateVals,
+                    backgroundColor: 'rgba(192,57,43,0.75)',
+                    borderColor: '#922B21',
                     borderWidth: 2, borderRadius: 4, borderSkipped: false
                 }
             ]
@@ -1358,6 +1363,18 @@ function renderIceChart(airData) {
             }
         }
     });
+
+    // Add note below chart
+    const iceSection = document.getElementById('iceChart').closest('section');
+    if (!iceSection.querySelector('.ice-note')) {
+        const note = document.createElement('div');
+        note.className = 'ice-note';
+        note.style.cssText = 'font-size:0.74rem;color:#888;margin-top:6px;padding:0 4px';
+        note.textContent = todayMo >= 3
+            ? `W${YEAR} season peak estimated from data accumulated to ${todayLabel} — ice growth assumed complete by April.`
+            : `W${YEAR} shown as "As of ${todayLabel}" — season peak not yet estimated (before April).`;
+        iceSection.appendChild(note);
+    }
 }
 
 function renderIndicators(snowData, airData, currentADG) {
