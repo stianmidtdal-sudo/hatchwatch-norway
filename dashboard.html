@@ -6,12 +6,12 @@
     <title>Hatch Watch</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎣</text></svg>">
     <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4SMRL2FQPP"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PF7ZGH4PNX"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'G-4SMRL2FQPP');
+      gtag('config', 'G-PF7ZGH4PNX');
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <style>
@@ -1736,6 +1736,22 @@ async function main() {
         // Show dashboard
         document.getElementById('loadingState').style.display = 'none';
         document.getElementById('dashboard').style.display    = '';
+
+        // GA: fire view_dashboard with rich context
+        if (typeof gtag === 'function') {
+            const bestEl   = document.getElementById('bestDate');
+            const noteEl   = document.getElementById('bestNote');
+            const bestDateTxt = bestEl ? bestEl.textContent : '–';
+            const methodTxt   = noteEl ? noteEl.textContent.split('—')[0].trim() : 'unknown';
+            gtag('event', 'view_dashboard', {
+                location_id:   LOC.id,
+                location_name: LOC.area,
+                region:        LOC.region,
+                calibrated:    LOC.calibrated ? 'yes' : 'no',
+                best_method:   methodTxt,
+                hatch_estimate: bestDateTxt
+            });
+        }
 
     } catch (err) {
         document.getElementById('loadingState').innerHTML = `
