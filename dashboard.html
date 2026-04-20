@@ -298,24 +298,43 @@
 
         .yr-current { color: #C0392B; font-weight: 700; }
         .yr-na { color: #bbb; }
+
+        /* ── Language button ─────────────────────────── */
+        .lang-btn {
+            background: none;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 6px;
+            padding: 4px 11px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            color: rgba(255,255,255,0.85);
+            cursor: pointer;
+            transition: background 0.15s;
+            white-space: nowrap;
+        }
+        .lang-btn:hover { background: rgba(255,255,255,0.1); }
     </style>
 </head>
 <body>
 
 <header>
     <div class="header-left">
-        <a href="index.html" class="back-link">← All locations</a>
+        <a href="index.html" class="back-link" id="backLink">← All locations</a>
         <h1 id="headerTitle">Hatch Watch</h1>
         <div class="sub" id="headerSub">Loading…</div>
     </div>
-    <div class="updated" id="lastUpdated">Loading…</div>
+    <div style="display:flex;align-items:center;gap:14px">
+        <div class="updated" id="lastUpdated">Loading…</div>
+        <button id="langBtn" class="lang-btn" onclick="toggleLang()">EN</button>
+    </div>
 </header>
 
 <div class="container">
 
     <div id="loadingState" class="loading-wrap">
         <div class="spinner"></div>
-        <div>Fetching live data from MET Norway &amp; NVE…</div>
+        <div id="loadingText">Fetching live data from MET Norway &amp; NVE…</div>
     </div>
 
     <div id="dashboard" style="display:none">
@@ -331,7 +350,7 @@
         <!-- ═══ SEASON HATCH CALENDAR ═══ -->
         <div class="best-wrap">
             <div class="best-header">
-                <div class="best-label">▶ Season Hatch Calendar</div>
+                <div class="best-label" id="bestLabel">▶ Season Hatch Calendar</div>
                 <div class="best-note" id="bestNote">Loading…</div>
             </div>
             <div id="speciesCalendar" class="species-grid"></div>
@@ -340,25 +359,25 @@
 
         <!-- ═══ TODAY'S STATUS ═══ -->
         <section>
-            <h2>Today's Status</h2>
+            <h2 data-i18n="todayStatus">Today's Status</h2>
             <div class="kpi-grid">
                 <div class="kpi-card">
-                    <div class="kpi-label">Air Temperature</div>
+                    <div class="kpi-label" data-i18n="airTemp">Air Temperature</div>
                     <div class="kpi-value" id="kpiAir">–</div>
                     <div class="kpi-unit" id="kpiAirUnit">°C</div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-label">Snow Depth</div>
+                    <div class="kpi-label" data-i18n="snowDepth">Snow Depth</div>
                     <div class="kpi-value" id="kpiSnow">–</div>
                     <div class="kpi-unit" id="kpiSnowUnit">cm</div>
                 </div>
                 <div class="kpi-card" id="kpiFlowCard">
-                    <div class="kpi-label">Water Flow</div>
+                    <div class="kpi-label" data-i18n="waterFlow">Water Flow</div>
                     <div class="kpi-value" id="kpiFlow">–</div>
                     <div class="kpi-unit" id="kpiFlowUnit">m³/s</div>
                 </div>
                 <div class="kpi-card" id="kpiWtCard">
-                    <div class="kpi-label">Water Temperature</div>
+                    <div class="kpi-label" data-i18n="waterTemp">Water Temperature</div>
                     <div class="kpi-value" id="kpiWaterTemp">–</div>
                     <div class="kpi-unit" id="kpiWtUnit">°C</div>
                 </div>
@@ -370,28 +389,28 @@
             <h2 id="modelHeading">GDD Model · Loading…</h2>
             <div class="model-grid">
                 <div class="card">
-                    <div class="card-label">GDD This Year (from 1 Jan)</div>
+                    <div class="card-label" data-i18n="gddThisYear">GDD This Year (from 1 Jan)</div>
                     <div class="card-value card-highlight" id="adgNow">–</div>
-                    <div class="card-note">Growing Degree Days · base 0°C</div>
+                    <div class="card-note" data-i18n="gddUnit">Growing Degree Days · base 0°C</div>
                     <div class="progress-wrap">
                         <div class="progress-bar" id="adgBar" style="width:0%"></div>
                     </div>
                     <div class="progress-label" id="adgPct">– % of target</div>
-                    <div id="adgCompareBand" class="model-info-band">Loading historical average…</div>
+                    <div id="adgCompareBand" class="model-info-band" data-i18n="loadingHistAvg">Loading historical average…</div>
                     <div id="uncertaintyBand" class="uncertainty-band" style="display:none"></div>
                 </div>
                 <div class="card">
-                    <div class="card-label">Remaining to Target</div>
+                    <div class="card-label" data-i18n="remaining">Remaining to Target</div>
                     <div class="card-value" id="adgLeft">–</div>
-                    <div class="card-note">GDD units until threshold</div>
+                    <div class="card-note" data-i18n="remainingUnit">GDD units until threshold</div>
                 </div>
                 <div class="card">
-                    <div class="card-label">Est. GDD Threshold Date</div>
+                    <div class="card-label" data-i18n="estGddDate">Est. GDD Threshold Date</div>
                     <div class="card-value yr-current" id="adgDate">–</div>
                     <div class="card-note" id="adgDateNote">when GDD will reach target</div>
                 </div>
                 <div class="card">
-                    <div class="card-label">Estimated Hatch Date</div>
+                    <div class="card-label" data-i18n="estHatchDate">Estimated Hatch Date</div>
                     <div class="card-value yr-current" id="hatchDate">–</div>
                     <div class="card-note" id="hatchNote">–</div>
                 </div>
@@ -400,22 +419,22 @@
 
         <!-- ═══ EARLY WARNING ═══ -->
         <section>
-            <h2>Early Warning · When Will Water Reach 12°C?</h2>
+            <h2 data-i18n="earlyWarning">Early Warning · When Will Water Reach 12°C?</h2>
             <div class="warning-grid">
                 <div class="warning-card">
-                    <div class="w-step">Baseline · GDD model</div>
+                    <div class="w-step" data-i18n="wStep0">Baseline · GDD model</div>
                     <div class="w-date" id="wGddDate">–</div>
                     <div class="w-unc" id="wGddUnc">± ? days · GDD-based estimate</div>
                     <span class="badge" id="wGddBadge">⏳ Calculating…</span>
                 </div>
                 <div class="warning-card">
-                    <div class="w-step">Level 1 · Snow-free + 32 days</div>
+                    <div class="w-step" data-i18n="wStep1">Level 1 · Snow-free + 32 days</div>
                     <div class="w-date" id="wL1Date">–</div>
                     <div class="w-unc">± 11 days</div>
                     <span class="badge" id="wL1Badge">⏳ Awaiting snow-free date</span>
                 </div>
                 <div class="warning-card">
-                    <div class="w-step">Level 2 · Water temp extrapolation</div>
+                    <div class="w-step" data-i18n="wStep2">Level 2 · Water temp extrapolation</div>
                     <div class="w-date" id="wL2Date">–</div>
                     <div class="w-unc" id="wL2Unc">available when WT > 3°C · uncertainty depends on forecast horizon</div>
                     <span class="badge badge-cold" id="wL2Badge">❄️ Awaiting spring warm-up</span>
@@ -425,17 +444,17 @@
 
         <!-- ═══ HISTORICAL GDD WINDOW (all locations) ═══ -->
         <section id="gddHistSection">
-            <h2>Historical GDD Model · Year-by-Year</h2>
-            <div id="gddHistContent">Loading…</div>
+            <h2 data-i18n="histGdd">Historical GDD Model · Year-by-Year</h2>
+            <div id="gddHistContent" data-i18n="loadingText">Loading…</div>
         </section>
 
         <!-- ═══ HISTORICAL HATCH COMPARISON (Kautokeino only) ═══ -->
         <section id="histSection" style="display:none">
-            <h2>Historical Hatch Comparison</h2>
+            <h2 data-i18n="histHatch">Historical Hatch Comparison</h2>
             <div class="table-wrap">
                 <table>
                     <thead><tr>
-                        <th>Year</th>
+                        <th data-i18n="histYrCol">Year</th>
                         <th>Ice Breakup</th>
                         <th>Snow Free</th>
                         <th>Winter Snow (cm)</th>
@@ -450,7 +469,7 @@
 
         <!-- ═══ NO HATCH DATA NOTE (uncalibrated) ═══ -->
         <section id="noHatchSection" style="display:none">
-            <h2>Historical Hatch Data</h2>
+            <h2 data-i18n="histHatchData">Historical Hatch Data</h2>
             <div class="table-wrap">
                 <table>
                     <thead><tr>
@@ -466,7 +485,7 @@
 
         <!-- ═══ WATER TEMPERATURE CHART ═══ -->
         <section id="wtSection">
-            <h2>Water Temperature May–July · Year-by-Year</h2>
+            <h2 data-i18n="waterTempChart">Water Temperature May–July · Year-by-Year</h2>
             <div class="chart-wrap">
                 <canvas id="wtChart"></canvas>
             </div>
@@ -483,7 +502,7 @@
 
         <!-- ═══ ICE THICKNESS CHART (Kautokeino only) ═══ -->
         <section id="iceSection" style="display:none">
-            <h2>Estimated Ice Thickness · Stefan Equation · h = α × √FDD  (α = 0.6)</h2>
+            <h2 data-i18n="iceHeading">Estimated Ice Thickness · Stefan Equation · h = α × √FDD  (α = 0.6)</h2>
             <div class="chart-wrap" style="height:260px">
                 <canvas id="iceChart"></canvas>
             </div>
@@ -494,7 +513,7 @@
 
         <!-- ═══ SEASON INDICATORS ═══ -->
         <section>
-            <h2>Season Indicators</h2>
+            <h2 data-i18n="seasonIndicators">Season Indicators</h2>
             <div class="table-wrap">
                 <table>
                     <thead><tr>
@@ -517,6 +536,179 @@
 <script>
 // ═══════════════════════════════════════════════════════════════════
 //  LOCATION CONFIGURATION
+// ═══════════════════════════════════════════════════════════════════
+//  LANGUAGE / i18n
+// ═══════════════════════════════════════════════════════════════════
+const LANG = localStorage.getItem('lang') || 'no';
+const T = {
+  no: {
+    backLink: '← Alle steder',
+    loading: 'Henter live data fra MET Norge og NVE…',
+    loadingHistAvg: 'Laster historisk gjennomsnitt…',
+    seasonCalendar: '▶ Sesong klekkekalender',
+    bestEstimateNow: '▶ Beste estimat nå',
+    todayStatus: 'Dagens status',
+    airTemp: 'Lufttemperatur',
+    snowDepth: 'Snødybde',
+    waterFlow: 'Vannføring',
+    waterTemp: 'Vanntemperatur',
+    earlyWarning: 'Tidlig varsel · Når når vannet 12°C?',
+    wStep0: 'Grunnlinje · GDD-modell',
+    wStep1: 'Nivå 1 · Snøfri + 32 dager',
+    wStep2: 'Nivå 2 · Vanntemp. ekstrapolering',
+    calculating: '⏳ Beregner…',
+    awaitingSnowFree: '⏳ Venter på snøfri dato',
+    awaitingSpring: '❄️ Venter på våroppvarming',
+    noWtData: '— Ingen vanntemperaturdata',
+    active: '✅ Aktiv',
+    datePassed: '⏳ Dato passert — venter på VT',
+    awaitingSnowFreeDate: 'Venter på snøfri dato',
+    noEstimate: 'Ingen estimat tilgjengelig ennå',
+    histGdd: 'Historisk GDD-modell · År for år',
+    histHatch: 'Historisk klekke-sammenligning',
+    histHatchData: 'Historiske klekkedata',
+    waterTempChart: 'Vanntemperatur mai–juli · År for år',
+    seasonIndicators: 'Sesongmarkører',
+    iceHeading: 'Estimert istykkelse · Stefan-ligningen · h = α × √FDD  (α = 0.6)',
+    locArea: 'Område',
+    locAirStation: 'Lufttempstasjon',
+    locWaterStation: 'Vannempstasjon',
+    locAltitude: 'Høyde',
+    locCoords: 'Koordinater',
+    locBiofix: 'Biofix',
+    locGddTarget: 'GDD-terskel',
+    locModel: 'Modell',
+    masl: 'm o.h.',
+    calibratedModel: '✅ Kalibrert',
+    gddThisYear: 'GDD i år (fra 1. jan)',
+    gddUnit: 'Akkumulerte varmegrader · base 0°C',
+    remaining: 'Gjenstående til terskel',
+    remainingUnit: 'GDD-enheter til terskel',
+    estGddDate: 'Est. GDD terskelsdato',
+    estHatchDate: 'Estimert klekkedato',
+    shortSeason: 'Kort sesong — klekking komprimeres til ett enkelt vindu her.',
+    noNveStation: 'Ingen NVE-stasjon konfigurert',
+    requiresNve: 'Krever NVE vanntemperaturdata',
+    histEarliest: 'Tidligst',
+    histMedian: 'Median',
+    histLatest: 'Senest',
+    histStd: 'Standardavvik',
+    histYrCol: 'År',
+    histGddCrossed: 'GDD-terskel nådd',
+    histDoy: 'Dag i år',
+    histVsMedian: 'vs. median',
+    altCorrection: '🏔 Høydekorreksjon:',
+    dynamicBiofix: 'Dynamisk biofix: GDD-akkumulering starter fra første vedvarende oppvarming (7-dagers snitt > 3°C), ikke fast 1. jan.',
+    noHatchDataRow: 'Ingen systematiske klekkobservasjoner tilgjengelig for dette stedet. Værhistorikk (nedenfor) hentes live fra MET Norge. Kontakt oss for å bidra med kalibreringsdata.',
+    gddHatchModel: 'GDD klekkemodell',
+    dualTriggerLabel: 'Dobbelttrigger-modell · GDD ≥',
+    gddPriorLabel: 'GDD forenklet modell · Terskel',
+    pctOfTarget: '% av',
+    fiveYearAvg: '5-årig gjennomsnitt samme dato:',
+    vsAvg: 'vs. snitt',
+    latestOf: 'siste av: GDD ≥ 520 + vanntemp ≥ 12°C',
+    gddTriggerOnly: 'Kun GDD-trigger (vanntemp ukjent)',
+    whenGddReaches: 'når GDD når',
+    updatedLabel: 'Oppdatert:',
+    loadingText: 'Laster…',
+  },
+  en: {
+    backLink: '← All locations',
+    loading: 'Fetching live data from MET Norway &amp; NVE…',
+    loadingHistAvg: 'Loading historical average…',
+    seasonCalendar: '▶ Season Hatch Calendar',
+    bestEstimateNow: '▶ Best Estimate Now',
+    todayStatus: "Today's Status",
+    airTemp: 'Air Temperature',
+    snowDepth: 'Snow Depth',
+    waterFlow: 'Water Flow',
+    waterTemp: 'Water Temperature',
+    earlyWarning: 'Early Warning · When Will Water Reach 12°C?',
+    wStep0: 'Baseline · GDD model',
+    wStep1: 'Level 1 · Snow-free + 32 days',
+    wStep2: 'Level 2 · Water temp extrapolation',
+    calculating: '⏳ Calculating…',
+    awaitingSnowFree: '⏳ Awaiting snow-free date',
+    awaitingSpring: '❄️ Awaiting spring warm-up',
+    noWtData: '— No water temp data',
+    active: '✅ Active',
+    datePassed: '⏳ Date passed — awaiting WT',
+    awaitingSnowFreeDate: 'Awaiting snow-free date',
+    noEstimate: 'No estimate available yet',
+    histGdd: 'Historical GDD Model · Year-by-Year',
+    histHatch: 'Historical Hatch Comparison',
+    histHatchData: 'Historical Hatch Data',
+    waterTempChart: 'Water Temperature May–July · Year-by-Year',
+    seasonIndicators: 'Season Indicators',
+    iceHeading: 'Estimated Ice Thickness · Stefan Equation · h = α × √FDD  (α = 0.6)',
+    locArea: 'Area',
+    locAirStation: 'Air temp station',
+    locWaterStation: 'Water temp station',
+    locAltitude: 'Altitude',
+    locCoords: 'Coordinates',
+    locBiofix: 'Biofix',
+    locGddTarget: 'GDD Target',
+    locModel: 'Model',
+    masl: 'm a.s.l.',
+    calibratedModel: '✅ Calibrated',
+    gddThisYear: 'GDD This Year (from 1 Jan)',
+    gddUnit: 'Growing Degree Days · base 0°C',
+    remaining: 'Remaining to Target',
+    remainingUnit: 'GDD units until threshold',
+    estGddDate: 'Est. GDD Threshold Date',
+    estHatchDate: 'Estimated Hatch Date',
+    shortSeason: 'Short season — hatches compress into a single window here.',
+    noNveStation: 'No NVE station configured',
+    requiresNve: 'Requires NVE water temp data',
+    histEarliest: 'Earliest',
+    histMedian: 'Median',
+    histLatest: 'Latest',
+    histStd: 'Std deviation',
+    histYrCol: 'Year',
+    histGddCrossed: 'GDD threshold crossed',
+    histDoy: 'Day of year',
+    histVsMedian: 'vs. median',
+    altCorrection: '🏔 Altitude correction:',
+    dynamicBiofix: 'Dynamic biofix: GDD accumulation starts from first sustained warming (7-day avg > 3°C), not fixed Jan 1.',
+    noHatchDataRow: 'No systematic hatch observations available for this location. Weather history (below) is fetched live from MET Norway. Contact us to contribute calibration data.',
+    gddHatchModel: 'GDD Hatch Model',
+    dualTriggerLabel: 'Dual Trigger Model · GDD ≥',
+    gddPriorLabel: 'GDD Prior Model · Threshold',
+    pctOfTarget: '% of',
+    fiveYearAvg: '5-year average same date:',
+    vsAvg: 'vs avg',
+    latestOf: 'latest of: GDD ≥ 520 + water temp ≥ 12°C',
+    gddTriggerOnly: 'GDD trigger only (water temp unknown)',
+    whenGddReaches: 'when GDD reaches',
+    updatedLabel: 'Updated:',
+    loadingText: 'Loading…',
+  }
+};
+function t(key) { return (T[LANG] && T[LANG][key] != null) ? T[LANG][key] : (T['en'][key] || key); }
+function toggleLang() {
+    localStorage.setItem('lang', LANG === 'no' ? 'en' : 'no');
+    location.reload();
+}
+function applyLang() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const v = t(el.getAttribute('data-i18n'));
+        if (v) el.textContent = v;
+    });
+    document.querySelectorAll('[data-i18n-html]').forEach(el => {
+        const v = t(el.getAttribute('data-i18n-html'));
+        if (v) el.innerHTML = v;
+    });
+    const btn = document.getElementById('langBtn');
+    if (btn) btn.textContent = LANG === 'no' ? 'EN' : 'NO';
+    const backLink = document.getElementById('backLink');
+    if (backLink) backLink.textContent = t('backLink');
+    const loadingText = document.getElementById('loadingText');
+    if (loadingText) loadingText.innerHTML = t('loading');
+    const bestLabel = document.getElementById('bestLabel');
+    if (bestLabel) bestLabel.textContent = t('seasonCalendar');
+}
+applyLang();
+
 //  Shared with index.html — if you update one, update both.
 // ═══════════════════════════════════════════════════════════════════
 const LOCATIONS = {
@@ -665,19 +857,19 @@ const TODAY = new Date().toISOString().slice(0, 10);
 document.title = `Hatch Watch · ${LOC.area}`;
 document.getElementById('headerTitle').textContent = `Hatch Watch · ${LOC.area}`;
 document.getElementById('headerSub').textContent =
-    `${LOC.area} · ${LOC.region} · GDD Hatch Model`;
+    `${LOC.area} · ${LOC.region} · ${t('gddHatchModel')}`;
 document.getElementById('yearCol').textContent = YEAR;
 
 // Location info strip
 document.getElementById('locStrip').innerHTML = [
-    { key: 'Area',              val: `${LOC.area}, ${LOC.region}` },
-    { key: 'Air temp station',  val: LOC.airStationName },
-    { key: 'Water temp station',val: LOC.waterStationName },
-    { key: 'Altitude',          val: `${LOC.altitude} m a.s.l.` },
-    { key: 'Coordinates', val: `${LOC.lat.toFixed(2)}°N, ${LOC.lon.toFixed(2)}°E` },
-    { key: 'Biofix',      val: LOC.biofixLabel },
-    { key: 'GDD Target',  val: `${LOC.gddThreshold} (base 0°C)` },
-    { key: 'Model',       val: LOC.calibrated ? '✅ Calibrated' : `⚠ Prior (±${LOC.uncertaintyDays} d)` },
+    { key: t('locArea'),         val: `${LOC.area}, ${LOC.region}` },
+    { key: t('locAirStation'),   val: LOC.airStationName },
+    { key: t('locWaterStation'), val: LOC.waterStationName },
+    { key: t('locAltitude'),     val: `${LOC.altitude} ${t('masl')}` },
+    { key: t('locCoords'),       val: `${LOC.lat.toFixed(2)}°N, ${LOC.lon.toFixed(2)}°E` },
+    { key: t('locBiofix'),       val: LOC.biofixLabel },
+    { key: t('locGddTarget'),    val: `${LOC.gddThreshold} (base 0°C)` },
+    { key: t('locModel'),        val: LOC.calibrated ? t('calibratedModel') : `⚠ Prior (±${LOC.uncertaintyDays} d)` },
 ].map(i => `<div class="loc-item"><div class="loc-key">${i.key}</div><div class="loc-val">${i.val}</div></div>`).join('');
 
 // Show/hide sections based on calibration
@@ -696,13 +888,13 @@ if (!LOC.nveStation) {
     document.getElementById('kpiWtCard').classList.add('na');
     document.getElementById('kpiFlow').classList.add('na-val');
     document.getElementById('kpiFlow').textContent = 'N/A';
-    document.getElementById('kpiFlowUnit').textContent = 'No NVE station configured';
+    document.getElementById('kpiFlowUnit').textContent = t('noNveStation');
     document.getElementById('kpiWaterTemp').classList.add('na-val');
     document.getElementById('kpiWaterTemp').textContent = 'N/A';
-    document.getElementById('kpiWtUnit').textContent = 'No NVE station configured';
+    document.getElementById('kpiWtUnit').textContent = t('noNveStation');
     document.getElementById('wL2Date').textContent = 'N/A';
-    document.getElementById('wL2Unc').textContent = 'Requires NVE water temp data';
-    document.getElementById('wL2Badge').textContent = '— No water temp data';
+    document.getElementById('wL2Unc').textContent = t('requiresNve');
+    document.getElementById('wL2Badge').textContent = t('noWtData');
     document.getElementById('wL2Badge').className = 'badge';
     document.getElementById('wtSection').style.display = 'none';
     document.getElementById('wtNote').textContent = '';
@@ -718,7 +910,9 @@ document.getElementById('modelHeading').textContent =
         : `GDD Prior Model · Threshold ${LOC.gddThreshold} GDD (bt = 0°C) · Prior uncertainty ±${LOC.uncertaintyDays} days`;
 
 document.getElementById('snowHeading').textContent =
-    `Snow Depth Nov–May · Year-by-Year · ${LOC.place}`;
+    LANG === 'no'
+        ? `Snødybde nov–mai · År for år · ${LOC.place}`
+        : `Snow Depth Nov–May · Year-by-Year · ${LOC.place}`;
 
 // ═══════════════════════════════════════════════════════════════════
 //  DATE HELPERS
@@ -921,26 +1115,26 @@ function renderHistoricalGDDSection(stats, correctionDelta) {
 
     let html = `<div class="hist-gdd-summary">
         <div class="hist-gdd-stat">
-            <div class="hist-gdd-label">Earliest (${stats.n} yrs)</div>
+            <div class="hist-gdd-label">${t('histEarliest')} (${stats.n} yrs)</div>
             <div class="hist-gdd-val yr-early">${e}</div>
         </div>
         <div class="hist-gdd-stat hist-gdd-median">
-            <div class="hist-gdd-label">Median</div>
+            <div class="hist-gdd-label">${t('histMedian')}</div>
             <div class="hist-gdd-val">${m}</div>
         </div>
         <div class="hist-gdd-stat">
-            <div class="hist-gdd-label">Latest</div>
+            <div class="hist-gdd-label">${t('histLatest')}</div>
             <div class="hist-gdd-val yr-late">${l}</div>
         </div>
         <div class="hist-gdd-stat">
-            <div class="hist-gdd-label">Std deviation</div>
+            <div class="hist-gdd-label">${t('histStd')}</div>
             <div class="hist-gdd-val">± ${stats.std} days</div>
         </div>
     </div>
     <div class="table-wrap" style="margin-top:14px"><table>
         <thead><tr>
-            <th>Year</th><th>GDD threshold crossed</th>
-            <th>Day of year</th><th>vs. median</th>
+            <th>${t('histYrCol')}</th><th>${t('histGddCrossed')}</th>
+            <th>${t('histDoy')}</th><th>${t('histVsMedian')}</th>
         </tr></thead><tbody>`;
 
     for (const c of [...stats.crossings].sort((a, b) => b.year - a.year)) {
@@ -960,12 +1154,12 @@ function renderHistoricalGDDSection(stats, correctionDelta) {
     if (Math.abs(correctionDelta) >= 0.1) {
         const sign = correctionDelta > 0 ? '+' : '';
         html += `<div style="font-size:0.74rem;color:#888;margin-top:8px;padding:0 4px">
-            🏔 Altitude correction: ${sign}${correctionDelta}°C on all daily temperatures
+            ${t('altCorrection')} ${sign}${correctionDelta}°C on all daily temperatures
             (station ${LOC.stationAltitude}m · fishing area ~${LOC.altitude}m · lapse rate 0.6°C/100m)
         </div>`;
     }
     html += `<div style="font-size:0.74rem;color:#888;margin-top:4px;padding:0 4px">
-        Dynamic biofix: GDD accumulation starts from first sustained warming (7-day avg > 3°C), not fixed Jan 1.
+        ${t('dynamicBiofix')}
     </div>`;
 
     document.getElementById('gddHistContent').innerHTML = html;
@@ -1062,7 +1256,7 @@ function renderKPIs(airData, snowData, flowData, wtData) {
     }
     const dateStr = at.date || TODAY;
     document.getElementById('lastUpdated').innerHTML =
-        `Updated: ${parseDate(dateStr).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}<br>
+        `${t('updatedLabel')} ${parseDate(dateStr).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}<br>
          ${LOC.frostStation}${LOC.nveStation ? ' · ' + LOC.nveStation : ''}`;
 }
 
@@ -1073,12 +1267,12 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
     document.getElementById('adgNow').textContent  = currentADG.toFixed(1);
     document.getElementById('adgLeft').textContent = remaining.toFixed(1);
     document.getElementById('adgBar').style.width  = pct + '%';
-    document.getElementById('adgPct').textContent  = `${pct.toFixed(1)}% of ${LOC.gddThreshold} GDD target`;
+    document.getElementById('adgPct').textContent  = `${pct.toFixed(1)}${t('pctOfTarget')} ${LOC.gddThreshold} GDD`;
 
     const diff = currentADG - histADG;
     const sign = diff >= 0 ? '+' : '';
     document.getElementById('adgCompareBand').textContent =
-        `5-year average same date: ${histADG.toFixed(1)} GDD  (${sign}${diff.toFixed(1)} vs avg)`;
+        `${t('fiveYearAvg')} ${histADG.toFixed(1)} GDD  (${sign}${diff.toFixed(1)} ${t('vsAvg')})`;
 
     // Uncertainty band — data-driven when histStats available, prior fallback otherwise
     const uncDays   = histStats ? histStats.std.toFixed(1) : LOC.uncertaintyDays;
@@ -1108,8 +1302,8 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
 
     // Update model heading with actual uncertainty
     document.getElementById('modelHeading').textContent = LOC.calibrated
-        ? `Dual Trigger Model · GDD ≥ ${LOC.gddThreshold} (bt = 0°C) + Water Temp ≥ 12°C · ±${uncDays} days MAE`
-        : `GDD Prior Model · Threshold ${LOC.gddThreshold} GDD (bt = 0°C) · ±${uncDays} days${histStats ? ` (${histStats.n}-yr data)` : ' prior'}`;
+        ? `${t('dualTriggerLabel')} ${LOC.gddThreshold} (bt = 0°C) + Water Temp ≥ 12°C · ±${uncDays} days MAE`
+        : `${t('gddPriorLabel')} ${LOC.gddThreshold} GDD (bt = 0°C) · ±${uncDays} days${histStats ? ` (${histStats.n}-yr data)` : ' prior'}`;
 
     document.getElementById('adgDate').textContent = adgDate ? fmt(adgDate) : '–';
 
@@ -1117,15 +1311,15 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
     let hatchNote = '';
     if (LOC.calibrated && adgDate && wtDate) {
         hatchDate = adgDate > wtDate ? adgDate : wtDate;
-        hatchNote = 'latest of: GDD ≥ 520 + water temp ≥ 12°C';
+        hatchNote = t('latestOf');
     } else if (adgDate) {
         hatchNote = LOC.calibrated
-            ? 'GDD trigger only (water temp unknown)'
+            ? t('gddTriggerOnly')
             : `Estimate ±${uncDays} days${histStats ? ` (${histStats.n}-yr data)` : ' (prior)'}`;
     }
     document.getElementById('hatchDate').textContent = hatchDate ? fmt(hatchDate) : '–';
     document.getElementById('hatchNote').textContent = hatchNote;
-    document.getElementById('adgDateNote').textContent = `when GDD reaches ${LOC.gddThreshold}`;
+    document.getElementById('adgDateNote').textContent = `${t('whenGddReaches')} ${LOC.gddThreshold}`;
 }
 
 function renderHistorical() {
@@ -1586,14 +1780,14 @@ function renderSpeciesCalendar(isgangResult, vulgataDate) {
 
     // Finnmark: season too compressed for species differentiation — show classic big-date layout
     if (LOC.region === 'Finnmark') {
-        if (label) label.textContent = '▶ Best Estimate Now';
+        if (label) label.textContent = t('bestEstimateNow');
         const dateStr = vulgataDate ? fmt(vulgataDate) : '–';
         grid.style.display = 'block';
         grid.innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;padding-top:4px">
                 <div style="font-size:2.1rem;font-weight:700">${dateStr}</div>
                 <div style="font-size:0.78rem;opacity:0.55;font-style:italic;max-width:320px;text-align:right">
-                    Short season — hatches compress into a single window here.
+                    ${t('shortSeason')}
                 </div>
             </div>`;
         return;
@@ -1681,7 +1875,7 @@ function renderWarning(snowFree, wtData, adgDate, histStats, fromDate, airData) 
         document.getElementById('wGddDate').textContent = fmt(adgDate);
         document.getElementById('wGddUnc').textContent  = `± ${uncDays} days · GDD model (${uncSource})`;
         const badge = document.getElementById('wGddBadge');
-        badge.textContent = '✅ Active';
+        badge.textContent = t('active');
         badge.className   = 'badge badge-active';
     }
     // Level 1: snow-free + 32 days (only if snow-free is from current season)
@@ -1693,15 +1887,15 @@ function renderWarning(snowFree, wtData, adgDate, histStats, fromDate, airData) 
             l1Date = candidate;
             document.getElementById('wL1Date').textContent = fmt(l1Date);
             const b = document.getElementById('wL1Badge');
-            b.textContent = '✅ Active'; b.className = 'badge badge-active';
+            b.textContent = t('active'); b.className = 'badge badge-active';
         } else {
             // L1 date already passed — don't display a past date
             document.getElementById('wL1Date').textContent = fmt(candidate);
             const b = document.getElementById('wL1Badge');
-            b.textContent = '⏳ Date passed — awaiting WT'; b.className = 'badge';
+            b.textContent = t('datePassed'); b.className = 'badge';
         }
     } else {
-        document.getElementById('wL1Date').textContent = 'Awaiting snow-free date';
+        document.getElementById('wL1Date').textContent = t('awaitingSnowFreeDate');
     }
     // Level 2: water temp extrapolation
     // Uncertainty grows with forecast horizon — only supersedes GDD when close enough
@@ -1718,7 +1912,7 @@ function renderWarning(snowFree, wtData, adgDate, histStats, fromDate, airData) 
             document.getElementById('wL2Date').textContent = fmt(l2Date);
             document.getElementById('wL2Unc').textContent  = uncLabel;
             const b = document.getElementById('wL2Badge');
-            b.textContent = '✅ Active'; b.className = 'badge badge-active';
+            b.textContent = t('active'); b.className = 'badge badge-active';
         }
     }
     // Dynamic model selection: pick whichever available model has the lowest uncertainty.
@@ -1738,7 +1932,7 @@ function renderWarning(snowFree, wtData, adgDate, histStats, fromDate, airData) 
     let bestDate = best ? best.date : null;
     let bestNote = best ? best.note : '';
     document.getElementById('bestDate').textContent = bestDate ? fmt(bestDate) : '–';
-    document.getElementById('bestNote').textContent = bestNote || 'No estimate available yet';
+    document.getElementById('bestNote').textContent = bestNote || t('noEstimate');
 
     // Species calendar always anchors Vulgata to the GDD model date (adgDate).
     // bestDate (water temp / L1) is shown in the best-estimate box above —
