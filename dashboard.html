@@ -837,7 +837,6 @@ const LOCATIONS = {
         gddThreshold: 520,
         uncertaintyDays: 14,
         biofixLabel: 'Snow-melt',
-        isgangWater: 'Krokvannet',
         isgangHistory: {
             2025: '2025-06-10', 2024: '2024-06-10', 2023: '2023-06-05',
             2022: '2022-06-05', 2021: '2021-06-13', 2020: '2020-06-15',
@@ -860,7 +859,6 @@ const LOCATIONS = {
         gddThreshold: 520,
         uncertaintyDays: 14,
         biofixLabel: 'Snow-melt',
-        isgangWater: 'Anjavannet',
         isgangHistory: {
             2025: '2025-06-13', 2024: '2024-06-03', 2023: '2023-06-07',
             2022: '2022-06-11', 2021: '2021-06-12', 2020: '2020-06-19',
@@ -884,7 +882,6 @@ const LOCATIONS = {
         gddThreshold: 520,
         uncertaintyDays: 14,
         biofixLabel: 'Snow-melt',
-        isgangWater: 'Langvatnet',
         isgangHistory: {
             2025: '2025-06-18', 2024: '2024-06-03', 2023: '2023-06-15',
             2022: '2022-06-13', 2021: '2021-06-11', 2020: '2020-06-27',
@@ -1555,7 +1552,7 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
 
 function renderHistorical(airData, snowData) {
     const ALPHA = 0.6;  // Stefan coefficient (same as ice chart)
-    const HIST_YEARS = [2020, 2021, 2022, 2023, 2024, 2025];
+    const HIST_YEARS = [2025, 2024, 2023, 2022, 2021, 2020];
     const tbody = document.getElementById('histBody');
     tbody.innerHTML = '';
 
