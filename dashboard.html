@@ -851,7 +851,7 @@ const LOCATIONS = {
         region: 'Troms',
         lat: 68.671, lon: 19.795, altitude: 180, stationAltitude: 204,  // Dividalen II 204m
         frostStation: 'SN89940',     // Dividalen II
-        snowStation:  'SN89940',
+        snowStation:  'SN89820',     // Separat snøstasjon med snødybde
         nveStation:   '196.26.0',    // Høgskarhus — Målselva
         airStationName:   'Dividalen',
         waterStationName: 'Høgskarhus (Målselva)',
@@ -1552,7 +1552,7 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
 
 function renderHistorical(airData, snowData) {
     const ALPHA = 0.6;  // Stefan coefficient (same as ice chart)
-    const HIST_YEARS = [2025, 2024, 2023, 2022, 2021, 2020];
+    const HIST_YEARS = Array.from({ length: YEAR - 2020 }, (_, i) => YEAR - 1 - i);
     const tbody = document.getElementById('histBody');
     tbody.innerHTML = '';
 
