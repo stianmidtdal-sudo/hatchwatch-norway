@@ -871,15 +871,16 @@ const LOCATIONS = {
     bardufoss: {
         id: 'bardufoss',
         area: 'Bardufoss',
-        name: 'Barduelva',
+        name: 'Barduelva / Målselva',
         place: 'Bardu',
         region: 'Troms',
         lat: 69.036, lon: 18.820, altitude: 91, stationAltitude: 76,  // Bardufoss 76m
         frostStation: 'SN89350',     // Bardufoss
         snowStation:  'SN89350',
-        nveStation:   '196.12.0',    // Lundberg — Barduelva
+        nveStation:         '196.12.0',  // Lundberg — Barduelva (vannføring)
+        nveWaterTempStation:'196.43.0',  // Målselva ovf. Barduelva — naturlig, uregulert, data siden 1989
         airStationName:   'Bardufoss',
-        waterStationName: 'Lundberg (Barduelva)',
+        waterStationName: 'Målselva ovf. Barduelva (196.43.0)',
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 14,
@@ -888,15 +889,16 @@ const LOCATIONS = {
     narvik: {
         id: 'narvik',
         area: 'Narvik',
-        name: 'Taraldsvikelv',
+        name: 'Taraldsvikelv / Elvegårdselva',
         place: 'Narvik',
         region: 'Nordland',
         lat: 68.364, lon: 17.623, altitude: 50, stationAltitude: 200,  // Straumsnes 200m
         frostStation: 'SN84500',     // Straumsnes
         snowStation:  'SN84500',
-        nveStation:   '174.11.0',    // Taraldsvikelv — Narvik
+        nveStation:         '174.11.0',  // Taraldsvikelv — vannføring (data siden 1972)
+        nveWaterTempStation:'173.24.0',  // Elvegårdselva v/Stiberg bru — vanntemp siden 1983
         airStationName:   'Straumsnes',
-        waterStationName: 'Taraldsvikelv',
+        waterStationName: 'Elvegårdselva v/Stiberg bru (173.24.0)',
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 14,
@@ -1087,8 +1089,10 @@ if (!LOC.nveStation) {
     document.getElementById('wtSection').style.display = 'none';
     document.getElementById('wtNote').textContent = '';
 } else {
+    const wtStnNote = LOC.nveWaterTempStation || LOC.nveStation;
+    const stationLabel = LOC.waterStationName || wtStnNote;
     document.getElementById('wtNote').textContent =
-        `Water temperature data from NVE HydAPI station ${LOC.nveStation}.`;
+        `Water temperature data from NVE HydAPI station ${stationLabel}.`;
 }
 
 // Model heading
@@ -1156,17 +1160,25 @@ async function fetchFrost(element, start, end, stationOverride) {
     return out;
 }
 
-async function fetchNVE(parameter, start, end) {
-    if (!LOC.nveStation) return {};
-    const url = `/api/nve?parameter=${parameter}&start=${start}&end=${end}&station=${LOC.nveStation}`;
+async function fetchNVE(parameter, start, end, stationId) {
+    const station = stationId || LOC.nveStation;
+    if (!station) return {};
+    const url = `/api/nve?parameter=${parameter}&start=${start}&end=${end}&station=${station}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error(`NVE HydAPI error ${res.status}`);
     const json = await res.json();
     const out = {};
-    for (const station of (json.data || [])) {
-        for (const obs of (station.observations || [])) {
+    for (const s of (json.data || [])) {
+        for (const obs of (s.observations || [])) {
             const date = (obs.time || '').slice(0, 10);
-            if (date && obs.value != null) out[date] = obs.value;
+            if (!date || obs.value == null) continue;
+            if (obs.value <= -100) continue;      // NVE sentinel / missing-value placeholder
+            if (obs.value > 9000) continue;       // Other large sentinel values
+            // Quality filtering: NVE marks suspect observations with correction flags
+            // Skip observations flagged as erroneous (correction = 3 or 9)
+            if (obs.correction === 3 || obs.correction === 9) continue;
+            if (parameter === 1003 && obs.value > 30) continue;  // Water temp sanity: Norwegian rivers max ~30°C
+            out[date] = obs.value;
         }
     }
     return out;
@@ -1175,6 +1187,30 @@ async function fetchNVE(parameter, start, end) {
 // ═══════════════════════════════════════════════════════════════════
 //  DATA PROCESSING
 // ═══════════════════════════════════════════════════════════════════
+
+// Fill gaps up to maxGapDays with linear interpolation.
+// Smooths out short sensor outages without fabricating long stretches of data.
+function interpolateGaps(data, maxGapDays = 7) {
+    const sorted = Object.keys(data).sort();
+    if (sorted.length < 2) return data;
+    const result = { ...data };
+    for (let i = 0; i < sorted.length - 1; i++) {
+        const d1 = sorted[i], d2 = sorted[i + 1];
+        const dt1 = parseDate(d1), dt2 = parseDate(d2);
+        const gapDays = Math.round((dt2 - dt1) / 86400000) - 1;
+        if (gapDays <= 0 || gapDays > maxGapDays) continue;
+        const v1 = data[d1], v2 = data[d2];
+        for (let j = 1; j <= gapDays; j++) {
+            const d = new Date(dt1);
+            d.setDate(dt1.getDate() + j);
+            const dateStr = d.toISOString().slice(0, 10);
+            if (!(dateStr in result))
+                result[dateStr] = v1 + (v2 - v1) * j / (gapDays + 1);
+        }
+    }
+    return result;
+}
+
 function latest(data) {
     const dates = Object.keys(data).sort();
     if (!dates.length) return { date: null, value: null };
@@ -1439,13 +1475,17 @@ function renderKPIs(airData, snowData, flowData, wtData) {
     document.getElementById('kpiAirUnit').textContent  = `°C · ${LOC.place} (${LOC.frostStation})`;
     document.getElementById('kpiSnowUnit').textContent = `cm · ${LOC.place}`;
     if (LOC.nveStation) {
+        const wtStn = LOC.nveWaterTempStation || LOC.nveStation;
         document.getElementById('kpiFlowUnit').textContent = `m³/s · ${LOC.place} (${LOC.nveStation})`;
-        document.getElementById('kpiWtUnit').textContent   = `°C · ${LOC.place} (${LOC.nveStation})`;
+        document.getElementById('kpiWtUnit').textContent   = `°C · ${LOC.place} (${wtStn})`;
     }
     const dateStr = at.date || TODAY;
+    const wtStnId = LOC.nveWaterTempStation || LOC.nveStation;
+    const nveIds  = LOC.nveWaterTempStation && LOC.nveWaterTempStation !== LOC.nveStation
+        ? `${LOC.nveStation} / ${LOC.nveWaterTempStation}` : (LOC.nveStation || '');
     document.getElementById('lastUpdated').innerHTML =
         `${t('updatedLabel')} ${parseDate(dateStr).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}<br>
-         ${LOC.frostStation}${LOC.nveStation ? ' · ' + LOC.nveStation : ''}`;
+         ${LOC.frostStation}${nveIds ? ' · ' + nveIds : ''}`;
 }
 
 function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
@@ -1528,7 +1568,7 @@ function renderHistorical() {
 }
 
 function renderWaterTempChart(wtData) {
-    if (!LOC.nveStation) return;
+    if (!LOC.nveStation && !LOC.nveWaterTempStation) return;
     const may1  = doy(new Date(YEAR, 4,  1));
     const jul15 = doy(new Date(YEAR, 6, 15));
     const doys  = Array.from({ length: jul15 - may1 + 1 }, (_, i) => may1 + i);
@@ -1552,11 +1592,11 @@ function renderWaterTempChart(wtData) {
     const datasets = histYears.map(yr => {
         const s = YEAR_STYLE[yr] || { color:'#aaa', w:1 };
         return { label: String(yr), data: doys.map(d => byYear[yr]?.[d] ?? null),
-            borderColor: s.color, borderWidth: s.w, pointRadius: 0, tension: 0.35, spanGaps: true };
+            borderColor: s.color, borderWidth: s.w, pointRadius: 0, tension: 0.35, spanGaps: false };
     });
     if (byYear[YEAR]) {
         datasets.push({ label: `${YEAR} ★`, data: doys.map(d => byYear[YEAR]?.[d] ?? null),
-            borderColor: '#C0392B', borderWidth: 3, pointRadius: 0, tension: 0.35, spanGaps: true });
+            borderColor: '#C0392B', borderWidth: 3, pointRadius: 0, tension: 0.35, spanGaps: false });
     }
     datasets.push({ label: '12°C threshold', data: doys.map(() => 12),
         borderColor: 'rgba(230,100,20,0.6)', borderWidth: 1.5, borderDash: [7,4], pointRadius: 0 });
@@ -1966,8 +2006,8 @@ function renderSpeciesCalendar(isgangResult, vulgataDate) {
     const label = document.querySelector('.best-label');
     if (!grid) return;
 
-    // Finnmark: season too compressed for species differentiation — show classic big-date layout
-    if (LOC.region === 'Finnmark') {
+    // Finnmark / Troms / Nordland: season too compressed for species differentiation — show classic big-date layout
+    if (['Finnmark', 'Troms', 'Nordland'].includes(LOC.region)) {
         if (label) label.textContent = t('bestEstimateNow');
         const dateStr = vulgataDate ? fmt(vulgataDate) : '–';
         grid.style.display = 'block';
@@ -2088,7 +2128,7 @@ function renderWarning(snowFree, wtData, adgDate, histStats, fromDate, airData) 
     // Level 2: water temp extrapolation
     // Uncertainty grows with forecast horizon — only supersedes GDD when close enough
     let l2Date = null, l2Unc = null, l2DaysOut = null;
-    if (LOC.nveStation) {
+    if (LOC.nveStation || LOC.nveWaterTempStation) {
         l2Date = extrapolateWT(wtData);
         if (l2Date) {
             l2DaysOut = Math.round((l2Date - now) / 86400000);
@@ -2145,14 +2185,25 @@ async function main() {
 
     try {
         // Fetch in parallel
-        const [airData, snowData, flowData, wtData] = await Promise.all([
+        const wtStation = LOC.nveWaterTempStation || LOC.nveStation;
+        const [airData, snowData, flowData, wtDataRaw] = await Promise.all([
             fetchFrost('mean(air_temperature P1D)', dataStart, dataEnd),
-            fetchFrost('sum(duration_of_snow_covered_ground P1D)', dataStart, dataEnd, LOC.snowStation)
-                .catch(() => fetchFrost('surface_snow_thickness', dataStart, dataEnd, LOC.snowStation))
-                .catch(() => ({})),   // station may not have snow element — degrade gracefully
+            (async () => {
+                // Try duration_of_snow_covered_ground first; fall back to surface_snow_thickness
+                // if it errors OR returns no data at all.
+                let d = await fetchFrost('sum(duration_of_snow_covered_ground P1D)', dataStart, dataEnd, LOC.snowStation)
+                    .catch(() => ({}));
+                if (Object.keys(d).length === 0) {
+                    d = await fetchFrost('surface_snow_thickness', dataStart, dataEnd, LOC.snowStation)
+                        .catch(() => ({}));
+                }
+                return d;
+            })(),
             LOC.nveStation ? fetchNVE(1001, dataStart, dataEnd).catch(() => ({})) : Promise.resolve({}),
-            LOC.nveStation ? fetchNVE(1003, dataStart, dataEnd).catch(() => ({})) : Promise.resolve({}),
+            wtStation ? fetchNVE(1003, dataStart, dataEnd, wtStation).catch(() => ({})) : Promise.resolve({}),
         ]);
+        // Fill short sensor gaps (≤7 days) with linear interpolation before rendering
+        const wtData = interpolateGaps(wtDataRaw, 7);
 
         // Apply altitude lapse-rate correction (+0.6°C per 100m station is above fishing area)
         const { data: airDataCorrected, correction: altCorrection } = applyAltitudeCorrection(airData);
