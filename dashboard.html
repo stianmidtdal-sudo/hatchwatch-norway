@@ -833,6 +833,193 @@ const LOCATIONS = {
             2019: '2019-04-08', 2018: '2018-04-24', 2017: '2017-04-04',
         },
     },
+    ifjordfjellet: {
+        id: 'ifjordfjellet',
+        area: 'Ifjordfjellet',
+        name: 'Tanaelva',
+        place: 'Ifjordfjellet',
+        region: 'Finnmark',
+        lat: 70.193, lon: 28.202, altitude: 10, stationAltitude: 32,  // Tana bru 32m
+        frostStation: 'SN96850',     // Tana bru
+        snowStation:  'SN96850',
+        nveStation:   '234.18.0',    // Polmak nye — Tana
+        airStationName:   'Tana bru',
+        waterStationName: 'Polmak nye (Tanaelva)',
+        calibrated: false,
+        gddThreshold: 520,
+        uncertaintyDays: 14,
+        biofixLabel: 'Snow-melt',
+    },
+    dividalen: {
+        id: 'dividalen',
+        area: 'Dividalen',
+        name: 'Målselva',
+        place: 'Dividalen',
+        region: 'Troms',
+        lat: 68.671, lon: 19.795, altitude: 180, stationAltitude: 204,  // Dividalen II 204m
+        frostStation: 'SN89940',     // Dividalen II
+        snowStation:  'SN89940',
+        nveStation:   '196.26.0',    // Høgskarhus — Målselva
+        airStationName:   'Dividalen',
+        waterStationName: 'Høgskarhus (Målselva)',
+        calibrated: false,
+        gddThreshold: 520,
+        uncertaintyDays: 14,
+        biofixLabel: 'Snow-melt',
+    },
+    bardufoss: {
+        id: 'bardufoss',
+        area: 'Bardufoss',
+        name: 'Barduelva',
+        place: 'Bardu',
+        region: 'Troms',
+        lat: 69.036, lon: 18.820, altitude: 91, stationAltitude: 76,  // Bardufoss 76m
+        frostStation: 'SN89350',     // Bardufoss
+        snowStation:  'SN89350',
+        nveStation:   '196.12.0',    // Lundberg — Barduelva
+        airStationName:   'Bardufoss',
+        waterStationName: 'Lundberg (Barduelva)',
+        calibrated: false,
+        gddThreshold: 520,
+        uncertaintyDays: 14,
+        biofixLabel: 'Snow-melt',
+    },
+    narvik: {
+        id: 'narvik',
+        area: 'Narvik',
+        name: 'Taraldsvikelv',
+        place: 'Narvik',
+        region: 'Nordland',
+        lat: 68.364, lon: 17.623, altitude: 50, stationAltitude: 200,  // Straumsnes 200m
+        frostStation: 'SN84500',     // Straumsnes
+        snowStation:  'SN84500',
+        nveStation:   '174.11.0',    // Taraldsvikelv — Narvik
+        airStationName:   'Straumsnes',
+        waterStationName: 'Taraldsvikelv',
+        calibrated: false,
+        gddThreshold: 520,
+        uncertaintyDays: 14,
+        biofixLabel: 'Snow-melt',
+    },
+    mo_i_rana: {
+        id: 'mo_i_rana',
+        area: 'Mo i Rana',
+        name: 'Leiråga',
+        place: 'Mo i Rana',
+        region: 'Nordland',
+        lat: 66.360, lon: 14.692, altitude: 150, stationAltitude: 110,  // Storforshei 110m
+        frostStation: 'SN79700',     // Storforshei
+        snowStation:  'SN79700',
+        nveStation:   '156.27.0',    // Leiråga — Mo i Rana
+        airStationName:   'Storforshei',
+        waterStationName: 'Leiråga',
+        calibrated: false,
+        gddThreshold: 520,
+        uncertaintyDays: 14,
+        biofixLabel: 'Snow-melt',
+    },
+    borgefjell: {
+        id: 'borgefjell',
+        area: 'Børgefjell',
+        name: 'Unkervatnet',
+        place: 'Børgefjell',
+        region: 'Nordland',
+        lat: 65.109, lon: 14.090, altitude: 469, stationAltitude: 460,  // Namsvatn II 460m
+        frostStation: 'SN74780',     // Namsvatn II
+        snowStation:  'SN74780',
+        nveStation:   '151.70.0',    // Unkervatn — Hattfjelldal
+        airStationName:   'Namsvatn',
+        waterStationName: 'Unkervatn',
+        calibrated: false,
+        gddThreshold: 520,
+        uncertaintyDays: 14,
+        biofixLabel: 'Snow-melt',
+    },
+    lierne: {
+        id: 'lierne',
+        area: 'Lierne',
+        name: 'Skjellbreivatn',
+        place: 'Lierne',
+        region: 'Trøndelag',
+        lat: 64.185, lon: 13.145, altitude: 420, stationAltitude: 195,  // Snåsa - Kjevlia 195m
+        frostStation: 'SN70850',     // Snåsa - Kjevlia
+        snowStation:  'SN70850',
+        nveStation:   '139.25.0',    // Skjellbreivatn — Lierne
+        airStationName:   'Snåsa',
+        waterStationName: 'Skjellbreivatn',
+        calibrated: false,
+        gddThreshold: 520,
+        uncertaintyDays: 14,
+        biofixLabel: 'Dynamic (7-day avg >3°C)',
+    },
+    trondheim: {
+        id: 'trondheim',
+        area: 'Trondheim',
+        name: 'Nidelva',
+        place: 'Trondheim',
+        region: 'Trøndelag',
+        lat: 63.483, lon: 10.812, altitude: 288, stationAltitude: 27,  // Kvithamar 27m
+        frostStation: 'SN69150',     // Kvithamar
+        snowStation:  'SN69150',
+        nveStation:   '123.95.0',    // Kobberdammen — Nidelva/Trondheim
+        airStationName:   'Kvithamar',
+        waterStationName: 'Kobberdammen (Nidelva)',
+        calibrated: false,
+        gddThreshold: 520,
+        uncertaintyDays: 14,
+        biofixLabel: 'Dynamic (7-day avg >3°C)',
+    },
+    rena: {
+        id: 'rena',
+        area: 'Rena',
+        name: 'Glomma',
+        place: 'Rena',
+        region: 'Innlandet',
+        lat: 61.135, lon: 11.650, altitude: 209, stationAltitude: 230,  // Rv3 Rena 230m
+        frostStation: 'SN6840',      // Rv3 Rena
+        snowStation:  'SN6840',
+        nveStation:   '2.43.0',      // Glomstadfoss — Glomma ved Rena
+        airStationName:   'Rv3 Rena',
+        waterStationName: 'Glomstadfoss (Glomma)',
+        calibrated: false,
+        gddThreshold: 520,
+        uncertaintyDays: 14,
+        biofixLabel: 'Dynamic (7-day avg >3°C)',
+    },
+    finnemarka: {
+        id: 'finnemarka',
+        area: 'Finnemarka',
+        name: 'Elgtjern',
+        place: 'Finnemarka',
+        region: 'Østlandet',
+        lat: 59.855, lon: 10.303, altitude: 220, stationAltitude: 250,  // E18 Lierskogen 250m
+        frostStation: 'SN19923',     // E18 Lierskogen
+        snowStation:  'SN19923',
+        nveStation:   '11.4.0',      // Elgtjern — Modum
+        airStationName:   'E18 Lierskogen',
+        waterStationName: 'Elgtjern',
+        calibrated: false,
+        gddThreshold: 520,
+        uncertaintyDays: 14,
+        biofixLabel: 'Dynamic (7-day avg >3°C)',
+    },
+    hardangervidda: {
+        id: 'hardangervidda',
+        area: 'Hardangervidda',
+        name: 'Kvenna',
+        place: 'Hardangervidda',
+        region: 'Telemark',
+        lat: 60.139, lon: 8.547, altitude: 935, stationAltitude: 648,  // Uvdal kraftverk 648m
+        frostStation: 'SN29350',     // Uvdal kraftverk
+        snowStation:  'SN29350',
+        nveStation:   '16.140.0',    // Kvenna — Hardangervidda
+        airStationName:   'Uvdal',
+        waterStationName: 'Kvenna',
+        calibrated: false,
+        gddThreshold: 520,
+        uncertaintyDays: 14,
+        biofixLabel: 'Snow-melt',
+    },
 };
 
 // ─── Kautokeino historical hatch data ─────────────────────────────
