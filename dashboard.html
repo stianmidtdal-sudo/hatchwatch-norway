@@ -459,8 +459,6 @@
                         <th>Snow Free</th>
                         <th>Winter Snow (cm)</th>
                         <th>Est. Ice Thickness (cm)</th>
-                        <th>First Hatch</th>
-                        <th>Notes</th>
                     </tr></thead>
                     <tbody id="histBody"></tbody>
                 </table>
@@ -1561,8 +1559,7 @@ function renderHistorical() {
             <td>${r.snowFree || '–'}</td>
             <td>${r.snowCm ?? '–'}</td>
             <td>${r.iceCm ? r.iceCm.toFixed(1) : '–'}</td>
-            <td>${r.hatch ? `<strong>${r.hatch}</strong>` : '<span class="yr-na">–</span>'}</td>
-            <td style="font-size:0.78rem;color:#666">${r.comment||''}</td>`;
+`;
         tbody.appendChild(tr);
     });
 }
