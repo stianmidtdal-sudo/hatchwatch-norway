@@ -450,14 +450,14 @@
 
         <!-- ═══ HISTORICAL HATCH COMPARISON (Kautokeino only) ═══ -->
         <section id="histSection" style="display:none">
-            <h2 data-i18n="histHatch">Historical Hatch Comparison</h2>
+            <h2>Historical Season Overview</h2>
             <div class="table-wrap">
                 <table>
                     <thead><tr>
-                        <th data-i18n="histYrCol">Year</th>
+                        <th>Year</th>
                         <th>Ice Breakup</th>
                         <th>Snow Free</th>
-                        <th>Winter Snow (cm)</th>
+                        <th>Max Snow (cm)</th>
                         <th>Est. Ice Thickness (cm)</th>
                     </tr></thead>
                     <tbody id="histBody"></tbody>
@@ -465,21 +465,6 @@
             </div>
         </section>
 
-        <!-- ═══ NO HATCH DATA NOTE (uncalibrated) ═══ -->
-        <section id="noHatchSection" style="display:none">
-            <h2 data-i18n="histHatchData">Historical Hatch Data</h2>
-            <div class="table-wrap">
-                <table>
-                    <thead><tr>
-                        <th>Status</th>
-                        <th>Note</th>
-                    </tr></thead>
-                    <tbody>
-                        <tr><td>⚠ No data</td><td style="color:#777">No systematic hatch observations available for this location. Weather history (below) is fetched live from MET Norway. If you have observed hatching here, contact us to contribute calibration data.</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
 
         <!-- ═══ WATER TEMPERATURE CHART ═══ -->
         <section id="wtSection">
@@ -726,6 +711,10 @@ const LOCATIONS = {
         gddThreshold: 520,
         uncertaintyDays: 2.1,
         biofixLabel: 'Snow-melt / 1 Jan',
+        isgangHistory: {
+            2025: '2025-05-28', 2024: '2024-05-26', 2023: '2023-05-23',
+            2022: '2022-05-26', 2021: '2021-05-30',
+        },
     },
     alta: {
         id: 'alta',
@@ -1065,10 +1054,8 @@ if (LOC.showIce) document.getElementById('iceSection').style.display = '';
 if (!LOC.calibrated) {
     document.getElementById('priorNotice').style.display = '';
     document.getElementById('priorUncDays').textContent = `±${LOC.uncertaintyDays} days`;
-    document.getElementById('noHatchSection').style.display = '';
-} else {
-    document.getElementById('histSection').style.display = '';
 }
+document.getElementById('histSection').style.display = '';  // shown for all locations
 
 // Water sections
 if (!LOC.nveStation) {
@@ -1548,20 +1535,78 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
     document.getElementById('adgDateNote').textContent = `${t('whenGddReaches')} ${LOC.gddThreshold}`;
 }
 
-function renderHistorical() {
-    if (!LOC.calibrated) return;
+function renderHistorical(airData, snowData) {
+    const ALPHA = 0.6;  // Stefan coefficient (same as ice chart)
+    const HIST_YEARS = [2020, 2021, 2022, 2023, 2024, 2025];
     const tbody = document.getElementById('histBody');
-    KAUTOKEINO_HIST.forEach(r => {
+    tbody.innerHTML = '';
+
+    // Group air data by winter year (Nov–May)
+    const byWinter = {};
+    for (const [dateStr, temp] of Object.entries(airData)) {
+        if (temp == null) continue;
+        const dt = parseDate(dateStr);
+        const mo = dt.getMonth() + 1, yr = dt.getFullYear();
+        const winterYr = mo >= 11 ? yr + 1 : yr;
+        if (!byWinter[winterYr]) byWinter[winterYr] = [];
+        byWinter[winterYr].push({ dt, temp });
+    }
+
+    function calcMaxIce(winterYr) {
+        const entries = (byWinter[winterYr] || []).sort((a, b) => a.dt - b.dt);
+        const nov1    = new Date(winterYr - 1, 10, 1);
+        const cutoff  = new Date(winterYr, 4, 31);
+        let fdd = 0, maxH = 0;
+        for (const { dt, temp } of entries) {
+            if (dt < nov1 || dt > cutoff) continue;
+            if (temp < 0) fdd += Math.abs(temp);
+            const h = ALPHA * Math.sqrt(fdd);
+            if (h > maxH) maxH = h;
+        }
+        return Math.round(maxH * 10) / 10;
+    }
+
+    function maxSnowForWinter(winterYr) {
+        let max = null;
+        for (const [dateStr, val] of Object.entries(snowData)) {
+            const yr = parseInt(dateStr.slice(0, 4));
+            const mo = parseInt(dateStr.slice(5, 7));
+            const wy = mo >= 10 ? yr + 1 : yr;
+            if (wy !== winterYr) continue;
+            if (max == null || val > max) max = val;
+        }
+        return max;
+    }
+
+    for (const year of HIST_YEARS) {
+        if (year >= YEAR) continue;
+
+        // Ice breakup from isgangHistory
+        const isgangRaw = LOC.isgangHistory?.[year];
+        let isgang = '–';
+        if (isgangRaw && isgangRaw !== '–') {
+            isgang = fmt(parseDate(isgangRaw));
+        }
+
+        // Snow free date
+        const sfDate  = findSnowFreeDate(snowData, year);
+        const snowFree = sfDate ? fmt(parseDate(sfDate)) : '–';
+
+        // Max snow depth
+        const maxSnow = maxSnowForWinter(year);
+
+        // Max ice thickness via Stefan
+        const iceCm = calcMaxIce(year);
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><strong>${r.year}</strong></td>
-            <td>${r.isgang || '–'}</td>
-            <td>${r.snowFree || '–'}</td>
-            <td>${r.snowCm ?? '–'}</td>
-            <td>${r.iceCm ? r.iceCm.toFixed(1) : '–'}</td>
-`;
+            <td><strong>${year}</strong></td>
+            <td>${isgang}</td>
+            <td>${snowFree}</td>
+            <td>${maxSnow != null ? Math.round(maxSnow) : '–'}</td>
+            <td>${iceCm > 0 ? iceCm.toFixed(1) : '–'}</td>`;
         tbody.appendChild(tr);
-    });
+    }
 }
 
 function renderWaterTempChart(wtData) {
@@ -2219,7 +2264,7 @@ async function main() {
         // Render
         renderKPIs(airData, snowData, flowData, wtData);   // KPIs show raw station readings
         renderModel(airDataCorrected, currentADG, histADG, adgDate, wtDate, histStats);
-        renderHistorical();
+        renderHistorical(airDataCorrected, snowData);
         renderHistoricalGDDSection(histStats, altCorrection);
         renderWaterTempChart(wtData);
         renderSnowChart(snowData);
