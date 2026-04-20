@@ -214,55 +214,134 @@
             .cards { padding: 0 20px 40px; }
             .how { padding: 36px 20px; }
         }
+
+        /* ── Language button ─────────────────────────── */
+        .lang-btn {
+            background: none;
+            border: 1px solid #dde8dd;
+            border-radius: 6px;
+            padding: 5px 13px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            color: #1B4332;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .lang-btn:hover { background: #e8f5e0; border-color: #b0cfb8; }
     </style>
 </head>
 <body>
 
 <nav>
+    <div style="display:flex;align-items:center">
     <img src="data:image/png;base64,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" alt="HatchWatch" style="height:40px;width:40px;margin-right:10px;vertical-align:middle;">
-    <span class="logo">HATCH WATCH</span>
-    <span class="sub">Norway</span>
+        <div>
+            <div class="logo">HATCH WATCH</div>
+            <div class="sub">Norway</div>
+        </div>
+    </div>
+    <button id="langBtn" class="lang-btn" onclick="toggleLang()">EN</button>
 </nav>
 
 <div class="hero">
     <div class="tag">Beta v1.0</div>
-    <h1>Aquatic insect<br><span>emergence forecasting</span></h1>
-    <p>Hatch timing estimated from live water temperature data and accumulated heat units (GDD)</p>
+    <h1><span data-i18n="heroLine1">Aquatic insect</span><br><span data-i18n="heroSpan">emergence forecasting</span></h1>
+    <p data-i18n="heroP">Hatch timing estimated from live water temperature data and accumulated heat units (GDD)</p>
 </div>
 
 <div class="cards" id="main"></div>
 
 
 <div class="how">
-    <div class="eyebrow">How it works</div>
+    <div class="eyebrow" data-i18n="howEyebrow">How it works</div>
     <div class="how-grid">
         <div class="item">
-            <strong>Dual Trigger Model</strong>
-            <p>Two independent models run in parallel — one tracking accumulated heat units (GDD), the other the live water temperature trend. Each blends real observations with a forward projection to its respective threshold. The estimated hatch date is where the last condition is met.</p>
+            <strong data-i18n="dualTitle">Dual Trigger Model</strong>
+            <p data-i18n="dualDesc">Two independent models run in parallel — one tracking accumulated heat units (GDD), the other the live water temperature trend. Each blends real observations with a forward projection to its respective threshold. The estimated hatch date is where the last condition is met.</p>
         </div>
         <div class="item">
-            <strong>GDD · Growing Degree Days</strong>
-            <p>Heat accumulates from January 1st. Each species crosses a calibrated thermal threshold — that crossing is the forecast.</p>
+            <strong data-i18n="gddTitle">GDD · Growing Degree Days</strong>
+            <p data-i18n="gddDesc">Heat accumulates from January 1st. Each species crosses a calibrated thermal threshold — that crossing is the forecast.</p>
         </div>
         <div class="item">
-            <strong>Stefan Ice Model</strong>
-            <p>Ice-out is predicted using Stefan's law — a physical growth/melt model calibrated against satellite-observed records from each location.</p>
+            <strong data-i18n="stefanTitle">Stefan Ice Model</strong>
+            <p data-i18n="stefanDesc">Ice-out is predicted using Stefan's law — a physical growth/melt model calibrated against satellite-observed records from each location.</p>
         </div>
         <div class="item">
-            <strong>Data Sources</strong>
-            <p>Air temperature and snow cover from MET Norway's Frost API. Water temperature from NVE HydAPI. Updated daily.</p>
+            <strong data-i18n="dataTitle">Data Sources</strong>
+            <p data-i18n="dataDesc">Air temperature and snow cover from MET Norway's Frost API. Water temperature from NVE HydAPI. Updated daily.</p>
         </div>
     </div>
-    <div class="how-note">
+    <div class="how-note" data-i18n-html="howNote">
         <strong>It's either very clever, or deeply unnecessary.</strong> Possibly both.
     </div>
 </div>
 
-<div class="page-footer">
+<div class="page-footer" data-i18n-html="footer">
     Built by <strong>Stian Midtdal</strong> &nbsp;·&nbsp; © 2026 Hatch Watch Norway
 </div>
 
 <script>
+// ── Language / i18n ─────────────────────────────────────────────────
+const LANG = localStorage.getItem('lang') || 'no';
+const T = {
+  no: {
+    heroLine1: 'Klekking av',
+    heroSpan: 'akvatiske insekter',
+    heroP: 'Klekketidspunkt estimert fra løpende vanntemperaturdata og akkumulerte varmegrader (GDD)',
+    howEyebrow: 'Slik fungerer det',
+    dualTitle: 'Dobbelttrigger-modell',
+    dualDesc: 'To uavhengige modeller kjører parallelt — én sporer akkumulerte varmegrader (GDD), den andre den løpende vanntemperaturtrenden. Hver blander faktiske observasjoner med en fremskriving til sin respektive terskel. Estimert klekkedato er der den siste betingelsen oppfylles.',
+    gddTitle: 'GDD · Akkumulerte døgngrader',
+    gddDesc: 'Varme akkumuleres fra 1. januar. Hver art krysser en kalibrert termisk terskel — denne kryssingen er prognosen.',
+    stefanTitle: 'Stefan ismodell',
+    stefanDesc: 'Istykkelse estimeres med Stefans ligning — en fysisk vekstmodell for innsjøis basert på akkumulerte kuldegrader.',
+    dataTitle: 'Datakilder',
+    dataDesc: 'Lufttemperatur og snødybde fra Meteorologisk institutts Frost API. Vanntemperatur fra NVE HydAPI. Oppdateres daglig.',
+    howNote: '<strong>Dette er enten veldig smart, eller dypt unødvendig.</strong> Sannsynligvis begge deler.',
+    footer: 'Laget av <strong>Stian Midtdal</strong> &nbsp;·&nbsp; © 2026 Hatch Watch Norway',
+    viewForecast: 'Se prognose →',
+    calibratedBadge: '⭐ Kalibrert',
+  },
+  en: {
+    heroLine1: 'Aquatic insect',
+    heroSpan: 'emergence forecasting',
+    heroP: 'Hatch timing estimated from live water temperature data and accumulated heat units (GDD)',
+    howEyebrow: 'How it works',
+    dualTitle: 'Dual Trigger Model',
+    dualDesc: 'Two independent models run in parallel — one tracking accumulated heat units (GDD), the other the live water temperature trend. Each blends real observations with a forward projection to its respective threshold. The estimated hatch date is where the last condition is met.',
+    gddTitle: 'GDD · Growing Degree Days',
+    gddDesc: 'Heat accumulates from January 1st. Each species crosses a calibrated thermal threshold — that crossing is the forecast.',
+    stefanTitle: 'Stefan Ice Model',
+    stefanDesc: 'Ice thickness is estimated using the Stefan equation — a physical growth model for lake ice based on accumulated freezing degree days.',
+    dataTitle: 'Data Sources',
+    dataDesc: "Air temperature and snow cover from MET Norway's Frost API. Water temperature from NVE HydAPI. Updated daily.",
+    howNote: "<strong>It's either very clever, or deeply unnecessary.</strong> Possibly both.",
+    footer: 'Built by <strong>Stian Midtdal</strong> &nbsp;·&nbsp; © 2026 Hatch Watch Norway',
+    viewForecast: 'View forecast →',
+    calibratedBadge: '⭐ Calibrated',
+  }
+};
+function t(key) { return (T[LANG] && T[LANG][key] != null) ? T[LANG][key] : (T['en'][key] || key); }
+function toggleLang() {
+    localStorage.setItem('lang', LANG === 'no' ? 'en' : 'no');
+    location.reload();
+}
+function applyLang() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const v = t(el.getAttribute('data-i18n'));
+        if (v) el.textContent = v;
+    });
+    document.querySelectorAll('[data-i18n-html]').forEach(el => {
+        const v = t(el.getAttribute('data-i18n-html'));
+        if (v) el.innerHTML = v;
+    });
+    const btn = document.getElementById('langBtn');
+    if (btn) btn.textContent = LANG === 'no' ? 'EN' : 'NO';
+}
+applyLang();
+
 // ── Area data ────────────────────────────────────────────────────────
 // Ordered north → south by latitude.
 const RIVERS = [
@@ -318,8 +397,8 @@ function buildCards() {
                 <div class="card-river">${r.calibrated ? "⭐ " : ""}${r.area}</div>
                 <div class="card-place">${r.region} · ${r.lat.toFixed(1)}°N</div>
                 <div class="card-stations">🌡 ${r.river}<br>💧 ${r.waterRiver}</div>
-                ${r.calibrated ? '<div class="badge">⭐ Calibrated</div>' : ''}
-                <div class="card-arrow">View forecast →</div>`;
+                ${r.calibrated ? `<div class="badge">${t('calibratedBadge')}</div>` : ''}
+                <div class="card-arrow">${t('viewForecast')}</div>`;
 
             grid.appendChild(a);
         }
