@@ -132,8 +132,32 @@
         .card-note { font-size: 0.72rem; color: #999; margin-top: 5px; }
         .card-highlight { color: #2D6A4F; }
 
-        .progress-wrap { background: #e8e8e8; border-radius: 5px; height: 9px; margin-top: 14px; overflow: hidden; }
+        .progress-wrap { background: #e8e8e8; border-radius: 5px; height: 9px; margin-top: 14px; position: relative; }
         .progress-bar { height: 100%; background: linear-gradient(90deg, #74C69D, #1B4332); border-radius: 5px; transition: width 0.6s ease; }
+        .progress-avg-marker {
+            position: absolute;
+            top: -3px;
+            bottom: -3px;
+            width: 2px;
+            background: #d97706;
+            border-radius: 1px;
+            transform: translateX(-50%);
+            z-index: 2;
+            transition: left 0.6s ease;
+            pointer-events: auto;
+        }
+        .progress-avg-marker::after {
+            content: attr(data-label);
+            position: absolute;
+            top: -16px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.62rem;
+            color: #b45309;
+            white-space: nowrap;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
         .progress-label { font-size: 0.72rem; color: #888; margin-top: 5px; }
 
         .model-info-band {
@@ -341,7 +365,7 @@
 
         <!-- ═══ PRIOR MODEL NOTICE (shown for uncalibrated) ═══ -->
         <div id="priorNotice" class="prior-notice" style="display:none">
-            ⚠ <strong>Prior model:</strong> No local hatch data incorporated. Predictions use calibrated GDD parameters with regional adjustments (<strong id="priorUncDays">±6 days</strong> uncertainty). Weather from nearest MET Norway station.
+            <span data-i18n-html="priorNoticePrefix">⚠ <strong>Prior model:</strong> No local hatch data incorporated. Predictions use calibrated GDD parameters with regional adjustments (</span><strong id="priorUncDays">±6 days</strong><span data-i18n="priorNoticeSuffix"> uncertainty). Weather from nearest MET Norway station.</span>
         </div>
 
         <!-- ═══ LOCATION INFO STRIP ═══ -->
@@ -392,8 +416,9 @@
                     <div class="card-label" data-i18n="gddThisYear">GDD This Year (from 1 Jan)</div>
                     <div class="card-value card-highlight" id="adgNow">–</div>
                     <div class="card-note" data-i18n="gddUnit">Growing Degree Days · base 0°C</div>
-                    <div class="progress-wrap">
+                    <div class="progress-wrap" style="margin-top: 24px">
                         <div class="progress-bar" id="adgBar" style="width:0%"></div>
+                        <div class="progress-avg-marker" id="adgAvgMarker" style="left:0%; display:none" data-label=""></div>
                     </div>
                     <div class="progress-label" id="adgPct">– % of target</div>
                     <div id="adgCompareBand" class="model-info-band" data-i18n="loadingHistAvg">Loading historical average…</div>
@@ -413,6 +438,11 @@
                     <div class="card-label" data-i18n="estHatchDate">Estimated Hatch Date</div>
                     <div class="card-value yr-current" id="hatchDate">–</div>
                     <div class="card-note" id="hatchNote">–</div>
+                </div>
+                <div class="card" id="generalHatchCard" style="display:none">
+                    <div class="card-label" data-i18n="generalHatchStart">General Hatch Start</div>
+                    <div class="card-value yr-current" id="generalHatchDate">–</div>
+                    <div class="card-note" id="generalHatchNote" data-i18n="generalHatchNote">–</div>
                 </div>
             </div>
         </section>
@@ -563,12 +593,41 @@ const T = {
     locModel: 'Modell',
     masl: 'm o.h.',
     calibratedModel: '✅ Kalibrert',
+    stdShort: 'standardavvik',
+    daysLabel: 'dager',
+    fromJan1: 'fra 1. jan',
+    priorLabel: 'Prior',
+    priorUncLabel: 'Prior usikkerhet',
+    yrDataSuffix: 'års data',
+    calibVerifiedText: 'Kalibrert modell · Kautokeino GDD-parametere er verifisert mot feltobservasjoner.',
+    modelUncertaintyText: 'Modellusikkerhet',
+    dataDrivenText: 'datadrevet fra år med GDD-modell',
+    priorEstimateText: 'prior-estimat — kalibrer ved å rapportere observerte klekkedatoer',
+    estimateLabel: 'Estimat',
+    priorLower: 'prior',
+    uncalibratedLower: 'ukalibrert',
+    gddModelShort: 'GDD-modell',
+    wtExtrapolation: 'Vanntempekstrapolering',
+    toHatch: 'til klekking',
+    snowFreePlus32: 'Snøfri dato + 32 dager',
+    earlySignal: 'tidlig signal',
+    earlySignalOnly: 'kun tidlig signal',
+    preciseLabel: 'presis',
+    reliableLabel: 'pålitelig',
+    priorUncalibrated: 'prior, ukalibrert',
+    priorNoticePrefix: '⚠ <strong>Prior-modell:</strong> Ingen lokale klekkedata integrert. Prognoser bruker kalibrerte GDD-parametere med regionale justeringer (',
+    priorNoticeSuffix: ' usikkerhet). Vær fra nærmeste MET Norge-stasjon.',
+    verylowSnowNote: (avg, place) => `⚠ Svært lite snø her (snitt maks ${avg} cm ved ${place}). Snødybde er ikke en meningsfylt sesongindikator her.`,
+    lowlandSnowNote: (avg) => `⚠ Lavlandsstasjon (snitt maks ${avg} cm). Snøen er flyktig — hvert segment er en isolert snøhendelse, ikke en sammenhengende sesong.`,
+    avgMarkerLabel: '▼ 5-årssnitt',
     gddThisYear: 'GDD i år (fra 1. jan)',
     gddUnit: 'Akkumulerte varmegrader · base 0°C',
     remaining: 'Gjenstående til terskel',
     remainingUnit: 'GDD-enheter til terskel',
     estGddDate: 'Est. GDD terskelsdato',
     estHatchDate: 'Estimert klekkedato',
+    generalHatchStart: 'Generell klekkestart',
+    generalHatchNote: '2-feature OLS · snøfri + vårtemp (LOO-MAE 2.75 d, n=20)',
     shortSeason: 'Kort sesong — klekking komprimeres til ett enkelt vindu her.',
     noNveStation: 'Ingen NVE-stasjon konfigurert',
     requiresNve: 'Krever NVE vanntemperaturdata',
@@ -634,12 +693,41 @@ const T = {
     locModel: 'Model',
     masl: 'm a.s.l.',
     calibratedModel: '✅ Calibrated',
+    stdShort: 'std. dev.',
+    daysLabel: 'days',
+    fromJan1: 'from 1 Jan',
+    priorLabel: 'Prior',
+    priorUncLabel: 'Prior uncertainty',
+    yrDataSuffix: 'yr data',
+    calibVerifiedText: 'Calibrated model · Kautokeino GDD parameters verified against field observations.',
+    modelUncertaintyText: 'Model uncertainty',
+    dataDrivenText: 'data-driven from years of GDD model',
+    priorEstimateText: 'prior estimate — calibrate by reporting observed hatch dates',
+    estimateLabel: 'Estimate',
+    priorLower: 'prior',
+    uncalibratedLower: 'uncalibrated',
+    gddModelShort: 'GDD model',
+    wtExtrapolation: 'Water temp extrapolation',
+    toHatch: 'to hatch',
+    snowFreePlus32: 'Snow-free date + 32 days',
+    earlySignal: 'early signal',
+    earlySignalOnly: 'early signal only',
+    preciseLabel: 'precise',
+    reliableLabel: 'reliable',
+    priorUncalibrated: 'prior, uncalibrated',
+    priorNoticePrefix: '⚠ <strong>Prior model:</strong> No local hatch data incorporated. Predictions use calibrated GDD parameters with regional adjustments (',
+    priorNoticeSuffix: ' uncertainty). Weather from nearest MET Norway station.',
+    verylowSnowNote: (avg, place) => `⚠ Very low snow area (avg. max ${avg} cm at ${place}). Snow depth is not a meaningful seasonal indicator here.`,
+    lowlandSnowNote: (avg) => `⚠ Lowland station (avg. max ${avg} cm). Snow is ephemeral — each segment is an isolated snow event, not a continuous season.`,
+    avgMarkerLabel: '▼ 5-yr avg',
     gddThisYear: 'GDD This Year (from 1 Jan)',
     gddUnit: 'Growing Degree Days · base 0°C',
     remaining: 'Remaining to Target',
     remainingUnit: 'GDD units until threshold',
     estGddDate: 'Est. GDD Threshold Date',
     estHatchDate: 'Estimated Hatch Date',
+    generalHatchStart: 'General Hatch Start',
+    generalHatchNote: '2-feature OLS · snow-free + spring temp (LOO-MAE 2.75 d, n=20)',
     shortSeason: 'Short season — hatches compress into a single window here.',
     noNveStation: 'No NVE station configured',
     requiresNve: 'Requires NVE water temp data',
@@ -1061,14 +1149,14 @@ document.getElementById('locStrip').innerHTML = [
     { key: t('locCoords'),       val: `${LOC.lat.toFixed(2)}°N, ${LOC.lon.toFixed(2)}°E` },
     { key: t('locBiofix'),       val: LOC.biofixLabel },
     { key: t('locGddTarget'),    val: `${LOC.gddThreshold} (base 0°C)` },
-    { key: t('locModel'),        val: LOC.calibrated ? t('calibratedModel') : `⚠ Prior (±${LOC.uncertaintyDays} d)` },
+    { key: t('locModel'),        val: LOC.calibrated ? t('calibratedModel') : `⚠ ${t('priorLabel')} (±${LOC.uncertaintyDays} d)` },
 ].map(i => `<div class="loc-item"><div class="loc-key">${i.key}</div><div class="loc-val">${i.val}</div></div>`).join('');
 
 // Show/hide sections based on calibration
 if (LOC.showIce) document.getElementById('iceSection').style.display = '';
 if (!LOC.calibrated) {
     document.getElementById('priorNotice').style.display = '';
-    document.getElementById('priorUncDays').textContent = `±${LOC.uncertaintyDays} days`;
+    document.getElementById('priorUncDays').textContent = `±${LOC.uncertaintyDays} ${t('daysLabel')}`;
 }
 document.getElementById('histSection').style.display = '';  // shown for all locations
 
@@ -1098,8 +1186,8 @@ if (!LOC.nveStation) {
 // Model heading
 document.getElementById('modelHeading').textContent =
     LOC.calibrated
-        ? `Dual Trigger Model · GDD ≥ ${LOC.gddThreshold} (bt = 0°C, from 1 Jan) + Water Temp ≥ 12°C · MAE = ±${LOC.uncertaintyDays} days`
-        : `GDD Prior Model · Threshold ${LOC.gddThreshold} GDD (bt = 0°C) · Prior uncertainty ±${LOC.uncertaintyDays} days`;
+        ? `${t('dualTriggerLabel')} ${LOC.gddThreshold} (bt = 0°C, ${t('fromJan1')}) + ${t('waterTemp')} ≥ 12°C · ${t('stdShort')} = ±${LOC.uncertaintyDays} ${t('daysLabel')}`
+        : `${t('gddPriorLabel')} ${LOC.gddThreshold} GDD (bt = 0°C) · ${t('priorUncLabel')} ±${LOC.uncertaintyDays} ${t('daysLabel')}`;
 
 document.getElementById('snowHeading').textContent =
     LANG === 'no'
@@ -1228,7 +1316,9 @@ function calcADG(airData, fromDate) {
 function histAvgADG(airData, toDoy) {
     // Use the same dynamic biofix logic for each historical year so the comparison
     // is apples-to-apples with currentADG (which also starts from dynamic biofix).
-    const years = [2021, 2022, 2023, 2024, 2025];
+    // Rullerende 5-årssnitt: alltid de 5 siste fullførte årene før inneværende år.
+    const thisYear = new Date().getFullYear();
+    const years = [thisYear - 5, thisYear - 4, thisYear - 3, thisYear - 2, thisYear - 1];
     const adgs = years.map(yr => {
         const biofix = findWarmingOnset(airData, yr);
         let sum = 0;
@@ -1433,6 +1523,102 @@ function findSnowFreeDate(snowData, year) {
     return null;
 }
 
+// ═══════════════════════════════════════════════════════════════════
+//  HatchWatch v3 — 2-feature OLS model (Kautokeino kalibrering)
+//  Trent på 20 klekkeobservasjoner 2016–2025 (døgnflue + vårflue).
+//  LOO-MAE = 2.75 d · formel: DOY = 282.14 − 0.50·SnowFree − 3.88·SpringMean
+//  Kjøres kun for kautokeino — andre steder har ikke tilsvarende data.
+// ═══════════════════════════════════════════════════════════════════
+const HATCH_V3 = {
+    intercept:         282.1355,
+    snowFreeCoef:       -0.5015,
+    springMeanCoef:     -3.8796,
+    looMaeDays:          2.75,
+    looRmseDays:         3.23,
+};
+
+// Python-definisjonen: første dag fra 1. april der snø ≤ 0 cm (snø-smelting
+// skjer aldri før april i Kautokeino). Faller tilbake på dashboardets
+// findSnowFreeDate hvis strengt 0-nivå ikke observeres (sporadisk rapportering).
+function computeSnowFreeDoyV3(snowData, year) {
+    const dates = Object.keys(snowData).filter(d => d.startsWith(String(year))).sort();
+    for (const d of dates) {
+        if (d < `${year}-04-01`) continue;
+        if (snowData[d] <= 0) return doy(parseDate(d));
+    }
+    // Fallback: bruk eksisterende snøfri-logikk (≤ 1 cm, 3-dagers streak)
+    const fallback = findSnowFreeDate(snowData, year);
+    if (fallback) return doy(parseDate(fallback));
+    return null;
+}
+
+// Gjennomsnitt av daglig lufttemperatur fra 1. mai til 30. juni.
+// Hvis vi spør om inneværende år og 30. juni ikke er nådd ennå, projekteres
+// resten av perioden med klimatologisk snitt (samme mnd/dag fra tidligere år).
+// Gir stabil prediksjon allerede i april/mai.
+function computeSpringMeanMayJunV3(airData, year) {
+    const inMayJun = (dt) => {
+        const m = dt.getMonth() + 1;  // 1-indexed month
+        return m === 5 || m === 6;
+    };
+    const mdKey = (dt) => `${(dt.getMonth() + 1).toString().padStart(2,'0')}-${dt.getDate().toString().padStart(2,'0')}`;
+
+    const observed = [];
+    const observedKeys = new Set();
+    for (const [d, t] of Object.entries(airData)) {
+        if (t == null) continue;
+        const dt = parseDate(d);
+        if (dt.getFullYear() !== year) continue;
+        if (!inMayJun(dt)) continue;
+        observed.push(t);
+        observedKeys.add(mdKey(dt));
+    }
+    const obsSum = observed.reduce((s, v) => s + v, 0);
+    const obsCount = observed.length;
+
+    // Bygg liste over alle mai-juni-dager i dette kalenderåret
+    const allKeys = new Set();
+    for (let m of [5, 6]) {
+        const daysInMonth = (m === 5) ? 31 : 30;
+        for (let d = 1; d <= daysInMonth; d++) {
+            allKeys.add(`${m.toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`);
+        }
+    }
+    const missingKeys = [...allKeys].filter(k => !observedKeys.has(k));
+    if (missingKeys.length === 0) {
+        return obsCount > 0 ? obsSum / obsCount : null;
+    }
+
+    // Klimatologisk snitt per måned/dag fra tidligere år
+    const climoByKey = {};
+    for (const [d, t] of Object.entries(airData)) {
+        if (t == null) continue;
+        const dt = parseDate(d);
+        if (dt.getFullYear() >= year) continue;
+        if (!inMayJun(dt)) continue;
+        const k = mdKey(dt);
+        if (!climoByKey[k]) climoByKey[k] = { sum: 0, n: 0 };
+        climoByKey[k].sum += t;
+        climoByKey[k].n++;
+    }
+    let climoSum = 0, climoCount = 0;
+    for (const k of missingKeys) {
+        const c = climoByKey[k];
+        if (c && c.n > 0) { climoSum += c.sum / c.n; climoCount++; }
+    }
+    const totalCount = obsCount + climoCount;
+    if (totalCount === 0) return null;
+    return (obsSum + climoSum) / totalCount;
+}
+
+function predictHatchV3(snowFreeDoy, springMean, year) {
+    if (snowFreeDoy == null || springMean == null) return null;
+    const predDoy = HATCH_V3.intercept
+        + HATCH_V3.snowFreeCoef * snowFreeDoy
+        + HATCH_V3.springMeanCoef * springMean;
+    return { doy: predDoy, date: dateFromDoy(year || YEAR, Math.round(predDoy)) };
+}
+
 function extrapolateWT(waterTempData) {
     const recent = Object.entries(waterTempData)
         .filter(([d]) => d.startsWith(String(YEAR)))
@@ -1497,6 +1683,16 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
     document.getElementById('adgBar').style.width  = pct + '%';
     document.getElementById('adgPct').textContent  = `${pct.toFixed(1)}${t('pctOfTarget')} ${LOC.gddThreshold} GDD`;
 
+    // 5-årssnittmarkør på progress-baren — visuell referanse for fremgang mot snitt
+    const avgPct = Math.min(100, Math.max(0, histADG / LOC.gddThreshold * 100));
+    const avgMarker = document.getElementById('adgAvgMarker');
+    if (avgMarker && isFinite(avgPct) && histADG > 0) {
+        avgMarker.style.left = avgPct + '%';
+        avgMarker.style.display = '';
+        avgMarker.setAttribute('data-label', t('avgMarkerLabel'));
+        avgMarker.title = `${t('fiveYearAvg')} ${histADG.toFixed(1)} GDD (${avgPct.toFixed(1)}%)`;
+    }
+
     const diff = currentADG - histADG;
     const sign = diff >= 0 ? '+' : '';
     document.getElementById('adgCompareBand').textContent =
@@ -1505,17 +1701,18 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
     // Uncertainty band — data-driven when histStats available, prior fallback otherwise
     const uncDays   = histStats ? histStats.std.toFixed(1) : LOC.uncertaintyDays;
     const uncSource = histStats
-        ? `data-driven from ${histStats.n} years of GDD model (2019–${histStats.crossings.at(-1)?.year ?? ''})`
-        : `prior estimate — calibrate by reporting observed hatch dates`;
+        ? (LANG === 'no'
+            ? `datadrevet fra ${histStats.n} års GDD-modell (2019–${histStats.crossings.at(-1)?.year ?? ''})`
+            : `data-driven from ${histStats.n} years of GDD model (2019–${histStats.crossings.at(-1)?.year ?? ''})`)
+        : t('priorEstimateText');
     const unc = document.getElementById('uncertaintyBand');
-    unc.style.display = '';
     if (LOC.calibrated) {
-        unc.innerHTML = `✅ Calibrated model · MAE ±${uncDays} days · Kautokeino GDD parameters verified against field observations.`;
-        unc.style.background = '#edf7f2';
-        unc.style.borderColor = '#74C69D';
-        unc.style.color = '#1B4332';
+        // Boksen med "Kalibrert modell · …" er unødvendig støy på kalibrerte lokasjoner.
+        // Usikkerheten kommuniseres allerede via modellheading og loc-strip.
+        unc.style.display = 'none';
     } else {
-        unc.innerHTML = `⚠ Model uncertainty: <strong>±${uncDays} days</strong> (${uncSource}).`;
+        unc.style.display = '';
+        unc.innerHTML = `⚠ ${t('modelUncertaintyText')}: <strong>±${uncDays} ${t('daysLabel')}</strong> (${uncSource}).`;
     }
 
 
@@ -1524,14 +1721,14 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
     const locModelEl = document.querySelector('#locStrip .loc-item:last-child .loc-val');
     if (locModelEl) {
         locModelEl.textContent = LOC.calibrated
-            ? `✅ Calibrated (±${uncDays} d)`
-            : `⚠ Prior · ±${uncDays} d${histStats ? ` (${histStats.n} yrs)` : ''}`;
+            ? `${t('calibratedModel')} (±${uncDays} d)`
+            : `⚠ ${t('priorLabel')} · ±${uncDays} d${histStats ? ` (${histStats.n} ${LANG === 'no' ? 'år' : 'yrs'})` : ''}`;
     }
 
     // Update model heading with actual uncertainty
     document.getElementById('modelHeading').textContent = LOC.calibrated
-        ? `${t('dualTriggerLabel')} ${LOC.gddThreshold} (bt = 0°C) + Water Temp ≥ 12°C · ±${uncDays} days MAE`
-        : `${t('gddPriorLabel')} ${LOC.gddThreshold} GDD (bt = 0°C) · ±${uncDays} days${histStats ? ` (${histStats.n}-yr data)` : ' prior'}`;
+        ? `${t('dualTriggerLabel')} ${LOC.gddThreshold} (bt = 0°C) + ${t('waterTemp')} ≥ 12°C · ±${uncDays} ${t('daysLabel')} ${t('stdShort')}`
+        : `${t('gddPriorLabel')} ${LOC.gddThreshold} GDD (bt = 0°C) · ±${uncDays} ${t('daysLabel')}${histStats ? ` (${histStats.n}-${t('yrDataSuffix')})` : ` ${t('priorLabel').toLowerCase()}`}`;
 
     document.getElementById('adgDate').textContent = adgDate ? fmt(adgDate) : '–';
 
@@ -1543,11 +1740,38 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
     } else if (adgDate) {
         hatchNote = LOC.calibrated
             ? t('gddTriggerOnly')
-            : `Estimate ±${uncDays} days${histStats ? ` (${histStats.n}-yr data)` : ' (prior)'}`;
+            : `${t('estimateLabel')} ±${uncDays} ${t('daysLabel')}${histStats ? ` (${histStats.n}-${t('yrDataSuffix')})` : ` (${t('priorLower')})`}`;
     }
     document.getElementById('hatchDate').textContent = hatchDate ? fmt(hatchDate) : '–';
     document.getElementById('hatchNote').textContent = hatchNote;
     document.getElementById('adgDateNote').textContent = `${t('whenGddReaches')} ${LOC.gddThreshold}`;
+}
+
+// General Hatch Start (2-feature OLS) — kun for kautokeino. For andre steder
+// er modellen ikke kalibrert, og kortet holdes skjult av renderModel-laget.
+function renderGeneralHatch(airData, snowData) {
+    const card = document.getElementById('generalHatchCard');
+    if (!card) return;
+    if (LOC.id !== 'kautokeino') { card.style.display = 'none'; return; }
+
+    const sf = computeSnowFreeDoyV3(snowData, YEAR);
+    const sm = computeSpringMeanMayJunV3(airData, YEAR);
+    const result = predictHatchV3(sf, sm, YEAR);
+    card.style.display = '';
+    const dateEl = document.getElementById('generalHatchDate');
+    const noteEl = document.getElementById('generalHatchNote');
+    if (!result) {
+        dateEl.textContent = '–';
+        noteEl.textContent = sf == null
+            ? 'Venter på snøfri dato'
+            : 'Venter på mai-data';
+        return;
+    }
+    dateEl.textContent = fmt(result.date);
+    const partsNo = [];
+    if (sf != null) partsNo.push(`snøfri DOY ${sf}`);
+    if (sm != null) partsNo.push(`vårtemp ${sm.toFixed(1)}°C`);
+    noteEl.textContent = `±${HATCH_V3.looMaeDays.toFixed(1)} d MAE · ${partsNo.join(' · ')}`;
 }
 
 function renderHistorical(airData, snowData) {
@@ -1744,9 +1968,9 @@ function renderSnowChart(snowData) {
         if (avgMax < 5) {
             // Essentially no snow — hide the chart entirely, just show a message
             document.getElementById('snowChart').style.display = 'none';
-            note.textContent = `⚠ Very low snow area (avg. max ${avgMax.toFixed(0)} cm at ${LOC.place}). Snow depth is not a meaningful seasonal indicator here.`;
+            note.textContent = t('verylowSnowNote')(avgMax.toFixed(0), LOC.place);
         } else if (isSparseSnow) {
-            note.textContent = `⚠ Lowland station (avg. max ${avgMax.toFixed(0)} cm). Snow is ephemeral — each segment is an isolated snow event, not a continuous season.`;
+            note.textContent = t('lowlandSnowNote')(avgMax.toFixed(0));
         }
         if (note.textContent) snowSection.appendChild(note);
     }
@@ -2154,11 +2378,11 @@ function renderSpeciesCalendar(isgangResult, vulgataDate) {
 
 function renderWarning(snowFree, wtData, adgDate, histStats, fromDate, airData) {
     const uncDays   = histStats ? histStats.std.toFixed(1) : LOC.uncertaintyDays;
-    const uncSource = histStats ? `${histStats.n}-yr data` : 'prior';
+    const uncSource = histStats ? `${histStats.n}-${t('yrDataSuffix')}` : t('priorLower');
     // GDD-based estimate
     if (adgDate) {
         document.getElementById('wGddDate').textContent = fmt(adgDate);
-        document.getElementById('wGddUnc').textContent  = `± ${uncDays} days · GDD model (${uncSource})`;
+        document.getElementById('wGddUnc').textContent  = `± ${uncDays} ${t('daysLabel')} · ${t('gddModelShort')} (${uncSource})`;
         const badge = document.getElementById('wGddBadge');
         badge.textContent = t('active');
         badge.className   = 'badge badge-active';
@@ -2191,9 +2415,9 @@ function renderWarning(snowFree, wtData, adgDate, histStats, fromDate, airData) 
             l2DaysOut = Math.round((l2Date - now) / 86400000);
             // ±3d base + 0.1d per day of horizon, min 4, max 14
             l2Unc = Math.min(14, Math.max(4, Math.round(3 + l2DaysOut * 0.1)));
-            const uncLabel = l2DaysOut <= 14 ? `±${l2Unc} days — precise`
-                           : l2DaysOut <= 30 ? `±${l2Unc} days — reliable`
-                           :                   `±${l2Unc} days — early signal only`;
+            const uncLabel = l2DaysOut <= 14 ? `±${l2Unc} ${t('daysLabel')} — ${t('preciseLabel')}`
+                           : l2DaysOut <= 30 ? `±${l2Unc} ${t('daysLabel')} — ${t('reliableLabel')}`
+                           :                   `±${l2Unc} ${t('daysLabel')} — ${t('earlySignalOnly')}`;
             document.getElementById('wL2Date').textContent = fmt(l2Date);
             document.getElementById('wL2Unc').textContent  = uncLabel;
             const b = document.getElementById('wL2Badge');
@@ -2206,11 +2430,11 @@ function renderWarning(snowFree, wtData, adgDate, histStats, fromDate, airData) 
     const L1_UNC = 11;
     const candidates = [];
     if (l2Date && l2Date > now && l2DaysOut <= 30)
-        candidates.push({ date: l2Date, unc: l2Unc,           note: `Water temp extrapolation — ±${l2Unc} days (${l2DaysOut}d to hatch)` });
+        candidates.push({ date: l2Date, unc: l2Unc,           note: `${t('wtExtrapolation')} — ±${l2Unc} ${t('daysLabel')} (${l2DaysOut}${LANG === 'no' ? 'd' : 'd'} ${t('toHatch')})` });
     if (adgDate)
-        candidates.push({ date: adgDate, unc: parseFloat(uncDays), note: `GDD model — ±${uncDays} days${histStats ? ` (${histStats.n}-yr data)` : !LOC.calibrated ? ' (prior, uncalibrated)' : ''}` });
+        candidates.push({ date: adgDate, unc: parseFloat(uncDays), note: `${t('gddModelShort')} — ±${uncDays} ${t('daysLabel')}${histStats ? ` (${histStats.n}-${t('yrDataSuffix')})` : !LOC.calibrated ? ` (${t('priorUncalibrated')})` : ''}` });
     if (l1Date)
-        candidates.push({ date: l1Date,  unc: L1_UNC,          note: `Snow-free date + 32 days — ±${L1_UNC} days (early signal)` });
+        candidates.push({ date: l1Date,  unc: L1_UNC,          note: `${t('snowFreePlus32')} — ±${L1_UNC} ${t('daysLabel')} (${t('earlySignal')})` });
 
     candidates.sort((a, b) => a.unc - b.unc);
     const best = candidates[0] ?? null;
@@ -2228,7 +2452,7 @@ function renderWarning(snowFree, wtData, adgDate, histStats, fromDate, airData) 
     // Sync prior notice banner with the active best estimate method's uncertainty
     const priorUncEl = document.getElementById('priorUncDays');
     if (priorUncEl) {
-        priorUncEl.textContent = best ? `±${best.unc} days` : `±${uncDays} days`;
+        priorUncEl.textContent = best ? `±${best.unc} ${t('daysLabel')}` : `±${uncDays} ${t('daysLabel')}`;
     }
 }
 
@@ -2279,6 +2503,7 @@ async function main() {
         // Render
         renderKPIs(airData, snowData, flowData, wtData);   // KPIs show raw station readings
         renderModel(airDataCorrected, currentADG, histADG, adgDate, wtDate, histStats);
+        renderGeneralHatch(airDataCorrected, snowData);
         renderHistorical(airDataCorrected, snowData);
         renderHistoricalGDDSection(histStats, altCorrection);
         renderWaterTempChart(wtData);
