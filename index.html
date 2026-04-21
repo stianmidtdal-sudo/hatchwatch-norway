@@ -406,7 +406,7 @@ function buildCards() {
 
             a.innerHTML = `
                 <div class="top-bar"></div>
-                <div class="card-river">${r.calibrated ? "⭐ " : ""}${r.area}</div>
+                <div class="card-river">${r.area}</div>
                 <div class="card-place">${r.region} · ${r.lat.toFixed(1)}°N</div>
                 <div class="card-stations">🌡 ${r.river}<br>💧 ${r.waterRiver}</div>
                 ${r.calibrated ? `<div class="badge">${t('calibratedBadge')}</div>` : ''}
