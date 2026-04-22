@@ -436,10 +436,7 @@
 
         <!-- ═══ PREDICTION CONVERGENCE ═══ -->
         <section id="convergenceSection">
-            <h2 data-i18n="convergenceHeading">Prediction Convergence · How the estimate settles as data arrives</h2>
-            <div id="convergenceIntro" class="conv-intro" data-i18n="convergenceIntro">
-                Each day, we combine observed GDD so far with the 5-year historical rate for the remaining days to project when the 520-GDD threshold will be crossed. Early in the season the prediction leans heavily on the historical rate; as real measurements replace forecast days, the line converges toward the final answer.
-            </div>
+            <h2 data-i18n="convergenceHeading">Prediction history</h2>
             <div class="chart-wrap" style="height:320px">
                 <canvas id="convChart"></canvas>
             </div>
@@ -525,12 +522,11 @@ const T = {
     wStep0: 'Grunnlinje · GDD-modell',
     wStep1: 'Nivå 1 · Snøfri + 32 dager',
     wStep2: 'Nivå 2 · Vanntemp. ekstrapolering',
-    convergenceHeading: 'Prediksjonskonvergens · Hvordan estimatet lander etter hvert som data kommer inn',
-    convergenceIntro: 'Hver dag kombinerer vi observert GDD så langt med 5-års historisk rate for de gjenstående dagene, og projiserer når 520-GDD-terskelen nås. Tidlig i sesongen hviler prediksjonen tungt på historisk rate; ettersom virkelige målinger erstatter prognosedager, konvergerer linjen mot det endelige svaret.',
+    convergenceHeading: 'Prediksjonshistorikk',
     convToday: 'I dag',
     convPrediction: 'Dagens prediksjon',
     convBand: (unc) => `Standardavvik (±${String(unc).replace('.', ',')} d)`,
-    convHistMedian: '5-års median',
+    convHistMedian: 'Median klekkedato',
     convNotEnoughData: 'Ikke nok data for konvergensgraf — venter på første GDD-akkumulering av sesongen.',
     convCrossed: 'GDD-terskelen er allerede nådd i år.',
     convSummaryLatest: (date, unc, stability) => `Nåværende estimat: <strong>${date}</strong> · ±${unc} d (standardavvik). ${stability}`,
@@ -635,12 +631,11 @@ const T = {
     wStep0: 'Baseline · GDD model',
     wStep1: 'Level 1 · Snow-free + 32 days',
     wStep2: 'Level 2 · Water temp extrapolation',
-    convergenceHeading: 'Prediction Convergence · How the estimate settles as data arrives',
-    convergenceIntro: 'Each day, we combine observed GDD so far with the 5-year historical rate for the remaining days to project when the 520-GDD threshold will be crossed. Early in the season the prediction leans heavily on the historical rate; as real measurements replace forecast days, the line converges toward the final answer.',
+    convergenceHeading: 'Prediction history',
     convToday: 'Today',
     convPrediction: "Today's prediction trajectory",
     convBand: (unc) => `Std deviation (±${unc} d)`,
-    convHistMedian: '5-year median',
+    convHistMedian: 'Median hatch date',
     convNotEnoughData: 'Not enough data for convergence chart — awaiting first GDD accumulation of the season.',
     convCrossed: 'GDD threshold already crossed this year.',
     convSummaryLatest: (date, unc, stability) => `Current estimate: <strong>${date}</strong> · ±${unc} d (std. dev.). ${stability}`,
@@ -2427,7 +2422,7 @@ function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate, airDa
     ];
     if (histMedianDoy != null) {
         datasets.push({
-            label: `${t('convHistMedian')} (DOY ${histMedianDoy})`,
+            label: `${t('convHistMedian')}: ${fmt(dateFromDoy(YEAR, histMedianDoy))}`,
             data: labels.map(() => histMedianDoy),
             borderColor: 'rgba(100, 100, 100, 0.7)',
             borderWidth: 1.5,
