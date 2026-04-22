@@ -401,6 +401,15 @@
             </div>
         </section>
 
+        <!-- ═══ PREDICTION CONVERGENCE ═══ -->
+        <section id="convergenceSection">
+            <h2 data-i18n="convergenceHeading">Prediction history</h2>
+            <div class="chart-wrap" style="height:320px">
+                <canvas id="convChart"></canvas>
+            </div>
+            <div class="conv-summary" id="convSummary"></div>
+        </section>
+
         <!-- ═══ GDD MODEL ═══ -->
         <section>
             <h2 id="modelHeading">GDD Model · Loading…</h2>
@@ -432,15 +441,6 @@
                     <div class="card-note" id="hatchNote">–</div>
                 </div>
             </div>
-        </section>
-
-        <!-- ═══ PREDICTION CONVERGENCE ═══ -->
-        <section id="convergenceSection">
-            <h2 data-i18n="convergenceHeading">Prediction history</h2>
-            <div class="chart-wrap" style="height:320px">
-                <canvas id="convChart"></canvas>
-            </div>
-            <div class="conv-summary" id="convSummary"></div>
         </section>
 
         <!-- ═══ HISTORICAL GDD WINDOW (all locations) ═══ -->
