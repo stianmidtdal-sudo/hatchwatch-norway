@@ -564,7 +564,6 @@ const T = {
     locWaterStation: 'Vannempstasjon',
     locAltitude: 'Høyde',
     locCoords: 'Koordinater',
-    locBiofix: 'Biofix',
     locGddTarget: 'GDD-terskel',
     locModel: 'Modell',
     masl: 'm o.h.',
@@ -613,7 +612,6 @@ const T = {
     histDoy: 'Dag i år',
     histVsMedian: 'vs. median',
     altCorrection: '🏔 Høydekorreksjon:',
-    dynamicBiofix: 'Dynamisk biofix: GDD-akkumulering starter fra første vedvarende oppvarming (7-dagers snitt > 3°C), ikke fast 1. jan.',
     noHatchDataRow: 'Ingen systematiske klekkobservasjoner tilgjengelig for dette stedet. Værhistorikk (nedenfor) hentes live fra MET Norge. Kontakt oss for å bidra med kalibreringsdata.',
     gddHatchModel: 'GDD klekkemodell',
     dualTriggerLabel: 'Dobbelttrigger-modell · GDD ≥',
@@ -661,7 +659,6 @@ const T = {
     locWaterStation: 'Water temp station',
     locAltitude: 'Altitude',
     locCoords: 'Coordinates',
-    locBiofix: 'Biofix',
     locGddTarget: 'GDD Target',
     locModel: 'Model',
     masl: 'm a.s.l.',
@@ -710,7 +707,6 @@ const T = {
     histDoy: 'Day of year',
     histVsMedian: 'vs. median',
     altCorrection: '🏔 Altitude correction:',
-    dynamicBiofix: 'Dynamic biofix: GDD accumulation starts from first sustained warming (7-day avg > 3°C), not fixed Jan 1.',
     noHatchDataRow: 'No systematic hatch observations available for this location. Weather history (below) is fetched live from MET Norway. Contact us to contribute calibration data.',
     gddHatchModel: 'GDD Hatch Model',
     dualTriggerLabel: 'Dual Trigger Model · GDD ≥',
@@ -768,7 +764,6 @@ const LOCATIONS = {
         showIce: true,
         gddThreshold: 520,
         uncertaintyDays: 2.1,
-        biofixLabel: 'Snow-melt / 1 Jan',
         isgangHistory: {
             2025: '2025-05-28', 2024: '2024-05-26', 2023: '2023-05-23',
             2022: '2022-05-26', 2021: '2021-05-30',
@@ -789,7 +784,6 @@ const LOCATIONS = {
         showIce: true,
         gddThreshold: 520,
         uncertaintyDays: 10,
-        biofixLabel: 'Snow-melt',
     },
     porsanger: {
         id: 'porsanger',
@@ -806,7 +800,6 @@ const LOCATIONS = {
         showIce: true,
         gddThreshold: 520,
         uncertaintyDays: 10,
-        biofixLabel: 'Snow-melt',
     },
     roros: {
         id: 'roros',
@@ -823,7 +816,6 @@ const LOCATIONS = {
         showIce: true,
         gddThreshold: 520,
         uncertaintyDays: 12,
-        biofixLabel: 'Dynamic (7-day avg >3°C)',
         isgangWater: 'Sætersjøen',
         isgangHistory: {
             2025: '2025-05-12', 2024: '2024-05-18', 2023: '2023-06-05',
@@ -846,7 +838,6 @@ const LOCATIONS = {
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 14,
-        biofixLabel: 'Dynamic (7-day avg >3°C)',
         isgangWater: 'Katnosa',
         isgangHistory: {
             2025: '2025-04-25', 2024: '2024-05-09', 2023: '2023-05-23',
@@ -869,7 +860,6 @@ const LOCATIONS = {
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 14,
-        biofixLabel: 'Dynamic (7-day avg >3°C)',
         isgangWater: 'Søndre Ertevannet',
         isgangHistory: {
             2026: '2026-03-18',
@@ -894,7 +884,6 @@ const LOCATIONS = {
         showIce: true,
         gddThreshold: 520,
         uncertaintyDays: 14,
-        biofixLabel: 'Snow-melt',
         isgangHistory: {
             2025: '2025-06-10', 2024: '2024-06-10', 2023: '2023-06-05',
             2022: '2022-06-05', 2021: '2021-06-13', 2020: '2020-06-15',
@@ -916,7 +905,6 @@ const LOCATIONS = {
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 14,
-        biofixLabel: 'Snow-melt',
         isgangHistory: {
             2025: '2025-06-13', 2024: '2024-06-03', 2023: '2023-06-07',
             2022: '2022-06-11', 2021: '2021-06-12', 2020: '2020-06-19',
@@ -939,7 +927,6 @@ const LOCATIONS = {
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 14,
-        biofixLabel: 'Snow-melt',
         isgangHistory: {
             2025: '2025-06-18', 2024: '2024-06-03', 2023: '2023-06-15',
             2022: '2022-06-13', 2021: '2021-06-11', 2020: '2020-06-27',
@@ -962,7 +949,6 @@ const LOCATIONS = {
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 14,
-        biofixLabel: 'Snow-melt',
     },
     mo_i_rana: {
         id: 'mo_i_rana',
@@ -979,7 +965,6 @@ const LOCATIONS = {
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 14,
-        biofixLabel: 'Snow-melt',
     },
     borgefjell: {
         id: 'borgefjell',
@@ -996,7 +981,6 @@ const LOCATIONS = {
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 14,
-        biofixLabel: 'Snow-melt',
     },
     lierne: {
         id: 'lierne',
@@ -1013,7 +997,6 @@ const LOCATIONS = {
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 14,
-        biofixLabel: 'Dynamic (7-day avg >3°C)',
     },
     trondheim: {
         id: 'trondheim',
@@ -1030,7 +1013,6 @@ const LOCATIONS = {
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 14,
-        biofixLabel: 'Dynamic (7-day avg >3°C)',
     },
     rena: {
         id: 'rena',
@@ -1047,7 +1029,6 @@ const LOCATIONS = {
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 14,
-        biofixLabel: 'Dynamic (7-day avg >3°C)',
     },
     finnemarka: {
         id: 'finnemarka',
@@ -1064,7 +1045,6 @@ const LOCATIONS = {
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 14,
-        biofixLabel: 'Dynamic (7-day avg >3°C)',
     },
     hardangervidda: {
         id: 'hardangervidda',
@@ -1081,7 +1061,6 @@ const LOCATIONS = {
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 14,
-        biofixLabel: 'Snow-melt',
     },
 };
 
@@ -1117,7 +1096,6 @@ document.getElementById('locStrip').innerHTML = [
     { key: t('locWaterStation'), val: LOC.waterStationName },
     { key: t('locAltitude'),     val: `${LOC.altitude} ${t('masl')}` },
     { key: t('locCoords'),       val: `${LOC.lat.toFixed(2)}°N, ${LOC.lon.toFixed(2)}°E` },
-    { key: t('locBiofix'),       val: LOC.biofixLabel },
     { key: t('locGddTarget'),    val: `${LOC.gddThreshold} (base 0°C)` },
     { key: t('locModel'),        val: LOC.calibrated ? t('calibratedModel') : `⚠ ${t('priorLabel')} (±${LOC.uncertaintyDays} d)` },
 ].map(i => `<div class="loc-item"><div class="loc-key">${i.key}</div><div class="loc-val">${i.val}</div></div>`).join('');
@@ -1283,19 +1261,17 @@ function calcADG(airData, fromDate) {
     return Math.round(adg * 10) / 10;
 }
 
-function histAvgADG(airData, toDoy) {
-    // Use the same dynamic biofix logic for each historical year so the comparison
-    // is apples-to-apples with currentADG (which also starts from dynamic biofix).
-    // Rullerende 5-årssnitt: alltid de 5 siste fullførte årene før inneværende år.
+function histAvgADG(airData, fromDoy, toDoy) {
+    // Rullerende 5-årssnitt over nøyaktig SAMME DOY-vindu som inneværende år.
+    // Alltid fra 1. januar (bt=0°C), per Excel-modellen Dashboard 3.0.
     const thisYear = new Date().getFullYear();
     const years = [thisYear - 5, thisYear - 4, thisYear - 3, thisYear - 2, thisYear - 1];
     const adgs = years.map(yr => {
-        const biofix = findWarmingOnset(airData, yr);
         let sum = 0;
         for (const [d, v] of Object.entries(airData)) {
             if (!d.startsWith(String(yr))) continue;
-            if (d < biofix) continue;
-            if (doy(parseDate(d)) > toDoy) continue;
+            const dy = doy(parseDate(d));
+            if (dy < fromDoy || dy > toDoy) continue;
             sum += Math.max(0, v);
         }
         return sum;
@@ -1319,7 +1295,7 @@ function buildDoyAvgTemp(airData) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  MODEL v2 — ALTITUDE CORRECTION + HISTORICAL STATS + DYNAMIC BIOFIX
+//  MODEL v2 — ALTITUDE CORRECTION + HISTORICAL STATS (GDD from Jan 1, per Excel)
 // ═══════════════════════════════════════════════════════════════════
 
 // A. Altitude lapse-rate correction (0.6°C per 100m)
@@ -1335,27 +1311,11 @@ function applyAltitudeCorrection(rawData) {
     return { data: corrected, correction: Math.round(delta * 10) / 10 };
 }
 
-// B. Dynamic biofix — first date when 7-day rolling average exceeds 3°C.
-// More accurate than fixed Jan 1 for locations with actual snow cover.
-function findWarmingOnset(airData, year) {
-    const dates = Object.keys(airData)
-        .filter(d => d >= `${year}-02-01` && d < `${year}-07-01`)
-        .sort();
-    for (let i = 6; i < dates.length; i++) {
-        const window = dates.slice(i - 6, i + 1)
-            .map(d => airData[d]).filter(v => v != null);
-        if (window.length < 5) continue;
-        const avg = window.reduce((a, b) => a + b, 0) / window.length;
-        if (avg > 3.0) return dates[Math.max(0, i - 3)];
-    }
-    return `${year}-01-01`;
-}
-
 // C. Calculate day-of-year when cumulative GDD crosses threshold for a given year
 function calcGDDCrossingYear(airData, year, threshold) {
-    const biofix = findWarmingOnset(airData, year);
+    // GDD teller fra 1. januar (bt=0°C), per Excel-modellen Dashboard 3.0.
     const dates = Object.keys(airData)
-        .filter(d => d.startsWith(String(year)) && d >= biofix)
+        .filter(d => d.startsWith(String(year)))
         .sort();
     let gdd = 0;
     for (const d of dates) {
@@ -1442,10 +1402,6 @@ function renderHistoricalGDDSection(stats, correctionDelta) {
             (station ${LOC.stationAltitude}m · fishing area ~${LOC.altitude}m · lapse rate 0.6°C/100m)
         </div>`;
     }
-    html += `<div style="font-size:0.74rem;color:#888;margin-top:4px;padding:0 4px">
-        ${t('dynamicBiofix')}
-    </div>`;
-
     document.getElementById('gddHistContent').innerHTML = html;
 }
 
@@ -2208,7 +2164,7 @@ function resolveIsgang(airData, fromDate, snowFree, vulgataDate) {
         return { date: d1, source: 'est. from snow-free' };
     }
     if (fromDate) {
-        return { date: new Date(fromDate), source: 'warming onset' };
+        return { date: new Date(fromDate), source: 'Jan 1 start' };
     }
     if (vulgataDate) {
         var d2 = new Date(vulgataDate); d2.setDate(d2.getDate() - 35);
@@ -2424,11 +2380,12 @@ async function main() {
         // Apply altitude lapse-rate correction (+0.6°C per 100m station is above fishing area)
         const { data: airDataCorrected, correction: altCorrection } = applyAltitudeCorrection(airData);
 
-        // Dynamic biofix: GDD starts from first sustained warming (7-day avg > 3°C), not fixed 1 Jan
-        const fromDate   = findWarmingOnset(airDataCorrected, YEAR);
+        // GDD starts from 1. januar (per Excel-modell Dashboard 3.0, kalibrert mot 520 GDD + WT ≥ 12°C)
+        const fromDate   = `${YEAR}-01-01`;
         const currentADG = calcADG(airDataCorrected, fromDate);
         const todayDoyN  = doy(new Date());
-        const histADG    = histAvgADG(airDataCorrected, todayDoyN);
+        const fromDoyN   = doy(parseDate(fromDate));
+        const histADG    = histAvgADG(airDataCorrected, fromDoyN, todayDoyN);
         const adgDate    = projectADGDate(airDataCorrected, currentADG);
         const wtDate     = LOC.nveStation ? extrapolateWT(wtData) : null;
 
