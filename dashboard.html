@@ -572,11 +572,11 @@ const T = {
     convergenceIntro: 'Hver dag kombinerer vi observert GDD så langt med 5-års historisk rate for de gjenstående dagene, og projiserer når 520-GDD-terskelen nås. Tidlig i sesongen hviler prediksjonen tungt på historisk rate; ettersom virkelige målinger erstatter prognosedager, konvergerer linjen mot det endelige svaret.',
     convToday: 'I dag',
     convPrediction: 'Dagens prediksjon',
-    convBand: 'MAE-bånd (±2,1 d)',
+    convBand: 'Standardavvik (±2,1 d)',
     convHistMedian: '5-års median',
     convNotEnoughData: 'Ikke nok data for konvergensgraf — venter på første GDD-akkumulering av sesongen.',
     convCrossed: 'GDD-terskelen er allerede nådd i år.',
-    convSummaryLatest: (date, unc, stability) => `Nåværende estimat: <strong>${date}</strong> · ±${unc} d (MAE). ${stability}`,
+    convSummaryLatest: (date, unc, stability) => `Nåværende estimat: <strong>${date}</strong> · ±${unc} d (standardavvik). ${stability}`,
     convStabilityStable: 'Prediksjonen har stabilisert seg de siste 7 dagene (≤1 dags endring).',
     convStabilityMoving: (days) => `Prediksjonen har beveget seg ${days} dager de siste 7 dagene — fortsatt sensitiv for ny data.`,
     convStabilityEarly: 'Sesongen er ung — forvent at prediksjonen vil bevege seg en del før den stabiliserer seg.',
@@ -587,7 +587,7 @@ const T = {
     snowHatchCaveat2: '<strong>Confounding (skjulte tredjevariable).</strong> Milde vintre har ofte både mer snø OG lavere frost-degree-days OG tidligere vår. "Snødybde" kan være en proxy for "generelt mild vinter" snarere enn en kausal driver.',
     snowHatchCaveat3: '<strong>Pseudo-replikasjon.</strong> Flere observasjoner samme år deler samme vær — hver nye observasjon tilfører ikke et uavhengig år.',
     snowHatchCaveat4: '<strong>Kontraintuitivt fortegn.</strong> "Mer snø → tidligere klekking" er uvanlig og bør vekke skepsis. Isolasjonsmekanismen er plausibel, men ikke bevist fra disse dataene alene.',
-    snowHatchCaveatConclusion: '<strong>Bruk det som svakt tidlig signal, ikke som prediktor.</strong> GDD + vanntemp er fortsatt hovedmodellen (MAE = 2,1 d). Snødybde kan gi et hint i februar–mars, før GDD har tatt av.',
+    snowHatchCaveatConclusion: '<strong>Bruk det som svakt tidlig signal, ikke som prediktor.</strong> GDD + vanntemp er fortsatt hovedmodellen (±2,1 d standardavvik). Snødybde kan gi et hint i februar–mars, før GDD har tatt av.',
     snowHatchRegression: (r, n) => `Trendlinje i plottet: r = ${r.toFixed(2)}, n = ${n}.`,
     snowHatchWinterAxis: 'Vintermaks snødybde (cm)',
     snowHatchDateAxis: 'GDD-520 krysningsdato (dag i år)',
@@ -615,7 +615,6 @@ const T = {
     masl: 'm o.h.',
     calibratedModel: '✅ Kalibrert',
     stdShort: 'standardavvik',
-    maeShort: 'MAE',
     daysLabel: 'dager',
     fromJan1: 'fra 1. jan',
     priorLabel: 'Prior',
@@ -653,7 +652,7 @@ const T = {
     histEarliest: 'Tidligst',
     histMedian: 'Median',
     histLatest: 'Senest',
-    histStd: 'År-til-år-spredning',
+    histStd: 'Standardavvik',
     histYrCol: 'År',
     histGddCrossed: 'GDD-terskel nådd',
     histDoy: 'Dag i år',
@@ -691,11 +690,11 @@ const T = {
     convergenceIntro: 'Each day, we combine observed GDD so far with the 5-year historical rate for the remaining days to project when the 520-GDD threshold will be crossed. Early in the season the prediction leans heavily on the historical rate; as real measurements replace forecast days, the line converges toward the final answer.',
     convToday: 'Today',
     convPrediction: "Today's prediction trajectory",
-    convBand: 'MAE band (±2.1 d)',
+    convBand: 'Std deviation (±2.1 d)',
     convHistMedian: '5-year median',
     convNotEnoughData: 'Not enough data for convergence chart — awaiting first GDD accumulation of the season.',
     convCrossed: 'GDD threshold already crossed this year.',
-    convSummaryLatest: (date, unc, stability) => `Current estimate: <strong>${date}</strong> · ±${unc} d (MAE). ${stability}`,
+    convSummaryLatest: (date, unc, stability) => `Current estimate: <strong>${date}</strong> · ±${unc} d (std. dev.). ${stability}`,
     convStabilityStable: 'Prediction has stabilized over the last 7 days (≤1 day movement).',
     convStabilityMoving: (days) => `Prediction has moved ${days} days over the last 7 days — still sensitive to new data.`,
     convStabilityEarly: 'Season is young — expect the prediction to move substantially before it stabilizes.',
@@ -706,7 +705,7 @@ const T = {
     snowHatchCaveat2: '<strong>Confounding (hidden third variables).</strong> Mild winters often have more snow AND fewer frost degree-days AND earlier springs. "Snow depth" may be a proxy for "generally mild winter" rather than a causal driver.',
     snowHatchCaveat3: '<strong>Pseudo-replication.</strong> Multiple observations from the same year share the same weather — each additional observation does not add an independent year.',
     snowHatchCaveat4: '<strong>Counterintuitive sign.</strong> "More snow → earlier hatch" is unusual and should trigger skepticism. The insulation mechanism is plausible, but not proven from this data alone.',
-    snowHatchCaveatConclusion: '<strong>Use as a weak early signal, not as a predictor.</strong> GDD + water temp is still the main model (MAE = 2.1 d). Snow depth can provide a hint in February–March, before GDD ramps up.',
+    snowHatchCaveatConclusion: '<strong>Use as a weak early signal, not as a predictor.</strong> GDD + water temp is still the main model (±2.1 d std. dev.). Snow depth can provide a hint in February–March, before GDD ramps up.',
     snowHatchRegression: (r, n) => `Trendline in plot: r = ${r.toFixed(2)}, n = ${n}.`,
     snowHatchWinterAxis: 'Winter max snow depth (cm)',
     snowHatchDateAxis: 'GDD-520 crossing date (day of year)',
@@ -734,7 +733,6 @@ const T = {
     masl: 'm a.s.l.',
     calibratedModel: '✅ Calibrated',
     stdShort: 'std. dev.',
-    maeShort: 'MAE',
     daysLabel: 'days',
     fromJan1: 'from 1 Jan',
     priorLabel: 'Prior',
@@ -772,7 +770,7 @@ const T = {
     histEarliest: 'Earliest',
     histMedian: 'Median',
     histLatest: 'Latest',
-    histStd: 'Year-to-year spread',
+    histStd: 'Std deviation',
     histYrCol: 'Year',
     histGddCrossed: 'GDD threshold crossed',
     histDoy: 'Day of year',
@@ -1202,7 +1200,7 @@ if (!LOC.nveStation) {
 // Model heading
 document.getElementById('modelHeading').textContent =
     LOC.calibrated
-        ? `${t('dualTriggerLabel')} ${LOC.gddThreshold} (bt = 0°C, ${t('fromJan1')}) + ${t('waterTemp')} ≥ 12°C · ${t('maeShort')} = ±${LOC.uncertaintyDays} ${t('daysLabel')}`
+        ? `${t('dualTriggerLabel')} ${LOC.gddThreshold} (bt = 0°C, ${t('fromJan1')}) + ${t('waterTemp')} ≥ 12°C · ${t('stdShort')} = ±${LOC.uncertaintyDays} ${t('daysLabel')}`
         : `${t('gddPriorLabel')} ${LOC.gddThreshold} GDD (bt = 0°C) · ${t('priorUncLabel')} ±${LOC.uncertaintyDays} ${t('daysLabel')}`;
 
 document.getElementById('snowHeading').textContent =
@@ -1690,7 +1688,7 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
     // histStats.std er år-til-år-spredning av terskelkryssingen, ikke modellfeil — brukes ikke her.
     const uncDays   = LOC.uncertaintyDays;
     const uncSource = LOC.calibrated
-        ? (LANG === 'no' ? 'MAE, validert på 8 år (2016–2025)' : 'MAE, validated on 8 years (2016–2025)')
+        ? (LANG === 'no' ? 'standardavvik, validert på 8 år (2016–2025)' : 'std. dev., validated on 8 years (2016–2025)')
         : t('priorEstimateText');
     const unc = document.getElementById('uncertaintyBand');
     if (LOC.calibrated) {
@@ -1708,14 +1706,14 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
     const locModelEl = document.querySelector('#locStrip .loc-item:last-child .loc-val');
     if (locModelEl) {
         locModelEl.textContent = LOC.calibrated
-            ? `${t('calibratedModel')} · ${t('maeShort')} ±${uncDays} d`
+            ? `${t('calibratedModel')} · ${t('stdShort')} ±${uncDays} d`
             : `⚠ ${t('priorLabel')} · ±${uncDays} d`;
     }
 
     // Update model heading with actual uncertainty
-    // Kalibrerte: MAE=2.1 d fra Excel-validering (n=8 år). Ukalibrerte: prior-estimat.
+    // Kalibrerte: ±2,1 d fra Excel-validering (n=8 år). Ukalibrerte: prior-estimat.
     document.getElementById('modelHeading').textContent = LOC.calibrated
-        ? `${t('dualTriggerLabel')} ${LOC.gddThreshold} (bt = 0°C, ${t('fromJan1')}) + ${t('waterTemp')} ≥ 12°C · ${t('maeShort')} = ±${uncDays} ${t('daysLabel')}`
+        ? `${t('dualTriggerLabel')} ${LOC.gddThreshold} (bt = 0°C, ${t('fromJan1')}) + ${t('waterTemp')} ≥ 12°C · ${t('stdShort')} = ±${uncDays} ${t('daysLabel')}`
         : `${t('gddPriorLabel')} ${LOC.gddThreshold} GDD (bt = 0°C) · ±${uncDays} ${t('daysLabel')} ${t('priorLabel').toLowerCase()}`;
 
     document.getElementById('adgDate').textContent = adgDate ? fmt(adgDate) : '–';
@@ -2523,7 +2521,7 @@ function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate, airDa
     // Ukalibrerte faller tilbake til LOC.uncertaintyDays (prior).
     const uncDays   = LOC.uncertaintyDays;
     const uncSource = LOC.calibrated
-        ? (LANG === 'no' ? 'MAE, 8 år' : 'MAE, 8 yrs')
+        ? (LANG === 'no' ? 'standardavvik, 8 år' : 'std. dev., 8 yrs')
         : t('priorLower');
 
     // Best-estimate-kandidater (samme logikk som før — feeder "Best estimate now")
