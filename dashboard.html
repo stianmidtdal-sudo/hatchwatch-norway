@@ -35,6 +35,8 @@
         }
         .header-left { display: flex; flex-direction: row; align-items: center; gap: 12px; }
         .header-logo { width: 44px; height: 44px; flex-shrink: 0; display: block; }
+        .header-logo-link { display: block; flex-shrink: 0; cursor: pointer; }
+        .header-logo-link:hover .header-logo { opacity: 0.82; transition: opacity 0.15s ease; }
         .header-text { display: flex; flex-direction: column; }
         header h1 { font-size: 1.2rem; font-weight: 700; letter-spacing: 0.3px; }
         header .sub { font-size: 0.78rem; opacity: 0.7; margin-top: 3px; }
@@ -334,7 +336,7 @@
 
 <header>
     <div class="header-left">
-        <img src="data:image/png;base64,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" alt="HatchWatch" class="header-logo">
+        <a href="index.html" class="header-logo-link" aria-label="HatchWatch — tilbake til forsiden"><img src="data:image/png;base64,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" alt="HatchWatch" class="header-logo"></a>
         <div class="header-text">
             <a href="index.html" class="back-link" id="backLink">← All locations</a>
             <h1 id="headerTitle">Hatch Watch</h1>
@@ -429,11 +431,6 @@
                     <div class="card-label" data-i18n="remaining">Remaining to Target</div>
                     <div class="card-value" id="adgLeft">–</div>
                     <div class="card-note" data-i18n="remainingUnit">GDD units until threshold</div>
-                </div>
-                <div class="card">
-                    <div class="card-label" data-i18n="estGddDate">Est. GDD Threshold Date</div>
-                    <div class="card-value yr-current" id="adgDate">–</div>
-                    <div class="card-note" id="adgDateNote">when GDD will reach target</div>
                 </div>
                 <div class="card">
                     <div class="card-label" data-i18n="estHatchDate">Estimated Hatch Date</div>
@@ -586,7 +583,6 @@ const T = {
     gddUnit: 'Akkumulerte varmegrader · base 0°C',
     remaining: 'Gjenstående til terskel',
     remainingUnit: 'GDD-enheter til terskel',
-    estGddDate: 'Est. GDD terskelsdato',
     estHatchDate: 'Estimert klekkedato',
     shortSeason: 'Kort sesong — klekking komprimeres til ett enkelt vindu her.',
     noNveStation: 'Ingen NVE-stasjon konfigurert',
@@ -612,7 +608,6 @@ const T = {
     vsAvg: 'vs. snitt',
     latestOf: 'siste av: GDD ≥ 520 + vanntemp ≥ 12°C',
     gddTriggerOnly: 'Kun GDD-trigger (vanntemp ukjent)',
-    whenGddReaches: 'når GDD når',
     updatedLabel: 'Oppdatert:',
     loadingText: 'Laster…',
   },
@@ -695,7 +690,6 @@ const T = {
     gddUnit: 'Growing Degree Days · base 0°C',
     remaining: 'Remaining to Target',
     remainingUnit: 'GDD units until threshold',
-    estGddDate: 'Est. GDD Threshold Date',
     estHatchDate: 'Estimated Hatch Date',
     shortSeason: 'Short season — hatches compress into a single window here.',
     noNveStation: 'No NVE station configured',
@@ -721,7 +715,6 @@ const T = {
     vsAvg: 'vs avg',
     latestOf: 'latest of: GDD ≥ 520 + water temp ≥ 12°C',
     gddTriggerOnly: 'GDD trigger only (water temp unknown)',
-    whenGddReaches: 'when GDD reaches',
     updatedLabel: 'Updated:',
     loadingText: 'Loading…',
   }
@@ -1642,8 +1635,9 @@ function renderKPIs(airData, snowData, flowData, wtData) {
     document.getElementById('kpiSnowUnit').textContent = `cm · ${LOC.place}`;
     if (LOC.nveStation) {
         const wtStn = LOC.nveWaterTempStation || LOC.nveStation;
-        document.getElementById('kpiFlowUnit').textContent = `m³/s · ${LOC.place} (${LOC.nveStation})`;
-        document.getElementById('kpiWtUnit').textContent   = `°C · ${LOC.place} (${wtStn})`;
+        const riverName = LOC.name || LOC.waterStationName || LOC.place;
+        document.getElementById('kpiFlowUnit').textContent = `m³/s · ${riverName} (${LOC.nveStation})`;
+        document.getElementById('kpiWtUnit').textContent   = `°C · ${riverName} (${wtStn})`;
     }
     const dateStr = at.date || TODAY;
     const wtStnId = LOC.nveWaterTempStation || LOC.nveStation;
@@ -1704,8 +1698,6 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
         ? `${t('dualTriggerLabel')} ${LOC.gddThreshold} (bt = 0°C, ${t('fromJan1')}) + ${t('waterTemp')} ≥ 12°C · ${t('stdShort')} = ±${uncDays} ${t('daysLabel')}`
         : `${t('gddPriorLabel')} ${LOC.gddThreshold} GDD (bt = 0°C) · ±${uncDays} ${t('daysLabel')} ${t('priorLabel').toLowerCase()}`;
 
-    document.getElementById('adgDate').textContent = adgDate ? fmt(adgDate) : '–';
-
     let hatchDate = adgDate;
     let hatchNote = '';
     if (LOC.calibrated && adgDate && wtDate) {
@@ -1718,7 +1710,6 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
     }
     document.getElementById('hatchDate').textContent = hatchDate ? fmt(hatchDate) : '–';
     document.getElementById('hatchNote').textContent = hatchNote;
-    document.getElementById('adgDateNote').textContent = `${t('whenGddReaches')} ${LOC.gddThreshold}`;
 }
 
 function renderWaterTempChart(wtData) {
