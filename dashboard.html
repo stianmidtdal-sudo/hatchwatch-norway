@@ -180,17 +180,41 @@
         /* ── INDICATORS ── */
         .signal { font-weight: 600; }
 
-        /* ── WARNING ── */
-        .warning-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-        .warning-card {
-            background: white;
-            border-radius: 10px;
-            padding: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        /* ── CONVERGENCE ── */
+        .conv-intro {
+            font-size: 0.82rem;
+            color: #555;
+            line-height: 1.45;
+            background: #f7faf8;
+            border-left: 3px solid #2D6A4F;
+            padding: 10px 14px;
+            border-radius: 6px;
+            margin-bottom: 14px;
         }
-        .w-step { font-size: 0.67rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 6px; }
-        .w-date { font-size: 1.4rem; font-weight: 700; color: #1B4332; }
-        .w-unc { font-size: 0.76rem; color: #999; margin-top: 2px; }
+        .conv-summary {
+            font-size: 0.88rem;
+            color: #333;
+            background: white;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            line-height: 1.5;
+        }
+        .conv-summary strong { color: #1B4332; }
+        .snow-caveat {
+            font-size: 0.82rem;
+            line-height: 1.5;
+            color: #555;
+            background: #fff7e6;
+            border-left: 3px solid #c8941c;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-top: 14px;
+        }
+        .snow-caveat strong { color: #8a5a00; }
+        .snow-caveat ul { margin: 8px 0 0 0; padding-left: 20px; }
+        .snow-caveat li { margin-bottom: 6px; }
         .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; margin-top: 8px; }
         .badge-active { background: #d1f5e1; color: #1B4332; }
         .badge-cold { background: #d9eeff; color: #1a4a6a; }
@@ -288,7 +312,7 @@
         @media (max-width: 860px) {
             .kpi-grid { grid-template-columns: 1fr 1fr; }
             .model-grid { grid-template-columns: 1fr 1fr; }
-            .warning-grid { grid-template-columns: 1fr; }
+            .conv-intro { font-size: 0.78rem; }
             .species-grid { grid-template-columns: repeat(2, 1fr); }
             .best-note { text-align: left; }
         }
@@ -423,29 +447,16 @@
             </div>
         </section>
 
-        <!-- ═══ EARLY WARNING ═══ -->
-        <section>
-            <h2 data-i18n="earlyWarning">Early Warning · When Will Water Reach 12°C?</h2>
-            <div class="warning-grid">
-                <div class="warning-card">
-                    <div class="w-step" data-i18n="wStep0">Baseline · GDD model</div>
-                    <div class="w-date" id="wGddDate">–</div>
-                    <div class="w-unc" id="wGddUnc">± ? days · GDD-based estimate</div>
-                    <span class="badge" id="wGddBadge">⏳ Calculating…</span>
-                </div>
-                <div class="warning-card">
-                    <div class="w-step" data-i18n="wStep1">Level 1 · Snow-free + 32 days</div>
-                    <div class="w-date" id="wL1Date">–</div>
-                    <div class="w-unc">± 11 days</div>
-                    <span class="badge" id="wL1Badge">⏳ Awaiting snow-free date</span>
-                </div>
-                <div class="warning-card">
-                    <div class="w-step" data-i18n="wStep2">Level 2 · Water temp extrapolation</div>
-                    <div class="w-date" id="wL2Date">–</div>
-                    <div class="w-unc" id="wL2Unc">available when WT > 3°C · uncertainty depends on forecast horizon</div>
-                    <span class="badge badge-cold" id="wL2Badge">❄️ Awaiting spring warm-up</span>
-                </div>
+        <!-- ═══ PREDICTION CONVERGENCE ═══ -->
+        <section id="convergenceSection">
+            <h2 data-i18n="convergenceHeading">Prediction Convergence · How the estimate settles as data arrives</h2>
+            <div id="convergenceIntro" class="conv-intro" data-i18n="convergenceIntro">
+                Each day, we combine observed GDD so far with the 5-year historical rate for the remaining days to project when the 520-GDD threshold will be crossed. Early in the season the prediction leans heavily on the historical rate; as real measurements replace forecast days, the line converges toward the final answer.
             </div>
+            <div class="chart-wrap" style="height:320px">
+                <canvas id="convChart"></canvas>
+            </div>
+            <div class="conv-summary" id="convSummary"></div>
         </section>
 
         <!-- ═══ HISTORICAL GDD WINDOW (all locations) ═══ -->
@@ -487,6 +498,18 @@
             <div class="chart-wrap">
                 <canvas id="snowChart"></canvas>
             </div>
+        </section>
+
+        <!-- ═══ SNOW ↔ HATCH ANALYSIS (calibrated only) ═══ -->
+        <section id="snowHatchSection" style="display:none">
+            <h2 data-i18n="snowHatchHeading">Vintersnø vs klekketidspunkt · Statistisk sammenheng</h2>
+            <div class="conv-intro" data-i18n-html="snowHatchIntro">
+                Historiske data antyder at <strong>mer vintersnø samvarierer med tidligere klekking</strong> (r ≈ −0,75 i Excel-analysen). Sammenhengen er reell i datasettet, men må tolkes forsiktig. Hypotesen: dyp snø isolerer isen → tynnere is → tidligere åpent, varmet vann → tidligere klekking.
+            </div>
+            <div class="chart-wrap" style="height:300px">
+                <canvas id="snowHatchChart"></canvas>
+            </div>
+            <div class="snow-caveat" id="snowHatchCaveat"></div>
         </section>
 
         <!-- ═══ ICE THICKNESS CHART (Kautokeino only) ═══ -->
@@ -545,6 +568,29 @@ const T = {
     wStep0: 'Grunnlinje · GDD-modell',
     wStep1: 'Nivå 1 · Snøfri + 32 dager',
     wStep2: 'Nivå 2 · Vanntemp. ekstrapolering',
+    convergenceHeading: 'Prediksjonskonvergens · Hvordan estimatet lander etter hvert som data kommer inn',
+    convergenceIntro: 'Hver dag kombinerer vi observert GDD så langt med 5-års historisk rate for de gjenstående dagene, og projiserer når 520-GDD-terskelen nås. Tidlig i sesongen hviler prediksjonen tungt på historisk rate; ettersom virkelige målinger erstatter prognosedager, konvergerer linjen mot det endelige svaret.',
+    convToday: 'I dag',
+    convPrediction: 'Dagens prediksjon',
+    convBand: 'MAE-bånd (±2,1 d)',
+    convHistMedian: '5-års median',
+    convNotEnoughData: 'Ikke nok data for konvergensgraf — venter på første GDD-akkumulering av sesongen.',
+    convCrossed: 'GDD-terskelen er allerede nådd i år.',
+    convSummaryLatest: (date, unc, stability) => `Nåværende estimat: <strong>${date}</strong> · ±${unc} d (MAE). ${stability}`,
+    convStabilityStable: 'Prediksjonen har stabilisert seg de siste 7 dagene (≤1 dags endring).',
+    convStabilityMoving: (days) => `Prediksjonen har beveget seg ${days} dager de siste 7 dagene — fortsatt sensitiv for ny data.`,
+    convStabilityEarly: 'Sesongen er ung — forvent at prediksjonen vil bevege seg en del før den stabiliserer seg.',
+    snowHatchHeading: 'Vintersnø vs klekketidspunkt · Statistisk sammenheng',
+    snowHatchIntro: 'Historiske data antyder at <strong>mer vintersnø samvarierer med tidligere klekking</strong> (r ≈ −0,75 i Excel-analysen, n = 8 år). Sammenhengen er reell i datasettet, men må tolkes forsiktig. <strong>Hypotese:</strong> dyp snø isolerer isen → tynnere is → tidligere åpent, varmet vann → tidligere klekking.',
+    snowHatchCaveatTitle: '⚠ Statistiske forbehold — ikke dra konklusjonen for fort:',
+    snowHatchCaveat1: '<strong>Liten n (~8 år).</strong> Med så få observasjoner kan én ekstrem vinter dominere korrelasjonen. r = −0,75 høres sterkt ut, men konfidensintervallet er vidt.',
+    snowHatchCaveat2: '<strong>Confounding (skjulte tredjevariable).</strong> Milde vintre har ofte både mer snø OG lavere frost-degree-days OG tidligere vår. "Snødybde" kan være en proxy for "generelt mild vinter" snarere enn en kausal driver.',
+    snowHatchCaveat3: '<strong>Pseudo-replikasjon.</strong> Flere observasjoner samme år deler samme vær — hver nye observasjon tilfører ikke et uavhengig år.',
+    snowHatchCaveat4: '<strong>Kontraintuitivt fortegn.</strong> "Mer snø → tidligere klekking" er uvanlig og bør vekke skepsis. Isolasjonsmekanismen er plausibel, men ikke bevist fra disse dataene alene.',
+    snowHatchCaveatConclusion: '<strong>Bruk det som svakt tidlig signal, ikke som prediktor.</strong> GDD + vanntemp er fortsatt hovedmodellen (MAE = 2,1 d). Snødybde kan gi et hint i februar–mars, før GDD har tatt av.',
+    snowHatchRegression: (r, n) => `Trendlinje i plottet: r = ${r.toFixed(2)}, n = ${n}.`,
+    snowHatchWinterAxis: 'Vintermaks snødybde (cm)',
+    snowHatchDateAxis: 'GDD-520 krysningsdato (dag i år)',
     calculating: '⏳ Beregner…',
     awaitingSnowFree: '⏳ Venter på snøfri dato',
     awaitingSpring: '❄️ Venter på våroppvarming',
@@ -569,6 +615,7 @@ const T = {
     masl: 'm o.h.',
     calibratedModel: '✅ Kalibrert',
     stdShort: 'standardavvik',
+    maeShort: 'MAE',
     daysLabel: 'dager',
     fromJan1: 'fra 1. jan',
     priorLabel: 'Prior',
@@ -606,7 +653,7 @@ const T = {
     histEarliest: 'Tidligst',
     histMedian: 'Median',
     histLatest: 'Senest',
-    histStd: 'Standardavvik',
+    histStd: 'År-til-år-spredning',
     histYrCol: 'År',
     histGddCrossed: 'GDD-terskel nådd',
     histDoy: 'Dag i år',
@@ -640,6 +687,29 @@ const T = {
     wStep0: 'Baseline · GDD model',
     wStep1: 'Level 1 · Snow-free + 32 days',
     wStep2: 'Level 2 · Water temp extrapolation',
+    convergenceHeading: 'Prediction Convergence · How the estimate settles as data arrives',
+    convergenceIntro: 'Each day, we combine observed GDD so far with the 5-year historical rate for the remaining days to project when the 520-GDD threshold will be crossed. Early in the season the prediction leans heavily on the historical rate; as real measurements replace forecast days, the line converges toward the final answer.',
+    convToday: 'Today',
+    convPrediction: "Today's prediction trajectory",
+    convBand: 'MAE band (±2.1 d)',
+    convHistMedian: '5-year median',
+    convNotEnoughData: 'Not enough data for convergence chart — awaiting first GDD accumulation of the season.',
+    convCrossed: 'GDD threshold already crossed this year.',
+    convSummaryLatest: (date, unc, stability) => `Current estimate: <strong>${date}</strong> · ±${unc} d (MAE). ${stability}`,
+    convStabilityStable: 'Prediction has stabilized over the last 7 days (≤1 day movement).',
+    convStabilityMoving: (days) => `Prediction has moved ${days} days over the last 7 days — still sensitive to new data.`,
+    convStabilityEarly: 'Season is young — expect the prediction to move substantially before it stabilizes.',
+    snowHatchHeading: 'Winter Snow vs Hatch Timing · Statistical Relationship',
+    snowHatchIntro: 'Historical data suggest <strong>more winter snow correlates with earlier hatches</strong> (r ≈ −0.75 in the Excel analysis, n = 8 years). The relationship is real in the dataset, but interpret with care. <strong>Hypothesis:</strong> deep snow insulates ice → thinner ice → earlier open, warming water → earlier hatch.',
+    snowHatchCaveatTitle: '⚠ Statistical caveats — do not overinterpret:',
+    snowHatchCaveat1: '<strong>Small n (~8 years).</strong> With so few observations, one extreme winter can dominate the correlation. r = −0.75 sounds strong, but the confidence interval is wide.',
+    snowHatchCaveat2: '<strong>Confounding (hidden third variables).</strong> Mild winters often have more snow AND fewer frost degree-days AND earlier springs. "Snow depth" may be a proxy for "generally mild winter" rather than a causal driver.',
+    snowHatchCaveat3: '<strong>Pseudo-replication.</strong> Multiple observations from the same year share the same weather — each additional observation does not add an independent year.',
+    snowHatchCaveat4: '<strong>Counterintuitive sign.</strong> "More snow → earlier hatch" is unusual and should trigger skepticism. The insulation mechanism is plausible, but not proven from this data alone.',
+    snowHatchCaveatConclusion: '<strong>Use as a weak early signal, not as a predictor.</strong> GDD + water temp is still the main model (MAE = 2.1 d). Snow depth can provide a hint in February–March, before GDD ramps up.',
+    snowHatchRegression: (r, n) => `Trendline in plot: r = ${r.toFixed(2)}, n = ${n}.`,
+    snowHatchWinterAxis: 'Winter max snow depth (cm)',
+    snowHatchDateAxis: 'GDD-520 crossing date (day of year)',
     calculating: '⏳ Calculating…',
     awaitingSnowFree: '⏳ Awaiting snow-free date',
     awaitingSpring: '❄️ Awaiting spring warm-up',
@@ -664,6 +734,7 @@ const T = {
     masl: 'm a.s.l.',
     calibratedModel: '✅ Calibrated',
     stdShort: 'std. dev.',
+    maeShort: 'MAE',
     daysLabel: 'days',
     fromJan1: 'from 1 Jan',
     priorLabel: 'Prior',
@@ -701,7 +772,7 @@ const T = {
     histEarliest: 'Earliest',
     histMedian: 'Median',
     histLatest: 'Latest',
-    histStd: 'Std deviation',
+    histStd: 'Year-to-year spread',
     histYrCol: 'Year',
     histGddCrossed: 'GDD threshold crossed',
     histDoy: 'Day of year',
@@ -1118,10 +1189,7 @@ if (!LOC.nveStation) {
     document.getElementById('kpiWaterTemp').classList.add('na-val');
     document.getElementById('kpiWaterTemp').textContent = 'N/A';
     document.getElementById('kpiWtUnit').textContent = t('noNveStation');
-    document.getElementById('wL2Date').textContent = 'N/A';
-    document.getElementById('wL2Unc').textContent = t('requiresNve');
-    document.getElementById('wL2Badge').textContent = t('noWtData');
-    document.getElementById('wL2Badge').className = 'badge';
+    // wL2Date/wL2Unc/wL2Badge elements are gone (Early Warning section replaced by convergence graph).
     document.getElementById('wtSection').style.display = 'none';
     document.getElementById('wtNote').textContent = '';
 } else {
@@ -1134,7 +1202,7 @@ if (!LOC.nveStation) {
 // Model heading
 document.getElementById('modelHeading').textContent =
     LOC.calibrated
-        ? `${t('dualTriggerLabel')} ${LOC.gddThreshold} (bt = 0°C, ${t('fromJan1')}) + ${t('waterTemp')} ≥ 12°C · ${t('stdShort')} = ±${LOC.uncertaintyDays} ${t('daysLabel')}`
+        ? `${t('dualTriggerLabel')} ${LOC.gddThreshold} (bt = 0°C, ${t('fromJan1')}) + ${t('waterTemp')} ≥ 12°C · ${t('maeShort')} = ±${LOC.uncertaintyDays} ${t('daysLabel')}`
         : `${t('gddPriorLabel')} ${LOC.gddThreshold} GDD (bt = 0°C) · ${t('priorUncLabel')} ±${LOC.uncertaintyDays} ${t('daysLabel')}`;
 
 document.getElementById('snowHeading').textContent =
@@ -1616,17 +1684,17 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
     document.getElementById('adgCompareBand').textContent =
         `${t('fiveYearAvg')} ${histADG.toFixed(1)} GDD  (${sign}${diff.toFixed(1)} GDD / ${pctSign}${pctDiff.toFixed(1)}% ${t('vsAvg')})`;
 
-    // Uncertainty band — data-driven when histStats available, prior fallback otherwise
-    const uncDays   = histStats ? histStats.std.toFixed(1) : LOC.uncertaintyDays;
-    const uncSource = histStats
-        ? (LANG === 'no'
-            ? `datadrevet fra ${histStats.n} års GDD-modell (2019–${histStats.crossings.at(-1)?.year ?? ''})`
-            : `data-driven from ${histStats.n} years of GDD model (2019–${histStats.crossings.at(-1)?.year ?? ''})`)
+    // Usikkerhet: for kalibrerte lokasjoner (Kautokeino) bruker vi MAE fra Excel-valideringen
+    // (n=8 år, 2016-2025 ekskl. 2020). Det er den faktiske prediksjonsfeilen.
+    // For ukalibrerte lokasjoner faller vi tilbake til LOC.uncertaintyDays (prior).
+    // histStats.std er år-til-år-spredning av terskelkryssingen, ikke modellfeil — brukes ikke her.
+    const uncDays   = LOC.uncertaintyDays;
+    const uncSource = LOC.calibrated
+        ? (LANG === 'no' ? 'MAE, validert på 8 år (2016–2025)' : 'MAE, validated on 8 years (2016–2025)')
         : t('priorEstimateText');
     const unc = document.getElementById('uncertaintyBand');
     if (LOC.calibrated) {
-        // Boksen med "Kalibrert modell · …" er unødvendig støy på kalibrerte lokasjoner.
-        // Usikkerheten kommuniseres allerede via modellheading og loc-strip.
+        // Skjult for kalibrerte lokasjoner — usikkerheten vises i modellheading og loc-strip.
         unc.style.display = 'none';
     } else {
         unc.style.display = '';
@@ -1635,18 +1703,20 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
 
 
 
-    // Update loc-strip Model entry with actual data-driven uncertainty
+    // Update loc-strip Model entry with actual uncertainty
+    // Kalibrerte viser MAE fra Excel-validering; ukalibrerte viser prior.
     const locModelEl = document.querySelector('#locStrip .loc-item:last-child .loc-val');
     if (locModelEl) {
         locModelEl.textContent = LOC.calibrated
-            ? `${t('calibratedModel')} (±${uncDays} d)`
-            : `⚠ ${t('priorLabel')} · ±${uncDays} d${histStats ? ` (${histStats.n} ${LANG === 'no' ? 'år' : 'yrs'})` : ''}`;
+            ? `${t('calibratedModel')} · ${t('maeShort')} ±${uncDays} d`
+            : `⚠ ${t('priorLabel')} · ±${uncDays} d`;
     }
 
     // Update model heading with actual uncertainty
+    // Kalibrerte: MAE=2.1 d fra Excel-validering (n=8 år). Ukalibrerte: prior-estimat.
     document.getElementById('modelHeading').textContent = LOC.calibrated
-        ? `${t('dualTriggerLabel')} ${LOC.gddThreshold} (bt = 0°C) + ${t('waterTemp')} ≥ 12°C · ±${uncDays} ${t('daysLabel')} ${t('stdShort')}`
-        : `${t('gddPriorLabel')} ${LOC.gddThreshold} GDD (bt = 0°C) · ±${uncDays} ${t('daysLabel')}${histStats ? ` (${histStats.n}-${t('yrDataSuffix')})` : ` ${t('priorLabel').toLowerCase()}`}`;
+        ? `${t('dualTriggerLabel')} ${LOC.gddThreshold} (bt = 0°C, ${t('fromJan1')}) + ${t('waterTemp')} ≥ 12°C · ${t('maeShort')} = ±${uncDays} ${t('daysLabel')}`
+        : `${t('gddPriorLabel')} ${LOC.gddThreshold} GDD (bt = 0°C) · ±${uncDays} ${t('daysLabel')} ${t('priorLabel').toLowerCase()}`;
 
     document.getElementById('adgDate').textContent = adgDate ? fmt(adgDate) : '–';
 
@@ -1658,7 +1728,7 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
     } else if (adgDate) {
         hatchNote = LOC.calibrated
             ? t('gddTriggerOnly')
-            : `${t('estimateLabel')} ±${uncDays} ${t('daysLabel')}${histStats ? ` (${histStats.n}-${t('yrDataSuffix')})` : ` (${t('priorLower')})`}`;
+            : `${t('estimateLabel')} ±${uncDays} ${t('daysLabel')} (${t('priorLower')})`;
     }
     document.getElementById('hatchDate').textContent = hatchDate ? fmt(hatchDate) : '–';
     document.getElementById('hatchNote').textContent = hatchNote;
@@ -1737,6 +1807,138 @@ function renderHistorical(airData, snowData) {
             <td>${iceCm > 0 ? iceCm.toFixed(1) : '–'}</td>`;
         tbody.appendChild(tr);
     }
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// SNOW ↔ HATCH ANALYSIS (kalibrert lokasjon)
+// Scatter: vintermaks snødybde vs GDD-520-krysningsdato per år.
+// Viser korrelasjon, men med tydelige statistiske forbehold.
+// ─────────────────────────────────────────────────────────────────────
+function renderSnowHatchAnalysis(histStats, snowData, airData) {
+    if (!LOC.calibrated || !histStats || !histStats.crossings) return;
+
+    // Beregn vintermaks snø per år (samme logikk som renderHistorical)
+    function maxSnowForWinter(winterYr) {
+        let max = null;
+        for (const [dateStr, val] of Object.entries(snowData || {})) {
+            const yr = parseInt(dateStr.slice(0, 4));
+            const mo = parseInt(dateStr.slice(5, 7));
+            const wy = mo >= 10 ? yr + 1 : yr;
+            if (wy !== winterYr) continue;
+            if (max == null || val > max) max = val;
+        }
+        return max;
+    }
+
+    const points = [];
+    for (const c of histStats.crossings) {
+        const snowMax = maxSnowForWinter(c.year);
+        if (snowMax == null || snowMax <= 0) continue;
+        points.push({ year: c.year, snow: snowMax, doy: c.doy });
+    }
+    if (points.length < 4) return;  // trenger minst 4 punkter for meningsfull r
+
+    // Pearson r
+    const n = points.length;
+    const xs = points.map(p => p.snow);
+    const ys = points.map(p => p.doy);
+    const meanX = xs.reduce((a,b)=>a+b,0)/n;
+    const meanY = ys.reduce((a,b)=>a+b,0)/n;
+    let sxx = 0, syy = 0, sxy = 0;
+    for (let i = 0; i < n; i++) {
+        const dx = xs[i] - meanX, dy = ys[i] - meanY;
+        sxx += dx*dx; syy += dy*dy; sxy += dx*dy;
+    }
+    const r = (sxx > 0 && syy > 0) ? sxy / Math.sqrt(sxx * syy) : 0;
+
+    // Enkel lineær regresjon (slope, intercept) — for trendlinje
+    const slope = sxx > 0 ? sxy / sxx : 0;
+    const intercept = meanY - slope * meanX;
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const trendLine = [
+        { x: minX, y: slope * minX + intercept },
+        { x: maxX, y: slope * maxX + intercept },
+    ];
+
+    // Vis seksjon
+    document.getElementById('snowHatchSection').style.display = '';
+
+    // Caveat-boks
+    const caveatEl = document.getElementById('snowHatchCaveat');
+    caveatEl.innerHTML = `
+        <strong>${t('snowHatchCaveatTitle')}</strong>
+        <ul>
+            <li>${t('snowHatchCaveat1')}</li>
+            <li>${t('snowHatchCaveat2')}</li>
+            <li>${t('snowHatchCaveat3')}</li>
+            <li>${t('snowHatchCaveat4')}</li>
+        </ul>
+        <div style="margin-top:10px">${t('snowHatchCaveatConclusion')}</div>
+        <div style="margin-top:8px;font-size:0.78rem;color:#777">${t('snowHatchRegression')(r, n)}</div>
+    `;
+
+    // Scatter plot
+    const ctx = document.getElementById('snowHatchChart').getContext('2d');
+    if (window._snowHatchChart) window._snowHatchChart.destroy();
+    window._snowHatchChart = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+            datasets: [
+                {
+                    label: LANG === 'no' ? 'Observerte år' : 'Observed years',
+                    data: points.map(p => ({ x: p.snow, y: p.doy, year: p.year })),
+                    backgroundColor: '#2D6A4F',
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    showLine: false,
+                },
+                {
+                    label: LANG === 'no' ? `Trendlinje (r=${r.toFixed(2)})` : `Trendline (r=${r.toFixed(2)})`,
+                    data: trendLine,
+                    borderColor: 'rgba(192, 57, 43, 0.7)',
+                    borderWidth: 2,
+                    borderDash: [6, 4],
+                    pointRadius: 0,
+                    showLine: true,
+                    fill: false,
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top', labels: { boxWidth: 14, font: { size: 10 } } },
+                tooltip: {
+                    callbacks: {
+                        label: (c) => {
+                            if (c.dataset.label.startsWith(LANG === 'no' ? 'Trendlinje' : 'Trendline')) return null;
+                            const p = c.raw;
+                            const dateStr = fmt(dateFromDoy(p.year, p.y));
+                            return `${p.year}: ${p.x.toFixed(0)} cm snø → ${dateStr} (DOY ${p.y})`;
+                        },
+                    },
+                },
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: t('snowHatchWinterAxis'), font: { size: 11 } },
+                    ticks: { font: { size: 10 } },
+                },
+                y: {
+                    title: { display: true, text: t('snowHatchDateAxis'), font: { size: 11 } },
+                    ticks: {
+                        font: { size: 10 },
+                        callback: (v) => {
+                            const dt = dateFromDoy(YEAR, Math.round(v));
+                            return fmt(dt).slice(0, 6);
+                        },
+                    },
+                },
+            },
+        },
+    });
 }
 
 function renderWaterTempChart(wtData) {
@@ -2036,7 +2238,7 @@ function renderIndicators(snowData, airData, currentADG) {
     tbody.innerHTML = rows.map(r => `<tr>
         <td>${r.name}</td><td><strong>${r.val}</strong></td>
         <td>${r.avg}</td><td class="signal">${r.signal}</td></tr>`).join('');
-    // Pass only current-season snow-free date to renderWarning
+    // Pass only current-season snow-free date to renderConvergence
     return { snowFree: snowFreeValid, adgRate };
 }
 
@@ -2267,84 +2469,256 @@ function renderSpeciesCalendar(isgangResult, vulgataDate) {
     }).join('');
 }
 
-function renderWarning(snowFree, wtData, adgDate, histStats, fromDate, airData) {
-    const uncDays   = histStats ? histStats.std.toFixed(1) : LOC.uncertaintyDays;
-    const uncSource = histStats ? `${histStats.n}-${t('yrDataSuffix')}` : t('priorLower');
-    // GDD-based estimate
-    if (adgDate) {
-        document.getElementById('wGddDate').textContent = fmt(adgDate);
-        document.getElementById('wGddUnc').textContent  = `± ${uncDays} ${t('daysLabel')} · ${t('gddModelShort')} (${uncSource})`;
-        const badge = document.getElementById('wGddBadge');
-        badge.textContent = t('active');
-        badge.className   = 'badge badge-active';
+// ─────────────────────────────────────────────────────────────────────
+// PREDICTION CONVERGENCE
+// Beregner daglig prediksjon gjennom sesongen: observert GDD (1. jan → d)
+// pluss 5-årig historisk daglig rate for (d+1 → framtid), fram til 520 GDD.
+// Tegner konvergenskurven + MAE-bånd. Best-estimate-kandidater beregnes som før
+// for å mate "Best estimate now"-boksen og artsmarkøren.
+// ─────────────────────────────────────────────────────────────────────
+function buildHistDailyRate(airData) {
+    // 5-årig gjennomsnitt av daglig GDD (base 0) for hver DOY (1..366).
+    const thisYear = new Date().getFullYear();
+    const years = [thisYear - 5, thisYear - 4, thisYear - 3, thisYear - 2, thisYear - 1];
+    const byDoy = {};   // doy -> [values across years]
+    for (const [d, v] of Object.entries(airData)) {
+        if (v == null) continue;
+        const dt = parseDate(d);
+        const yr = dt.getFullYear();
+        if (!years.includes(yr)) continue;
+        const dy = doy(dt);
+        (byDoy[dy] ||= []).push(Math.max(0, v));
     }
-    // Level 1: snow-free + 32 days (only if snow-free is from current season)
+    const rate = {};
+    for (let dy = 1; dy <= 366; dy++) {
+        const arr = byDoy[dy];
+        rate[dy] = arr && arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+    }
+    return rate;
+}
+
+function predictHatchDoyFromDay(airData, yr, upToDoy, threshold, histRate) {
+    // Observert GDD fra 1. jan til upToDoy (inkludert).
+    let gdd = 0;
+    let doyObs = 1;
+    for (; doyObs <= upToDoy; doyObs++) {
+        const dt = dateFromDoy(yr, doyObs);
+        const key = `${yr}-${String(dt.getMonth() + 1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+        const v = airData[key];
+        if (v != null) gdd += Math.max(0, v);
+        if (gdd >= threshold) return doyObs;
+    }
+    // Ekstrapoler med historisk daglig rate.
+    let projDoy = upToDoy + 1;
+    while (gdd < threshold && projDoy <= 366) {
+        gdd += histRate[projDoy] ?? 0;
+        if (gdd >= threshold) return projDoy;
+        projDoy++;
+    }
+    return null;
+}
+
+function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate, airData) {
+    // Usikkerhet: kalibrerte bruker MAE fra Excel-validering (2.1 d, n=8 år).
+    // Ukalibrerte faller tilbake til LOC.uncertaintyDays (prior).
+    const uncDays   = LOC.uncertaintyDays;
+    const uncSource = LOC.calibrated
+        ? (LANG === 'no' ? 'MAE, 8 år' : 'MAE, 8 yrs')
+        : t('priorLower');
+
+    // Best-estimate-kandidater (samme logikk som før — feeder "Best estimate now")
     const now = new Date();
     let l1Date = null;
     if (snowFree) {
         const candidate = addDays(snowFree, 32);
-        if (candidate > now) {
-            l1Date = candidate;
-            document.getElementById('wL1Date').textContent = fmt(l1Date);
-            const b = document.getElementById('wL1Badge');
-            b.textContent = t('active'); b.className = 'badge badge-active';
-        } else {
-            // L1 date already passed — don't display a past date
-            document.getElementById('wL1Date').textContent = fmt(candidate);
-            const b = document.getElementById('wL1Badge');
-            b.textContent = t('datePassed'); b.className = 'badge';
-        }
-    } else {
-        document.getElementById('wL1Date').textContent = t('awaitingSnowFreeDate');
+        if (candidate > now) l1Date = candidate;
     }
-    // Level 2: water temp extrapolation
-    // Uncertainty grows with forecast horizon — only supersedes GDD when close enough
     let l2Date = null, l2Unc = null, l2DaysOut = null;
     if (LOC.nveStation || LOC.nveWaterTempStation) {
         l2Date = extrapolateWT(wtData);
         if (l2Date) {
             l2DaysOut = Math.round((l2Date - now) / 86400000);
-            // ±3d base + 0.1d per day of horizon, min 4, max 14
             l2Unc = Math.min(14, Math.max(4, Math.round(3 + l2DaysOut * 0.1)));
-            const uncLabel = l2DaysOut <= 14 ? `±${l2Unc} ${t('daysLabel')} — ${t('preciseLabel')}`
-                           : l2DaysOut <= 30 ? `±${l2Unc} ${t('daysLabel')} — ${t('reliableLabel')}`
-                           :                   `±${l2Unc} ${t('daysLabel')} — ${t('earlySignalOnly')}`;
-            document.getElementById('wL2Date').textContent = fmt(l2Date);
-            document.getElementById('wL2Unc').textContent  = uncLabel;
-            const b = document.getElementById('wL2Badge');
-            b.textContent = t('active'); b.className = 'badge badge-active';
         }
     }
-    // Dynamic model selection: pick whichever available model has the lowest uncertainty.
-    // L2 (water temp) is only eligible within 30 days — beyond that the extrapolation
-    // becomes unreliable regardless of what the uncertainty formula says.
     const L1_UNC = 11;
     const candidates = [];
     if (l2Date && l2Date > now && l2DaysOut <= 30)
-        candidates.push({ date: l2Date, unc: l2Unc,           note: `${t('wtExtrapolation')} — ±${l2Unc} ${t('daysLabel')} (${l2DaysOut}${LANG === 'no' ? 'd' : 'd'} ${t('toHatch')})` });
-    if (adgDate)
-        candidates.push({ date: adgDate, unc: parseFloat(uncDays), note: `${t('gddModelShort')} — ±${uncDays} ${t('daysLabel')}${histStats ? ` (${histStats.n}-${t('yrDataSuffix')})` : !LOC.calibrated ? ` (${t('priorUncalibrated')})` : ''}` });
+        candidates.push({ date: l2Date, unc: l2Unc, note: `${t('wtExtrapolation')} — ±${l2Unc} ${t('daysLabel')} (${l2DaysOut}d ${t('toHatch')})` });
+    if (adgDate) {
+        const gddNoteSuffix = LOC.calibrated ? ` (${uncSource})` : ` (${t('priorUncalibrated')})`;
+        candidates.push({ date: adgDate, unc: parseFloat(uncDays), note: `${t('gddModelShort')} — ±${uncDays} ${t('daysLabel')}${gddNoteSuffix}` });
+    }
     if (l1Date)
-        candidates.push({ date: l1Date,  unc: L1_UNC,          note: `${t('snowFreePlus32')} — ±${L1_UNC} ${t('daysLabel')} (${t('earlySignal')})` });
-
+        candidates.push({ date: l1Date, unc: L1_UNC, note: `${t('snowFreePlus32')} — ±${L1_UNC} ${t('daysLabel')} (${t('earlySignal')})` });
     candidates.sort((a, b) => a.unc - b.unc);
     const best = candidates[0] ?? null;
-    let bestDate = best ? best.date : null;
-    let bestNote = best ? best.note : '';
-    document.getElementById('bestDate').textContent = bestDate ? fmt(bestDate) : '–';
-    document.getElementById('bestNote').textContent = bestNote || t('noEstimate');
+    document.getElementById('bestDate').textContent = best ? fmt(best.date) : '–';
+    document.getElementById('bestNote').textContent = best ? best.note : t('noEstimate');
 
-    // Species calendar always anchors Vulgata to the GDD model date (adgDate).
-    // bestDate (water temp / L1) is shown in the best-estimate box above —
-    // keeping the calendar on GDD avoids showing two different Vulgata dates.
+    // Species calendar
     const isgangResult = resolveIsgang(airData || {}, fromDate, snowFree, adgDate);
     renderSpeciesCalendar(isgangResult, adgDate);
 
-    // Sync prior notice banner with the active best estimate method's uncertainty
+    // Sync prior notice banner
     const priorUncEl = document.getElementById('priorUncDays');
-    if (priorUncEl) {
-        priorUncEl.textContent = best ? `±${best.unc} ${t('daysLabel')}` : `±${uncDays} ${t('daysLabel')}`;
+    if (priorUncEl) priorUncEl.textContent = best ? `±${best.unc} ${t('daysLabel')}` : `±${uncDays} ${t('daysLabel')}`;
+
+    // ── Konvergensgraf ──
+    const convSummary = document.getElementById('convSummary');
+    const histRate = buildHistDailyRate(airData);
+    const todayDoy = doy(new Date());
+    const threshold = LOC.gddThreshold;
+
+    // Tidligste dag med noe observert GDD (ikke start fra 1. jan hvor alt er 0)
+    let firstDoy = null;
+    for (let d = 1; d <= todayDoy; d++) {
+        const dt = dateFromDoy(YEAR, d);
+        const key = `${YEAR}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+        if ((airData[key] ?? 0) > 0) { firstDoy = d; break; }
     }
+    if (!firstDoy) {
+        convSummary.innerHTML = t('convNotEnoughData');
+        return;
+    }
+
+    // Beregn daglig prediksjon fra firstDoy til today
+    const labels = [];
+    const predDoys = [];
+    const lowerBand = [];
+    const upperBand = [];
+    for (let d = firstDoy; d <= todayDoy; d++) {
+        const pred = predictHatchDoyFromDay(airData, YEAR, d, threshold, histRate);
+        const dt = dateFromDoy(YEAR, d);
+        labels.push(fmt(dt));
+        if (pred == null) {
+            predDoys.push(null); lowerBand.push(null); upperBand.push(null);
+        } else {
+            predDoys.push(pred);
+            lowerBand.push(pred - uncDays);
+            upperBand.push(pred + uncDays);
+        }
+    }
+
+    // 5-års median hatchdato for denne lokasjonen (fra histStats)
+    const histMedianDoy = histStats?.median ?? null;
+
+    // Summary-tekst
+    const latest = predDoys[predDoys.length - 1];
+    let summaryHtml = '';
+    if (latest == null) {
+        summaryHtml = t('convCrossed');
+    } else {
+        // Stabilitet: endring siste 7 dager
+        const idx7 = Math.max(0, predDoys.length - 8);
+        const sevenDaysAgo = predDoys[idx7];
+        let stability;
+        if (predDoys.length < 14) {
+            stability = t('convStabilityEarly');
+        } else if (sevenDaysAgo != null && Math.abs(latest - sevenDaysAgo) <= 1) {
+            stability = t('convStabilityStable');
+        } else {
+            stability = t('convStabilityMoving')(Math.abs(latest - (sevenDaysAgo ?? latest)));
+        }
+        const latestDateStr = fmt(dateFromDoy(YEAR, latest));
+        summaryHtml = t('convSummaryLatest')(latestDateStr, uncDays, stability);
+    }
+    convSummary.innerHTML = summaryHtml;
+
+    // Tegn Chart.js
+    const ctx = document.getElementById('convChart').getContext('2d');
+    if (window._convChart) window._convChart.destroy();
+    const datasets = [
+        {
+            label: t('convBand'),
+            data: upperBand,
+            borderColor: 'rgba(45, 106, 79, 0)',
+            backgroundColor: 'rgba(45, 106, 79, 0.12)',
+            pointRadius: 0,
+            fill: '+1',
+            tension: 0.3,
+            order: 3,
+        },
+        {
+            label: '_lower',
+            data: lowerBand,
+            borderColor: 'rgba(45, 106, 79, 0)',
+            backgroundColor: 'rgba(45, 106, 79, 0.12)',
+            pointRadius: 0,
+            fill: false,
+            tension: 0.3,
+            order: 3,
+        },
+        {
+            label: t('convPrediction'),
+            data: predDoys,
+            borderColor: '#C0392B',
+            backgroundColor: '#C0392B',
+            borderWidth: 2.5,
+            pointRadius: 0,
+            tension: 0.3,
+            order: 1,
+        },
+    ];
+    if (histMedianDoy != null) {
+        datasets.push({
+            label: `${t('convHistMedian')} (DOY ${histMedianDoy})`,
+            data: labels.map(() => histMedianDoy),
+            borderColor: 'rgba(100, 100, 100, 0.7)',
+            borderWidth: 1.5,
+            borderDash: [6, 4],
+            pointRadius: 0,
+            fill: false,
+            order: 2,
+        });
+    }
+
+    // Yakseverdier: konverter DOY tilbake til dato i tooltip/ticks
+    window._convChart = new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        boxWidth: 14, font: { size: 10 }, padding: 8,
+                        filter: (item) => item.text !== '_lower',
+                    },
+                },
+                tooltip: {
+                    callbacks: {
+                        label: (c) => {
+                            if (c.dataset.label === '_lower') return null;
+                            const val = c.parsed.y;
+                            if (val == null) return null;
+                            const dateStr = fmt(dateFromDoy(YEAR, Math.round(val)));
+                            return `${c.dataset.label}: ${dateStr}`;
+                        },
+                    },
+                },
+            },
+            scales: {
+                x: {
+                    ticks: { maxTicksLimit: 10, font: { size: 10 } },
+                    title: { display: true, text: LANG === 'no' ? 'Dato (prediksjonen gjort på)' : 'Date (prediction made on)', font: { size: 11 } },
+                },
+                y: {
+                    title: { display: true, text: LANG === 'no' ? 'Prediktert klekkedag (dag i år)' : 'Predicted hatch day (DOY)', font: { size: 11 } },
+                    ticks: {
+                        font: { size: 10 },
+                        callback: (v) => {
+                            const dt = dateFromDoy(YEAR, Math.round(v));
+                            return fmt(dt).slice(0, 6);
+                        },
+                    },
+                },
+            },
+        },
+    });
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -2399,9 +2773,10 @@ async function main() {
         renderHistoricalGDDSection(histStats, altCorrection);
         renderWaterTempChart(wtData);
         renderSnowChart(snowData);
+        renderSnowHatchAnalysis(histStats, snowData, airDataCorrected);
         renderIceChart(airDataCorrected, snowData);
         const { snowFree } = renderIndicators(snowData, airDataCorrected, currentADG);
-        renderWarning(snowFree, wtData, adgDate, histStats, fromDate, airDataCorrected);
+        renderConvergence(snowFree, wtData, adgDate, histStats, fromDate, airDataCorrected);
 
         // Show dashboard
         document.getElementById('loadingState').style.display = 'none';
