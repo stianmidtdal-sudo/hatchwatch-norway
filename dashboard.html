@@ -360,7 +360,7 @@
 
         <!-- ═══ PRIOR MODEL NOTICE (shown for uncalibrated) ═══ -->
         <div id="priorNotice" class="prior-notice" style="display:none">
-            <span data-i18n-html="priorNoticePrefix">⚠ <strong>Prior model:</strong> No local hatch data incorporated. Predictions use calibrated GDD parameters with regional adjustments (</span><strong id="priorUncDays">±6 days</strong><span data-i18n="priorNoticeSuffix"> uncertainty). Weather from nearest MET Norway station.</span>
+            <span data-i18n-html="priorNoticeText">⚠ <strong>Indikativ prognose:</strong> Modellen bruker kalibrerte GDD-parametere, men er ikke validert mot observerte klekkedatoer for denne elva. Bruk som veiledning. Vær fra nærmeste MET Norge-stasjon.</span>
         </div>
 
         <!-- ═══ LOCATION INFO STRIP ═══ -->
@@ -523,10 +523,14 @@ const T = {
     convToday: 'I dag',
     convPrediction: 'Historisk prediksjon',
     convBand: (unc) => `Standardavvik (±${String(unc).replace('.', ',')} d)`,
+    convBandIndicative: 'Usikkerhetsintervall',
     convHistMedian: 'Median klekkedato',
     convNotEnoughData: 'Ikke nok data for konvergensgraf — venter på første GDD-akkumulering av sesongen.',
     convCrossed: 'GDD-terskelen er allerede nådd i år.',
     convSummaryLatest: (date, unc, stability) => `Nåværende estimat: <strong>${date}</strong> · ±${unc} d (standardavvik). ${stability}`,
+    convSummaryLatestIndicative: (date, stability) => `Nåværende estimat: <strong>${date}</strong>. ${stability}`,
+    indicativeLabel: 'Indikativ prognose',
+    indicativeNote: 'modellen er ikke validert mot observerte klekkedatoer for denne elva. Bruk som veiledning.',
     convStabilityStable: 'Prediksjonen har stabilisert seg de siste 7 dagene (≤1 dags endring).',
     convStabilityMoving: (days) => `Prediksjonen har beveget seg ${days} dager de siste 7 dagene — fortsatt sensitiv for ny data.`,
     convStabilityEarly: 'Sesongen er ung — forvent at prediksjonen vil bevege seg en del før den stabiliserer seg.',
@@ -575,8 +579,7 @@ const T = {
     preciseLabel: 'presis',
     reliableLabel: 'pålitelig',
     priorUncalibrated: 'prior, ukalibrert',
-    priorNoticePrefix: '⚠ <strong>Prior-modell:</strong> Ingen lokale klekkedata integrert. Prognoser bruker kalibrerte GDD-parametere med regionale justeringer (',
-    priorNoticeSuffix: ' usikkerhet). Vær fra nærmeste MET Norge-stasjon.',
+    priorNoticeText: '⚠ <strong>Indikativ prognose:</strong> Modellen bruker kalibrerte GDD-parametere, men er ikke validert mot observerte klekkedatoer for denne elva. Bruk som veiledning. Vær fra nærmeste MET Norge-stasjon.',
     verylowSnowNote: (avg, place) => `⚠ Svært lite snø her (snitt maks ${avg} cm ved ${place}). Snødybde er ikke en meningsfylt sesongindikator her.`,
     lowlandSnowNote: (avg) => `⚠ Lavlandsstasjon (snitt maks ${avg} cm). Snøen er flyktig — hvert segment er en isolert snøhendelse, ikke en sammenhengende sesong.`,
     gddThisYear: 'GDD i år (fra 1. jan)',
@@ -630,10 +633,14 @@ const T = {
     convToday: 'Today',
     convPrediction: 'Historic prediction',
     convBand: (unc) => `Std deviation (±${unc} d)`,
+    convBandIndicative: 'Uncertainty range',
     convHistMedian: 'Median hatch date',
     convNotEnoughData: 'Not enough data for convergence chart — awaiting first GDD accumulation of the season.',
     convCrossed: 'GDD threshold already crossed this year.',
     convSummaryLatest: (date, unc, stability) => `Current estimate: <strong>${date}</strong> · ±${unc} d (std. dev.). ${stability}`,
+    convSummaryLatestIndicative: (date, stability) => `Current estimate: <strong>${date}</strong>. ${stability}`,
+    indicativeLabel: 'Indicative forecast',
+    indicativeNote: 'model has not been validated against observed hatch dates for this river. Use as guidance.',
     convStabilityStable: 'Prediction has stabilized over the last 7 days (≤1 day movement).',
     convStabilityMoving: (days) => `Prediction has moved ${days} days over the last 7 days — still sensitive to new data.`,
     convStabilityEarly: 'Season is young — expect the prediction to move substantially before it stabilizes.',
@@ -682,8 +689,7 @@ const T = {
     preciseLabel: 'precise',
     reliableLabel: 'reliable',
     priorUncalibrated: 'prior, uncalibrated',
-    priorNoticePrefix: '⚠ <strong>Prior model:</strong> No local hatch data incorporated. Predictions use calibrated GDD parameters with regional adjustments (',
-    priorNoticeSuffix: ' uncertainty). Weather from nearest MET Norway station.',
+    priorNoticeText: '⚠ <strong>Indicative forecast:</strong> Model uses calibrated GDD parameters but has not been validated against observed hatch dates for this river. Use as guidance. Weather from nearest MET Norway station.',
     verylowSnowNote: (avg, place) => `⚠ Very low snow area (avg. max ${avg} cm at ${place}). Snow depth is not a meaningful seasonal indicator here.`,
     lowlandSnowNote: (avg) => `⚠ Lowland station (avg. max ${avg} cm). Snow is ephemeral — each segment is an isolated snow event, not a continuous season.`,
     gddThisYear: 'GDD This Year (from 1 Jan)',
@@ -762,6 +768,10 @@ const LOCATIONS = {
         showIce: true,
         gddThreshold: 520,
         uncertaintyDays: 2.1,
+        calibNoteNo:  'validert på 8 år (2016–2025)',
+        calibNoteEn:  'validated on 8 years (2016–2025)',
+        calibShortNo: '8 år',
+        calibShortEn: '8 yrs',
         isgangHistory: {
             2025: '2025-05-28', 2024: '2024-05-26', 2023: '2023-05-23',
             2022: '2022-05-26', 2021: '2021-05-30',
@@ -855,9 +865,13 @@ const LOCATIONS = {
         nveStation:   '2.1236.0',   // Tverråa — Østfold/Halden
         airStationName:   'Rakkestad, Østfold',
         waterStationName: 'Tverråa, Enningdalselva',
-        calibrated: false,
+        calibrated: true,
         gddThreshold: 520,
-        uncertaintyDays: 14,
+        uncertaintyDays: 2.3,
+        calibNoteNo:  'n=4, Børtervanna 2021–2024',
+        calibNoteEn:  'n=4, Børtervanna 2021–2024',
+        calibShortNo: 'n=4',
+        calibShortEn: 'n=4',
         isgangWater: 'Søndre Ertevannet',
         isgangHistory: {
             2026: '2026-03-18',
@@ -1102,7 +1116,6 @@ document.getElementById('locStrip').innerHTML = [
 if (LOC.showIce) document.getElementById('iceSection').style.display = '';
 if (!LOC.calibrated) {
     document.getElementById('priorNotice').style.display = '';
-    document.getElementById('priorUncDays').textContent = `±${LOC.uncertaintyDays} ${t('daysLabel')}`;
 }
 
 // Water sections
@@ -1670,7 +1683,9 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
     // histStats.std er år-til-år-spredning av terskelkryssingen, ikke modellfeil — brukes ikke her.
     const uncDays   = LOC.uncertaintyDays;
     const uncSource = LOC.calibrated
-        ? (LANG === 'no' ? 'standardavvik, validert på 8 år (2016–2025)' : 'std. dev., validated on 8 years (2016–2025)')
+        ? (LANG === 'no'
+            ? `standardavvik, ${LOC.calibNoteNo || 'validert mot observerte klekkedatoer'}`
+            : `std. dev., ${LOC.calibNoteEn || 'validated against observed hatch dates'}`)
         : t('priorEstimateText');
     const unc = document.getElementById('uncertaintyBand');
     if (LOC.calibrated) {
@@ -1678,7 +1693,7 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
         unc.style.display = 'none';
     } else {
         unc.style.display = '';
-        unc.innerHTML = `⚠ ${t('modelUncertaintyText')}: <strong>±${uncDays} ${t('daysLabel')}</strong> (${uncSource}).`;
+        unc.innerHTML = `⚠ <strong>${t('indicativeLabel')}</strong> — ${t('indicativeNote')}`;
     }
 
 
@@ -1689,14 +1704,14 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
     if (locModelEl) {
         locModelEl.textContent = LOC.calibrated
             ? `${t('calibratedModel')} · ${t('stdShort')} ±${uncDays} d`
-            : `⚠ ${t('priorLabel')} · ±${uncDays} d`;
+            : `⚠ ${t('indicativeLabel')}`;
     }
 
     // Update model heading with actual uncertainty
     // Kalibrerte: ±2,1 d fra Excel-validering (n=8 år). Ukalibrerte: prior-estimat.
     document.getElementById('modelHeading').textContent = LOC.calibrated
         ? `${t('dualTriggerLabel')} ${LOC.gddThreshold} (bt = 0°C, ${t('fromJan1')}) + ${t('waterTemp')} ≥ 12°C · ${t('stdShort')} = ±${uncDays} ${t('daysLabel')}`
-        : `${t('gddPriorLabel')} ${LOC.gddThreshold} GDD (bt = 0°C) · ±${uncDays} ${t('daysLabel')} ${t('priorLabel').toLowerCase()}`;
+        : `${t('gddPriorLabel')} ${LOC.gddThreshold} GDD (bt = 0°C) · ${t('indicativeLabel').toLowerCase()}`;
 
     let hatchDate = adgDate;
     let hatchNote = '';
@@ -2272,7 +2287,9 @@ function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate, airDa
     // Ukalibrerte faller tilbake til LOC.uncertaintyDays (prior).
     const uncDays   = LOC.uncertaintyDays;
     const uncSource = LOC.calibrated
-        ? (LANG === 'no' ? 'standardavvik, 8 år' : 'std. dev., 8 yrs')
+        ? (LANG === 'no'
+            ? `standardavvik, ${LOC.calibShortNo || 'kalibrert'}`
+            : `std. dev., ${LOC.calibShortEn || 'calibrated'}`)
         : t('priorLower');
 
     // Best-estimate-kandidater (samme logikk som før — feeder "Best estimate now")
@@ -2295,8 +2312,10 @@ function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate, airDa
     if (l2Date && l2Date > now && l2DaysOut <= 30)
         candidates.push({ date: l2Date, unc: l2Unc, note: `${t('wtExtrapolation')} — ±${l2Unc} ${t('daysLabel')} (${l2DaysOut}d ${t('toHatch')})` });
     if (adgDate) {
-        const gddNoteSuffix = LOC.calibrated ? ` (${uncSource})` : ` (${t('priorUncalibrated')})`;
-        candidates.push({ date: adgDate, unc: parseFloat(uncDays), note: `${t('gddModelShort')} — ±${uncDays} ${t('daysLabel')}${gddNoteSuffix}` });
+        const gddNote = LOC.calibrated
+            ? `${t('gddModelShort')} — ±${uncDays} ${t('daysLabel')} (${uncSource})`
+            : `${t('gddModelShort')} — ${t('indicativeLabel').toLowerCase()}`;
+        candidates.push({ date: adgDate, unc: parseFloat(uncDays), note: gddNote });
     }
     if (l1Date)
         candidates.push({ date: l1Date, unc: L1_UNC, note: `${t('snowFreePlus32')} — ±${L1_UNC} ${t('daysLabel')} (${t('earlySignal')})` });
@@ -2308,10 +2327,6 @@ function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate, airDa
     // Species calendar
     const isgangResult = resolveIsgang(airData || {}, fromDate, snowFree, adgDate);
     renderSpeciesCalendar(isgangResult, adgDate);
-
-    // Sync prior notice banner
-    const priorUncEl = document.getElementById('priorUncDays');
-    if (priorUncEl) priorUncEl.textContent = best ? `±${best.unc} ${t('daysLabel')}` : `±${uncDays} ${t('daysLabel')}`;
 
     // ── Konvergensgraf ──
     // Bruk SAMME avgTemp som projectADGDate (10-års DOY-snitt) slik at
@@ -2372,16 +2387,19 @@ function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate, airDa
             stability = t('convStabilityMoving')(Math.abs(latest - (sevenDaysAgo ?? latest)));
         }
         const latestDateStr = fmt(dateFromDoy(YEAR, latest));
-        summaryHtml = t('convSummaryLatest')(latestDateStr, uncDays, stability);
+        summaryHtml = LOC.calibrated
+            ? t('convSummaryLatest')(latestDateStr, uncDays, stability)
+            : t('convSummaryLatestIndicative')(latestDateStr, stability);
     }
     convSummary.innerHTML = summaryHtml;
 
     // Tegn Chart.js
     const ctx = document.getElementById('convChart').getContext('2d');
     if (window._convChart) window._convChart.destroy();
+    const bandLabel = LOC.calibrated ? t('convBand')(uncDays) : t('convBandIndicative');
     const datasets = [
         {
-            label: t('convBand')(uncDays),
+            label: bandLabel,
             data: upperBand,
             borderColor: 'rgba(45, 106, 79, 0)',
             backgroundColor: 'rgba(45, 106, 79, 0.12)',
