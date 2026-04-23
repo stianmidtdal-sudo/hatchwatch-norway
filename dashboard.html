@@ -360,7 +360,7 @@
 
         <!-- ═══ PRIOR MODEL NOTICE (shown for uncalibrated) ═══ -->
         <div id="priorNotice" class="prior-notice" style="display:none">
-            <span data-i18n-html="priorNoticeText">⚠ <strong>Indikativ prognose:</strong> Modellen bruker kalibrerte GDD-parametere, men er ikke validert mot observerte klekkedatoer for denne elva. Bruk som veiledning. Vær fra nærmeste MET Norge-stasjon.</span>
+            <span data-i18n-html="priorNoticeText">⚠ <strong>Indikativ prognose:</strong> Modellen bruker kalibrerte GDD-parametere, men er ikke validert mot observerte klekkedatoer for denne lokasjonen. Bruk som veiledning. Vær fra nærmeste MET Norge-stasjon.</span>
         </div>
 
         <!-- ═══ LOCATION INFO STRIP ═══ -->
@@ -530,7 +530,7 @@ const T = {
     convSummaryLatest: (date, unc, stability) => `Nåværende estimat: <strong>${date}</strong> · ±${unc} d (standardavvik). ${stability}`,
     convSummaryLatestIndicative: (date, stability) => `Nåværende estimat: <strong>${date}</strong>. ${stability}`,
     indicativeLabel: 'Indikativ prognose',
-    indicativeNote: 'modellen er ikke validert mot observerte klekkedatoer for denne elva. Bruk som veiledning.',
+    indicativeNote: 'modellen er ikke validert mot observerte klekkedatoer for denne lokasjonen. Bruk som veiledning.',
     convStabilityStable: 'Prediksjonen har stabilisert seg de siste 7 dagene (≤1 dags endring).',
     convStabilityMoving: (days) => `Prediksjonen har beveget seg ${days} dager de siste 7 dagene — fortsatt sensitiv for ny data.`,
     convStabilityEarly: 'Sesongen er ung — forvent at prediksjonen vil bevege seg en del før den stabiliserer seg.',
@@ -579,7 +579,7 @@ const T = {
     preciseLabel: 'presis',
     reliableLabel: 'pålitelig',
     priorUncalibrated: 'prior, ukalibrert',
-    priorNoticeText: '⚠ <strong>Indikativ prognose:</strong> Modellen bruker kalibrerte GDD-parametere, men er ikke validert mot observerte klekkedatoer for denne elva. Bruk som veiledning. Vær fra nærmeste MET Norge-stasjon.',
+    priorNoticeText: '⚠ <strong>Indikativ prognose:</strong> Modellen bruker kalibrerte GDD-parametere, men er ikke validert mot observerte klekkedatoer for denne lokasjonen. Bruk som veiledning. Vær fra nærmeste MET Norge-stasjon.',
     verylowSnowNote: (avg, place) => `⚠ Svært lite snø her (snitt maks ${avg} cm ved ${place}). Snødybde er ikke en meningsfylt sesongindikator her.`,
     lowlandSnowNote: (avg) => `⚠ Lavlandsstasjon (snitt maks ${avg} cm). Snøen er flyktig — hvert segment er en isolert snøhendelse, ikke en sammenhengende sesong.`,
     gddThisYear: 'GDD i år (fra 1. jan)',
@@ -640,7 +640,7 @@ const T = {
     convSummaryLatest: (date, unc, stability) => `Current estimate: <strong>${date}</strong> · ±${unc} d (std. dev.). ${stability}`,
     convSummaryLatestIndicative: (date, stability) => `Current estimate: <strong>${date}</strong>. ${stability}`,
     indicativeLabel: 'Indicative forecast',
-    indicativeNote: 'model has not been validated against observed hatch dates for this river. Use as guidance.',
+    indicativeNote: 'model has not been validated against observed hatch dates for this location. Use as guidance.',
     convStabilityStable: 'Prediction has stabilized over the last 7 days (≤1 day movement).',
     convStabilityMoving: (days) => `Prediction has moved ${days} days over the last 7 days — still sensitive to new data.`,
     convStabilityEarly: 'Season is young — expect the prediction to move substantially before it stabilizes.',
@@ -689,7 +689,7 @@ const T = {
     preciseLabel: 'precise',
     reliableLabel: 'reliable',
     priorUncalibrated: 'prior, uncalibrated',
-    priorNoticeText: '⚠ <strong>Indicative forecast:</strong> Model uses calibrated GDD parameters but has not been validated against observed hatch dates for this river. Use as guidance. Weather from nearest MET Norway station.',
+    priorNoticeText: '⚠ <strong>Indicative forecast:</strong> Model uses calibrated GDD parameters but has not been validated against observed hatch dates for this location. Use as guidance. Weather from nearest MET Norway station.',
     verylowSnowNote: (avg, place) => `⚠ Very low snow area (avg. max ${avg} cm at ${place}). Snow depth is not a meaningful seasonal indicator here.`,
     lowlandSnowNote: (avg) => `⚠ Lowland station (avg. max ${avg} cm). Snow is ephemeral — each segment is an isolated snow event, not a continuous season.`,
     gddThisYear: 'GDD This Year (from 1 Jan)',
