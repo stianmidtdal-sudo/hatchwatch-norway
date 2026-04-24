@@ -368,14 +368,13 @@
         <button class="welcome-close" onclick="closeWelcome()" aria-label="Lukk">×</button>
         <div data-i18n-html="welcomeContent">
             <h2>Velkommen til Hatch Watch! 🎣</h2>
-            <p>Dette er et <strong>daglig oppdatert klekkevarsel</strong> for norske fluefiskere. Vi kombinerer <strong>sanntids vær-data</strong> fra MET Norge og NVE med <strong>statistisk modellering</strong> og <strong>historiske observasjoner</strong> — for å på best mulig måte forutsi når det klekker insekter.</p>
-            <p>Siden er <strong>helt ny</strong> og bygges videre mens sesongen pågår. Det vil kunne <strong>oppstå rariteter</strong> underveis nå i starten. Håpet er å få raritetene ned til et minimum, og treffsikkerheten over middels.</p>
+            <p>Dette er et <strong>daglig oppdatert klekkevarsel</strong> for norske fluefiskere. Vi kombinerer sanntids vær-data fra MET Norge og NVE med statistisk modellering og historiske observasjoner — for å på best mulig måte forutsi når det klekker insekter.</p>
+            <p>Siden er helt ny og bygges videre mens sesongen pågår. Det vil kunne oppstå rariteter underveis nå i starten. Håpet er å få raritetene ned til et minimum, og treffsikkerheten over middels.</p>
             <p><strong>Det er åpenbart at naturen aldri kan forutses helt nøyaktig</strong> — det vet vi fra værmeldingen. Men det viser seg at historisk data og statistisk modellering tar oss overraskende langt i å forutse når klekkinger faktisk skjer.</p>
-            <p>Lokasjoner merket med <strong>⭐ Kalibrert</strong> er validert mot observerte klekkedatoer og treffer typisk innen 2-4 dager. For andre er prognosen <strong>indikativ</strong> — fortsatt langt bedre enn å gjette, men bruk den som veiledning, ikke fasit. Kombiner alltid med egen fiskefølelse og lokalkunnskap.</p>
-            <p><strong>Tilbakemeldinger gjør siden bedre.</strong> Forbedringspotensiale, nye lokasjoner og kanskje aller mest verdifult — <strong>klekkeobservasjoner</strong>. Feltobservasjoner trener modellen og gjør den enda skarpere.</p>
-            <p><strong>Tight lines!</strong></p>
+            <p>Lokasjoner merket med ⭐ Kalibrert er validert mot observerte klekkedatoer og treffer typisk innen 2-4 dager. For andre er prognosen indikativ — fortsatt langt bedre enn å gjette, men bruk den som veiledning, ikke fasit. Kombiner alltid med egen fiskefølelse og lokalkunnskap.</p>
+            <p><strong>Tilbakemeldinger gjør siden bedre.</strong> Forbedringspotensiale, nye lokasjoner og kanskje aller mest verdifult — klekkeobservasjoner. Feltobservasjoner trener modellen og gjør den enda skarpere.</p>
         </div>
-        <button class="welcome-btn" onclick="closeWelcome()" data-i18n="welcomeDismiss">La oss fiske 🎣</button>
+        <button class="welcome-btn" onclick="closeWelcome()" data-i18n="welcomeDismiss">Lukk</button>
     </div>
 </div>
 
@@ -407,14 +406,13 @@ const T = {
     altitudeTitle: '🏔 Høydekorreksjon',
     altitudeDesc: 'Værstasjoner ligger ofte lavere enn fiskeplassene. Lufttemperaturer justeres med 0,6°C per 100m (standard atmosfærisk lapse rate) for å estimere forholdene der folk faktisk fisker. Dette påvirker GDD-akkumuleringen. Vanntemperaturer brukt i prediksjonsmodellen justeres med 0,35°C per 100m.',
     aboutLink: 'Om Hatch Watch',
-    welcomeDismiss: 'La oss fiske 🎣',
+    welcomeDismiss: 'Lukk',
     welcomeContent: `<h2>Velkommen til Hatch Watch! 🎣</h2>
-        <p>Dette er et <strong>daglig oppdatert klekkevarsel</strong> for norske fluefiskere. Vi kombinerer <strong>sanntids vær-data</strong> fra MET Norge og NVE med <strong>statistisk modellering</strong> og <strong>historiske observasjoner</strong> — for å på best mulig måte forutsi når det klekker insekter.</p>
-        <p>Siden er <strong>helt ny</strong> og bygges videre mens sesongen pågår. Det vil kunne <strong>oppstå rariteter</strong> underveis nå i starten. Håpet er å få raritetene ned til et minimum, og treffsikkerheten over middels.</p>
+        <p>Dette er et <strong>daglig oppdatert klekkevarsel</strong> for norske fluefiskere. Vi kombinerer sanntids vær-data fra MET Norge og NVE med statistisk modellering og historiske observasjoner — for å på best mulig måte forutsi når det klekker insekter.</p>
+        <p>Siden er helt ny og bygges videre mens sesongen pågår. Det vil kunne oppstå rariteter underveis nå i starten. Håpet er å få raritetene ned til et minimum, og treffsikkerheten over middels.</p>
         <p><strong>Det er åpenbart at naturen aldri kan forutses helt nøyaktig</strong> — det vet vi fra værmeldingen. Men det viser seg at historisk data og statistisk modellering tar oss overraskende langt i å forutse når klekkinger faktisk skjer.</p>
-        <p>Lokasjoner merket med <strong>⭐ Kalibrert</strong> er validert mot observerte klekkedatoer og treffer typisk innen 2-4 dager. For andre er prognosen <strong>indikativ</strong> — fortsatt langt bedre enn å gjette, men bruk den som veiledning, ikke fasit. Kombiner alltid med egen fiskefølelse og lokalkunnskap.</p>
-        <p><strong>Tilbakemeldinger gjør siden bedre.</strong> Forbedringspotensiale, nye lokasjoner og kanskje aller mest verdifult — <strong>klekkeobservasjoner</strong>. Feltobservasjoner trener modellen og gjør den enda skarpere.</p>
-        <p><strong>Tight lines!</strong></p>`,
+        <p>Lokasjoner merket med ⭐ Kalibrert er validert mot observerte klekkedatoer og treffer typisk innen 2-4 dager. For andre er prognosen indikativ — fortsatt langt bedre enn å gjette, men bruk den som veiledning, ikke fasit. Kombiner alltid med egen fiskefølelse og lokalkunnskap.</p>
+        <p><strong>Tilbakemeldinger gjør siden bedre.</strong> Forbedringspotensiale, nye lokasjoner og kanskje aller mest verdifult — klekkeobservasjoner. Feltobservasjoner trener modellen og gjør den enda skarpere.</p>`,
     stefanTitle: 'Stefan ismodell',
     stefanDesc: 'Istykkelse estimeres med Stefans ligning — en fysisk vekstmodell for innsjøis basert på akkumulerte kuldegrader.',
     dataTitle: 'Datakilder',
@@ -444,14 +442,13 @@ const T = {
     viewForecast: 'View forecast →',
     calibratedBadge: '⭐ Calibrated',
     aboutLink: 'About Hatch Watch',
-    welcomeDismiss: 'Let\'s fish 🎣',
+    welcomeDismiss: 'Close',
     welcomeContent: `<h2>Welcome to Hatch Watch! 🎣</h2>
-        <p>This is a <strong>daily updated hatch forecast</strong> for fly fishers in Norway. We combine <strong>real-time weather data</strong> from MET Norway and NVE with <strong>statistical modeling</strong> and <strong>historical observations</strong> — to give our best prediction of when insects will hatch.</p>
-        <p>The site is <strong>brand new</strong> and is being built further as the season unfolds. <strong>Expect some oddities</strong> early on. The goal is to reduce them to a minimum while keeping accuracy above average.</p>
+        <p>This is a <strong>daily updated hatch forecast</strong> for fly fishers in Norway. We combine real-time weather data from MET Norway and NVE with statistical modeling and historical observations — to give our best prediction of when insects will hatch.</p>
+        <p>The site is brand new and is being built further as the season unfolds. Expect some oddities early on. The goal is to reduce them to a minimum while keeping accuracy above average.</p>
         <p><strong>It's obvious that nature can never be predicted with certainty</strong> — we know that from weather forecasts. But it turns out that historical data and statistical modeling take us surprisingly far in predicting when hatches actually occur.</p>
-        <p>Locations marked with <strong>⭐ Calibrated</strong> have been validated against observed hatch dates and typically hit within 2-4 days. For others, the forecast is <strong>indicative</strong> — still far better than guessing, but use it as guidance, not gospel. Always combine with your own fishing sense and local knowledge.</p>
-        <p><strong>Feedback makes the site better.</strong> Improvements, new locations, and perhaps most valuable of all — <strong>hatch observations</strong>. Field observations train the model and make it sharper.</p>
-        <p><strong>Tight lines!</strong></p>`,
+        <p>Locations marked with ⭐ Calibrated have been validated against observed hatch dates and typically hit within 2-4 days. For others, the forecast is indicative — still far better than guessing, but use it as guidance, not gospel. Always combine with your own fishing sense and local knowledge.</p>
+        <p><strong>Feedback makes the site better.</strong> Improvements, new locations, and perhaps most valuable of all — hatch observations. Field observations train the model and make it sharper.</p>`,
   }
 };
 function t(key) { return (T[LANG] && T[LANG][key] != null) ? T[LANG][key] : (T['en'][key] || key); }
