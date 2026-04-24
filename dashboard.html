@@ -853,18 +853,18 @@ const LOCATIONS = {
             2019: '2019-05-10', 2018: '2018-05-13', 2017: '2017-05-16',
         },
     },
-    vestfjella: {
-        id: 'vestfjella',
-        area: 'Østfold',             // Halden-området / Vestfjella
-        name: 'Enningdalselva',
-        place: 'Rakkestad',
+    ostmarka: {
+        id: 'ostmarka',
+        area: 'Østmarka',            // Enebakk / Børtervanna-området
+        name: 'Børtervanna',
+        place: 'Enebakk',
         region: 'Østlandet',
-        lat: 59.10, lon: 11.40, altitude: 180, stationAltitude: 57,
-        frostStation: 'SN3290',      // Rakkestad — air temperature
-        snowStation:  'SN3280',      // Rakkestad — snow depth (separate station)
-        nveStation:   '2.1236.0',   // Tverråa — Østfold/Halden
-        airStationName:   'Rakkestad, Østfold',
-        waterStationName: 'Tverråa, Enningdalselva',
+        lat: 59.70, lon: 11.17, altitude: 170, stationAltitude: 150,
+        frostStation: 'SN4090',      // Vallerudåsen — air temperature
+        snowStation:  'SN4040',      // Enebakk – Barbøl — snow depth
+        nveStation:   '2.1213.0',    // Mønevann — vannstand/-temp Enebakk
+        airStationName:   'Vallerudåsen',
+        waterStationName: 'Mønevann, Enebakk',
         calibrated: true,
         gddThreshold: 520,
         uncertaintyDays: 2.3,
@@ -872,6 +872,26 @@ const LOCATIONS = {
         calibNoteEn:  'n=4, Børtervanna 2021–2024',
         calibShortNo: 'n=4',
         calibShortEn: 'n=4',
+        isgangWater: 'Børtervanna',
+    },
+    vestfjella: {
+        id: 'vestfjella',
+        area: 'Vestfjella',          // Vestfjella skogsområde / Halden-Ørje
+        name: 'Enningdalselva',
+        place: 'Ørje',
+        region: 'Østlandet',
+        lat: 59.30, lon: 11.66, altitude: 180, stationAltitude: 150,
+        frostStation: 'SN1960',      // Ørje Vest — air temperature
+        snowStation:  'SN1950',      // Ørje — snow depth
+        nveStation:   '2.1236.0',    // Tverråa — Østfold/Halden
+        airStationName:   'Ørje Vest',
+        waterStationName: 'Tverråa, Enningdalselva',
+        calibrated: false,
+        gddThreshold: 520,
+        uncertaintyDays: 14,
+        // Merk: bruker internt id 'vestfjella' (samme nøkkel som gammel Østfold-entry).
+        // Tidligere bookmarks til ?loc=vestfjella vil nå lande her, på Halden/Ørje-området,
+        // mens Enebakk/Børtervanna-delen er flyttet til 'ostmarka'.
         isgangWater: 'Søndre Ertevannet',
         isgangHistory: {
             2026: '2026-03-18',
