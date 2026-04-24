@@ -1376,10 +1376,17 @@ function interpolateGaps(data, maxGapDays = 7) {
     return result;
 }
 
-function latest(data) {
+function latest(data, maxAgeDays = 30) {
     const dates = Object.keys(data).sort();
     if (!dates.length) return { date: null, value: null };
-    return { date: dates.at(-1), value: data[dates.at(-1)] };
+    const lastDate = dates.at(-1);
+    // Ferskhetssjekk: hvis nyeste datapunkt er eldre enn maxAgeDays,
+    // er det gammel lagret data (f.eks. fra i fjor sommer). Returner null.
+    // Dette forhindrer at en død/utgått NVE-stasjon viser fjorårets verdier
+    // som "dagens" i KPI-kortene.
+    const ageDays = (new Date() - parseDate(lastDate)) / 86400000;
+    if (ageDays > maxAgeDays) return { date: null, value: null };
+    return { date: lastDate, value: data[lastDate] };
 }
 
 function calcADG(airData, fromDate) {
