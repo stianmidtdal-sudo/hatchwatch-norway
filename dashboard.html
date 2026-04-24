@@ -2639,11 +2639,17 @@ function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate, airDa
         rawPredDoys.push(pred);
     }
 
-    // 3-dagers rullende median for å glatte ut enkeltdagsspiker fra
-    // vanntemp-regresjonen. Påvirker kun visualiseringen — selve
-    // "Estimert klekkedato"-kortet bruker rå dual-trigger uten glatting.
+    // 5-dagers rullende median for å glatte ut enkeltdagsspiker fra
+    // vanntemp-regresjonen. Brukte tidligere 3-dagers vindu, men det
+    // håndterer ikke boundary godt (siste punkt hadde kun 2 verdier i
+    // vinduet = median = den største). 5-dagers med [d-2, d-1, d, d+1, d+2]
+    // gir siste punkt et trailing vindu på 3 verdier som dempes ordentlig.
+    // Påvirker kun visualiseringen — "Estimert klekkedato"-kortet bruker rå dual-trigger.
     const predDoys = rawPredDoys.map((v, i) => {
-        const window = [rawPredDoys[i-1], rawPredDoys[i], rawPredDoys[i+1]].filter(x => x != null);
+        const window = [
+            rawPredDoys[i-2], rawPredDoys[i-1], rawPredDoys[i],
+            rawPredDoys[i+1], rawPredDoys[i+2],
+        ].filter(x => x != null);
         if (window.length === 0) return null;
         window.sort((a, b) => a - b);
         return window[Math.floor(window.length / 2)];
