@@ -1096,11 +1096,11 @@ const LOCATIONS = {
         name: 'Elgtjern',
         place: 'Finnemarka',
         region: 'Østlandet',
-        lat: 59.855, lon: 10.303, altitude: 220, stationAltitude: 250,  // E18 Lierskogen 250m
-        frostStation: 'SN19923',     // E18 Lierskogen
+        lat: 59.855, lon: 10.303, altitude: 220, stationAltitude: 64,  // Geithus 64m (Modum)
+        frostStation: 'SN26500',     // Geithus, Modum (100% dekning 2024-2025, tilbake til 2016)
         snowStation:  'SN19930',     // Glitre (Glitrevannverket, 375m, Modum, 14km)
         nveStation:   '11.4.0',      // Elgtjern — Modum
-        airStationName:   'E18 Lierskogen',
+        airStationName:   'Geithus',
         waterStationName: 'Elgtjern',
         calibrated: false,
         gddThreshold: 520,
@@ -2482,9 +2482,7 @@ function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate, airDa
     // Dual-trigger: latest of GDD-520-dato og vanntemp-12°C-dato for hver dag d.
     // Gir konsistens med "Estimert klekkedato"-kortet som bruker samme logikk.
     const labels = [];
-    const predDoys = [];
-    const lowerBand = [];
-    const upperBand = [];
+    const rawPredDoys = [];
     for (let d = firstDoy; d <= todayDoy; d++) {
         const gddPred = predictHatchDoyFromDay(airData, YEAR, d, threshold, avgTemp);
         const dt = dateFromDoy(YEAR, d);
@@ -2499,14 +2497,20 @@ function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate, airDa
         }
 
         labels.push(fmt(dt));
-        if (pred == null) {
-            predDoys.push(null); lowerBand.push(null); upperBand.push(null);
-        } else {
-            predDoys.push(pred);
-            lowerBand.push(pred - uncDays);
-            upperBand.push(pred + uncDays);
-        }
+        rawPredDoys.push(pred);
     }
+
+    // 3-dagers rullende median for å glatte ut enkeltdagsspiker fra
+    // vanntemp-regresjonen. Påvirker kun visualiseringen — selve
+    // "Estimert klekkedato"-kortet bruker rå dual-trigger uten glatting.
+    const predDoys = rawPredDoys.map((v, i) => {
+        const window = [rawPredDoys[i-1], rawPredDoys[i], rawPredDoys[i+1]].filter(x => x != null);
+        if (window.length === 0) return null;
+        window.sort((a, b) => a - b);
+        return window[Math.floor(window.length / 2)];
+    });
+    const lowerBand = predDoys.map(v => v != null ? v - uncDays : null);
+    const upperBand = predDoys.map(v => v != null ? v + uncDays : null);
 
     // 5-års median hatchdato for denne lokasjonen (fra histStats)
     const histMedianDoy = histStats?.median ?? null;
