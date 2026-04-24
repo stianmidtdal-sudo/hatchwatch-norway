@@ -1227,7 +1227,9 @@ const locItems = [
     { key: t('locAltitude'),     val: `${LOC.altitude} ${t('masl')}` },
     { key: t('locCoords'),       val: `${LOC.lat.toFixed(2)}°N, ${LOC.lon.toFixed(2)}°E` },
     { key: t('locGddTarget'),    val: `${LOC.gddThreshold} (base 0°C)` },
-    { key: t('locModel'),        val: LOC.calibrated ? t('calibratedModel') : `⚠ ${t('priorLabel')} (±${LOC.uncertaintyDays} d)` },
+    // Initielt: vis "Indikativ" for ikke-kalibrerte uten ± tall. renderModel oppdaterer evt.
+    { key: t('locModel'),        id: 'locModelItem',
+      val: LOC.calibrated ? t('calibratedModel') : `⚠ ${t('indicativeLabel')}` },
 ];
 // Høydekorreksjon — vis bare hvis luft-korreksjonen er meningsfull (≥ 0.1°C)
 const _airDelta = ((LOC.stationAltitude ?? LOC.altitude) - LOC.altitude) * 0.6 / 100;
@@ -1240,7 +1242,7 @@ if (Math.abs(_airDelta) >= 0.1) {
     });
 }
 document.getElementById('locStrip').innerHTML = locItems
-    .map(i => `<div class="loc-item"><div class="loc-key">${i.key}</div><div class="loc-val">${i.val}</div></div>`)
+    .map(i => `<div class="loc-item"${i.id ? ` id="${i.id}"` : ''}><div class="loc-key">${i.key}</div><div class="loc-val">${i.val}</div></div>`)
     .join('');
 
 // Show/hide sections based on calibration
@@ -1884,7 +1886,7 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
 
     // Update loc-strip Model entry with actual uncertainty
     // Kalibrerte viser MAE fra Excel-validering; ukalibrerte viser prior.
-    const locModelEl = document.querySelector('#locStrip .loc-item:last-child .loc-val');
+    const locModelEl = document.querySelector('#locModelItem .loc-val');
     if (locModelEl) {
         locModelEl.textContent = LOC.calibrated
             ? `${t('calibratedModel')} · ${t('stdShort')} ±${uncDays} d`
