@@ -2182,9 +2182,60 @@ function predictIsgangIce(airData, alpha, beta) {
     return null;
 }
 
+// Hybrid isgang-prediksjon: blander Stefan-ismodellen med klimatologisk baseline.
+// Stefan alene kan overtilpasse med n=8 og bomme dramatisk i anomaliske år.
+// Hybriden regulariserer mot historisk median, justert for årets temperatur-anomali.
+// Formel: 50% Stefan + 50% (median ± K·anomaly), der K=4 dager/°C.
+function predictIsgangHybrid(airData, alpha, beta, hist) {
+    // Stefan-del (fysisk modell)
+    var stefanDate = predictIsgangIce(airData, alpha, beta);
+
+    // Historisk median av observerte isgangdatoer
+    var histDoys = Object.values(hist).map(function(s) { return doy(parseDate(s)); });
+    histDoys.sort(function(a, b) { return a - b; });
+    var medianDoy = histDoys[Math.floor(histDoys.length / 2)];
+
+    // Temperatur-anomali: obs vs klima fra 1. nov i fjor til i dag
+    var avgTemp = buildDoyAvgTemp(airData);
+    var winterStart = parseDate((YEAR - 1) + '-11-01');
+    var today = new Date();
+    var obsSum = 0, obsN = 0, climSum = 0, climN = 0;
+    for (var dt = new Date(winterStart); dt <= today; dt.setDate(dt.getDate() + 1)) {
+        var key = isoDate(dt);
+        var T = airData[key];
+        if (T != null) { obsSum += T; obsN++; }
+        var d = doy(dt);
+        if (avgTemp[d] != null) { climSum += avgTemp[d]; climN++; }
+    }
+    var anomaly = 0;
+    if (obsN > 30 && climN > 30) {
+        anomaly = (obsSum / obsN) - (climSum / climN);
+    }
+    var K = 4;  // dager tidligere per °C varmere vinter (Nordisk fenologisk tommelfingerregel)
+    var climateDoy = Math.round(medianDoy - anomaly * K);
+
+    // Blend 50/50
+    if (stefanDate) {
+        var hybridDoy = Math.round(0.5 * doy(stefanDate) + 0.5 * climateDoy);
+        return {
+            date: dateFromDoy(YEAR, hybridDoy),
+            stefanDoy: doy(stefanDate),
+            climateDoy: climateDoy,
+            anomaly: Math.round(anomaly * 10) / 10,
+        };
+    }
+    // Stefan feilet — bruk bare klima-justert median
+    return {
+        date: dateFromDoy(YEAR, climateDoy),
+        stefanDoy: null,
+        climateDoy: climateDoy,
+        anomaly: Math.round(anomaly * 10) / 10,
+    };
+}
+
 // Resolve the best isgang date for the species calendar.
 // Priority: 1. Observed this year (isgangHistory[YEAR])
-//           2. Ice model calibrated from observed historical isgang dates
+//           2. Hybrid prediction (Stefan + climate-adjusted median, 50/50 blend)
 //           3. Fallback chain: snowFree+12d / fromDate / back-calc / hist.mean
 function resolveIsgang(airData, fromDate, snowFree, vulgataDate) {
     var hist = LOC.isgangHistory;
@@ -2194,14 +2245,18 @@ function resolveIsgang(airData, fromDate, snowFree, vulgataDate) {
         return { date: parseDate(hist[YEAR]), source: 'observed (Sentinel Hub)', observed: true };
     }
 
-    // 2 — calibrated Stefan ice model
+    // 2 — hybrid prediksjon (Stefan + klima)
     if (hist && Object.keys(hist).length >= 3) {
         var cal = calibrateIceModel(hist, airData);
         if (cal) {
-            var predicted = predictIsgangIce(airData, cal.alpha, cal.beta);
-            if (predicted) {
-                var src = 'ice model \u03b1=' + cal.alpha + ' \u03b2=' + cal.beta + ' (' + cal.n + ' yrs, \u00b1' + cal.rmse + 'd)';
-                return { date: predicted, source: src, calibrated: true, rmse: cal.rmse };
+            var hy = predictIsgangHybrid(airData, cal.alpha, cal.beta, hist);
+            if (hy && hy.date) {
+                var anomSign = hy.anomaly >= 0 ? '+' : '';
+                var src = 'hybrid: Stefan DOY ' + (hy.stefanDoy || '–') +
+                          ' + klima (median DOY ' + hy.climateDoy +
+                          ', anomali ' + anomSign + hy.anomaly + '°C)' +
+                          ' · Stefan RMSE ±' + cal.rmse + 'd (n=' + cal.n + ')';
+                return { date: hy.date, source: src, calibrated: true, rmse: cal.rmse };
             }
         }
     }
