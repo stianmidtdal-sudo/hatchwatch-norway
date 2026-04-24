@@ -1773,15 +1773,17 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
         ? `${t('dualTriggerLabel')} ${LOC.gddThreshold} (bt = 0°C, ${t('fromJan1')}) + ${t('waterTemp')} ≥ 12°C · ${t('stdShort')} = ±${uncDays} ${t('daysLabel')}`
         : `${t('gddPriorLabel')} ${LOC.gddThreshold} GDD (bt = 0°C) · ${t('indicativeLabel').toLowerCase()}`;
 
+    // Dual-trigger: latest of GDD ≥ 520 og vanntemp ≥ 12°C.
+    // Gjelder ALLE lokasjoner med vanntemp-data, ikke bare kalibrerte.
+    // Vanntemp 12°C er en universell biofysisk terskel for døgnflueklekking;
+    // GDD 520 er lokalspesifikk-kalibrert. Kombinasjonen gir konservativ prediksjon.
     let hatchDate = adgDate;
     let hatchNote = '';
-    if (LOC.calibrated && adgDate && wtDate) {
+    if (adgDate && wtDate) {
         hatchDate = adgDate > wtDate ? adgDate : wtDate;
         hatchNote = t('latestOf');
     } else if (adgDate) {
-        hatchNote = LOC.calibrated
-            ? t('gddTriggerOnly')
-            : `${t('estimateLabel')} ±${uncDays} ${t('daysLabel')} (${t('priorLower')})`;
+        hatchNote = t('gddTriggerOnly');
     }
     document.getElementById('hatchDate').textContent = hatchDate ? fmt(hatchDate) : '–';
     document.getElementById('hatchNote').textContent = hatchNote;
@@ -2439,9 +2441,14 @@ function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate, airDa
     document.getElementById('bestDate').textContent = best ? fmt(best.date) : '–';
     document.getElementById('bestNote').textContent = best ? best.note : t('noEstimate');
 
-    // Species calendar
+    // Species calendar — Vulgata/Grandis ankres til dual-trigger (latest of GDD og vanntemp ≥ 12°C)
+    // hvis vanntemp-data finnes, ellers GDD alene.
     const isgangResult = resolveIsgang(airData || {}, fromDate, snowFree, adgDate);
-    renderSpeciesCalendar(isgangResult, adgDate);
+    let vulgataAnchor = adgDate;
+    if (adgDate && l2Date) {
+        vulgataAnchor = adgDate > l2Date ? adgDate : l2Date;
+    }
+    renderSpeciesCalendar(isgangResult, vulgataAnchor);
 
     // ── Konvergensgraf ──
     // Bruk SAMME avgTemp som projectADGDate (10-års DOY-snitt) slik at
