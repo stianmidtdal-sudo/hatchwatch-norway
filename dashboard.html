@@ -1987,10 +1987,14 @@ function renderSnowChart(snowData) {
         const dt = parseDate(dateStr);
         const mo = dt.getMonth() + 1, yr = dt.getFullYear();
         const winterYr = mo >= 11 ? yr + 1 : yr;
-        if (!byWinter[winterYr]) byWinter[winterYr] = {};
         const nov1 = new Date(winterYr - 1, 10, 1);
         const offset = Math.round((dt - nov1) / 86400000);
-        if (offset >= 0 && offset <= 212) byWinter[winterYr][offset] = val;
+        // Opprett vinterbøtten kun hvis vi faktisk har gyldig data å legge inn.
+        // Hvis ikke, får vi tomme vintre som gir Math.max() = -Infinity.
+        if (offset >= 0 && offset <= 212) {
+            if (!byWinter[winterYr]) byWinter[winterYr] = {};
+            byWinter[winterYr][offset] = val;
+        }
     }
     const SNOW_STYLE = {
         2017:{color:'#a8c5da',w:1}, 2018:{color:'#7fb3d3',w:1}, 2019:{color:'#5b9ebf',w:1},
@@ -2000,7 +2004,12 @@ function renderSnowChart(snowData) {
     };
     // Detect sparse/coastal station: if average max snow per winter is < 15 cm,
     // use stepped (no gap-spanning) to avoid ugly diagonal lines across data gaps.
-    const winterMaxes = Object.values(byWinter).map(d => Math.max(...Object.values(d)));
+    const winterMaxes = Object.values(byWinter)
+        .map(d => {
+            const vals = Object.values(d);
+            return vals.length ? Math.max(...vals) : null;
+        })
+        .filter(v => v != null && isFinite(v));
     const avgMax = winterMaxes.length ? winterMaxes.reduce((a,b)=>a+b,0)/winterMaxes.length : 0;
     const isSparseSnow = avgMax < 15;
 
