@@ -1898,19 +1898,15 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
     document.getElementById('hatchNote').textContent = hatchNote;
 }
 
-function renderWaterTempChart(wtData, altCorrection = 0) {
+function renderWaterTempChart(wtData) {
     if (!LOC.nveStation && !LOC.nveWaterTempStation) return;
 
-    // Oppdater wtNote med stasjonsnavn og høydekorreksjon (hvis satt)
+    // Vanntemp-grafen viser rå stasjonsverdier (uten høydekorreksjon) — stasjonsnavnet
+    // er tydelig angitt. Altitude-korreksjonen anvendes kun internt i dual-trigger
+    // og prediksjonshistorikk-modellen (som bruker wtDataForPrediction).
     const wtStnNote = LOC.nveWaterTempStation || LOC.nveStation;
     const tempStnName = LOC.waterStationName || LOC.name || LOC.place;
-    let noteText = `${t('stationLabel')}: ${tempStnName} (${wtStnNote})`;
-    if (Math.abs(altCorrection) >= 0.1) {
-        const sign = altCorrection > 0 ? '+' : '';
-        noteText += ` · ${t('waterAltCorrection')} ${sign}${altCorrection}°C `
-                  + `(${LOC.stationAltitude}m → ${LOC.altitude}m, ${t('waterLapseRate')})`;
-    }
-    document.getElementById('wtNote').textContent = noteText;
+    document.getElementById('wtNote').textContent = `${t('stationLabel')}: ${tempStnName} (${wtStnNote})`;
 
     const may1  = doy(new Date(YEAR, 4,  1));
     const jul15 = doy(new Date(YEAR, 6, 15));
@@ -2790,14 +2786,15 @@ async function main() {
             wtStation ? fetchNVE(1003, dataStart, dataEnd, wtStation).catch(() => ({})) : Promise.resolve({}),
         ]);
         // Fill short sensor gaps (≤7 days) with linear interpolation before rendering
-        const wtDataInterp = interpolateGaps(wtDataRaw, 7);
+        const wtData = interpolateGaps(wtDataRaw, 7);
 
         // Apply altitude lapse-rate correction.
-        // Luft: 0.6°C/100m. Vann: 0.35°C/100m (bufret av varmekapasitet, isavsmelting).
-        // Viktig for høyfjellslokasjoner (Hardangervidda) der stasjonen ligger
-        // hundrevis av meter lavere enn fiskeplassen.
+        // Luft: 0.6°C/100m (brukes gjennomgående — GDD, graf, historikk).
+        // Vann: 0.35°C/100m — men KUN i prediksjonsmodellen (dual-trigger + prediksjonshistorikk).
+        // Visning (KPI-kort + vanntemp-graf) viser alltid rå stasjonsverdier siden stasjonsnavnet
+        // allerede er tydelig merket. Unngår fysiske urimelige tall som negativ vanntemp fra korreksjonen.
         const { data: airDataCorrected, correction: altCorrection } = applyAltitudeCorrection(airData);
-        const { data: wtData, correction: wtAltCorrection } = applyWaterAltitudeCorrection(wtDataInterp);
+        const { data: wtDataForPrediction } = applyWaterAltitudeCorrection(wtData);
 
         // GDD starts from 1. januar (per Excel-modell Dashboard 3.0, kalibrert mot 520 GDD + WT ≥ 12°C)
         const fromDate   = `${YEAR}-01-01`;
@@ -2806,20 +2803,20 @@ async function main() {
         const fromDoyN   = doy(parseDate(fromDate));
         const histADG    = histAvgADG(airDataCorrected, fromDoyN, todayDoyN);
         const adgDate    = projectADGDate(airDataCorrected, currentADG);
-        const wtDate     = LOC.nveStation ? extrapolateWT(wtData) : null;
+        const wtDate     = LOC.nveStation ? extrapolateWT(wtDataForPrediction) : null;
 
         // Historical statistics: run GDD model on 2019–2025 → data-driven uncertainty
         const histStats  = computeHistoricalStats(airDataCorrected, LOC.gddThreshold);
 
         // Render
-        renderKPIs(airData, snowData, flowData, wtData);   // KPIs show air raw, water corrected
+        renderKPIs(airData, snowData, flowData, wtData);   // Vann: rå (uten høydekorreksjon)
         renderModel(airDataCorrected, currentADG, histADG, adgDate, wtDate, histStats);
         renderHistoricalGDDSection(histStats, altCorrection, snowData, airDataCorrected);
-        renderWaterTempChart(wtData, wtAltCorrection);
+        renderWaterTempChart(wtData);                       // Graf: rå verdier fra stasjon
         renderSnowChart(snowData);
         renderIceChart(airDataCorrected, snowData);
         const { snowFree } = renderIndicators(snowData, airDataCorrected, currentADG);
-        renderConvergence(snowFree, wtData, adgDate, histStats, fromDate, airDataCorrected);
+        renderConvergence(snowFree, wtDataForPrediction, adgDate, histStats, fromDate, airDataCorrected);
 
         // Show dashboard
         document.getElementById('loadingState').style.display = 'none';
