@@ -1001,18 +1001,19 @@ const LOCATIONS = {
     bardufoss: {
         id: 'bardufoss',
         area: 'Bardufoss',
-        name: 'Barduelva',
-        place: 'Bardu',
+        name: 'Bardufoss',                // modellerer stedet/området, ikke en spesifikk elv
+        place: 'Bardufoss',
         region: 'Troms',
         lat: 69.036, lon: 18.820, altitude: 91, stationAltitude: 76,  // Bardufoss 76m
         frostStation: 'SN89350',     // Bardufoss
         snowStation:  'SN89350',
-        nveStation:         '196.12.0',  // Lundberg — Barduelva (vannføring, 100% dekning)
-        nveWaterTempStation:'196.21.0',  // Skogly — Barduelva (vanntemp, naturlig sesongvariasjon 1-18°C)
-        // Tidligere 196.43.0 Målselva ovf. Barduelva sluttet rapportere etter juli 2025.
-        // Lundberg vanntemp ikke brukt fordi regulert dypvann fra Altevatn-kraftverket holder 2-5°C året rundt.
+        nveStation:   '196.21.0',    // Skogly (naturlig — 100% dekning for både vannføring og vanntemp, sesongvariasjon 1-18°C, nær Dividalen)
+        // Avvist: 196.43.0 Målselva ovf. sluttet rapportere etter juli 2025.
+        // Avvist: 196.12.0 Lundberg er regulert av Altevatn-kraftverket. Dypvanns-utslipp holder
+        // temperaturen 2-5°C året rundt, og vannføringen varierer med turbindrift — ikke
+        // representativt for naturlige fiskeforhold.
         airStationName:   'Bardufoss',
-        waterStationName: 'Skogly, Barduelva',
+        waterStationName: 'Skogly',
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 14,
@@ -1035,7 +1036,8 @@ const LOCATIONS = {
         nveStation:         '174.11.0',  // Taraldsvikelv — vannføring (data siden 1972)
         nveWaterTempStation:'173.24.0',  // Elvegårdselva v/Stiberg bru — vanntemp siden 1983
         airStationName:   'Straumsnes',
-        waterStationName: 'Elvegårdselva v/Stiberg bru (173.24.0)',
+        flowStationName:  'Taraldsvikelv',
+        waterStationName: 'Elvegårdselva v/Stiberg bru',
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 14,
@@ -1793,10 +1795,10 @@ function renderKPIs(airData, snowData, flowData, wtData) {
     document.getElementById('kpiSnowUnit').textContent = `cm · ${snowName} (${LOC.snowStation})`;
     if (LOC.nveStation) {
         const wtStn = LOC.nveWaterTempStation || LOC.nveStation;
-        const flowName = LOC.name || LOC.waterStationName || LOC.place;
-        // For vanntemp: vis faktisk stasjonsnavn (waterStationName) fordi det er den
-        // som er relevant. Dette er spesielt viktig når nveStation og nveWaterTempStation
-        // er forskjellige (f.eks. Bardufoss: Lundberg for flyt, Skogly for temp).
+        // Bruk dedikerte stasjonsnavn-felt når lokasjonen har dem (f.eks. Bardufoss:
+        // Lundberg for flyt, Skogly for temp). Fallback-kjeden håndterer lokasjoner
+        // med bare én vannstasjon.
+        const flowName = LOC.flowStationName || LOC.waterStationName || LOC.name || LOC.place;
         const tempName = LOC.waterStationName || LOC.name || LOC.place;
         document.getElementById('kpiFlowUnit').textContent = `m³/s · ${flowName} (${LOC.nveStation})`;
         document.getElementById('kpiWtUnit').textContent   = `°C · ${tempName} (${wtStn})`;
