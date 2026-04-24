@@ -542,7 +542,7 @@ const T = {
     datePassed: '⏳ Dato passert — venter på VT',
     awaitingSnowFreeDate: 'Venter på snøfri dato',
     noEstimate: 'Ingen estimat tilgjengelig ennå',
-    histGdd: 'Historisk GDD-modell · År for år',
+    histGdd: 'Historikk',
     histHatch: 'Historisk klekke-sammenligning',
     histHatchData: 'Historiske klekkedata',
     waterTempChart: 'Vanntemperatur mai–juli · År for år',
@@ -652,7 +652,7 @@ const T = {
     datePassed: '⏳ Date passed — awaiting WT',
     awaitingSnowFreeDate: 'Awaiting snow-free date',
     noEstimate: 'No estimate available yet',
-    histGdd: 'Historical GDD Model · Year-by-Year',
+    histGdd: 'History',
     histHatch: 'Historical Hatch Comparison',
     histHatchData: 'Historical Hatch Data',
     waterTempChart: 'Water Temperature May–July · Year-by-Year',
@@ -1482,9 +1482,9 @@ function renderHistoricalGDDSection(stats, correctionDelta, snowData, airData) {
         <thead><tr>
             <th>${t('histYrCol')}</th>
             <th>${t('histGddCrossed')}</th>
-            <th>${t('histVsMedian')}</th>`;
-    if (LOC.showIce) html += `<th>${t('histIceBreakup')}</th>`;
-    html += `<th>${t('histSnowFree')}</th>
+            <th>${t('histVsMedian')}</th>
+            <th>${t('histIceBreakup')}</th>
+            <th>${t('histSnowFree')}</th>
             <th>${t('histMaxSnow')}</th>`;
     if (LOC.showIce) html += `<th>${t('histIceThickness')}</th>`;
     html += `</tr></thead><tbody>`;
@@ -1506,9 +1506,9 @@ function renderHistoricalGDDSection(stats, correctionDelta, snowData, airData) {
         html += `<tr>
             <td><strong>${c.year}</strong></td>
             <td class="${cls}">${fmt(dateFromDoy(c.year, c.doy))}</td>
-            <td style="color:${col}">${sign}${diff} days</td>`;
-        if (LOC.showIce) html += `<td>${isgang}</td>`;
-        html += `<td>${snowFree}</td>
+            <td style="color:${col}">${sign}${diff} days</td>
+            <td>${isgang}</td>
+            <td>${snowFree}</td>
             <td>${maxSnow != null ? Math.round(maxSnow) : '–'}</td>`;
         if (LOC.showIce) html += `<td>${iceCm > 0 ? iceCm.toFixed(1) : '–'}</td>`;
         html += `</tr>`;
