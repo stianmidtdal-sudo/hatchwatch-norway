@@ -448,7 +448,7 @@
 
         <!-- ═══ WATER TEMPERATURE CHART ═══ -->
         <section id="wtSection">
-            <h2 data-i18n="waterTempChart">Water Temperature May–July · Year-by-Year</h2>
+            <h2 id="wtHeading" data-i18n="waterTempChart">Water Temperature May–July · Year-by-Year</h2>
             <div class="chart-wrap">
                 <canvas id="wtChart"></canvas>
             </div>
@@ -864,6 +864,7 @@ const LOCATIONS = {
         snowStation:  'SN4040',      // Enebakk – Barbøl — snow depth
         nveStation:   '2.1213.0',    // Mønevann — vannstand/-temp Enebakk
         airStationName:   'Råken',
+        snowStationName:  'Enebakk – Barbøl',
         waterStationName: 'Mønevann, Enebakk',
         calibrated: true,
         gddThreshold: 520,
@@ -889,6 +890,7 @@ const LOCATIONS = {
         lat: 59.30, lon: 11.66, altitude: 180, stationAltitude: 150,
         frostStation: 'SN1960',      // Ørje Vest — air temperature
         snowStation:  'SN1950',      // Ørje — snow depth
+        snowStationName:  'Ørje',
         nveStation:   '2.1236.0',    // Tverråa — Østfold/Halden
         airStationName:   'Ørje Vest',
         waterStationName: 'Tverråa, Enningdalselva',
@@ -1077,6 +1079,7 @@ const LOCATIONS = {
         lat: 61.135, lon: 11.650, altitude: 209, stationAltitude: 230,  // Rv3 Rena 230m
         frostStation: 'SN6840',      // Rv3 Rena (luft, 13 års historikk fra 2013)
         snowStation:  'SN100',       // Plassen, Trysil (333m, aktiv siden 1901 — SN8140 Evenstad sluttet rapportere snø i 2002)
+        snowStationName:  'Plassen, Trysil',
         nveStation:   '2.43.0',      // Glomstadfoss — Glomma ved Rena
         airStationName:   'Rv3 Rena',
         waterStationName: 'Glomstadfoss (Glomma)',
@@ -1099,6 +1102,7 @@ const LOCATIONS = {
         lat: 59.855, lon: 10.303, altitude: 220, stationAltitude: 64,  // Geithus 64m (Modum)
         frostStation: 'SN26500',     // Geithus, Modum (100% dekning 2024-2025, tilbake til 2016)
         snowStation:  'SN26996',     // Sande - Lauvkollmyr (437m, Holmestrand, 79-100% dekning siste vintre — bedre enn SN19930 Glitre som var glissent)
+        snowStationName:  'Sande – Lauvkollmyr',
         nveStation:   '11.4.0',      // Elgtjern — Modum
         airStationName:   'Geithus',
         waterStationName: 'Elgtjern',
@@ -1196,6 +1200,12 @@ if (!LOC.nveStation) {
     const stationLabel = LOC.waterStationName || wtStnNote;
     document.getElementById('wtNote').textContent =
         `Water temperature data from NVE HydAPI station ${stationLabel}.`;
+    // Oppdater overskrift med elv/stasjon-info
+    const riverName = LOC.name || LOC.waterStationName || LOC.place;
+    document.getElementById('wtHeading').textContent =
+        LANG === 'no'
+            ? `Vanntemperatur mai–juli · År for år · ${riverName} (${wtStnNote})`
+            : `Water Temperature May–July · Year-by-Year · ${riverName} (${wtStnNote})`;
 }
 
 // Model heading
@@ -1204,10 +1214,13 @@ document.getElementById('modelHeading').textContent =
         ? `${t('dualTriggerLabel')} ${LOC.gddThreshold} (bt = 0°C, ${t('fromJan1')}) + ${t('waterTemp')} ≥ 12°C · ${t('stdShort')} = ±${LOC.uncertaintyDays} ${t('daysLabel')}`
         : `${t('gddPriorLabel')} ${LOC.gddThreshold} GDD (bt = 0°C) · ${t('priorUncLabel')} ±${LOC.uncertaintyDays} ${t('daysLabel')}`;
 
+const snowHdrName = LOC.snowStationName
+    || (LOC.snowStation === LOC.frostStation ? LOC.airStationName : null)
+    || LOC.place;
 document.getElementById('snowHeading').textContent =
     LANG === 'no'
-        ? `Snødybde nov–mai · År for år · ${LOC.place}`
-        : `Snow Depth Nov–May · Year-by-Year · ${LOC.place}`;
+        ? `Snødybde nov–mai · År for år · ${snowHdrName} (${LOC.snowStation})`
+        : `Snow Depth Nov–May · Year-by-Year · ${snowHdrName} (${LOC.snowStation})`;
 
 // ═══════════════════════════════════════════════════════════════════
 //  DATE HELPERS
@@ -1713,7 +1726,11 @@ function renderKPIs(airData, snowData, flowData, wtData) {
         set('kpiWaterTemp', wt.value);
     }
     document.getElementById('kpiAirUnit').textContent  = `°C · ${LOC.airStationName || LOC.place} (${LOC.frostStation})`;
-    document.getElementById('kpiSnowUnit').textContent = `cm · ${LOC.place}`;
+    // Snø: hvis samme stasjon som luft, gjenbruk air-navnet. Ellers snowStationName, eller ID.
+    const snowName = LOC.snowStationName
+        || (LOC.snowStation === LOC.frostStation ? LOC.airStationName : null)
+        || LOC.place;
+    document.getElementById('kpiSnowUnit').textContent = `cm · ${snowName} (${LOC.snowStation})`;
     if (LOC.nveStation) {
         const wtStn = LOC.nveWaterTempStation || LOC.nveStation;
         const riverName = LOC.name || LOC.waterStationName || LOC.place;
