@@ -1172,6 +1172,7 @@ const LOCATIONS = {
         lat: 60.139, lon: 8.547, altitude: 935, stationAltitude: 648,  // Uvdal kraftverk 648m
         frostStation: 'SN29350',     // Uvdal kraftverk
         snowStation:  'SN31080',     // Tessungdalen-Bakkhus (MET.NO, 762m, 8.6km)
+        snowStationName:  'Tessungdalen-Bakkhus',
         nveStation:   '16.140.0',    // Kvenna — Hardangervidda
         airStationName:   'Uvdal',
         waterStationName: 'Kvenna',
@@ -1244,12 +1245,13 @@ if (!LOC.nveStation) {
     document.getElementById('wtNote').textContent = '';
 } else {
     const wtStnNote = LOC.nveWaterTempStation || LOC.nveStation;
-    const riverName = LOC.name || LOC.waterStationName || LOC.place;
-    document.getElementById('wtNote').textContent = `${t('stationLabel')}: ${riverName} (${wtStnNote})`;
+    // waterStationName er navnet på stasjonen som måler vanntemp — foretrukket over elvenavnet.
+    const tempStnName = LOC.waterStationName || LOC.name || LOC.place;
+    document.getElementById('wtNote').textContent = `${t('stationLabel')}: ${tempStnName} (${wtStnNote})`;
     document.getElementById('wtHeading').textContent =
         LANG === 'no'
-            ? `Vanntemperatur mai–juli · År for år · ${riverName} (${wtStnNote})`
-            : `Water Temperature May–July · Year-by-Year · ${riverName} (${wtStnNote})`;
+            ? `Vanntemperatur mai–juli · År for år · ${tempStnName} (${wtStnNote})`
+            : `Water Temperature May–July · Year-by-Year · ${tempStnName} (${wtStnNote})`;
 }
 
 // Snø-note under snøgraf
@@ -1791,9 +1793,13 @@ function renderKPIs(airData, snowData, flowData, wtData) {
     document.getElementById('kpiSnowUnit').textContent = `cm · ${snowName} (${LOC.snowStation})`;
     if (LOC.nveStation) {
         const wtStn = LOC.nveWaterTempStation || LOC.nveStation;
-        const riverName = LOC.name || LOC.waterStationName || LOC.place;
-        document.getElementById('kpiFlowUnit').textContent = `m³/s · ${riverName} (${LOC.nveStation})`;
-        document.getElementById('kpiWtUnit').textContent   = `°C · ${riverName} (${wtStn})`;
+        const flowName = LOC.name || LOC.waterStationName || LOC.place;
+        // For vanntemp: vis faktisk stasjonsnavn (waterStationName) fordi det er den
+        // som er relevant. Dette er spesielt viktig når nveStation og nveWaterTempStation
+        // er forskjellige (f.eks. Bardufoss: Lundberg for flyt, Skogly for temp).
+        const tempName = LOC.waterStationName || LOC.name || LOC.place;
+        document.getElementById('kpiFlowUnit').textContent = `m³/s · ${flowName} (${LOC.nveStation})`;
+        document.getElementById('kpiWtUnit').textContent   = `°C · ${tempName} (${wtStn})`;
     }
     const dateStr = at.date || TODAY;
     const wtStnId = LOC.nveWaterTempStation || LOC.nveStation;
@@ -2521,7 +2527,12 @@ function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate, airDa
             : `${t('gddModelShort')} — ${t('indicativeLabel').toLowerCase()}`;
         candidates.push({ date: adgDate, unc: parseFloat(uncDays), note: gddNote });
     }
-    if (l1Date) {
+    // Snøfri + 32 dager var en tidlig grov heuristikk. Nå som vi har hybrid
+    // ismodell (for lokasjoner med ≥3 års isgangHistory) som gir bedre
+    // estimat av onset, er snow-free+32 overflødig og drar Beste estimat
+    // for tidlig. Ta den bare med som fallback hvis vi IKKE har hybrid.
+    const hasHybridIce = LOC.isgangHistory && Object.keys(LOC.isgangHistory).length >= 3;
+    if (l1Date && !hasHybridIce) {
         const l1Note = LOC.calibrated
             ? `${t('snowFreePlus32')} — ±${L1_UNC} ${t('daysLabel')} (${t('earlySignal')})`
             : `${t('snowFreePlus32')} — ${t('indicativeLabel').toLowerCase()}`;
