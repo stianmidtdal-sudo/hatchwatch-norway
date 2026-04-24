@@ -76,8 +76,19 @@
     <div class="error" id="err">Wrong password — try again.</div>
 </div>
 <script>
-    if (new URLSearchParams(location.search).get('err')) {
+    const params = new URLSearchParams(location.search);
+    if (params.get('err')) {
         document.getElementById('err').classList.add('visible');
+    }
+    // Hvis middleware sendte oss hit med ?next=/dashboard.html?loc=xxx,
+    // ta med den destinasjonen som hidden felt så vi kan redirecte dit etter innlogging
+    const next = params.get('next');
+    if (next) {
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = 'next';
+        hidden.value = next;
+        document.getElementById('form').appendChild(hidden);
     }
 </script>
 </body>
