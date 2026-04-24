@@ -461,6 +461,7 @@
             <div class="chart-wrap">
                 <canvas id="snowChart"></canvas>
             </div>
+            <div id="snowNote" style="font-size:0.74rem;color:#888;margin-top:6px;padding:0 4px"></div>
         </section>
 
         <!-- ═══ ICE THICKNESS CHART (Kautokeino only) ═══ -->
@@ -480,15 +481,15 @@
             <div class="table-wrap">
                 <table>
                     <thead><tr>
-                        <th>Indicator</th>
+                        <th data-i18n="indicatorCol">Indicator</th>
                         <th id="yearCol">2026</th>
-                        <th>Historical Average</th>
-                        <th>Signal</th>
+                        <th data-i18n="histAvgCol">Historical Average</th>
+                        <th data-i18n="signalCol">Signal</th>
                     </tr></thead>
                     <tbody id="indBody"></tbody>
                 </table>
             </div>
-            <div style="font-size:0.74rem;color:#999;margin-top:8px;padding:0 4px;">
+            <div style="font-size:0.74rem;color:#999;margin-top:8px;padding:0 4px;" data-i18n="indicatorsFooter">
                 ⚠ All indicators based on available years of data. For uncalibrated locations, historical averages are derived from weather data only.
             </div>
         </section>
@@ -547,6 +548,28 @@ const T = {
     histHatchData: 'Historiske klekkedata',
     waterTempChart: 'Vanntemperatur mai–juli · År for år',
     seasonIndicators: 'Sesongmarkører',
+    stationLabel: 'Stasjon',
+    indicatorCol: 'Markør',
+    histAvgCol: 'Historisk snitt',
+    signalCol: 'Signal',
+    indWinterSnow: 'Snødybde gjennomsnitt (des–apr)',
+    indSnowFree: 'Snøfri dato',
+    indGddRate: 'GDD-akkumuleringsrate (14-dagers snitt)',
+    sigLowSnow: '🟢 Lite snø – tidlig sesong-signal',
+    sigNormalSnow: '🟡 Normalt',
+    sigHighSnow: '🔴 Mye snø – sen sesong-signal',
+    sigNoSnowData: '— Ingen snødata',
+    sigNoCurrentSnow: '— Ingen data fra årets sesong',
+    sigNotYet: '⏳ Ikke ennå',
+    sigEarly: '🟢 Tidlig',
+    sigLate: '🔴 Sent',
+    sigWinterNormal: '❄️ Vinter – normalt',
+    sigWarmingUp: '🟡 Varmes opp',
+    sigActiveSeason: '🟢 Aktiv sesong',
+    valNoData: 'Ingen data',
+    valNoDataStation: 'Ingen data (stasjon)',
+    valNotYet: 'Ikke ennå',
+    indicatorsFooter: '⚠ Alle markører baseres på tilgjengelige år med data. For ukalibrerte lokasjoner er historiske gjennomsnitt utledet kun fra værdata.',
     iceHeading: 'Estimert istykkelse · Stefan-ligningen · h = α × √FDD  (α = 0.6)',
     locArea: 'Område',
     locAirStation: 'Lufttempstasjon',
@@ -657,6 +680,28 @@ const T = {
     histHatchData: 'Historical Hatch Data',
     waterTempChart: 'Water Temperature May–July · Year-by-Year',
     seasonIndicators: 'Season Indicators',
+    stationLabel: 'Station',
+    indicatorCol: 'Indicator',
+    histAvgCol: 'Historical Average',
+    signalCol: 'Signal',
+    indWinterSnow: 'Winter snow average (Dec–Apr)',
+    indSnowFree: 'Snow-free date',
+    indGddRate: 'GDD accumulation rate (14-day avg)',
+    sigLowSnow: '🟢 Low snow – early season signal',
+    sigNormalSnow: '🟡 Normal',
+    sigHighSnow: '🔴 High snow – late season signal',
+    sigNoSnowData: '— No snow data',
+    sigNoCurrentSnow: '— No current-season data',
+    sigNotYet: '⏳ Not yet',
+    sigEarly: '🟢 Early',
+    sigLate: '🔴 Late',
+    sigWinterNormal: '❄️ Winter – normal',
+    sigWarmingUp: '🟡 Warming up',
+    sigActiveSeason: '🟢 Active season',
+    valNoData: 'No data',
+    valNoDataStation: 'No data (station)',
+    valNotYet: 'Not yet',
+    indicatorsFooter: '⚠ All indicators based on available years of data. For uncalibrated locations, historical averages are derived from weather data only.',
     iceHeading: 'Estimated Ice Thickness · Stefan Equation · h = α × √FDD  (α = 0.6)',
     locArea: 'Area',
     locAirStation: 'Air temp station',
@@ -1197,16 +1242,20 @@ if (!LOC.nveStation) {
     document.getElementById('wtNote').textContent = '';
 } else {
     const wtStnNote = LOC.nveWaterTempStation || LOC.nveStation;
-    const stationLabel = LOC.waterStationName || wtStnNote;
-    document.getElementById('wtNote').textContent =
-        `Water temperature data from NVE HydAPI station ${stationLabel}.`;
-    // Oppdater overskrift med elv/stasjon-info
     const riverName = LOC.name || LOC.waterStationName || LOC.place;
+    document.getElementById('wtNote').textContent = `${t('stationLabel')}: ${riverName} (${wtStnNote})`;
     document.getElementById('wtHeading').textContent =
         LANG === 'no'
             ? `Vanntemperatur mai–juli · År for år · ${riverName} (${wtStnNote})`
             : `Water Temperature May–July · Year-by-Year · ${riverName} (${wtStnNote})`;
 }
+
+// Snø-note under snøgraf
+const snowNoteName = LOC.snowStationName
+    || (LOC.snowStation === LOC.frostStation ? LOC.airStationName : null)
+    || LOC.place;
+const snowNoteEl = document.getElementById('snowNote');
+if (snowNoteEl) snowNoteEl.textContent = `${t('stationLabel')}: ${snowNoteName} (${LOC.snowStation})`;
 
 // Model heading
 document.getElementById('modelHeading').textContent =
@@ -2087,25 +2136,25 @@ function renderIndicators(snowData, airData, currentADG) {
         !Object.keys(snowData).some(d => d >= seasonStart);
 
     const snowSignal = winterSnow == null ? '–'
-        : winterSnow < 50 ? '🟢 Low snow – early season signal'
-        : winterSnow < 65 ? '🟡 Normal'
-        : '🔴 High snow – late season signal';
-    const snowFreeSignal = noSnowData    ? '— No snow data'
-        : noCurrentSnow                   ? '— No current-season data'
-        : !snowFreeValid                  ? '⏳ Not yet'
-        : snowFreeValid < `${YEAR}-05-10` ? '🟢 Early'
-        : snowFreeValid < `${YEAR}-05-25` ? '🟡 Normal' : '🔴 Late';
-    const snowFreeDisplay = noSnowData    ? 'No data'
-        : noCurrentSnow                   ? 'No data (station)'
+        : winterSnow < 50 ? t('sigLowSnow')
+        : winterSnow < 65 ? t('sigNormalSnow')
+        : t('sigHighSnow');
+    const snowFreeSignal = noSnowData    ? t('sigNoSnowData')
+        : noCurrentSnow                   ? t('sigNoCurrentSnow')
+        : !snowFreeValid                  ? t('sigNotYet')
+        : snowFreeValid < `${YEAR}-05-10` ? t('sigEarly')
+        : snowFreeValid < `${YEAR}-05-25` ? t('sigNormalSnow') : t('sigLate');
+    const snowFreeDisplay = noSnowData    ? t('valNoData')
+        : noCurrentSnow                   ? t('valNoDataStation')
         : snowFreeValid                   ? fmt(parseDate(snowFreeValid))
-        :                                   'Not yet';
+        :                                   t('valNotYet');
 
-    const rateSignal = parseFloat(adgRate) < 0.5 ? '❄️ Winter – normal'
-        : parseFloat(adgRate) < 3.5 ? '🟡 Warming up' : '🟢 Active season';
+    const rateSignal = parseFloat(adgRate) < 0.5 ? t('sigWinterNormal')
+        : parseFloat(adgRate) < 3.5 ? t('sigWarmingUp') : t('sigActiveSeason');
     const rows = [
-        { name:'Winter snow average (Dec–Apr)', val: winterSnow != null ? `${winterSnow} cm` : (noSnowData || noCurrentSnow ? 'No data' : '–'), avg:'—', signal:snowSignal },
-        { name:'Snow-free date', val: snowFreeDisplay, avg:'—', signal:snowFreeSignal },
-        { name:'GDD accumulation rate (14-day avg)', val:`${adgRate} GDD/day`, avg:'—', signal:rateSignal },
+        { name: t('indWinterSnow'), val: winterSnow != null ? `${winterSnow} cm` : (noSnowData || noCurrentSnow ? t('valNoData') : '–'), avg:'—', signal:snowSignal },
+        { name: t('indSnowFree'), val: snowFreeDisplay, avg:'—', signal:snowFreeSignal },
+        { name: t('indGddRate'), val:`${adgRate} GDD/day`, avg:'—', signal:rateSignal },
     ];
     const tbody = document.getElementById('indBody');
     tbody.innerHTML = rows.map(r => `<tr>
