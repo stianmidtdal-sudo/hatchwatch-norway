@@ -824,11 +824,11 @@ const LOCATIONS = {
         showIce: true,
         gddThreshold: 520,
         uncertaintyDays: 12,
-        isgangWater: 'Sætersjøen',
+        isgangWater: 'Sætersjøen, Røros (vest)',
         isgangHistory: {
             2025: '2025-05-12', 2024: '2024-05-18', 2023: '2023-06-05',
-            2022: '2022-06-01', 2021: '2021-06-02', 2020: '2020-06-07',
-            2019: '2019-05-24', 2018: '2018-05-15', 2017: '2017-06-01',
+            2022: '2022-06-01', 2021: '2021-06-02', 2020: '2020-06-08',
+            2019: '2019-05-24', 2018: '2018-06-15', 2017: '2017-06-01',
         },
     },
     oslo: {
@@ -846,7 +846,7 @@ const LOCATIONS = {
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 14,
-        isgangWater: 'Katnosa',
+        isgangWater: 'Katnosa, Nordmarka',
         isgangHistory: {
             2025: '2025-04-25', 2024: '2024-05-09', 2023: '2023-05-23',
             2022: '2022-05-04', 2021: '2021-05-22', 2020: '2020-05-17',
@@ -873,6 +873,12 @@ const LOCATIONS = {
         calibShortNo: 'n=4',
         calibShortEn: 'n=4',
         isgangWater: 'Børtervanna',
+        isgangHistory: {
+            2026: '2026-04-03',
+            2025: '2025-04-11', 2024: '2024-04-24', 2023: '2023-05-06',
+            2022: '2022-04-22', 2021: '2021-04-22', 2020: '2020-04-01',
+            2019: '2019-04-20', 2018: '2018-05-01', 2017: '2017-04-19',
+        },
     },
     vestfjella: {
         id: 'vestfjella',
@@ -892,7 +898,7 @@ const LOCATIONS = {
         // Merk: bruker internt id 'vestfjella' (samme nøkkel som gammel Østfold-entry).
         // Tidligere bookmarks til ?loc=vestfjella vil nå lande her, på Halden/Ørje-området,
         // mens Enebakk/Børtervanna-delen er flyttet til 'ostmarka'.
-        isgangWater: 'Søndre Ertevannet',
+        isgangWater: 'Søndre Ertevannet, Vestfjella',
         isgangHistory: {
             2026: '2026-03-18',
             2025: '2025-03-27', 2024: '2024-04-07', 2023: '2023-04-18',
@@ -919,8 +925,9 @@ const LOCATIONS = {
         isgangHistory: {
             2025: '2025-06-10', 2024: '2024-06-10', 2023: '2023-06-05',
             2022: '2022-06-05', 2021: '2021-06-13', 2020: '2020-06-15',
-            2019: '2019-06-05', 2018: '2018-06-01', 2017: '2017-07-03',
+            2019: '2019-06-05', 2018: '2018-06-15', 2017: '2017-07-03',
         },
+        isgangWater: 'Krokvannet (demning)',
     },
     dividalen: {
         id: 'dividalen',
@@ -942,6 +949,7 @@ const LOCATIONS = {
             2022: '2022-06-11', 2021: '2021-06-12', 2020: '2020-06-19',
             2019: '2019-06-08', 2018: '2018-05-28', 2017: '2017-06-22',
         },
+        isgangWater: 'Anjavannet',
     },
     bardufoss: {
         id: 'bardufoss',
@@ -964,6 +972,7 @@ const LOCATIONS = {
             2022: '2022-06-13', 2021: '2021-06-11', 2020: '2020-06-27',
             2019: '2019-06-10', 2018: '2018-05-28', 2017: '2017-06-27',
         },
+        isgangWater: 'Langvatnet (sentralnett over)',
     },
     narvik: {
         id: 'narvik',
@@ -981,6 +990,7 @@ const LOCATIONS = {
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 14,
+        isgangWater: 'Banjodalen',
     },
     mo_i_rana: {
         id: 'mo_i_rana',
@@ -1029,6 +1039,12 @@ const LOCATIONS = {
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 14,
+        isgangWater: 'Djupvatnet (sør-vest for Sandsjøen)',
+        isgangHistory: {
+            2025: '2025-05-11', 2024: '2024-05-20', 2023: '2023-05-23',
+            2022: '2022-05-27', 2021: '2021-05-23', 2020: '2020-06-06',
+            2019: '2019-05-21', 2018: '2018-05-15', 2017: '2017-06-03',
+        },
     },
     trondheim: {
         id: 'trondheim',
@@ -1045,6 +1061,12 @@ const LOCATIONS = {
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 14,
+        isgangWater: 'Skjellbreia (bymarka)',
+        isgangHistory: {
+            2025: '2025-04-27', 2024: '2024-05-04', 2023: '2023-05-16',
+            2022: '2022-05-18', 2021: '2021-05-19', 2020: '2020-05-20',
+            2019: '2019-05-16', 2018: '2018-05-11', 2017: '2017-05-17',
+        },
     },
     rena: {
         id: 'rena',
@@ -1061,6 +1083,12 @@ const LOCATIONS = {
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 14,
+        isgangWater: 'Netsjøen (vest for Storsjøen)',
+        isgangHistory: {
+            2025: '2025-04-23', 2024: '2024-05-09', 2023: '2023-05-24',
+            2022: '2022-05-07', 2021: '2021-05-04', 2020: '2020-05-22',
+            2019: '2019-05-08', 2018: '2018-05-12',
+        },
     },
     finnemarka: {
         id: 'finnemarka',
@@ -1077,6 +1105,12 @@ const LOCATIONS = {
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 14,
+        isgangWater: 'Glitrevannet',
+        isgangHistory: {
+            2025: '2025-04-16', 2024: '2024-05-01', 2023: '2023-05-17',
+            2022: '2022-05-30', 2021: '2021-05-09', 2020: '2020-04-26',
+            2019: '2019-05-05', 2018: '2018-05-08', 2017: '2017-05-05',
+        },
     },
     hardangervidda: {
         id: 'hardangervidda',
@@ -1093,6 +1127,12 @@ const LOCATIONS = {
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 14,
+        isgangWater: 'Gjuvsjøen (nær vannstasjon)',
+        isgangHistory: {
+            2025: '2025-05-24', 2024: '2024-06-06', 2023: '2023-06-13',
+            2022: '2022-06-12', 2021: '2021-06-09', 2020: '2020-06-25',
+            2019: '2019-06-13', 2018: '2018-05-30',
+        },
     },
 };
 
