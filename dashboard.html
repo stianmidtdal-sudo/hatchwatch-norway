@@ -1787,7 +1787,7 @@ function extrapolateWTFromDate(waterTempData, asOfDate) {
     const recent = Object.entries(waterTempData)
         .filter(([d]) => d.startsWith(String(YEAR)) && d <= cutoff)
         .sort(([a],[b]) => a < b ? -1 : 1)
-        .slice(-14);
+        .slice(-21);  // 21-dags vindu — stabilere enn 14, enkeltdagsvariasjoner får mindre vekt
     if (recent.length < 4) return null;
     const temps = recent.map(([,v]) => v);
     const currentWT = temps.at(-1);
