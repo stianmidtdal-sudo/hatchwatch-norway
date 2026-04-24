@@ -626,7 +626,7 @@ const T = {
     histIceThickness: 'Est. istykkelse (cm)',
     altCorrection: '🏔 Høydekorreksjon:',
     waterAltCorrection: '🏔 Vann-høydekorreksjon:',
-    waterLapseRate: 'vann-lapse 0,35°C/100m',
+    waterLapseRate: 'vann-temperaturgradient 0,35°C/100m',
     noHatchDataRow: 'Ingen systematiske klekkobservasjoner tilgjengelig for dette stedet. Værhistorikk (nedenfor) hentes live fra MET Norge. Kontakt oss for å bidra med kalibreringsdata.',
     gddHatchModel: 'GDD klekkemodell',
     dualTriggerLabel: 'Dobbelttrigger-modell · GDD ≥',
@@ -1628,7 +1628,7 @@ function renderHistoricalGDDSection(stats, correctionDelta, snowData, airData) {
         const sign = correctionDelta > 0 ? '+' : '';
         const msg = LANG === 'no'
             ? `${t('altCorrection')} ${sign}${correctionDelta}°C på alle daglige lufttemperaturer `
-              + `(stasjon ${LOC.stationAltitude}m → fiskeplass ~${LOC.altitude}m, lapse rate 0,6°C/100m)`
+              + `(stasjon ${LOC.stationAltitude}m → fiskeplass ~${LOC.altitude}m, temperaturgradient 0,6°C/100m)`
             : `${t('altCorrection')} ${sign}${correctionDelta}°C on all daily air temperatures `
               + `(station ${LOC.stationAltitude}m → fishing area ~${LOC.altitude}m, lapse rate 0.6°C/100m)`;
         html += `<div style="font-size:0.74rem;color:#888;margin-top:8px;padding:0 4px">${msg}</div>`;
