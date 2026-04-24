@@ -1712,7 +1712,7 @@ function renderKPIs(airData, snowData, flowData, wtData) {
         set('kpiFlow',      fl.value, 2);
         set('kpiWaterTemp', wt.value);
     }
-    document.getElementById('kpiAirUnit').textContent  = `°C · ${LOC.place} (${LOC.frostStation})`;
+    document.getElementById('kpiAirUnit').textContent  = `°C · ${LOC.airStationName || LOC.place} (${LOC.frostStation})`;
     document.getElementById('kpiSnowUnit').textContent = `cm · ${LOC.place}`;
     if (LOC.nveStation) {
         const wtStn = LOC.nveWaterTempStation || LOC.nveStation;
