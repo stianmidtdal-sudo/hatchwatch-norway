@@ -625,6 +625,8 @@ const T = {
     histMaxSnow: 'Maks snø (cm)',
     histIceThickness: 'Est. istykkelse (cm)',
     altCorrection: '🏔 Høydekorreksjon:',
+    waterAltCorrection: '🏔 Vann-høydekorreksjon:',
+    waterLapseRate: 'vann-lapse 0,35°C/100m',
     noHatchDataRow: 'Ingen systematiske klekkobservasjoner tilgjengelig for dette stedet. Værhistorikk (nedenfor) hentes live fra MET Norge. Kontakt oss for å bidra med kalibreringsdata.',
     gddHatchModel: 'GDD klekkemodell',
     dualTriggerLabel: 'Dobbelttrigger-modell · GDD ≥',
@@ -757,6 +759,8 @@ const T = {
     histMaxSnow: 'Max snow (cm)',
     histIceThickness: 'Est. ice thickness (cm)',
     altCorrection: '🏔 Altitude correction:',
+    waterAltCorrection: '🏔 Water altitude correction:',
+    waterLapseRate: 'water lapse 0.35°C/100m',
     noHatchDataRow: 'No systematic hatch observations available for this location. Weather history (below) is fetched live from MET Norway. Contact us to contribute calibration data.',
     gddHatchModel: 'GDD Hatch Model',
     dualTriggerLabel: 'Dual Trigger Model · GDD ≥',
@@ -1249,7 +1253,7 @@ if (!LOC.nveStation) {
     const wtStnNote = LOC.nveWaterTempStation || LOC.nveStation;
     // waterStationName er navnet på stasjonen som måler vanntemp — foretrukket over elvenavnet.
     const tempStnName = LOC.waterStationName || LOC.name || LOC.place;
-    document.getElementById('wtNote').textContent = `${t('stationLabel')}: ${tempStnName} (${wtStnNote})`;
+    // wtNote oppdateres i renderWaterTempChart med evt. høydekorreksjon
     document.getElementById('wtHeading').textContent =
         LANG === 'no'
             ? `Vanntemperatur mai–juli · År for år · ${tempStnName} (${wtStnNote})`
@@ -1446,7 +1450,21 @@ function buildDoyAvgTemp(airData) {
 function applyAltitudeCorrection(rawData) {
     const stationAlt = LOC.stationAltitude ?? LOC.altitude;
     const areaAlt    = LOC.altitude;
-    const delta = (stationAlt - areaAlt) * 0.6 / 100;  // °C to add
+    const delta = (stationAlt - areaAlt) * 0.6 / 100;  // °C to add (luft lapse rate)
+    if (Math.abs(delta) < 0.05) return { data: rawData, correction: 0 };
+    const corrected = {};
+    for (const [d, v] of Object.entries(rawData)) corrected[d] = v + delta;
+    return { data: corrected, correction: Math.round(delta * 10) / 10 };
+}
+
+// Vann har mildere lapse rate enn luft — typisk 0,35°C/100m.
+// Vann bufres av varmekapasitet, dybde, isavsmelting og grunnvannsinnblanding.
+// Brukes kun der fiskeplass (LOC.altitude) og stasjonshøyde (LOC.stationAltitude)
+// har meningsfull forskjell. Viktigst for høyfjellslokasjoner (Hardangervidda).
+function applyWaterAltitudeCorrection(rawData) {
+    const stationAlt = LOC.stationAltitude ?? LOC.altitude;
+    const areaAlt    = LOC.altitude;
+    const delta = (stationAlt - areaAlt) * 0.35 / 100;  // °C to add (vann lapse rate)
     if (Math.abs(delta) < 0.05) return { data: rawData, correction: 0 };
     const corrected = {};
     for (const [d, v] of Object.entries(rawData)) corrected[d] = v + delta;
@@ -1880,8 +1898,20 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
     document.getElementById('hatchNote').textContent = hatchNote;
 }
 
-function renderWaterTempChart(wtData) {
+function renderWaterTempChart(wtData, altCorrection = 0) {
     if (!LOC.nveStation && !LOC.nveWaterTempStation) return;
+
+    // Oppdater wtNote med stasjonsnavn og høydekorreksjon (hvis satt)
+    const wtStnNote = LOC.nveWaterTempStation || LOC.nveStation;
+    const tempStnName = LOC.waterStationName || LOC.name || LOC.place;
+    let noteText = `${t('stationLabel')}: ${tempStnName} (${wtStnNote})`;
+    if (Math.abs(altCorrection) >= 0.1) {
+        const sign = altCorrection > 0 ? '+' : '';
+        noteText += ` · ${t('waterAltCorrection')} ${sign}${altCorrection}°C `
+                  + `(${LOC.stationAltitude}m → ${LOC.altitude}m, ${t('waterLapseRate')})`;
+    }
+    document.getElementById('wtNote').textContent = noteText;
+
     const may1  = doy(new Date(YEAR, 4,  1));
     const jul15 = doy(new Date(YEAR, 6, 15));
     const doys  = Array.from({ length: jul15 - may1 + 1 }, (_, i) => may1 + i);
@@ -2760,10 +2790,14 @@ async function main() {
             wtStation ? fetchNVE(1003, dataStart, dataEnd, wtStation).catch(() => ({})) : Promise.resolve({}),
         ]);
         // Fill short sensor gaps (≤7 days) with linear interpolation before rendering
-        const wtData = interpolateGaps(wtDataRaw, 7);
+        const wtDataInterp = interpolateGaps(wtDataRaw, 7);
 
-        // Apply altitude lapse-rate correction (+0.6°C per 100m station is above fishing area)
+        // Apply altitude lapse-rate correction.
+        // Luft: 0.6°C/100m. Vann: 0.35°C/100m (bufret av varmekapasitet, isavsmelting).
+        // Viktig for høyfjellslokasjoner (Hardangervidda) der stasjonen ligger
+        // hundrevis av meter lavere enn fiskeplassen.
         const { data: airDataCorrected, correction: altCorrection } = applyAltitudeCorrection(airData);
+        const { data: wtData, correction: wtAltCorrection } = applyWaterAltitudeCorrection(wtDataInterp);
 
         // GDD starts from 1. januar (per Excel-modell Dashboard 3.0, kalibrert mot 520 GDD + WT ≥ 12°C)
         const fromDate   = `${YEAR}-01-01`;
@@ -2778,10 +2812,10 @@ async function main() {
         const histStats  = computeHistoricalStats(airDataCorrected, LOC.gddThreshold);
 
         // Render
-        renderKPIs(airData, snowData, flowData, wtData);   // KPIs show raw station readings
+        renderKPIs(airData, snowData, flowData, wtData);   // KPIs show air raw, water corrected
         renderModel(airDataCorrected, currentADG, histADG, adgDate, wtDate, histStats);
         renderHistoricalGDDSection(histStats, altCorrection, snowData, airDataCorrected);
-        renderWaterTempChart(wtData);
+        renderWaterTempChart(wtData, wtAltCorrection);
         renderSnowChart(snowData);
         renderIceChart(airDataCorrected, snowData);
         const { snowFree } = renderIndicators(snowData, airDataCorrected, currentADG);
