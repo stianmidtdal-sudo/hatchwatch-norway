@@ -1001,16 +1001,18 @@ const LOCATIONS = {
     bardufoss: {
         id: 'bardufoss',
         area: 'Bardufoss',
-        name: 'Barduelva / Målselva',
+        name: 'Barduelva',
         place: 'Bardu',
         region: 'Troms',
         lat: 69.036, lon: 18.820, altitude: 91, stationAltitude: 76,  // Bardufoss 76m
         frostStation: 'SN89350',     // Bardufoss
         snowStation:  'SN89350',
-        nveStation:   '196.12.0',    // Lundberg — Barduelva (både vannføring og vanntemp, 100% dekning 2023-2025)
-        // SN196.43.0 Målselva ovf. Barduelva var naturlig-uregulert men sluttet å rapportere etter juli 2025
+        nveStation:         '196.12.0',  // Lundberg — Barduelva (vannføring, 100% dekning)
+        nveWaterTempStation:'196.21.0',  // Skogly — Barduelva (vanntemp, naturlig sesongvariasjon 1-18°C)
+        // Tidligere 196.43.0 Målselva ovf. Barduelva sluttet rapportere etter juli 2025.
+        // Lundberg vanntemp ikke brukt fordi regulert dypvann fra Altevatn-kraftverket holder 2-5°C året rundt.
         airStationName:   'Bardufoss',
-        waterStationName: 'Lundberg, Barduelva',
+        waterStationName: 'Skogly, Barduelva',
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 14,
