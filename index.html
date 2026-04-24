@@ -273,6 +273,10 @@
             <strong data-i18n="dataTitle">Data Sources</strong>
             <p data-i18n="dataDesc">Air temperature and snow cover from MET Norway's Frost API. Water temperature from NVE HydAPI. Updated daily.</p>
         </div>
+        <div class="item">
+            <strong data-i18n="altitudeTitle">🏔 Altitude correction</strong>
+            <p data-i18n="altitudeDesc">Weather stations often sit lower than fishing areas. Air temperatures are adjusted by 0.6°C per 100m (standard atmospheric lapse rate) to estimate conditions at the actual fishing location. This affects the GDD accumulation. Water temperatures used in the prediction model are adjusted by 0.35°C per 100m.</p>
+        </div>
     </div>
     <div class="how-note" data-i18n-html="howNote">
         <strong>It's either very clever, or deeply unnecessary.</strong> Possibly both.
@@ -296,6 +300,8 @@ const T = {
     dualDesc: 'To uavhengige modeller kjører parallelt — én sporer akkumulerte døgngrader (GDD), den andre den løpende vanntemperaturtrenden. Hver blander faktiske observasjoner med en fremskriving til sin respektive terskel. Estimert klekkedato er der den siste betingelsen oppfylles.',
     gddTitle: 'GDD · Akkumulerte døgngrader',
     gddDesc: 'Varme akkumuleres fra 1. januar. Hver art krysser en kalibrert termisk terskel — denne kryssingen er prognosen.',
+    altitudeTitle: '🏔 Høydekorreksjon',
+    altitudeDesc: 'Værstasjoner ligger ofte lavere enn fiskeplassene. Lufttemperaturer justeres med 0,6°C per 100m (standard atmosfærisk lapse rate) for å estimere forholdene der folk faktisk fisker. Dette påvirker GDD-akkumuleringen. Vanntemperaturer brukt i prediksjonsmodellen justeres med 0,35°C per 100m.',
     stefanTitle: 'Stefan ismodell',
     stefanDesc: 'Istykkelse estimeres med Stefans ligning — en fysisk vekstmodell for innsjøis basert på akkumulerte kuldegrader.',
     dataTitle: 'Datakilder',
@@ -314,6 +320,8 @@ const T = {
     dualDesc: 'Two independent models run in parallel — one tracking accumulated heat units (GDD), the other the live water temperature trend. Each blends real observations with a forward projection to its respective threshold. The estimated hatch date is where the last condition is met.',
     gddTitle: 'GDD · Growing Degree Days',
     gddDesc: 'Heat accumulates from January 1st. Each species crosses a calibrated thermal threshold — that crossing is the forecast.',
+    altitudeTitle: '🏔 Altitude correction',
+    altitudeDesc: 'Weather stations often sit lower than fishing areas. Air temperatures are adjusted by 0.6°C per 100m (standard atmospheric lapse rate) to estimate conditions at the actual fishing location. This affects the GDD accumulation. Water temperatures used in the prediction model are adjusted by 0.35°C per 100m.',
     stefanTitle: 'Stefan Ice Model',
     stefanDesc: 'Ice thickness is estimated using the Stefan equation — a physical growth model for lake ice based on accumulated freezing degree days.',
     dataTitle: 'Data Sources',
