@@ -1220,7 +1220,7 @@ document.getElementById('headerSub').textContent =
 document.getElementById('yearCol').textContent = YEAR;
 
 // Location info strip
-document.getElementById('locStrip').innerHTML = [
+const locItems = [
     { key: t('locArea'),         val: `${LOC.area}, ${LOC.region}` },
     { key: t('locAirStation'),   val: LOC.airStationName },
     { key: t('locWaterStation'), val: LOC.waterStationName },
@@ -1228,7 +1228,20 @@ document.getElementById('locStrip').innerHTML = [
     { key: t('locCoords'),       val: `${LOC.lat.toFixed(2)}°N, ${LOC.lon.toFixed(2)}°E` },
     { key: t('locGddTarget'),    val: `${LOC.gddThreshold} (base 0°C)` },
     { key: t('locModel'),        val: LOC.calibrated ? t('calibratedModel') : `⚠ ${t('priorLabel')} (±${LOC.uncertaintyDays} d)` },
-].map(i => `<div class="loc-item"><div class="loc-key">${i.key}</div><div class="loc-val">${i.val}</div></div>`).join('');
+];
+// Høydekorreksjon — vis bare hvis luft-korreksjonen er meningsfull (≥ 0.1°C)
+const _airDelta = ((LOC.stationAltitude ?? LOC.altitude) - LOC.altitude) * 0.6 / 100;
+if (Math.abs(_airDelta) >= 0.1) {
+    const sign = _airDelta > 0 ? '+' : '';
+    const rounded = Math.round(_airDelta * 10) / 10;
+    locItems.push({
+        key: t('altCorrection'),
+        val: `${sign}${rounded}°C (${LOC.stationAltitude}m → ${LOC.altitude}m)`,
+    });
+}
+document.getElementById('locStrip').innerHTML = locItems
+    .map(i => `<div class="loc-item"><div class="loc-key">${i.key}</div><div class="loc-val">${i.val}</div></div>`)
+    .join('');
 
 // Show/hide sections based on calibration
 if (LOC.showIce) document.getElementById('iceSection').style.display = '';
@@ -1610,10 +1623,12 @@ function renderHistoricalGDDSection(stats, correctionDelta, snowData, airData) {
 
     if (Math.abs(correctionDelta) >= 0.1) {
         const sign = correctionDelta > 0 ? '+' : '';
-        html += `<div style="font-size:0.74rem;color:#888;margin-top:8px;padding:0 4px">
-            ${t('altCorrection')} ${sign}${correctionDelta}°C on all daily temperatures
-            (station ${LOC.stationAltitude}m · fishing area ~${LOC.altitude}m · lapse rate 0.6°C/100m)
-        </div>`;
+        const msg = LANG === 'no'
+            ? `${t('altCorrection')} ${sign}${correctionDelta}°C på alle daglige lufttemperaturer `
+              + `(stasjon ${LOC.stationAltitude}m → fiskeplass ~${LOC.altitude}m, lapse rate 0,6°C/100m)`
+            : `${t('altCorrection')} ${sign}${correctionDelta}°C on all daily air temperatures `
+              + `(station ${LOC.stationAltitude}m → fishing area ~${LOC.altitude}m, lapse rate 0.6°C/100m)`;
+        html += `<div style="font-size:0.74rem;color:#888;margin-top:8px;padding:0 4px">${msg}</div>`;
     }
     document.getElementById('gddHistContent').innerHTML = html;
 }
