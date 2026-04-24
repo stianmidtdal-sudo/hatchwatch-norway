@@ -230,6 +230,80 @@
             transition: background 0.15s, border-color 0.15s;
         }
         .lang-btn:hover { background: #e8f5e0; border-color: #b0cfb8; }
+
+        /* ═══ Velkomst-popup ═══ */
+        .welcome-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(13, 31, 23, 0.78);
+            z-index: 1000;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 40px 20px;
+            overflow-y: auto;
+        }
+        .welcome-overlay.open { display: flex; }
+        .welcome-box {
+            background: white;
+            border-radius: 14px;
+            padding: 36px 32px 30px;
+            max-width: 580px;
+            width: 100%;
+            box-shadow: 0 12px 48px rgba(0,0,0,0.25);
+            position: relative;
+            animation: welcome-fade 0.25s ease;
+        }
+        @keyframes welcome-fade {
+            from { opacity: 0; transform: translateY(-10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .welcome-close {
+            position: absolute;
+            top: 12px; right: 16px;
+            background: none; border: none;
+            font-size: 26px;
+            color: #999;
+            cursor: pointer;
+            line-height: 1;
+            padding: 4px 8px;
+        }
+        .welcome-close:hover { color: #1B4332; }
+        .welcome-box h2 {
+            font-size: 1.35rem;
+            color: #1B4332;
+            margin-bottom: 14px;
+            font-weight: 800;
+        }
+        .welcome-box p {
+            font-size: 0.94rem;
+            line-height: 1.55;
+            color: #2d3a35;
+            margin-bottom: 14px;
+        }
+        .welcome-box p:last-of-type { margin-bottom: 18px; }
+        .welcome-box strong { color: #1B4332; }
+        .welcome-btn {
+            display: inline-block;
+            background: #1B4332;
+            color: white;
+            padding: 10px 26px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.92rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 6px;
+            transition: background 0.15s;
+        }
+        .welcome-btn:hover { background: #2D6A4F; }
+        .footer-about-link {
+            color: inherit;
+            text-decoration: underline;
+            cursor: pointer;
+            margin-left: 12px;
+        }
+        .footer-about-link:hover { color: #1B4332; }
     </style>
 </head>
 <body>
@@ -283,9 +357,39 @@
     </div>
 </div>
 
-<div class="page-footer" data-i18n-html="footer">
-    Built by <strong>Stian Midtdal</strong> &nbsp;·&nbsp; © 2026 Hatch Watch Norway
+<div class="page-footer">
+    <span data-i18n-html="footer">Built by <strong>Stian Midtdal</strong> &nbsp;·&nbsp; © 2026 Hatch Watch Norway</span>
+    <a class="footer-about-link" onclick="openWelcome()" data-i18n="aboutLink">Om Hatch Watch</a>
 </div>
+
+<!-- ═══ VELKOMST-POPUP ═══ -->
+<div class="welcome-overlay" id="welcomeOverlay" onclick="if(event.target===this)closeWelcome()">
+    <div class="welcome-box">
+        <button class="welcome-close" onclick="closeWelcome()" aria-label="Lukk">×</button>
+        <div data-i18n-html="welcomeContent">
+            <h2>Velkommen til Hatch Watch! 🎣</h2>
+            <p>Dette er et <strong>daglig oppdatert klekkevarsel</strong> for norske fluefiskere. Vi kombinerer <strong>sanntids vær-data</strong> fra MET Norge og NVE med <strong>statistisk modellering</strong> og <strong>historiske observasjoner</strong> — for å på best mulig måte forutsi når det klekker insekter.</p>
+            <p>Siden er <strong>helt ny</strong> og bygges videre mens sesongen pågår. Det vil kunne <strong>oppstå rariteter</strong> underveis nå i starten. Håpet er å få raritetene ned til et minimum, og treffsikkerheten over middels.</p>
+            <p><strong>Det er åpenbart at naturen aldri kan forutses helt nøyaktig</strong> — det vet vi fra værmeldingen. Men det viser seg at historisk data og statistisk modellering tar oss overraskende langt i å forutse når klekkinger faktisk skjer.</p>
+            <p>Lokasjoner merket med <strong>⭐ Kalibrert</strong> er validert mot observerte klekkedatoer og treffer typisk innen 2-4 dager. For andre er prognosen <strong>indikativ</strong> — fortsatt langt bedre enn å gjette, men bruk den som veiledning, ikke fasit. Kombiner alltid med egen fiskefølelse og lokalkunnskap.</p>
+            <p><strong>Tilbakemeldinger gjør siden bedre.</strong> Forbedringspotensiale, nye lokasjoner og kanskje aller mest verdifult — <strong>klekkeobservasjoner</strong>. Feltobservasjoner trener modellen og gjør den enda skarpere.</p>
+            <p><strong>Tight lines!</strong></p>
+        </div>
+        <button class="welcome-btn" onclick="closeWelcome()" data-i18n="welcomeDismiss">La oss fiske 🎣</button>
+    </div>
+</div>
+
+<script>
+    function openWelcome()  { document.getElementById('welcomeOverlay').classList.add('open'); }
+    function closeWelcome() {
+        document.getElementById('welcomeOverlay').classList.remove('open');
+        try { localStorage.setItem('hw_welcome_seen', '1'); } catch (e) {}
+    }
+    // Vis automatisk første gang
+    try {
+        if (!localStorage.getItem('hw_welcome_seen')) openWelcome();
+    } catch (e) { /* localStorage disabled — hopp over */ }
+</script>
 
 <script>
 // ── Language / i18n ─────────────────────────────────────────────────
@@ -302,6 +406,15 @@ const T = {
     gddDesc: 'Varme akkumuleres fra 1. januar. Hver art krysser en kalibrert termisk terskel — denne kryssingen er prognosen.',
     altitudeTitle: '🏔 Høydekorreksjon',
     altitudeDesc: 'Værstasjoner ligger ofte lavere enn fiskeplassene. Lufttemperaturer justeres med 0,6°C per 100m (standard atmosfærisk lapse rate) for å estimere forholdene der folk faktisk fisker. Dette påvirker GDD-akkumuleringen. Vanntemperaturer brukt i prediksjonsmodellen justeres med 0,35°C per 100m.',
+    aboutLink: 'Om Hatch Watch',
+    welcomeDismiss: 'La oss fiske 🎣',
+    welcomeContent: `<h2>Velkommen til Hatch Watch! 🎣</h2>
+        <p>Dette er et <strong>daglig oppdatert klekkevarsel</strong> for norske fluefiskere. Vi kombinerer <strong>sanntids vær-data</strong> fra MET Norge og NVE med <strong>statistisk modellering</strong> og <strong>historiske observasjoner</strong> — for å på best mulig måte forutsi når det klekker insekter.</p>
+        <p>Siden er <strong>helt ny</strong> og bygges videre mens sesongen pågår. Det vil kunne <strong>oppstå rariteter</strong> underveis nå i starten. Håpet er å få raritetene ned til et minimum, og treffsikkerheten over middels.</p>
+        <p><strong>Det er åpenbart at naturen aldri kan forutses helt nøyaktig</strong> — det vet vi fra værmeldingen. Men det viser seg at historisk data og statistisk modellering tar oss overraskende langt i å forutse når klekkinger faktisk skjer.</p>
+        <p>Lokasjoner merket med <strong>⭐ Kalibrert</strong> er validert mot observerte klekkedatoer og treffer typisk innen 2-4 dager. For andre er prognosen <strong>indikativ</strong> — fortsatt langt bedre enn å gjette, men bruk den som veiledning, ikke fasit. Kombiner alltid med egen fiskefølelse og lokalkunnskap.</p>
+        <p><strong>Tilbakemeldinger gjør siden bedre.</strong> Forbedringspotensiale, nye lokasjoner og kanskje aller mest verdifult — <strong>klekkeobservasjoner</strong>. Feltobservasjoner trener modellen og gjør den enda skarpere.</p>
+        <p><strong>Tight lines!</strong></p>`,
     stefanTitle: 'Stefan ismodell',
     stefanDesc: 'Istykkelse estimeres med Stefans ligning — en fysisk vekstmodell for innsjøis basert på akkumulerte kuldegrader.',
     dataTitle: 'Datakilder',
@@ -330,6 +443,15 @@ const T = {
     footer: 'Built by <strong>Stian Midtdal</strong> &nbsp;·&nbsp; © 2026 Hatch Watch Norway',
     viewForecast: 'View forecast →',
     calibratedBadge: '⭐ Calibrated',
+    aboutLink: 'About Hatch Watch',
+    welcomeDismiss: 'Let\'s fish 🎣',
+    welcomeContent: `<h2>Welcome to Hatch Watch! 🎣</h2>
+        <p>This is a <strong>daily updated hatch forecast</strong> for fly fishers in Norway. We combine <strong>real-time weather data</strong> from MET Norway and NVE with <strong>statistical modeling</strong> and <strong>historical observations</strong> — to give our best prediction of when insects will hatch.</p>
+        <p>The site is <strong>brand new</strong> and is being built further as the season unfolds. <strong>Expect some oddities</strong> early on. The goal is to reduce them to a minimum while keeping accuracy above average.</p>
+        <p><strong>It's obvious that nature can never be predicted with certainty</strong> — we know that from weather forecasts. But it turns out that historical data and statistical modeling take us surprisingly far in predicting when hatches actually occur.</p>
+        <p>Locations marked with <strong>⭐ Calibrated</strong> have been validated against observed hatch dates and typically hit within 2-4 days. For others, the forecast is <strong>indicative</strong> — still far better than guessing, but use it as guidance, not gospel. Always combine with your own fishing sense and local knowledge.</p>
+        <p><strong>Feedback makes the site better.</strong> Improvements, new locations, and perhaps most valuable of all — <strong>hatch observations</strong>. Field observations train the model and make it sharper.</p>
+        <p><strong>Tight lines!</strong></p>`,
   }
 };
 function t(key) { return (T[LANG] && T[LANG][key] != null) ? T[LANG][key] : (T['en'][key] || key); }
