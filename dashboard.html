@@ -2500,16 +2500,24 @@ function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate, airDa
     }
     const L1_UNC = 11;
     const candidates = [];
-    if (l2Date && l2Date > now && l2DaysOut <= 30)
-        candidates.push({ date: l2Date, unc: l2Unc, note: `${t('wtExtrapolation')} — ±${l2Unc} ${t('daysLabel')} (${l2DaysOut}d ${t('toHatch')})` });
+    if (l2Date && l2Date > now && l2DaysOut <= 30) {
+        const wtNote = LOC.calibrated
+            ? `${t('wtExtrapolation')} — ±${l2Unc} ${t('daysLabel')} (${l2DaysOut}d ${t('toHatch')})`
+            : `${t('wtExtrapolation')} — ${l2DaysOut}d ${t('toHatch')}`;
+        candidates.push({ date: l2Date, unc: l2Unc, note: wtNote });
+    }
     if (adgDate) {
         const gddNote = LOC.calibrated
             ? `${t('gddModelShort')} — ±${uncDays} ${t('daysLabel')} (${uncSource})`
             : `${t('gddModelShort')} — ${t('indicativeLabel').toLowerCase()}`;
         candidates.push({ date: adgDate, unc: parseFloat(uncDays), note: gddNote });
     }
-    if (l1Date)
-        candidates.push({ date: l1Date, unc: L1_UNC, note: `${t('snowFreePlus32')} — ±${L1_UNC} ${t('daysLabel')} (${t('earlySignal')})` });
+    if (l1Date) {
+        const l1Note = LOC.calibrated
+            ? `${t('snowFreePlus32')} — ±${L1_UNC} ${t('daysLabel')} (${t('earlySignal')})`
+            : `${t('snowFreePlus32')} — ${t('indicativeLabel').toLowerCase()}`;
+        candidates.push({ date: l1Date, unc: L1_UNC, note: l1Note });
+    }
     candidates.sort((a, b) => a.unc - b.unc);
     const best = candidates[0] ?? null;
     document.getElementById('bestDate').textContent = best ? fmt(best.date) : '–';
