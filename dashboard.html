@@ -1277,11 +1277,13 @@ if (!LOC.nveStation) {
 }
 
 // Snø-note under snøgraf
+// Fallback: hvis snowStation ikke er satt, brukes frostStation som default for snødata
+const _snowStnId = LOC.snowStation || LOC.frostStation;
 const snowNoteName = LOC.snowStationName
-    || (LOC.snowStation === LOC.frostStation ? LOC.airStationName : null)
+    || (_snowStnId === LOC.frostStation ? LOC.airStationName : null)
     || LOC.place;
 const snowNoteEl = document.getElementById('snowNote');
-if (snowNoteEl) snowNoteEl.textContent = `${t('stationLabel')}: ${snowNoteName} (${LOC.snowStation})`;
+if (snowNoteEl) snowNoteEl.textContent = `${t('stationLabel')}: ${snowNoteName} (${_snowStnId})`;
 
 // Model heading
 document.getElementById('modelHeading').textContent =
@@ -1289,13 +1291,14 @@ document.getElementById('modelHeading').textContent =
         ? `${t('dualTriggerLabel')} ${LOC.gddThreshold} (bt = 0°C, ${t('fromJan1')}) + ${t('waterTemp')} ≥ 12°C · ${t('stdShort')} = ±${LOC.uncertaintyDays} ${t('daysLabel')}`
         : `${t('gddPriorLabel')} ${LOC.gddThreshold} GDD (bt = 0°C) · ${t('priorUncLabel')} ±${LOC.uncertaintyDays} ${t('daysLabel')}`;
 
+const _snowHdrStnId = LOC.snowStation || LOC.frostStation;
 const snowHdrName = LOC.snowStationName
-    || (LOC.snowStation === LOC.frostStation ? LOC.airStationName : null)
+    || (_snowHdrStnId === LOC.frostStation ? LOC.airStationName : null)
     || LOC.place;
 document.getElementById('snowHeading').textContent =
     LANG === 'no'
-        ? `Snødybde nov–mai · År for år · ${snowHdrName} (${LOC.snowStation})`
-        : `Snow Depth Nov–May · Year-by-Year · ${snowHdrName} (${LOC.snowStation})`;
+        ? `Snødybde nov–mai · År for år · ${snowHdrName} (${_snowHdrStnId})`
+        : `Snow Depth Nov–May · Year-by-Year · ${snowHdrName} (${_snowHdrStnId})`;
 
 // ═══════════════════════════════════════════════════════════════════
 //  DATE HELPERS
@@ -1824,11 +1827,12 @@ function renderKPIs(airData, snowData, flowData, wtData) {
         set('kpiWaterTemp', wt.value);
     }
     document.getElementById('kpiAirUnit').textContent  = `°C · ${LOC.airStationName || LOC.place} (${LOC.frostStation})`;
-    // Snø: hvis samme stasjon som luft, gjenbruk air-navnet. Ellers snowStationName, eller ID.
+    // Snø: fallback til frostStation hvis snowStation ikke er satt (samme fallback som datafetching).
+    const snowStnId = LOC.snowStation || LOC.frostStation;
     const snowName = LOC.snowStationName
-        || (LOC.snowStation === LOC.frostStation ? LOC.airStationName : null)
+        || (snowStnId === LOC.frostStation ? LOC.airStationName : null)
         || LOC.place;
-    document.getElementById('kpiSnowUnit').textContent = `cm · ${snowName} (${LOC.snowStation})`;
+    document.getElementById('kpiSnowUnit').textContent = `cm · ${snowName} (${snowStnId})`;
     if (LOC.nveStation) {
         const wtStn = LOC.nveWaterTempStation || LOC.nveStation;
         // Bruk dedikerte stasjonsnavn-felt når lokasjonen har dem (f.eks. Bardufoss:
@@ -2511,7 +2515,6 @@ function renderSpeciesCalendar(isgangResult, vulgataDate) {
             <div class="sp-name">${s.name}</div>
             ${primaryHtml}
             ${windowHtml}
-            <div class="sp-sci">${s.sci} · ${s.anchor}</div>
         </div>`;
     }).join('');
 }
