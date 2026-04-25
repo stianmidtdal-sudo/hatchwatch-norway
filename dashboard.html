@@ -1217,34 +1217,18 @@ const TODAY = new Date().toISOString().slice(0, 10);
 document.title = `Hatch Watch · ${LOC.area}`;
 document.getElementById('headerTitle').textContent = `Hatch Watch · ${LOC.area}`;
 document.getElementById('headerSub').textContent =
-    `${LOC.area} · ${LOC.region} · ${t('gddHatchModel')}`;
+    `${LOC.area} · ${LOC.region} · ${LOC.altitude} ${t('masl')} · ${t('gddHatchModel')}`;
 document.getElementById('yearCol').textContent = YEAR;
 
-// Location info strip
-const locItems = [
-    { key: t('locArea'),         val: `${LOC.area}, ${LOC.region}` },
-    { key: t('locAirStation'),   val: LOC.airStationName },
-    { key: t('locWaterStation'), val: LOC.waterStationName },
-    { key: t('locAltitude'),     val: `${LOC.altitude} ${t('masl')}` },
-    { key: t('locCoords'),       val: `${LOC.lat.toFixed(2)}°N, ${LOC.lon.toFixed(2)}°E` },
-    { key: t('locGddTarget'),    val: `${LOC.gddThreshold} (base 0°C)` },
-    // Initielt: vis "Indikativ" for ikke-kalibrerte uten ± tall. renderModel oppdaterer evt.
-    { key: t('locModel'),        id: 'locModelItem',
-      val: LOC.calibrated ? t('calibratedModel') : `⚠ ${t('indicativeLabel')}` },
-];
-// Høydekorreksjon — vis bare hvis luft-korreksjonen er meningsfull (≥ 0.1°C)
-const _airDelta = ((LOC.stationAltitude ?? LOC.altitude) - LOC.altitude) * 0.6 / 100;
-if (Math.abs(_airDelta) >= 0.1) {
-    const sign = _airDelta > 0 ? '+' : '';
-    const rounded = Math.round(_airDelta * 10) / 10;
-    locItems.push({
-        key: t('altCorrection'),
-        val: `${sign}${rounded}°C (${LOC.stationAltitude}m → ${LOC.altitude}m)`,
-    });
-}
-document.getElementById('locStrip').innerHTML = locItems
-    .map(i => `<div class="loc-item"${i.id ? ` id="${i.id}"` : ''}><div class="loc-key">${i.key}</div><div class="loc-val">${i.val}</div></div>`)
-    .join('');
+// Loc-strip fjernet 2026-04-24 — informasjonen var for det meste duplikat:
+// - Område: står i headerTitle/headerSub
+// - Stasjoner: står i KPI-kortene
+// - Koordinater: ikke interessant
+// - GDD-terskel: står i modellHeading
+// - Modell-status (kalibrert/indikativ): står i modellHeading + Indikativ-banneret
+// - Høyde fiskeplass: nå i headerSub
+// Høydekorreksjon vises i Historikk-tabellens fotnote og i wtNote ved behov.
+document.getElementById('locStrip').style.display = 'none';
 
 // Show/hide sections based on calibration
 if (LOC.showIce) document.getElementById('iceSection').style.display = '';
@@ -1889,14 +1873,8 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
 
 
 
-    // Update loc-strip Model entry with actual uncertainty
-    // Kalibrerte viser MAE fra Excel-validering; ukalibrerte viser prior.
-    const locModelEl = document.querySelector('#locModelItem .loc-val');
-    if (locModelEl) {
-        locModelEl.textContent = LOC.calibrated
-            ? `${t('calibratedModel')} · ${t('stdShort')} ±${uncDays} d`
-            : `⚠ ${t('indicativeLabel')}`;
-    }
+    // Loc-strip Modell-felt er fjernet 2026-04-24. Kalibreringsstatus
+    // vises nå kun i modellHeading og i Indikativ-banneret.
 
     // Update model heading with actual uncertainty
     // Kalibrerte: ±2,1 d fra Excel-validering (n=8 år). Ukalibrerte: prior-estimat.
