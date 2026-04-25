@@ -2504,9 +2504,9 @@ function renderSpeciesCalendar(isgangResult, vulgataDate) {
             primaryHtml = '<div class="sp-peak">–</div>';
             windowHtml = '';
         } else if (!s.peak) {
-            // Mygg: show onset date, no window
+            // Mygg: vis kun onset-dato, ingen vindu
             primaryHtml = `<div class="sp-peak">${fmt(s.onset)}</div>`;
-            windowHtml = `<div class="sp-window">→ ${s.endLabel}</div>`;
+            windowHtml = '';
         } else {
             primaryHtml = `<div class="sp-peak">${fmt(s.peak)}</div>`;
             windowHtml = `<div class="sp-window">${fmt(s.onset)} → ${fmt(s.end)}</div>`;
