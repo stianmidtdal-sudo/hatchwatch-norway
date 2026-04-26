@@ -372,10 +372,9 @@
                 Velg vann i Nordmarka
             </label>
             <select id="lakePicker" style="width: 100%; max-width: 480px; padding: 8px 10px; font-size: 0.95rem; border: 1px solid #b8cbb9; border-radius: 6px; background: #fff; color: #1B4332;"></select>
-            <div id="lakePickerNote" style="font-size: 0.72rem; color: #666; margin-top: 6px;">
-                Vann og høyder fra OFA (Oslomarka Fiskeadministrasjon). Modellen justerer alle prediksjoner basert på valgt høyde.
+            <div id="lakePickerNote" style="font-size: 0.72rem; color: #666; margin-top: 8px;">
+                Alle vannene i listen har dokumentert vulgata-klekking. Kilde: OFA (Oslomarka Fiskeadministrasjon). Modellen justerer prediksjonen basert på valgt høyde.
             </div>
-            <div id="lakePickerStatus" style="display:none; font-size: 0.78rem; color: #1B4332; margin-top: 8px; font-weight: 500;"></div>
         </div>
 
         <!-- ═══ TODAY'S STATUS ═══ -->
@@ -2999,7 +2998,6 @@ function buildLakePickerUI() {
 
     sel.addEventListener('change', onLakeChanged);
     wrap.style.display = '';
-    updateLakePickerStatus();
 }
 
 function onLakeChanged(e) {
@@ -3020,23 +3018,10 @@ function onLakeChanged(e) {
             localStorage.setItem(STORAGE_KEY_NAME, name);
         } catch (err) { /* ignore */ }
     }
-    updateLakePickerStatus();
     // Re-render header subtitle (altitude shown there)
     document.getElementById('headerSub').textContent =
         `${LOC.area} · ${LOC.region} · ${getCurrentAltitude(LOC)} ${t('masl')} · ${t('gddHatchModel')}`;
     rebuildDashboard();
-}
-
-function updateLakePickerStatus() {
-    const statusEl = document.getElementById('lakePickerStatus');
-    if (!statusEl) return;
-    if (userSelectedLakeName != null) {
-        statusEl.textContent = `Justert for: ${userSelectedLakeName} (${userSelectedAltitude} m)`;
-        statusEl.style.display = '';
-    } else {
-        statusEl.textContent = `Viser standard Nordmarka-snitt (${LOC.altitude} m). Velg ditt vann over for spesifikk prediksjon.`;
-        statusEl.style.display = '';
-    }
 }
 
 // ═══════════════════════════════════════════════════════════════════
