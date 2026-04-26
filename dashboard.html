@@ -1124,14 +1124,18 @@ const LOCATIONS = {
         },
         isgangWater: 'Anjavannet',
     },
-    bardufoss: {
-        id: 'bardufoss',
-        area: 'Bardufoss',
-        name: 'Bardufoss',                // modellerer stedet/området, ikke en spesifikk elv
-        place: 'Bardufoss',
+    bardu: {
+        id: 'bardu',
+        area: 'Bardu',
+        name: 'Bardu',                    // modellerer stedet/området, ikke en spesifikk elv
+        place: 'Bardu',
         region: 'Troms',
-        lat: 69.036, lon: 18.820, altitude: 91, stationAltitude: 76,  // Bardufoss 76m
-        frostStation: 'SN89350',     // Bardufoss
+        // Lokasjon brand-navnet er "Bardu" (kommunen), men MET-stasjonen heter
+        // offisielt "Bardufoss" siden den ligger på Bardufoss flyplass —
+        // airStationName beholdes som "Bardufoss" for å reflektere faktisk
+        // stasjonsdata (frost.met.no/sources viser SN89350 = Bardufoss).
+        lat: 69.036, lon: 18.820, altitude: 91, stationAltitude: 76,  // Bardufoss flyplass 76m
+        frostStation: 'SN89350',     // Bardufoss flyplass
         snowStation:  'SN89350',
         nveStation:   '196.21.0',    // Skogly (naturlig — 100% dekning for både vannføring og vanntemp, sesongvariasjon 1-18°C, nær Dividalen)
         // Avvist: 196.43.0 Målselva ovf. sluttet rapportere etter juli 2025.
