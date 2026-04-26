@@ -366,6 +366,18 @@
         <!-- ═══ LOCATION INFO STRIP ═══ -->
         <div class="loc-strip" id="locStrip"></div>
 
+        <!-- ═══ DYNAMIC ALTITUDE PICKER (kun for nordmarka_dyn / LOC.altitudeAdjustable) ═══ -->
+        <div id="lakePickerWrap" style="display:none; margin: 16px 0 24px; padding: 16px 18px; background: #f6faf7; border: 1px solid #d4e3d6; border-radius: 8px;">
+            <label for="lakePicker" style="display:block; font-size: 0.78rem; color: #1B4332; font-weight: 600; margin-bottom: 6px; letter-spacing: 0.04em; text-transform: uppercase;">
+                Velg vann i Nordmarka
+            </label>
+            <select id="lakePicker" style="width: 100%; max-width: 480px; padding: 8px 10px; font-size: 0.95rem; border: 1px solid #b8cbb9; border-radius: 6px; background: #fff; color: #1B4332;"></select>
+            <div id="lakePickerNote" style="font-size: 0.72rem; color: #666; margin-top: 6px;">
+                Vann og høyder fra OFA (Oslomarka Fiskeadministrasjon). Modellen justerer alle prediksjoner basert på valgt høyde.
+            </div>
+            <div id="lakePickerStatus" style="display:none; font-size: 0.78rem; color: #1B4332; margin-top: 8px; font-weight: 500;"></div>
+        </div>
+
         <!-- ═══ TODAY'S STATUS ═══ -->
         <section>
             <h2 data-i18n="todayStatus">Today's Status</h2>
@@ -937,6 +949,67 @@ const LOCATIONS = {
             2019: '2019-05-10', 2018: '2018-05-13', 2017: '2017-05-16',
         },
     },
+    // ── nordmarka_dyn (steg 2 — DYNAMISK HØYDE-VELGER) ───────────────────────
+    // Klone av oslo med altitudeAdjustable:true. Bruker velger sitt vann fra
+    // OFA-listen via dropdown — modellen justerer alle prediksjoner basert
+    // på valgt høyde (lapse rate 0.6°C/100m for luft, 0.35°C/100m for vann).
+    // Default = 370m (Nordmarka snitt) hvis bruker ikke gjør valg.
+    // Hidden i index.html initialt — bruker statisk 'oslo' som offentlig versjon.
+    // Etter testing kan vi bytte: oslo.hidden=true, nordmarka_dyn.hidden=false.
+    // ────────────────────────────────────────────────────────────────────────
+    nordmarka_dyn: {
+        id: 'nordmarka_dyn',
+        area: 'Nordmarka',
+        name: 'Bjørnholt',
+        place: 'Nordmarka',
+        region: 'Østlandet',
+        lat: 59.94, lon: 10.72, altitude: 370, stationAltitude: 380,
+        altitudeAdjustable: true,    // ⚡ Aktiverer dropdown for vann-valg
+        ofaLakes: [                  // Kilde: OFAs liste (Oslomarka Fiskeadministrasjon)
+            { name: 'Skillingen Store', altitude: 248 },
+            { name: 'Øyungen',          altitude: 283 },
+            { name: 'Gåslungen',        altitude: 283 },
+            { name: 'Åklungen Lille',   altitude: 293 },
+            { name: 'Åklungen Store',   altitude: 293 },
+            { name: 'Bjørnsjøen',       altitude: 337 },
+            { name: 'Elvann',           altitude: 341 },
+            { name: 'Langvann',         altitude: 342 },
+            { name: 'Blankvann',        altitude: 351 },
+            { name: 'Helgeren',         altitude: 358 },
+            { name: 'Trehørningen',     altitude: 360 },
+            { name: 'Gørja Lille',      altitude: 371 },
+            { name: 'Gørja Store',      altitude: 376 },
+            { name: 'Kalvsjøen',        altitude: 387 },
+            { name: 'Måsjøen Sør',      altitude: 391 },
+            { name: 'Måsjøen Nord',     altitude: 392 },
+            { name: 'Auretjern Nord',   altitude: 395 },
+            { name: 'Auretjern Sør',    altitude: 395 },
+            { name: 'Daltjuven Lille',  altitude: 408 },
+            { name: 'Fjellsjøen',       altitude: 425 },
+            { name: 'Daltjuven Store',  altitude: 442 },
+            { name: 'Manntjern',        altitude: 444 },
+            { name: 'Katnosa',          altitude: 464 },
+            { name: 'Spålen',           altitude: 478 },
+        ],
+        frostStation: 'SN18500',
+        snowStation:  'SN18500',
+        nveStation:   '6.71.0',
+        airStationName:   'Bjørnholt, Nordmarka',
+        waterStationName: 'Sinnerdammen, Nordmarka',
+        calibrated: true,
+        gddThreshold: 620,
+        uncertaintyDays: 10,
+        calibNoteNo:  'Dynamisk høyde-justering — velg vannet ditt fra OFAs liste (Oslomarka Fiskeadministrasjon). Modellen justerer prediksjon for ditt spesifikke vann via temperaturgradient (0,6°C/100m luft, 0,35°C/100m vann).',
+        calibNoteEn:  'Dynamic altitude adjustment — pick your lake from the OFA list (Oslomarka Fiskeadministrasjon). Model adjusts prediction for your specific lake via lapse rate (0.6°C/100m air, 0.35°C/100m water).',
+        calibShortNo: 'n=24+5, OFA',
+        calibShortEn: 'n=24+5, OFA',
+        isgangWater: 'Katnosa, Nordmarka',
+        isgangHistory: {
+            2025: '2025-04-25', 2024: '2024-05-09', 2023: '2023-05-23',
+            2022: '2022-05-04', 2021: '2021-05-22', 2020: '2020-05-17',
+            2019: '2019-05-10', 2018: '2018-05-13', 2017: '2017-05-16',
+        },
+    },
     ostmarka: {
         id: 'ostmarka',
         area: 'Østmarka',            // Enebakk / Børtervanna-området
@@ -1252,7 +1325,7 @@ const TODAY = new Date().toISOString().slice(0, 10);
 document.title = `Hatch Watch · ${LOC.area}`;
 document.getElementById('headerTitle').textContent = `Hatch Watch · ${LOC.area}`;
 document.getElementById('headerSub').textContent =
-    `${LOC.area} · ${LOC.region} · ${LOC.altitude} ${t('masl')} · ${t('gddHatchModel')}`;
+    `${LOC.area} · ${LOC.region} · ${getCurrentAltitude(LOC)} ${t('masl')} · ${t('gddHatchModel')}`;
 document.getElementById('yearCol').textContent = YEAR;
 
 // Loc-strip fjernet 2026-04-24 — informasjonen var for det meste duplikat:
@@ -1482,12 +1555,29 @@ function buildDoyAvgTemp(airData) {
 //  MODEL v2 — ALTITUDE CORRECTION + HISTORICAL STATS (GDD from Jan 1, per Excel)
 // ═══════════════════════════════════════════════════════════════════
 
+// ── DYNAMISK HØYDE-OVERSTYRING (steg 2 — kun for nordmarka_dyn) ────────────
+// Brukerens valg fra dropdown lagres her og persisteres i localStorage.
+// For lokasjoner uten LOC.altitudeAdjustable: getCurrentAltitude returnerer
+// alltid LOC.altitude — null endring i oppførsel.
+// For nordmarka_dyn: returnerer userSelectedAltitude hvis satt, ellers
+// LOC.altitude (= 370m, Nordmarka snitt).
+let userSelectedAltitude = null;
+let userSelectedLakeName = null;
+
+function getCurrentAltitude(loc) {
+    if (loc && loc.altitudeAdjustable && userSelectedAltitude != null) {
+        return userSelectedAltitude;
+    }
+    return loc.altitude;
+}
+// ───────────────────────────────────────────────────────────────────────────
+
 // A. Altitude lapse-rate correction (0.6°C per 100m)
 // Station may be at different altitude than fishing area.
 // Higher station → colder readings → need to warm-correct for area.
 function applyAltitudeCorrection(rawData) {
-    const stationAlt = LOC.stationAltitude ?? LOC.altitude;
-    const areaAlt    = LOC.altitude;
+    const stationAlt = LOC.stationAltitude ?? getCurrentAltitude(LOC);
+    const areaAlt    = getCurrentAltitude(LOC);
     const delta = (stationAlt - areaAlt) * 0.6 / 100;  // °C to add (luft lapse rate)
     if (Math.abs(delta) < 0.05) return { data: rawData, correction: 0 };
     const corrected = {};
@@ -1500,8 +1590,8 @@ function applyAltitudeCorrection(rawData) {
 // Brukes kun der fiskeplass (LOC.altitude) og stasjonshøyde (LOC.stationAltitude)
 // har meningsfull forskjell. Viktigst for høyfjellslokasjoner (Hardangervidda).
 function applyWaterAltitudeCorrection(rawData) {
-    const stationAlt = LOC.stationAltitude ?? LOC.altitude;
-    const areaAlt    = LOC.altitude;
+    const stationAlt = LOC.stationAltitude ?? getCurrentAltitude(LOC);
+    const areaAlt    = getCurrentAltitude(LOC);
     const delta = (stationAlt - areaAlt) * 0.35 / 100;  // °C to add (vann lapse rate)
     if (Math.abs(delta) < 0.05) return { data: rawData, correction: 0 };
     const corrected = {};
@@ -1650,9 +1740,9 @@ function renderHistoricalGDDSection(stats, correctionDelta, snowData, airData) {
         const sign = correctionDelta > 0 ? '+' : '';
         const msg = LANG === 'no'
             ? `${t('altCorrection')} ${sign}${correctionDelta}°C på alle daglige lufttemperaturer `
-              + `(stasjon ${LOC.stationAltitude}m → fiskeplass ~${LOC.altitude}m, temperaturgradient 0,6°C/100m)`
+              + `(stasjon ${LOC.stationAltitude}m → fiskeplass ~${getCurrentAltitude(LOC)}m, temperaturgradient 0,6°C/100m)`
             : `${t('altCorrection')} ${sign}${correctionDelta}°C on all daily air temperatures `
-              + `(station ${LOC.stationAltitude}m → fishing area ~${LOC.altitude}m, lapse rate 0.6°C/100m)`;
+              + `(station ${LOC.stationAltitude}m → fishing area ~${getCurrentAltitude(LOC)}m, lapse rate 0.6°C/100m)`;
         html += `<div style="font-size:0.74rem;color:#888;margin-top:8px;padding:0 4px">${msg}</div>`;
     }
     document.getElementById('gddHistContent').innerHTML = html;
@@ -2808,9 +2898,147 @@ function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate, airDa
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  MAIN
+//  DYNAMIC ALTITUDE PICKER — bygger og styrer dropdown for LOC.altitudeAdjustable
 // ═══════════════════════════════════════════════════════════════════
+//
+// Hvordan det fungerer:
+// 1. På page load: les userSelectedAltitude fra localStorage (per LOC.id)
+// 2. Bygg <select> med <optgroup>'er gruppert etter høydeintervaller
+// 3. Når bruker velger nytt vann: lagre i localStorage, oppdater
+//    userSelectedAltitude/userSelectedLakeName, og kall rebuildDashboard()
+// 4. rebuildDashboard() kjører hele beregnings- + render-pipelinen på nytt
+//    med ny høyde — uten å re-fetche data fra Frost/NVE
+//
+// Alle andre lokasjoner (ikke altitudeAdjustable) er upåvirket — de bruker
+// fortsatt LOC.altitude direkte, og picker-en vises ikke for dem.
+
+const STORAGE_KEY_ALT  = `hw_lake_alt_${LOC.id}`;
+const STORAGE_KEY_NAME = `hw_lake_name_${LOC.id}`;
+
+function initAltitudePickerState() {
+    if (!LOC.altitudeAdjustable) return;
+    try {
+        const savedAlt  = localStorage.getItem(STORAGE_KEY_ALT);
+        const savedName = localStorage.getItem(STORAGE_KEY_NAME);
+        if (savedAlt != null) userSelectedAltitude = parseFloat(savedAlt);
+        if (savedName != null) userSelectedLakeName = savedName;
+    } catch (e) { /* localStorage may be blocked */ }
+}
+
+function buildLakePickerUI() {
+    if (!LOC.altitudeAdjustable || !LOC.ofaLakes) return;
+    const wrap = document.getElementById('lakePickerWrap');
+    const sel  = document.getElementById('lakePicker');
+    if (!wrap || !sel) return;
+
+    // Group lakes by altitude band
+    const bands = [
+        { label: 'Lavtliggende (250–340m)',     min: 0,   max: 340 },
+        { label: 'Mellomliggende (340–410m)',   min: 340, max: 410 },
+        { label: 'Høytliggende (410–500m)',     min: 410, max: 999 },
+    ];
+
+    let html = `<option value="default">Standard — Nordmarka snitt (${LOC.altitude}m)</option>`;
+    for (const band of bands) {
+        const lakesInBand = LOC.ofaLakes.filter(l => l.altitude >= band.min && l.altitude < band.max);
+        if (lakesInBand.length === 0) continue;
+        html += `<optgroup label="${band.label}">`;
+        for (const lake of lakesInBand) {
+            const value = `${lake.altitude}|${lake.name}`;
+            const selected = (userSelectedLakeName === lake.name) ? ' selected' : '';
+            html += `<option value="${value}"${selected}>${lake.name} — ${lake.altitude} m</option>`;
+        }
+        html += `</optgroup>`;
+    }
+    sel.innerHTML = html;
+
+    sel.addEventListener('change', onLakeChanged);
+    wrap.style.display = '';
+    updateLakePickerStatus();
+}
+
+function onLakeChanged(e) {
+    const val = e.target.value;
+    if (val === 'default') {
+        userSelectedAltitude = null;
+        userSelectedLakeName = null;
+        try {
+            localStorage.removeItem(STORAGE_KEY_ALT);
+            localStorage.removeItem(STORAGE_KEY_NAME);
+        } catch (err) { /* ignore */ }
+    } else {
+        const [altStr, name] = val.split('|');
+        userSelectedAltitude = parseFloat(altStr);
+        userSelectedLakeName = name;
+        try {
+            localStorage.setItem(STORAGE_KEY_ALT, altStr);
+            localStorage.setItem(STORAGE_KEY_NAME, name);
+        } catch (err) { /* ignore */ }
+    }
+    updateLakePickerStatus();
+    // Re-render header subtitle (altitude shown there)
+    document.getElementById('headerSub').textContent =
+        `${LOC.area} · ${LOC.region} · ${getCurrentAltitude(LOC)} ${t('masl')} · ${t('gddHatchModel')}`;
+    rebuildDashboard();
+}
+
+function updateLakePickerStatus() {
+    const statusEl = document.getElementById('lakePickerStatus');
+    if (!statusEl) return;
+    if (userSelectedLakeName != null) {
+        statusEl.textContent = `Justert for: ${userSelectedLakeName} (${userSelectedAltitude} m)`;
+        statusEl.style.display = '';
+    } else {
+        statusEl.textContent = `Viser standard Nordmarka-snitt (${LOC.altitude} m). Velg ditt vann over for spesifikk prediksjon.`;
+        statusEl.style.display = '';
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  MAIN — fetch once, render via rebuildDashboard (kan kalles flere ganger)
+// ═══════════════════════════════════════════════════════════════════
+
+let cachedData = null;  // { airData, snowData, flowData, wtData } — cached after fetch
+
+function rebuildDashboard() {
+    if (!cachedData) return;
+    const { airData, snowData, flowData, wtData } = cachedData;
+
+    // Apply altitude lapse-rate correction (uses getCurrentAltitude internally).
+    // Luft: 0.6°C/100m (brukes gjennomgående — GDD, graf, historikk).
+    // Vann: 0.35°C/100m — men KUN i prediksjonsmodellen (dual-trigger + prediksjonshistorikk).
+    // Visning (KPI-kort + vanntemp-graf) viser alltid rå stasjonsverdier siden stasjonsnavnet
+    // allerede er tydelig merket. Unngår fysiske urimelige tall som negativ vanntemp fra korreksjonen.
+    const { data: airDataCorrected, correction: altCorrection } = applyAltitudeCorrection(airData);
+    const { data: wtDataForPrediction } = applyWaterAltitudeCorrection(wtData);
+
+    // GDD starts from 1. januar (per Excel-modell Dashboard 3.0)
+    const fromDate   = `${YEAR}-01-01`;
+    const currentADG = calcADG(airDataCorrected, fromDate);
+    const todayDoyN  = doy(new Date());
+    const fromDoyN   = doy(parseDate(fromDate));
+    const histADG    = histAvgADG(airDataCorrected, fromDoyN, todayDoyN);
+    const adgDate    = projectADGDate(airDataCorrected, currentADG);
+    const wtDate     = LOC.nveStation ? extrapolateWT(wtDataForPrediction) : null;
+
+    // Historical statistics: run GDD model on 2019–2025 → data-driven uncertainty
+    const histStats  = computeHistoricalStats(airDataCorrected, LOC.gddThreshold);
+
+    // Render
+    renderKPIs(airData, snowData, flowData, wtData);   // Vann: rå (uten høydekorreksjon)
+    renderModel(airDataCorrected, currentADG, histADG, adgDate, wtDate, histStats);
+    renderHistoricalGDDSection(histStats, altCorrection, snowData, airDataCorrected);
+    renderWaterTempChart(wtData);                       // Graf: rå verdier fra stasjon
+    renderSnowChart(snowData);
+    renderIceChart(airDataCorrected, snowData);
+    const { snowFree } = renderIndicators(snowData, airDataCorrected, currentADG);
+    renderConvergence(snowFree, wtDataForPrediction, adgDate, histStats, fromDate, airDataCorrected);
+}
+
 async function main() {
+    // Restore user's altitude selection from localStorage BEFORE any rendering
+    initAltitudePickerState();
+
     const startYear = Math.max(2016, YEAR - 10);
     const dataStart = `${startYear}-01-01`;
     const dataEnd   = TODAY;
@@ -2837,35 +3065,14 @@ async function main() {
         // Fill short sensor gaps (≤7 days) with linear interpolation before rendering
         const wtData = interpolateGaps(wtDataRaw, 7);
 
-        // Apply altitude lapse-rate correction.
-        // Luft: 0.6°C/100m (brukes gjennomgående — GDD, graf, historikk).
-        // Vann: 0.35°C/100m — men KUN i prediksjonsmodellen (dual-trigger + prediksjonshistorikk).
-        // Visning (KPI-kort + vanntemp-graf) viser alltid rå stasjonsverdier siden stasjonsnavnet
-        // allerede er tydelig merket. Unngår fysiske urimelige tall som negativ vanntemp fra korreksjonen.
-        const { data: airDataCorrected, correction: altCorrection } = applyAltitudeCorrection(airData);
-        const { data: wtDataForPrediction } = applyWaterAltitudeCorrection(wtData);
+        // Cache for potential rebuild on altitude-change
+        cachedData = { airData, snowData, flowData, wtData };
 
-        // GDD starts from 1. januar (per Excel-modell Dashboard 3.0, kalibrert mot 520 GDD + WT ≥ 12°C)
-        const fromDate   = `${YEAR}-01-01`;
-        const currentADG = calcADG(airDataCorrected, fromDate);
-        const todayDoyN  = doy(new Date());
-        const fromDoyN   = doy(parseDate(fromDate));
-        const histADG    = histAvgADG(airDataCorrected, fromDoyN, todayDoyN);
-        const adgDate    = projectADGDate(airDataCorrected, currentADG);
-        const wtDate     = LOC.nveStation ? extrapolateWT(wtDataForPrediction) : null;
+        // Build picker UI (only renders if LOC.altitudeAdjustable)
+        buildLakePickerUI();
 
-        // Historical statistics: run GDD model on 2019–2025 → data-driven uncertainty
-        const histStats  = computeHistoricalStats(airDataCorrected, LOC.gddThreshold);
-
-        // Render
-        renderKPIs(airData, snowData, flowData, wtData);   // Vann: rå (uten høydekorreksjon)
-        renderModel(airDataCorrected, currentADG, histADG, adgDate, wtDate, histStats);
-        renderHistoricalGDDSection(histStats, altCorrection, snowData, airDataCorrected);
-        renderWaterTempChart(wtData);                       // Graf: rå verdier fra stasjon
-        renderSnowChart(snowData);
-        renderIceChart(airDataCorrected, snowData);
-        const { snowFree } = renderIndicators(snowData, airDataCorrected, currentADG);
-        renderConvergence(snowFree, wtDataForPrediction, adgDate, histStats, fromDate, airDataCorrected);
+        // Initial render
+        rebuildDashboard();
 
         // Show dashboard
         document.getElementById('loadingState').style.display = 'none';
