@@ -997,12 +997,27 @@ const LOCATIONS = {
         airStationName:   'Bjørnholt, Nordmarka',
         waterStationName: 'Sinnerdammen, Nordmarka',
         calibrated: true,
-        gddThreshold: 620,
+        gddThreshold: 620,            // Samme som statisk oslo (empirisk kalibrert mot OFA mean 16. juni)
         uncertaintyDays: 10,
-        calibNoteNo:  'Dynamisk høyde-justering — velg vannet ditt fra OFAs liste (Oslomarka Fiskeadministrasjon). Modellen justerer prediksjon for ditt spesifikke vann via temperaturgradient (0,6°C/100m luft, 0,35°C/100m vann).',
-        calibNoteEn:  'Dynamic altitude adjustment — pick your lake from the OFA list (Oslomarka Fiskeadministrasjon). Model adjusts prediction for your specific lake via lapse rate (0.6°C/100m air, 0.35°C/100m water).',
-        calibShortNo: 'n=24+5, OFA',
-        calibShortEn: 'n=24+5, OFA',
+        wtThreshold: 14,              // ⚡ EMPIRISK BUMP: Sinnerdammen er regulert demning som
+                                      // sannsynligvis er varmere enn typiske skogsvann i Nordmarka.
+                                      // Når Sinnerdammen viser 14°C, har de typiske vannene typisk
+                                      // ~12°C — det er da klekking faktisk skjer ute i naturen.
+                                      // Samme empiriske resonnement som Bjørnholt-luft-bias som
+                                      // krevde GDD 520→620: stasjon over-rapporterer vs faktisk
+                                      // forhold ved typiske skogs-/fiske-lokaliteter.
+                                      // Bonus: widener spread mellom høyt- og lavtliggende vann
+                                      // automatisk via eksisterende vann-lapse-rate (0,35°C/100m).
+                                      //
+                                      // GDD beholdes på 620 (samme som statisk oslo). Da WT 14°C
+                                      // er bindende for høytliggende vann, er GDD-terskel "soft"
+                                      // der. Når GDD er bindende (varme år, lavtliggende vann),
+                                      // gir 620 prediksjoner nærmere OFA-fasit enn 580 ville gjort.
+                                      // Analyse 2026-04-26: 620 + WT 14 vinner samlet vs 580 + WT 14.
+        calibNoteNo:  'Dynamisk høyde-justering med vanntemp-terskel 14°C (kompenserer for Sinnerdammen-stasjons varme bias) + GDD 620 (kompenserer for Bjørnholt-stasjons varme bias). Velg ditt vann fra OFAs liste — modellen justerer for høyde via temperaturgradient.',
+        calibNoteEn:  'Dynamic altitude adjustment with water temp trigger 14°C (compensates for warm bias of Sinnerdammen reservoir station) + GDD 620 (compensates for warm bias of Bjørnholt ridge station). Pick your lake from the OFA list — model adjusts for altitude via lapse rate.',
+        calibShortNo: 'n=24+5, OFA · GDD 620 + WT 14°C',
+        calibShortEn: 'n=24+5, OFA · GDD 620 + WT 14°C',
         isgangWater: 'Katnosa, Nordmarka',
         isgangHistory: {
             2025: '2025-04-25', 2024: '2024-05-09', 2023: '2023-05-23',
@@ -1330,6 +1345,15 @@ function getCurrentAltitude(loc) {
     }
     return loc.altitude;
 }
+
+// Vanntemp-trigger-terskel for dual-trigger. Default 12°C universelt.
+// LOC kan overstyre med wtThreshold (f.eks. nordmarka_dyn bruker 14°C som
+// kompensasjon for at Sinnerdammen-stasjonen sannsynligvis er varmere enn
+// typiske skogsvann i Nordmarka — samme empiriske resonnement som GDD-bumpen
+// for Bjørnholt-luft-stasjonen).
+function getWtThreshold(loc) {
+    return (loc && loc.wtThreshold != null) ? loc.wtThreshold : 12;
+}
 // ─────────────────────────────────────────────────────────────────────────────
 
 const URL_LOC = new URLSearchParams(location.search).get('loc') || 'kautokeino';
@@ -1407,7 +1431,7 @@ if (snowNoteEl) snowNoteEl.textContent = `${t('stationLabel')}: ${snowNoteName} 
 // Model heading
 document.getElementById('modelHeading').textContent =
     LOC.calibrated
-        ? `${t('dualTriggerLabel')} ${LOC.gddThreshold} (bt = 0°C, ${t('fromJan1')}) + ${t('waterTemp')} ≥ 12°C · ${t('stdShort')} = ±${LOC.uncertaintyDays} ${t('daysLabel')}`
+        ? `${t('dualTriggerLabel')} ${LOC.gddThreshold} (bt = 0°C, ${t('fromJan1')}) + ${t('waterTemp')} ≥ ${getWtThreshold(LOC)}°C · ${t('stdShort')} = ±${LOC.uncertaintyDays} ${t('daysLabel')}`
         : `${t('gddPriorLabel')} ${LOC.gddThreshold} GDD (bt = 0°C) · ${t('priorUncLabel')} ±${LOC.uncertaintyDays} ${t('daysLabel')}`;
 
 const _snowHdrStnId = LOC.snowStation || LOC.frostStation;
@@ -1908,7 +1932,7 @@ function extrapolateWT(waterTempData) {
     return extrapolateWTFromDate(waterTempData, new Date());
 }
 
-// Ekstrapoler når vanntemp når 12°C, gitt at vi står på dato "asOfDate".
+// Ekstrapoler når vanntemp når terskel (default 12°C, kan overstyres per LOC).
 // Brukes både for "nåværende" estimat (asOfDate = i dag) og retrospektiv
 // prediksjonshistorikk i konvergensgrafen (asOfDate = en dag tilbake).
 function extrapolateWTFromDate(waterTempData, asOfDate) {
@@ -1928,7 +1952,8 @@ function extrapolateWTFromDate(waterTempData, asOfDate) {
     const slope = xs.reduce((s, x, i) => s + (x - xm) * (temps[i] - ym), 0)
                 / xs.reduce((s, x) => s + (x - xm) ** 2, 0);
     if (slope <= 0) return null;
-    const daysNeeded = (12 - currentWT) / slope;
+    const wtTrigger = getWtThreshold(LOC);
+    const daysNeeded = (wtTrigger - currentWT) / slope;
     if (daysNeeded < 0 || daysNeeded > 60) return null;
     const result = new Date(asOfDate);
     result.setDate(result.getDate() + Math.round(daysNeeded));
@@ -2020,7 +2045,7 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
     // Update model heading with actual uncertainty
     // Kalibrerte: ±2,1 d fra Excel-validering (n=8 år). Ukalibrerte: prior-estimat.
     document.getElementById('modelHeading').textContent = LOC.calibrated
-        ? `${t('dualTriggerLabel')} ${LOC.gddThreshold} (bt = 0°C, ${t('fromJan1')}) + ${t('waterTemp')} ≥ 12°C · ${t('stdShort')} = ±${uncDays} ${t('daysLabel')}`
+        ? `${t('dualTriggerLabel')} ${LOC.gddThreshold} (bt = 0°C, ${t('fromJan1')}) + ${t('waterTemp')} ≥ ${getWtThreshold(LOC)}°C · ${t('stdShort')} = ±${uncDays} ${t('daysLabel')}`
         : `${t('gddPriorLabel')} ${LOC.gddThreshold} GDD (bt = 0°C) · ${t('indicativeLabel').toLowerCase()}`;
 
     // Dual-trigger: latest of GDD ≥ 520 og vanntemp ≥ 12°C.
@@ -2078,7 +2103,8 @@ function renderWaterTempChart(wtData) {
         datasets.push({ label: `${YEAR} ★`, data: doys.map(d => byYear[YEAR]?.[d] ?? null),
             borderColor: '#C0392B', borderWidth: 3, pointRadius: 0, tension: 0.35, spanGaps: false });
     }
-    datasets.push({ label: '12°C threshold', data: doys.map(() => 12),
+    const _wtTrigger = getWtThreshold(LOC);
+    datasets.push({ label: `${_wtTrigger}°C threshold`, data: doys.map(() => _wtTrigger),
         borderColor: 'rgba(230,100,20,0.6)', borderWidth: 1.5, borderDash: [7,4], pointRadius: 0 });
     const ctx = document.getElementById('wtChart').getContext('2d');
     new Chart(ctx, {
