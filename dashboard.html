@@ -2107,7 +2107,8 @@ function renderWaterTempChart(wtData) {
     datasets.push({ label: `${_wtTrigger}°C threshold`, data: doys.map(() => _wtTrigger),
         borderColor: 'rgba(230,100,20,0.6)', borderWidth: 1.5, borderDash: [7,4], pointRadius: 0 });
     const ctx = document.getElementById('wtChart').getContext('2d');
-    new Chart(ctx, {
+    if (window._wtChart) window._wtChart.destroy();  // tillat re-render ved altitudeAdjustable-bytte
+    window._wtChart = new Chart(ctx, {
         type: 'line', data: { labels, datasets },
         options: {
             responsive: true, maintainAspectRatio: false,
@@ -2179,7 +2180,8 @@ function renderSnowChart(snowData) {
             };
         });
     const ctx = document.getElementById('snowChart').getContext('2d');
-    new Chart(ctx, {
+    if (window._snowChart) window._snowChart.destroy();  // tillat re-render ved altitudeAdjustable-bytte
+    window._snowChart = new Chart(ctx, {
         type: 'line', data: { labels, datasets },
         options: {
             responsive: true, maintainAspectRatio: false,
@@ -2267,7 +2269,8 @@ function renderIceChart(airData, snowData) {
     }
 
     const ctx = document.getElementById('iceChart').getContext('2d');
-    new Chart(ctx, {
+    if (window._iceChart) window._iceChart.destroy();  // tillat re-render ved altitudeAdjustable-bytte
+    window._iceChart = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: years,
