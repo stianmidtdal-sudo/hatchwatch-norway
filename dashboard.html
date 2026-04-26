@@ -886,17 +886,34 @@ const LOCATIONS = {
         name: 'Bjørnholt',
         place: 'Nordmarka',
         region: 'Østlandet',
-        // ── KALIBRERING (2026-04-26) ─────────────────────────────────────────
-        // Datagrunnlag: OFAs liste over 24 vann i Nordmarka, høyde 248–478m.
-        //   Snitt høyde: 369m (avrundet til 370m som referanse).
-        //   Snitt klekkedato i typisk år: 16. juni (DOY 167).
-        //   Spennvidde: 10. juni (lavtliggende ~280m) → 25. juni (høytliggende ~470m).
-        // Empirisk høyde-rate fra regresjonen: 0.042 d/m (matcher atmosfærisk lapse rate ~0.04 d/m).
-        //   Modellens eksisterende temperaturgradient (0.6°C/100m) dekker dette automatisk.
-        // R²=0.26 vs. høyde alene — stor lake-til-lake variasjon utover bare høyde
-        //   (dybde, tilsig, eksponering). Derfor uncertaintyDays: 10 (matcher year-spread).
-        // GDD-terskel hevet 520→580 for å treffe snittet 167 på 370m. Tidligere 520
-        //   ga ca. 7. juni (~9 dager for tidlig vs. typisk år).
+        // ── KALIBRERING (2026-04-26, revidert samme dag) ─────────────────────
+        // Datagrunnlag — to lag av observasjoner:
+        //
+        // (A) OFAs liste over 24 vann i Nordmarka, typisk klekking-fra:
+        //     - Snitt høyde: 369m (avrundet til 370m som referanse)
+        //     - Snitt klekkedato i typisk år: 16. juni (DOY 167)
+        //     - Spennvidde: 10. juni (~280m) → 25. juni (~470m)
+        //     - Empirisk høyde-rate: 0.042 d/m (matcher atm. lapse rate ~0.04 d/m)
+        //     - R²=0.26 vs. høyde alene — stor lake-til-lake variasjon
+        //
+        // (B) Verifiserte år-spesifikke observasjoner (Stian + OFA-post):
+        //     - 2025: ~23. mai (OFA-post Nordmarka generelt — ekstremt varm vår)
+        //     - 2022 Klattertjernet 433m: 19. juni
+        //     - 2022 Fjellsjøen 423m:    27. juni
+        //     - 2019 Auretjerna 401m:    17. juni
+        //     - 2019 S. Heggelivatn 500m: 7. juli
+        //
+        // Iterasjon på terskel:
+        //   - 520 (start): modell ~7. juni i typisk år → ~9 d for tidlig
+        //   - 580 (1. revisjon): modell median 11. juni → fortsatt ~5 d for tidlig
+        //                        og verifisert mot Sett B viste -8d snitt-feil
+        //   - 620 (denne): + 4 dager. Bedre fit på 4/5 år-spesifikke obs,
+        //                  litt verre på 2025 (men 2025 var dokumentert ekstrem)
+        //
+        // Modellens eksisterende temperaturgradient (0.6°C/100m for luft) dekker
+        // høydekorreksjonen automatisk — ingen ekstra korreksjon trengs.
+        // uncertaintyDays: 10 reflekterer ekte lake-til-lake spread (R²=0.26).
+        //
         // Steg 2 (planlagt): klone til 'nordmarka_dyn' med altitudeAdjustable og
         //   dropdown for å velge ditt spesifikke OFA-vann. Denne entry forblir trygg baseline.
         // ─────────────────────────────────────────────────────────────────────
@@ -907,12 +924,12 @@ const LOCATIONS = {
         airStationName:   'Bjørnholt, Nordmarka',
         waterStationName: 'Sinnerdammen, Nordmarka',
         calibrated: true,
-        gddThreshold: 580,
+        gddThreshold: 620,
         uncertaintyDays: 10,
-        calibNoteNo:  'Basert på 24 vann i Nordmarka fra OFAs liste (Oslomarka Fiskeadministrasjon), høyde 248–478m. Snitt 16. juni på 370m. Stor lake-til-lake variasjon — vurder ±10 dager for ditt spesifikke vann.',
-        calibNoteEn:  'Based on 24 lakes in Nordmarka from OFA (Oslomarka Fiskeadministrasjon), altitude 248–478m. Mean June 16 at 370m. Large lake-to-lake variation — allow ±10 days for your specific lake.',
-        calibShortNo: 'n=24, OFA',
-        calibShortEn: 'n=24, OFA',
+        calibNoteNo:  'Kalibrert mot OFAs 24-vann-liste (Oslomarka Fiskeadministrasjon) + 5 år-spesifikke observasjoner (2019, 2022, 2025). Snitt 16. juni på 370m. Stor lake-til-lake variasjon — vurder ±10 dager for ditt spesifikke vann.',
+        calibNoteEn:  'Calibrated against OFA 24-lake list (Oslomarka Fiskeadministrasjon) + 5 year-specific observations (2019, 2022, 2025). Mean June 16 at 370m. Large lake-to-lake variation — allow ±10 days for your specific lake.',
+        calibShortNo: 'n=24+5, OFA',
+        calibShortEn: 'n=24+5, OFA',
         isgangWater: 'Katnosa, Nordmarka',
         isgangHistory: {
             2025: '2025-04-25', 2024: '2024-05-09', 2023: '2023-05-23',
