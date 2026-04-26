@@ -1316,10 +1316,37 @@ const KAUTOKEINO_HIST = [
 // ═══════════════════════════════════════════════════════════════════
 //  INIT — resolve location from URL
 // ═══════════════════════════════════════════════════════════════════
+// ── DYNAMISK HØYDE-STATE (må være over LOC-oppsett pga. headerSub-rendering) ──
+// Brukerens valg fra dropdown lagres her og persisteres i localStorage.
+// For lokasjoner uten LOC.altitudeAdjustable: getCurrentAltitude returnerer
+// alltid LOC.altitude — null endring i oppførsel.
+// For nordmarka_dyn: returnerer userSelectedAltitude hvis satt, ellers LOC.altitude.
+let userSelectedAltitude = null;
+let userSelectedLakeName = null;
+
+function getCurrentAltitude(loc) {
+    if (loc && loc.altitudeAdjustable && userSelectedAltitude != null) {
+        return userSelectedAltitude;
+    }
+    return loc.altitude;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 const URL_LOC = new URLSearchParams(location.search).get('loc') || 'kautokeino';
 const LOC = LOCATIONS[URL_LOC] || LOCATIONS.kautokeino;
 const YEAR = new Date().getFullYear();
 const TODAY = new Date().toISOString().slice(0, 10);
+
+// Restore user's altitude pick from localStorage BEFORE headerSub renders
+// (returnerer-bruker skal se sin valgte høyde umiddelbart, ikke standardhøyden)
+if (LOC.altitudeAdjustable) {
+    try {
+        const _savedAlt  = localStorage.getItem(`hw_lake_alt_${LOC.id}`);
+        const _savedName = localStorage.getItem(`hw_lake_name_${LOC.id}`);
+        if (_savedAlt  != null) userSelectedAltitude = parseFloat(_savedAlt);
+        if (_savedName != null) userSelectedLakeName = _savedName;
+    } catch (e) { /* localStorage may be blocked */ }
+}
 
 // Update page title
 document.title = `Hatch Watch · ${LOC.area}`;
@@ -1556,20 +1583,9 @@ function buildDoyAvgTemp(airData) {
 // ═══════════════════════════════════════════════════════════════════
 
 // ── DYNAMISK HØYDE-OVERSTYRING (steg 2 — kun for nordmarka_dyn) ────────────
-// Brukerens valg fra dropdown lagres her og persisteres i localStorage.
-// For lokasjoner uten LOC.altitudeAdjustable: getCurrentAltitude returnerer
-// alltid LOC.altitude — null endring i oppførsel.
-// For nordmarka_dyn: returnerer userSelectedAltitude hvis satt, ellers
-// LOC.altitude (= 370m, Nordmarka snitt).
-let userSelectedAltitude = null;
-let userSelectedLakeName = null;
-
-function getCurrentAltitude(loc) {
-    if (loc && loc.altitudeAdjustable && userSelectedAltitude != null) {
-        return userSelectedAltitude;
-    }
-    return loc.altitude;
-}
+// State-variablene er flyttet til toppen av scriptet (før LOC-oppsett) for å
+// unngå temporal dead zone — getCurrentAltitude kalles i headerSub-rendering
+// før denne posisjonen i koden.
 // ───────────────────────────────────────────────────────────────────────────
 
 // A. Altitude lapse-rate correction (0.6°C per 100m)
