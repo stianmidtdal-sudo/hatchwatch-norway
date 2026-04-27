@@ -940,9 +940,9 @@ const LOCATIONS = {
         waterStationName: 'Sinnerdammen, Nordmarka',
         calibrated: true,
         gddThreshold: 620,
-        uncertaintyDays: 10,
-        calibNoteNo:  'Kalibrert mot OFAs 24-vann-liste (Oslomarka Fiskeadministrasjon) + 5 år-spesifikke observasjoner (2019, 2022, 2025). Snitt 16. juni på 370m. Stor lake-til-lake variasjon — vurder ±10 dager for ditt spesifikke vann.',
-        calibNoteEn:  'Calibrated against OFA 24-lake list (Oslomarka Fiskeadministrasjon) + 5 year-specific observations (2019, 2022, 2025). Mean June 16 at 370m. Large lake-to-lake variation — allow ±10 days for your specific lake.',
+        uncertaintyDays: 5,           // Strammet 10→5 for konsistens med nordmarka_dyn (hovedversjon)
+        calibNoteNo:  'Kalibrert mot OFAs 24-vann-liste (Oslomarka Fiskeadministrasjon) + 5 år-spesifikke observasjoner (2019, 2022, 2025). Snitt 16. juni på 370m. Stor lake-til-lake variasjon — vurder ±5 dager for ditt spesifikke vann.',
+        calibNoteEn:  'Calibrated against OFA 24-lake list (Oslomarka Fiskeadministrasjon) + 5 year-specific observations (2019, 2022, 2025). Mean June 16 at 370m. Large lake-to-lake variation — allow ±5 days for your specific lake.',
         calibShortNo: 'n=24+5, OFA',
         calibShortEn: 'n=24+5, OFA',
         isgangWater: 'Katnosa, Nordmarka',
@@ -1001,7 +1001,13 @@ const LOCATIONS = {
         waterStationName: 'Sinnerdammen, Nordmarka',
         calibrated: true,
         gddThreshold: 620,            // Samme som statisk oslo (empirisk kalibrert mot OFA mean 16. juni)
-        uncertaintyDays: 10,
+        uncertaintyDays: 5,           // Strammet 10→5 (2026-04-27): reflekterer faktisk modellpresisjon
+                                      // for dropdown-vannene. Verifisert mot OFAs 24 vann: de fleste
+                                      // innenfor ±3 d, verste tilfelle (Fjellsjøen) ~6-8 d. Heggelivatn
+                                      // ekskludert siden det ikke er i dropdown. ±10 d var overestimert
+                                      // basert på lake-til-lake-spread, men det fanges nå av modellens
+                                      // høyde-justering. Realistisk usikkerhet er år-til-år + lake-spesifikk
+                                      // restvariasjon ≈ ±5 d. Gir bedre tur-planleggingsverdi for fisker.
         wtThreshold: 14,              // ⚡ EMPIRISK BUMP: Sinnerdammen er regulert demning som
                                       // sannsynligvis er varmere enn typiske skogsvann i Nordmarka.
                                       // Når Sinnerdammen viser 14°C, har de typiske vannene typisk
@@ -1260,6 +1266,18 @@ const LOCATIONS = {
         name: 'Glomma',
         place: 'Rena',
         region: 'Innlandet',
+        // ── EMPIRISK BUMP (2026-04-27) ───────────────────────────────────────
+        // Anvender samme prinsipp som Nordmarka (se nordmarka_dyn-kommentar):
+        // - Luftstasjon (SN6840 Rv3 Rena) er en veistasjon, sannsynligvis
+        //   varmere enn typiske skogs-/elveforhold → bumpe GDD 520→600
+        // - Vannstasjon (Glomstadfoss/Glomma) er stor regulert elv som varmes
+        //   raskere enn typiske mindre vann i området → bumpe WT 12→14°C
+        // Stians referanse: 2005 Rena-kart viste Vulgata ~22. juni.
+        // Med 600 + 14°C: GDD-trigger ~10. juni, WT-trigger ~22-25. juni,
+        // dual-trigger "latest of" = ~22. juni ✓
+        // calibrated: false beholdes — vi har kun 1 referansekart, ikke
+        // tilstrekkelig for "kalibrert"-stempel.
+        // ─────────────────────────────────────────────────────────────────────
         lat: 61.135, lon: 11.650, altitude: 209, stationAltitude: 230,  // Rv3 Rena 230m
         frostStation: 'SN6840',      // Rv3 Rena (luft, 13 års historikk fra 2013)
         snowStation:  'SN100',       // Plassen, Trysil (333m, aktiv siden 1901 — SN8140 Evenstad sluttet rapportere snø i 2002)
@@ -1268,8 +1286,9 @@ const LOCATIONS = {
         airStationName:   'Rv3 Rena',
         waterStationName: 'Glomstadfoss (Glomma)',
         calibrated: false,
-        gddThreshold: 520,
+        gddThreshold: 600,           // Empirisk bump 520→600 (kompenserer Rv3 Rena-stasjonens varme bias)
         uncertaintyDays: 14,
+        wtThreshold: 14,             // Empirisk bump (kompenserer Glomma-storelv-bias mot mindre fiskevann)
         isgangWater: 'Netsjøen (vest for Storsjøen)',
         isgangHistory: {
             2025: '2025-04-23', 2024: '2024-05-09', 2023: '2023-05-24',
