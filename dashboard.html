@@ -646,7 +646,7 @@ const T = {
     fiveYearAvg: '5-årig gjennomsnitt samme dato:',
     vsAvg: 'vs. snitt',
     latestOf: 'siste av: GDD ≥ 520 + vanntemp ≥ 12°C',
-    gddTriggerOnly: 'Kun GDD-trigger (vanntemp ukjent)',
+    gddTriggerOnly: 'Kun GDD-trigger — for tidlig å ekstrapolere vanntemp',
     updatedLabel: 'Oppdatert:',
     loadingText: 'Laster…',
   },
@@ -780,7 +780,7 @@ const T = {
     fiveYearAvg: '5-year average same date:',
     vsAvg: 'vs avg',
     latestOf: 'latest of: GDD ≥ 520 + water temp ≥ 12°C',
-    gddTriggerOnly: 'GDD trigger only (water temp unknown)',
+    gddTriggerOnly: 'GDD trigger only — too early to extrapolate water temp',
     updatedLabel: 'Updated:',
     loadingText: 'Loading…',
   }
@@ -1464,7 +1464,9 @@ function dateFromDoy(year, d) {
 }
 function fmt(date) {
     if (!date) return '–';
-    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    // Bruk norsk locale når LANG === 'no' så månedsnavn vises på norsk (mai/jun/jul...)
+    const locale = LANG === 'no' ? 'nb-NO' : 'en-GB';
+    return date.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
 }
 function addDays(dateStr, n) {
     const d = parseDate(dateStr);
@@ -1739,7 +1741,7 @@ function renderHistoricalGDDSection(stats, correctionDelta, snowData, airData) {
         </div>
         <div class="hist-gdd-stat">
             <div class="hist-gdd-label">${t('histStd')}</div>
-            <div class="hist-gdd-val">± ${stats.std} days</div>
+            <div class="hist-gdd-val">± ${stats.std} ${t('daysLabel')}</div>
         </div>
     </div>
     <div class="table-wrap" style="margin-top:14px"><table>
@@ -1770,7 +1772,7 @@ function renderHistoricalGDDSection(stats, correctionDelta, snowData, airData) {
         html += `<tr>
             <td><strong>${c.year}</strong></td>
             <td class="${cls}">${fmt(dateFromDoy(c.year, c.doy))}</td>
-            <td style="color:${col}">${sign}${diff} days</td>
+            <td style="color:${col}">${sign}${diff} ${t('daysLabel')}</td>
             <td>${isgang}</td>
             <td>${snowFree}</td>
             <td>${maxSnow != null ? Math.round(maxSnow) : '–'}</td>`;
@@ -2309,9 +2311,13 @@ function renderIceChart(airData, snowData) {
         const note = document.createElement('div');
         note.className = 'ice-note';
         note.style.cssText = 'font-size:0.74rem;color:#888;margin-top:6px;padding:0 4px';
-        note.textContent = todayMo >= 3
-            ? `Estimated from accumulated freezing degree days using the Stefan equation (α = 0.6), standard for snow-covered sub-arctic lake ice. W${YEAR} season peak estimated to ${todayLabel} — ice growth assumed complete by April. No local calibration data; treat as a relative indicator between years.`
-            : `Estimated from accumulated freezing degree days using the Stefan equation (α = 0.6), standard for snow-covered sub-arctic lake ice. W${YEAR} shown as "As of ${todayLabel}". No local calibration data; treat as a relative indicator between years.`;
+        note.textContent = LANG === 'no'
+            ? (todayMo >= 3
+                ? `Estimert fra akkumulerte frost-døgngrader via Stefans likning (α = 0,6), standard for snødekket subarktisk innsjøis. Sesong W${YEAR}-toppen er estimert til ${todayLabel} — isvekst antas fullført innen april. Ingen lokal kalibreringsdata; behandle som relativ indikator mellom år.`
+                : `Estimert fra akkumulerte frost-døgngrader via Stefans likning (α = 0,6), standard for snødekket subarktisk innsjøis. W${YEAR} vises som "Per ${todayLabel}". Ingen lokal kalibreringsdata; behandle som relativ indikator mellom år.`)
+            : (todayMo >= 3
+                ? `Estimated from accumulated freezing degree days using the Stefan equation (α = 0.6), standard for snow-covered sub-arctic lake ice. W${YEAR} season peak estimated to ${todayLabel} — ice growth assumed complete by April. No local calibration data; treat as a relative indicator between years.`
+                : `Estimated from accumulated freezing degree days using the Stefan equation (α = 0.6), standard for snow-covered sub-arctic lake ice. W${YEAR} shown as "As of ${todayLabel}". No local calibration data; treat as a relative indicator between years.`);
         iceSection.appendChild(note);
     }
 }
