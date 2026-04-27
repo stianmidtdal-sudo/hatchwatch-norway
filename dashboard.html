@@ -1266,15 +1266,25 @@ const LOCATIONS = {
         name: 'Glomma',
         place: 'Rena',
         region: 'Innlandet',
-        // ── EMPIRISK BUMP (2026-04-27) ───────────────────────────────────────
-        // Anvender samme prinsipp som Nordmarka (se nordmarka_dyn-kommentar):
-        // - Luftstasjon (SN6840 Rv3 Rena) er en veistasjon, sannsynligvis
-        //   varmere enn typiske skogs-/elveforhold → bumpe GDD 520→600
-        // - Vannstasjon (Glomstadfoss/Glomma) er stor regulert elv som varmes
-        //   raskere enn typiske mindre vann i området → bumpe WT 12→14°C
-        // Stians referanse: 2005 Rena-kart viste Vulgata ~22. juni.
-        // Med 600 + 14°C: GDD-trigger ~10. juni, WT-trigger ~22-25. juni,
-        // dual-trigger "latest of" = ~22. juni ✓
+        // ── EMPIRISK BUMP (2026-04-27, iterert) ──────────────────────────────
+        // Anvender samme prinsipp som Nordmarka (stasjon-bias-kompensasjon):
+        // - Luftstasjon (SN6840 Rv3 Rena) er en veistasjon — varmere enn
+        //   typiske skogs-/elveforhold med +1-2°C i sommermånedene
+        // - Vannstasjon (Glomstadfoss/Glomma) er stor regulert elv som har
+        //   annen termisk dynamikk enn små fiskevann
+        //
+        // Stians referanse: 2005 Rena-kart viste Vulgata klekker ~22-25. juni
+        // (siste uka av juni, peak rundt månedsskifte juni/juli).
+        //
+        // Iterasjon:
+        //   520 (start) → median ~13. juni — for tidlig
+        //   600 (1. forsøk) → marginal endring — fortsatt for tidlig
+        //   740 (denne) → mål: median ~24. juni, matche 2005-fasit
+        //
+        // 740 er et stort offset (+220 fra default 520), som indikerer at
+        // Rv3 Rena-stasjonens varme bias er substansiell. Robust mot om
+        // WT-trigger er aktiv eller ikke (GDD-trigger blir typisk bindende).
+        //
         // calibrated: false beholdes — vi har kun 1 referansekart, ikke
         // tilstrekkelig for "kalibrert"-stempel.
         // ─────────────────────────────────────────────────────────────────────
@@ -1286,9 +1296,9 @@ const LOCATIONS = {
         airStationName:   'Rv3 Rena',
         waterStationName: 'Glomstadfoss (Glomma)',
         calibrated: false,
-        gddThreshold: 600,           // Empirisk bump 520→600 (kompenserer Rv3 Rena-stasjonens varme bias)
+        gddThreshold: 740,           // Empirisk bump 520→600→740 (Rv3 Rena veistasjon-bias)
         uncertaintyDays: 14,
-        wtThreshold: 14,             // Empirisk bump (kompenserer Glomma-storelv-bias mot mindre fiskevann)
+        wtThreshold: 14,             // Empirisk bump (Glomma-storelv-bias)
         isgangWater: 'Netsjøen (vest for Storsjøen)',
         isgangHistory: {
             2025: '2025-04-23', 2024: '2024-05-09', 2023: '2023-05-24',
