@@ -2147,7 +2147,7 @@ function renderWaterTempChart(wtData) {
         type: 'line', data: { labels, datasets },
         options: {
             responsive: true, maintainAspectRatio: false,
-            interaction: { mode:'nearest', intersect:true },
+            interaction: { mode:'index', intersect:false },  // tooltip viser nærmeste x-posisjon, ikke krever direkte hit
             plugins: {
                 legend: { position:'right', labels: { boxWidth:14, font:{size:10}, padding:6 } },
                 tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.parsed.y?.toFixed(1) ?? '–'} °C` } }
@@ -2220,7 +2220,7 @@ function renderSnowChart(snowData) {
         type: 'line', data: { labels, datasets },
         options: {
             responsive: true, maintainAspectRatio: false,
-            interaction: { mode:'nearest', intersect:true },
+            interaction: { mode:'index', intersect:false },  // tooltip viser nærmeste x-posisjon, ikke krever direkte hit
             plugins: {
                 legend: { position:'right', labels:{boxWidth:14,font:{size:10},padding:6} },
                 tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.parsed.y?.toFixed(0) ?? '–'} cm` } }
@@ -2328,7 +2328,7 @@ function renderIceChart(airData, snowData) {
         },
         options: {
             responsive: true, maintainAspectRatio: false,
-            interaction: { mode:'nearest', intersect:true },
+            interaction: { mode:'index', intersect:false },  // tooltip viser nærmeste x-posisjon, ikke krever direkte hit
             plugins: {
                 legend: { position:'top', labels:{ boxWidth:14, font:{size:11}, padding:10 } },
                 tooltip: { callbacks: { label: c =>
