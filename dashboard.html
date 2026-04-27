@@ -1266,27 +1266,29 @@ const LOCATIONS = {
         name: 'Glomma',
         place: 'Rena',
         region: 'Innlandet',
-        // ── EMPIRISK BUMP (2026-04-27, iterert) ──────────────────────────────
-        // Anvender samme prinsipp som Nordmarka (stasjon-bias-kompensasjon):
-        // - Luftstasjon (SN6840 Rv3 Rena) er en veistasjon — varmere enn
-        //   typiske skogs-/elveforhold med +1-2°C i sommermånedene
-        // - Vannstasjon (Glomstadfoss/Glomma) er stor regulert elv som har
-        //   annen termisk dynamikk enn små fiskevann
+        // ── EMPIRISK KALIBRERING (2026-04-27, finalisert) ────────────────────
+        // KUN WT-justering — biologisk klar forklaring: "vulgata venter på
+        // at vannet er 14°C". GDD beholdt på default 520 = ingen dobbel
+        // bias-kompensasjon, ingen risiko for "latest of"-stacking i
+        // ekstreme kalde år.
         //
-        // Stians referanse: 2005 Rena-kart viste Vulgata klekker ~22-25. juni
-        // (siste uka av juni, peak rundt månedsskifte juni/juli).
+        // Stians referanse: 2005 Rena-kart viste Vulgata klekker ~22-25. juni.
         //
-        // Iterasjon:
-        //   520 (start) → median ~13. juni — for tidlig
-        //   600 (1. forsøk) → marginal endring — fortsatt for tidlig
-        //   740 (denne) → mål: median ~24. juni, matche 2005-fasit
+        // Iterasjons-historikk:
+        //   GDD 520 + WT 12°C: median 13. juni — for tidlig
+        //   GDD 600 + WT 14°C: ~17. juni — fortsatt for tidlig
+        //   GDD 740 + WT 14°C: median 23. juni ✓ men 2023-outlier 4. aug ✗
+        //                      (begge terskler aggressive = "latest of"-stacking)
+        //   GDD 520 + WT 14°C (denne): mediane ~22. juni ✓, 2023-outlier ~20. juli ✓
         //
-        // 740 er et stort offset (+220 fra default 520), som indikerer at
-        // Rv3 Rena-stasjonens varme bias er substansiell. Robust mot om
-        // WT-trigger er aktiv eller ikke (GDD-trigger blir typisk bindende).
+        // Hvorfor kun WT virker:
+        // - I varme år: GDD 520 nås tidlig (ikke bindende), WT 14°C binder
+        // - I kalde år: GDD 520 nås uansett, WT 14°C blir sent men ikke
+        //   absurd sent (Glomma når typisk 14°C selv i kalde år innen ~20-25. juli)
+        // - Konsistent biologisk historie (vannet styrer klekkingen)
         //
-        // calibrated: false beholdes — vi har kun 1 referansekart, ikke
-        // tilstrekkelig for "kalibrert"-stempel.
+        // calibrated: false beholdes — kun 1 referansekart, men kalibreringen
+        // er nå robust mot ekstreme år (i motsetning til 740-konfig).
         // ─────────────────────────────────────────────────────────────────────
         lat: 61.135, lon: 11.650, altitude: 209, stationAltitude: 230,  // Rv3 Rena 230m
         frostStation: 'SN6840',      // Rv3 Rena (luft, 13 års historikk fra 2013)
@@ -1296,9 +1298,9 @@ const LOCATIONS = {
         airStationName:   'Rv3 Rena',
         waterStationName: 'Glomstadfoss (Glomma)',
         calibrated: false,
-        gddThreshold: 740,           // Empirisk bump 520→600→740 (Rv3 Rena veistasjon-bias)
+        gddThreshold: 520,           // Default — ingen GDD-justering for Rena
         uncertaintyDays: 14,
-        wtThreshold: 14,             // Empirisk bump (Glomma-storelv-bias)
+        wtThreshold: 14,             // Empirisk bump (Glomma-storelv-bias) — eneste justering
         isgangWater: 'Netsjøen (vest for Storsjøen)',
         isgangHistory: {
             2025: '2025-04-23', 2024: '2024-05-09', 2023: '2023-05-24',
