@@ -1266,21 +1266,25 @@ const LOCATIONS = {
         name: 'Glomma',
         place: 'Rena',
         region: 'Innlandet',
-        // ── REN BASELINE-TEST (2026-04-27) ──────────────────────────────────
+        // ── KALIBRERING (2026-04-27, Sim 2) ─────────────────────────────────
         // Stasjonsbytter:
         //   Luft: SN6840 (Rv3 Rena, veistasjon) → SN7420 (Rena - Ørnhaugen)
         //   Vann: 2.43.0 Glomstadfoss (regulert) → 311.473.0 Femundselva (naturlig)
         //
-        // Tersker: alle på default (GDD 520 + WT 12°C via getWtThreshold-fallback).
-        // Ingen empiriske bumps lenger — vi tester rent hva nye stasjoner gir oss.
+        // Single-lever GDD-bump: 520 → 600.
+        //   Mål: bevare median ~25. juni, øke spredning fra ±1.9 d til ~5-8 d.
+        //   GDD-trigger gir naturlig år-til-år-variasjon (kalde vårer = senere
+        //   GDD-treff, varme = tidligere). Robust mot evt. WT-ekstrapolasjons-
+        //   feil siden GDD alltid virker.
+        //   WT defaulter til 12°C — ingen "latest of"-stacking risiko.
         //
         // Iterasjons-historikk på Rena:
         //   SN6840 + 2.43.0, GDD 520 + WT 12°C: median 13. juni — for tidlig
         //   SN6840 + 2.43.0, GDD 740 + WT 14°C: median 23. juni, 2023-outlier 4. aug ✗
         //   SN6840 + 2.43.0, GDD 520 + WT 14°C: median 8. juni — for tidlig
         //   SN7420 + 2.43.0, GDD 520 + WT 14°C: median 25. juni ✓ men ±1.9 d
-        //                                       (regulert demning gir for tett spread)
-        //   SN7420 + 311.473.0, default tersker (denne): ren baseline-test
+        //   SN7420 + 311.473.0, GDD 520 + WT 12°C: median 25. juni, ±1.9 d (for tett)
+        //   SN7420 + 311.473.0, GDD 600 + WT 12°C (denne): mål median ~25. juni, ±5-8 d
         //
         // stationAltitude: 230m beholdt midlertidig — må verifiseres på
         // frost.met.no/sources for Ørnhaugen.
@@ -1293,7 +1297,7 @@ const LOCATIONS = {
         airStationName:   'Rena - Ørnhaugen',
         waterStationName: 'Femundselva',
         calibrated: false,
-        gddThreshold: 520,           // Default — ingen GDD-justering
+        gddThreshold: 600,           // Sim 2: bumpet 520→600 for naturlig år-til-år-spredning
         uncertaintyDays: 14,         // Default — ingen kalibrert uncertainty
         // wtThreshold: ikke satt — defaulter til 12°C via getWtThreshold-fallback
         isgangWater: 'Netsjøen (vest for Storsjøen)',
