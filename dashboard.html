@@ -481,7 +481,7 @@
             <div class="chart-wrap" style="height:260px">
                 <canvas id="iceChart"></canvas>
             </div>
-            <div style="font-size:0.74rem;color:#888;margin-top:6px;padding:0 4px">
+            <div data-i18n="iceShortNote" style="font-size:0.74rem;color:#888;margin-top:6px;padding:0 4px">
                 Historical bars = peak ice thickness that winter. Current bar = live estimate based on frost degree-days so far.
             </div>
         </section>
@@ -582,6 +582,8 @@ const T = {
     valNotYet: 'Ikke ennå',
     indicatorsFooter: '⚠ Alle markører baseres på tilgjengelige år med data. For ukalibrerte lokasjoner er historiske gjennomsnitt utledet kun fra værdata.',
     iceHeading: 'Estimert istykkelse · Stefan-ligningen · h = α × √FDD  (α = 0.6)',
+    iceShortNote: 'Historiske søyler = topp-istykkelse den vinteren. Nåværende søyle = løpende estimat basert på frost-døgngrader hittil.',
+    iceLegendSeasonPeak: 'Sesong-topp',
     locArea: 'Område',
     locAirStation: 'Lufttempstasjon',
     locWaterStation: 'Vannempstasjon',
@@ -716,6 +718,8 @@ const T = {
     valNotYet: 'Not yet',
     indicatorsFooter: '⚠ All indicators based on available years of data. For uncalibrated locations, historical averages are derived from weather data only.',
     iceHeading: 'Estimated Ice Thickness · Stefan Equation · h = α × √FDD  (α = 0.6)',
+    iceShortNote: 'Historical bars = peak ice thickness that winter. Current bar = live estimate based on frost degree-days so far.',
+    iceLegendSeasonPeak: 'Season peak',
     locArea: 'Area',
     locAirStation: 'Air temp station',
     locWaterStation: 'Water temp station',
@@ -2275,13 +2279,20 @@ function renderIceChart(airData, snowData) {
 
     const ctx = document.getElementById('iceChart').getContext('2d');
     if (window._iceChart) window._iceChart.destroy();  // tillat re-render ved altitudeAdjustable-bytte
+    // Tett y-akse-intervall for å fremheve år-til-år-variasjon istedenfor 0-30 cm
+    // som flatter ut forskjellene. Bruker faktisk min/max ±2 cm padding, runder til
+    // nærmeste hele cm så aksen ser ren ut.
+    const _iceVals = peakVals.filter(v => v != null && Number.isFinite(v));
+    const _iceMin = _iceVals.length ? Math.max(0, Math.floor(Math.min(..._iceVals) - 2)) : 0;
+    const _iceMax = _iceVals.length ? Math.ceil(Math.max(..._iceVals) + 2) : 30;
+
     window._iceChart = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: years,
             datasets: [
                 {
-                    label: 'Season peak',
+                    label: t('iceLegendSeasonPeak'),
                     data: peakVals,
                     backgroundColor: '#52B788',
                     borderColor: '#2D6A4F',
@@ -2300,7 +2311,7 @@ function renderIceChart(airData, snowData) {
             },
             scales: {
                 x: { ticks:{ font:{size:11} } },
-                y: { min:0, title:{ display:true, text:'cm' }, ticks:{ font:{size:10} } }
+                y: { min: _iceMin, max: _iceMax, title:{ display:true, text:'cm' }, ticks:{ font:{size:10} } }
             }
         }
     });
