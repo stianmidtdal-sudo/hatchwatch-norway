@@ -1266,41 +1266,36 @@ const LOCATIONS = {
         name: 'Glomma',
         place: 'Rena',
         region: 'Innlandet',
-        // ── EMPIRISK KALIBRERING (2026-04-27, finalisert) ────────────────────
-        // KUN WT-justering — biologisk klar forklaring: "vulgata venter på
-        // at vannet er 14°C". GDD beholdt på default 520 = ingen dobbel
-        // bias-kompensasjon, ingen risiko for "latest of"-stacking i
-        // ekstreme kalde år.
+        // ── STASJONSBYTTE (2026-04-27) ──────────────────────────────────────
+        // Byttet luftstasjon SN6840 (Rv3 Rena, veistasjon med varm bias)
+        // → SN7420 (Rena - Ørnhaugen). Ny stasjon forventes mindre eksponert,
+        // bedre proxy for typiske fiskeforhold ved Glomma.
         //
-        // Stians referanse: 2005 Rena-kart viste Vulgata klekker ~22-25. juni.
+        // Beholder gddThreshold: 520 (default) og wtThreshold: 14°C inntil vi
+        // ser hvordan ny stasjon oppfører seg. Hvis median lander nær 2005-fasit
+        // (~22-25. juni) uten kalibreringsbumps, kan WT 14°C også droppes.
         //
-        // Iterasjons-historikk:
+        // Iterasjons-historikk på Rena (med gammel stasjon SN6840):
         //   GDD 520 + WT 12°C: median 13. juni — for tidlig
-        //   GDD 600 + WT 14°C: ~17. juni — fortsatt for tidlig
         //   GDD 740 + WT 14°C: median 23. juni ✓ men 2023-outlier 4. aug ✗
-        //                      (begge terskler aggressive = "latest of"-stacking)
-        //   GDD 520 + WT 14°C (denne): mediane ~22. juni ✓, 2023-outlier ~20. juli ✓
+        //   GDD 520 + WT 14°C: median 8. juni — for tidlig (WT-trigger feilet ofte)
+        //   STASJONSBYTTE → SN7420 (denne): se hva ny stasjon gir oss
         //
-        // Hvorfor kun WT virker:
-        // - I varme år: GDD 520 nås tidlig (ikke bindende), WT 14°C binder
-        // - I kalde år: GDD 520 nås uansett, WT 14°C blir sent men ikke
-        //   absurd sent (Glomma når typisk 14°C selv i kalde år innen ~20-25. juli)
-        // - Konsistent biologisk historie (vannet styrer klekkingen)
-        //
-        // calibrated: false beholdes — kun 1 referansekart, men kalibreringen
-        // er nå robust mot ekstreme år (i motsetning til 740-konfig).
+        // stationAltitude: 230m beholdt midlertidig — kan være feil for
+        // Ørnhaugen, må verifiseres på frost.met.no/sources og oppdateres
+        // hvis avviker fra Rv3 Rena.
         // ─────────────────────────────────────────────────────────────────────
-        lat: 61.135, lon: 11.650, altitude: 209, stationAltitude: 230,  // Rv3 Rena 230m
-        frostStation: 'SN6840',      // Rv3 Rena (luft, 13 års historikk fra 2013)
+        lat: 61.135, lon: 11.650, altitude: 209, stationAltitude: 230,  // TODO: verifiser Ørnhaugen høyde
+        frostStation: 'SN7420',      // Rena - Ørnhaugen (luft, mindre eksponert enn Rv3 Rena)
         snowStation:  'SN100',       // Plassen, Trysil (333m, aktiv siden 1901 — SN8140 Evenstad sluttet rapportere snø i 2002)
         snowStationName:  'Plassen, Trysil',
         nveStation:   '2.43.0',      // Glomstadfoss — Glomma ved Rena
-        airStationName:   'Rv3 Rena',
+        airStationName:   'Rena - Ørnhaugen',
         waterStationName: 'Glomstadfoss (Glomma)',
         calibrated: false,
-        gddThreshold: 520,           // Default — ingen GDD-justering for Rena
+        gddThreshold: 520,           // Default — ingen GDD-justering (vi tester ny stasjon)
         uncertaintyDays: 14,
-        wtThreshold: 14,             // Empirisk bump (Glomma-storelv-bias) — eneste justering
+        wtThreshold: 14,             // Beholder fra forrige iterasjon — kan droppes hvis stasjon alene fikser
         isgangWater: 'Netsjøen (vest for Storsjøen)',
         isgangHistory: {
             2025: '2025-04-23', 2024: '2024-05-09', 2023: '2023-05-24',
