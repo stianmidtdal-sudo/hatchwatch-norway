@@ -3535,8 +3535,20 @@ main();
                transition: transform 0.15s ease, box-shadow 0.15s ease;"
         onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(0,0,0,0.25)';"
         onmouseout="this.style.transform='';this.style.boxShadow='0 4px 16px rgba(0,0,0,0.18)';">
-    Feedback
+    Tilbakemelding
 </button>
+<script>
+// FAB-tekst settes her (etter elementet eksisterer i DOM).
+// applyLang() kjører for tidlig — knappen finnes ikke når data-i18n
+// prosesseres oppe i hovedscriptet (linje ~827).
+(function() {
+    var _fab = document.getElementById('tallyFAB');
+    if (_fab) {
+        var _lang = localStorage.getItem('lang') || 'no';
+        _fab.textContent = _lang === 'no' ? 'Tilbakemelding' : 'Feedback';
+    }
+})();
+</script>
 
 </body>
 </html>
