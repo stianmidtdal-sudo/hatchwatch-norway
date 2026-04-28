@@ -3452,20 +3452,9 @@ main();
                font-family:inherit;
                transition: transform 0.15s ease, box-shadow 0.15s ease;"
         onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(0,0,0,0.25)';"
-        onmouseout="this.style.transform='';this.style.boxShadow='0 4px 16px rgba(0,0,0,0.18)';"
-        data-i18n="feedbackBtn">
-    Tilbakemelding
+        onmouseout="this.style.transform='';this.style.boxShadow='0 4px 16px rgba(0,0,0,0.18)';">
+    Feedback
 </button>
-<script>
-    // Sett FAB-tekst direkte basert på lagret språk (selvstendig, krever ingen globale funksjoner)
-    (function() {
-        var fab = document.getElementById('tallyFAB');
-        if (!fab) return;
-        var lang;
-        try { lang = localStorage.getItem('lang') || 'no'; } catch(e) { lang = 'no'; }
-        fab.textContent = lang === 'en' ? 'Feedback' : 'Tilbakemelding';
-    })();
-</script>
 
 </body>
 </html>
