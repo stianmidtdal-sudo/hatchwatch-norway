@@ -571,5 +571,9 @@ buildCards();
         data-i18n="feedbackBtn">
     Tilbakemelding
 </button>
+<script>
+    // Re-apply språk for FAB-knappen siden den ble parsed etter applyLang() første kjøring
+    if (typeof applyLang === 'function') applyLang();
+</script>
 </body>
 </html>
