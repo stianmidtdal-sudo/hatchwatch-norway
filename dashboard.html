@@ -2845,6 +2845,26 @@ function renderSouthSignal() {
     const section = document.getElementById('southSignalSection');
     if (!section) return;
 
+    // ── PARKERT 2026-04-28 ──────────────────────────────────────────────
+    // Skjult inntil videre. Tre grunner:
+    //   1. Inkonsistens med hovedmodellen — to forskjellige datoer på
+    //      samme dashboard forvirrer brukeren mer enn det opplyser.
+    //   2. Mangel på direkte støtte i meteorologisk litteratur. Lignende
+    //      mønstre er studert (NAO, AO), men ikke det presise sør-Norge-
+    //      til-nord-Norge-signalet vi har funnet.
+    //   3. n=9 år er statistisk på minimum. r=-0.72 er reelt, men kan
+    //      være drevet av ekstrem-events (2020, 2026). Trenger flere år.
+    //
+    // Reaktivering: fjern denne return; -blokken når vi har:
+    //   - Validert mot 2026-sesongen (forventet sen Finnmark — bekreft eller
+    //     avkreft når Kautokeino-isgang faktisk kommer)
+    //   - Eventuelt litteraturstøtte (NAO/AO-papirer som peker på lignende)
+    //
+    // Funksjonen og UI-koden er beholdt intakt nedenfor for rask reaktivering.
+    section.style.display = 'none';
+    return;
+    // ────────────────────────────────────────────────────────────────────
+
     // Vises kun for Finnmark-lokasjoner (Kautokeino, Alta, Porsanger, Ifjordfjellet)
     if (LOC.region !== 'Finnmark') {
         section.style.display = 'none';
