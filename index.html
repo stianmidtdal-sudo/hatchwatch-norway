@@ -310,6 +310,31 @@
 </head>
 <body>
 
+<!-- ═══ BETA-BANNER (kun på forsiden, dismissible via localStorage) ═══ -->
+<div id="betaBanner" style="display:flex; justify-content:center; align-items:center; gap:14px; flex-wrap:wrap;
+                            padding:10px 18px; background:#1B4332; color:white;
+                            font-size:0.88rem; position:relative; z-index:9999; text-align:center;">
+    <span>📣 Beta v1.0 — vi vil gjerne høre hva du synes!</span>
+    <button onclick="if(window.Tally){Tally.openPopup('EkBErN')}else{alert('Skjemaet kunne ikke lastes. Send e-post til stian.midtdal@gmail.com istedenfor.')}"
+            style="background:white; color:#1B4332; border:none; padding:5px 14px;
+                   border-radius:4px; cursor:pointer; font-size:0.82rem; font-weight:600;
+                   font-family:inherit;">
+        Send tilbakemelding
+    </button>
+    <button onclick="document.getElementById('betaBanner').style.display='none'; try{localStorage.setItem('hw_beta_banner_dismissed','1')}catch(e){}"
+            aria-label="Lukk"
+            style="background:transparent; color:white; border:none; cursor:pointer;
+                   font-size:1.3rem; padding:0 6px; line-height:1; font-family:inherit;">×</button>
+</div>
+<script>
+    // Skjul banner hvis bruker har lukket den tidligere
+    try {
+        if (localStorage.getItem('hw_beta_banner_dismissed') === '1') {
+            document.getElementById('betaBanner').style.display = 'none';
+        }
+    } catch (e) { /* localStorage blokkert — banner vises uansett */ }
+</script>
+
 <nav>
     <div style="display:flex;align-items:center">
     <img src="data:image/png;base64,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" alt="HatchWatch" style="height:40px;width:40px;margin-right:10px;vertical-align:middle;">
@@ -362,7 +387,7 @@
 <div class="page-footer">
     <span data-i18n-html="footer">Built by <strong>Stian Midtdal</strong> &nbsp;·&nbsp; © 2026 Hatch Watch Norway</span>
     <a class="footer-about-link" onclick="openWelcome()" data-i18n="aboutLink">Om Hatch Watch</a>
-    <a class="footer-about-link" onclick="if(window.Tally){Tally.openPopup('EkBErN',{emoji:{text:'👋',animation:'wave'}})}else{alert('Tilbakemelding-skjemaet kunne ikke lastes. Send gjerne e-post til stian.midtdal@gmail.com istedenfor.')}" style="cursor:pointer;">Tilbakemelding</a>
+    <a class="footer-about-link" onclick="if(window.Tally){Tally.openPopup('EkBErN')}else{alert('Tilbakemelding-skjemaet kunne ikke lastes. Send gjerne e-post til stian.midtdal@gmail.com istedenfor.')}" style="cursor:pointer;">Tilbakemelding</a>
 </div>
 
 <!-- ═══ VELKOMST-POPUP ═══ -->
@@ -553,5 +578,20 @@ function buildCards() {
 
 buildCards();
 </script>
+
+<!-- ═══ FLOATING TILBAKEMELDING-KNAPP (alltid synlig nederst til høyre) ═══ -->
+<button id="tallyFAB"
+        onclick="if(window.Tally){Tally.openPopup('EkBErN')}else{alert('Tilbakemelding-skjemaet kunne ikke lastes. Send gjerne e-post til stian.midtdal@gmail.com istedenfor.')}"
+        aria-label="Send tilbakemelding"
+        style="position:fixed; bottom:20px; right:20px; padding:12px 18px;
+               background:#1B4332; color:white; border:none; border-radius:24px;
+               box-shadow:0 4px 16px rgba(0,0,0,0.18); cursor:pointer;
+               font-size:0.88rem; font-weight:500; z-index:9998;
+               font-family:inherit;
+               transition: transform 0.15s ease, box-shadow 0.15s ease;"
+        onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(0,0,0,0.25)';"
+        onmouseout="this.style.transform='';this.style.boxShadow='0 4px 16px rgba(0,0,0,0.18)';">
+    Tilbakemelding
+</button>
 </body>
 </html>
