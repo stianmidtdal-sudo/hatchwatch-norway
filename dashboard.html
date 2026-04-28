@@ -2435,10 +2435,73 @@ function renderIndicators(snowData, airData, currentADG) {
 
     const rateSignal = parseFloat(adgRate) < 0.5 ? t('sigWinterNormal')
         : parseFloat(adgRate) < 3.5 ? t('sigWarmingUp') : t('sigActiveSeason');
+
+    // ── Historisk snitt for hver indikator ────────────────────────────
+    // Snødybde gjennomsnitt (des-apr) — snitt over alle tidligere vintre
+    function calcHistWinterSnow() {
+        const years = new Set(Object.keys(snowData).map(d => parseInt(d.slice(0, 4))));
+        const yearAvgs = [];
+        for (const yr of years) {
+            if (yr >= YEAR) continue;
+            const vals = Object.entries(snowData).filter(([d]) => {
+                const mo = parseInt(d.slice(5, 7)), y = parseInt(d.slice(0, 4));
+                return (y === yr - 1 && mo === 12) || (y === yr && mo >= 1 && mo <= 4);
+            }).map(([, v]) => v);
+            if (vals.length > 30) yearAvgs.push(vals.reduce((a, b) => a + b, 0) / vals.length);
+        }
+        return yearAvgs.length ? Math.round(yearAvgs.reduce((a, b) => a + b, 0) / yearAvgs.length) : null;
+    }
+
+    // Snøfri-dato — gjennomsnittlig DOY over tidligere år
+    function calcHistSnowFreeDoy() {
+        const years = new Set(Object.keys(snowData).map(d => parseInt(d.slice(0, 4))));
+        const doys = [];
+        for (const yr of years) {
+            if (yr >= YEAR) continue;
+            const sf = findSnowFreeDate(snowData, yr);
+            if (sf) doys.push(doy(parseDate(sf)));
+        }
+        return doys.length ? Math.round(doys.reduce((a, b) => a + b, 0) / doys.length) : null;
+    }
+
+    // GDD-rate (14d før today's dato) — snitt over tidligere år
+    function calcHistAdgRate() {
+        const today = new Date();
+        const mo = today.getMonth(), day = today.getDate();
+        const years = new Set(Object.keys(airData).map(d => parseInt(d.slice(0, 4))));
+        const rates = [];
+        for (const yr of years) {
+            if (yr >= YEAR) continue;
+            const target = new Date(yr, mo, day);
+            const cut = new Date(target); cut.setDate(cut.getDate() - 14);
+            const cutStr = isoDate(cut);
+            const targStr = isoDate(target);
+            const yrAir = Object.entries(airData).filter(([d]) => d >= cutStr && d <= targStr);
+            if (yrAir.length >= 7) {
+                rates.push(yrAir.reduce((s, [, v]) => s + Math.max(0, v), 0) / yrAir.length);
+            }
+        }
+        return rates.length ? (rates.reduce((a, b) => a + b, 0) / rates.length).toFixed(1) : null;
+    }
+
+    const histWinterSnow = calcHistWinterSnow();
+    const histSnowFreeDoy = calcHistSnowFreeDoy();
+    const histAdgRate = calcHistAdgRate();
+    const histSnowFreeStr = histSnowFreeDoy != null ? fmt(dateFromDoy(YEAR, histSnowFreeDoy)) : '—';
+
     const rows = [
-        { name: t('indWinterSnow'), val: winterSnow != null ? `${winterSnow} cm` : (noSnowData || noCurrentSnow ? t('valNoData') : '–'), avg:'—', signal:snowSignal },
-        { name: t('indSnowFree'), val: snowFreeDisplay, avg:'—', signal:snowFreeSignal },
-        { name: t('indGddRate'), val:`${adgRate} GDD/day`, avg:'—', signal:rateSignal },
+        { name: t('indWinterSnow'),
+          val: winterSnow != null ? `${winterSnow} cm` : (noSnowData || noCurrentSnow ? t('valNoData') : '–'),
+          avg: histWinterSnow != null ? `${histWinterSnow} cm` : '—',
+          signal: snowSignal },
+        { name: t('indSnowFree'),
+          val: snowFreeDisplay,
+          avg: histSnowFreeStr,
+          signal: snowFreeSignal },
+        { name: t('indGddRate'),
+          val: `${adgRate} GDD/day`,
+          avg: histAdgRate != null ? `${histAdgRate} GDD/day` : '—',
+          signal: rateSignal },
     ];
     const tbody = document.getElementById('indBody');
     tbody.innerHTML = rows.map(r => `<tr>
