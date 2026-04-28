@@ -416,6 +416,12 @@
             <span id="bestDate" style="display:none"></span>
         </div>
 
+        <!-- ═══ SØR-NORGE-SIGNAL (kun for Finnmark) ═══ -->
+        <section id="southSignalSection" style="display:none">
+            <h2>🌍 <span data-i18n="southSignalHeading">Sør-Norge-signal</span></h2>
+            <div id="southSignalContent"></div>
+        </section>
+
         <!-- ═══ PREDICTION CONVERGENCE ═══ -->
         <section id="convergenceSection">
             <h2 data-i18n="convergenceHeading">Prediction history</h2>
@@ -535,6 +541,7 @@ const T = {
     wStep1: 'Nivå 1 · Snøfri + 32 dager',
     wStep2: 'Nivå 2 · Vanntemp. ekstrapolering',
     convergenceHeading: 'Prediksjonshistorikk',
+    southSignalHeading: 'Sør-Norge-signal',
     convToday: 'I dag',
     convPrediction: 'Historisk prediksjon',
     convBand: (unc) => `Standardavvik (±${String(unc).replace('.', ',')} d)`,
@@ -672,6 +679,7 @@ const T = {
     wStep1: 'Level 1 · Snow-free + 32 days',
     wStep2: 'Level 2 · Water temp extrapolation',
     convergenceHeading: 'Prediction history',
+    southSignalHeading: 'Southern Norway signal',
     convToday: 'Today',
     convPrediction: 'Historic prediction',
     convBand: (unc) => `Std deviation (±${unc} d)`,
@@ -2748,6 +2756,150 @@ function predictHatchDoyFromDay(airData, yr, upToDoy, threshold, avgTemp) {
     return null;
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// SØR-NORGE-SIGNAL — tidlig sesong-indikator for Finnmark
+// ═══════════════════════════════════════════════════════════════════
+// Basert på empirisk korrelasjonsanalyse av isgang-data 2017-2025:
+//   Sør-Norge (Vestfjella + Østmarka aggregert) korrelerer NEGATIVT
+//   med isgang i Nord-Norge:
+//     vs Bardufoss:    r = -0.72, p < 0.05 (n=9)
+//     vs Dividalen:    r = -0.75, p < 0.05 (n=9)
+//     vs Kautokeino:   r = -0.67 (n=5, p=0.22, retning konsistent)
+//
+// Værmekanisme: når atlantiske lavtrykk gir mild luft til Sør-Norge
+// (tidlig isgang), klemmer de samtidig kald arktisk luft fast over
+// Finnmark — derfor sen sesong nord.
+//
+// Vi bruker regresjons-helning -0.67 (gjennomsnitt) for å oversette
+// sør-avvik til forventet Finnmark-avvik. Usikkerhet ±5 d (1σ).
+function renderSouthSignal() {
+    const section = document.getElementById('southSignalSection');
+    if (!section) return;
+
+    // Vises kun for Finnmark-lokasjoner (Kautokeino, Alta, Porsanger, Ifjordfjellet)
+    if (LOC.region !== 'Finnmark') {
+        section.style.display = 'none';
+        return;
+    }
+
+    const vest = LOCATIONS.vestfjella?.isgangHistory || {};
+    const ost  = LOCATIONS.ostmarka?.isgangHistory || {};
+
+    function isgDoy(dateStr) {
+        const d = parseDate(dateStr);
+        return doy(d);
+    }
+
+    function calcDev(history, year) {
+        const otherYears = Object.keys(history).map(Number).filter(y => y !== year && y < year);
+        if (otherYears.length < 3) return null;
+        const doys = otherYears.map(y => isgDoy(history[y])).sort((a, b) => a - b);
+        const median = doys[Math.floor(doys.length / 2)];
+        const yearDoy = history[year] ? isgDoy(history[year]) : null;
+        return { median, yearDoy, dev: yearDoy != null ? yearDoy - median : null };
+    }
+
+    const vestDev = calcDev(vest, YEAR);
+    const ostDev  = calcDev(ost, YEAR);
+
+    if (!vestDev || !ostDev || vestDev.dev === null || ostDev.dev === null) {
+        // Ingen 2026-data ennå — skjul seksjonen
+        section.style.display = 'none';
+        return;
+    }
+
+    const aggDev = (vestDev.dev + ostDev.dev) / 2;
+    const slope = -0.67;  // empirisk regresjons-helning
+    const expectedDev = aggDev * slope;
+    const uncertainty = 5;
+
+    // Kategorisering av sør-vinteren
+    function sorCat(d) {
+        if (d < -15) return { lbl: '🟢🟢 Svært mild vinter', col: '#1B7A3E' };
+        if (d <  -7) return { lbl: '🟢 Mild vinter',         col: '#2D6A4F' };
+        if (d > +15) return { lbl: '🔴🔴 Svært kald vinter', col: '#80201a' };
+        if (d >  +7) return { lbl: '🔴 Kald vinter',         col: '#a03020' };
+        return                { lbl: '⚪ Normal vinter',      col: '#666' };
+    }
+
+    function nordCat(d) {
+        if (d < -7) return { lbl: '🟢 TIDLIG sesong forventet',   col: '#2D6A4F' };
+        if (d > +7) return { lbl: '🔴 SEN sesong forventet',      col: '#a03020' };
+        return                { lbl: '⚪ NORMAL sesong forventet', col: '#666' };
+    }
+
+    const sc = sorCat(aggDev);
+    const nc = nordCat(expectedDev);
+
+    function fmtDev(d) { return (d > 0 ? '+' : '') + d.toFixed(0) + ' d'; }
+    function fmtSign(d) { return d > 0 ? '+' : ''; }
+
+    // Konkrete prediksjoner per Finnmark-lokasjon (median + forventet avvik)
+    const finnLocs = ['kautokeino', 'ifjordfjellet'];
+    let predRows = '';
+    for (const fid of finnLocs) {
+        const fh = LOCATIONS[fid]?.isgangHistory;
+        if (!fh) continue;
+        const fdev = calcDev(fh, YEAR);
+        if (!fdev) continue;
+        const predDoy = fdev.median + expectedDev;
+        const predDate = dateFromDoy(YEAR, Math.round(predDoy));
+        predRows += `<tr><td style="padding:3px 8px;">${LOCATIONS[fid].area}</td><td style="padding:3px 8px;">~${fmt(predDate)}</td><td style="padding:3px 8px;color:#888;">(median ${fmt(dateFromDoy(YEAR, fdev.median))})</td></tr>`;
+    }
+
+    section.style.display = '';
+    document.getElementById('southSignalContent').innerHTML = `
+        <div style="background:#f6faf7; border:1px solid #d4e3d6; border-radius:8px; padding:18px 20px;">
+            <div style="display:flex; flex-wrap:wrap; gap:24px; align-items:flex-start;">
+                <div style="flex:1; min-width:240px;">
+                    <div style="font-size:0.72rem; color:#888; letter-spacing:0.05em; text-transform:uppercase; margin-bottom:4px;">Sør-Norge i år</div>
+                    <div style="font-size:1.05rem; font-weight:600; color:${sc.col};">${sc.lbl}</div>
+                    <div style="font-size:0.85rem; color:#555; margin-top:4px;">Isgang ${fmtDev(aggDev)} vs median</div>
+                </div>
+                <div style="flex:1; min-width:240px;">
+                    <div style="font-size:0.72rem; color:#888; letter-spacing:0.05em; text-transform:uppercase; margin-bottom:4px;">Forventet i Finnmark</div>
+                    <div style="font-size:1.05rem; font-weight:600; color:${nc.col};">${nc.lbl}</div>
+                    <div style="font-size:0.85rem; color:#555; margin-top:4px;">${fmtDev(expectedDev)} ± ${uncertainty} d</div>
+                </div>
+            </div>
+
+            ${predRows ? `
+            <div style="margin-top:16px; padding-top:14px; border-top:1px solid #e0ebe2;">
+                <div style="font-size:0.78rem; color:#666; margin-bottom:6px;">Prediksjon for isgang i ${YEAR}:</div>
+                <table style="font-size:0.85rem; border-collapse:collapse;">${predRows}</table>
+            </div>
+            ` : ''}
+
+            <details style="margin-top:14px;">
+                <summary style="cursor:pointer; font-size:0.85rem; color:#1B4332; font-weight:500; padding:6px 0;">
+                    ▾ Hvorfor henger sør og nord motsatt sammen?
+                </summary>
+                <div style="font-size:0.85rem; color:#444; line-height:1.55; padding:10px 0 4px;">
+                    <p style="margin:8px 0;"><strong>Norske vintre styres av jet streamen</strong> — det høytliggende luftbåndet som driver lavtrykk inn fra Atlanteren.</p>
+                    <p style="margin:8px 0;"><strong>Mønster A — "Mild sør, kald nord":</strong> Jet streamen ligger sørlig. Atlantiske lavtrykk trekker mild luft inn over Sør-Norge, og snøen smelter tidlig. Samtidig "klemmer" lavtrykkene kald polarluft fast over Finnmark og Troms — sen vår der.</p>
+                    <p style="margin:8px 0;"><strong>Mønster B — "Kald sør, mild nord":</strong> Høytrykk over Atlanteren blokkerer lavtrykksbanene. Kald polarluft drives sørover, lang kald vinter sør. Når blokkeringen slipper, går den milde luften nordpå istedenfor — tidlig vår i Finnmark.</p>
+                    <p style="margin:8px 0;"><strong>Begge mønstre</strong> gir sør og nord motsatt vintertype. Det er denne dualiteten som driver den negative korrelasjonen i isgang-data.</p>
+                    <div style="background:#fff; border-radius:6px; padding:10px 12px; margin-top:12px; font-size:0.82rem;">
+                        <strong>Eksempler fra historikk:</strong><br>
+                        2017 (Mønster A): sør −5 d → Dividalen +22 d (klassisk)<br>
+                        2018 (Mønster B): sør +13 d → Bardufoss −14 d (klassisk)<br>
+                        2020 (Mønster A): sør −22 d → Bardufoss +9 d (klassisk)<br>
+                        2025 (Mønster A): sør −12 d → Bardufoss +8 d (klassisk)
+                    </div>
+                </div>
+            </details>
+
+            <div style="margin-top:14px; padding-top:10px; border-top:1px solid #e0ebe2; font-size:0.7rem; color:#888; line-height:1.5;">
+                <strong>Statistisk grunnlag:</strong> Sør-aggregat = (Vestfjella + Østmarka avvik fra median) / 2.
+                Korrelasjon med Bardufoss r = −0,72, Dividalen r = −0,75 (begge p &lt; 0,05, n=9).
+                Kautokeino r = −0,67 (n=5, retning konsistent men kort historikk).
+                Regresjons-helning ≈ −0,67. Forklart varians R² ≈ 0,5.
+                Datakilde: Sentinel Hub-observasjoner 2017–${YEAR}.
+            </div>
+        </div>
+    `;
+}
+
 function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate, airData) {
     // Usikkerhet: kalibrerte bruker MAE fra Excel-validering (2.1 d, n=8 år).
     // Ukalibrerte faller tilbake til LOC.uncertaintyDays (prior).
@@ -3117,6 +3269,7 @@ function rebuildDashboard() {
     renderSnowChart(snowData);
     renderIceChart(airDataCorrected, snowData);
     const { snowFree } = renderIndicators(snowData, airDataCorrected, currentADG);
+    renderSouthSignal();  // kun for Finnmark — sjekker LOC.region internt
     renderConvergence(snowFree, wtDataForPrediction, adgDate, histStats, fromDate, airDataCorrected);
 }
 
