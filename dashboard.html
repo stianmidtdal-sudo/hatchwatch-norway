@@ -3194,8 +3194,23 @@ main();
 
 <div style="text-align:center; padding: 32px 0 24px; font-size: 0.75rem; color: #aaa;">
     Built by <strong style="color:#1B4332;">Stian Midtdal</strong> &nbsp;·&nbsp; © 2026 Hatch Watch Norway
-    &nbsp;·&nbsp; <a onclick="if(window.Tally){Tally.openPopup('EkBErN',{emoji:{text:'👋',animation:'wave'}})}else{alert('Tilbakemelding-skjemaet kunne ikke lastes. Send gjerne e-post til stian.midtdal@gmail.com istedenfor.')}" style="color:#1B4332; text-decoration:none; cursor:pointer;">Tilbakemelding</a>
+    &nbsp;·&nbsp; <a onclick="if(window.Tally){Tally.openPopup('EkBErN')}else{alert('Tilbakemelding-skjemaet kunne ikke lastes. Send gjerne e-post til stian.midtdal@gmail.com istedenfor.')}" style="color:#1B4332; text-decoration:none; cursor:pointer;">Tilbakemelding</a>
 </div>
+
+<!-- ═══ FLOATING TILBAKEMELDING-KNAPP (alltid synlig nederst til høyre) ═══ -->
+<button id="tallyFAB"
+        onclick="if(window.Tally){Tally.openPopup('EkBErN')}else{alert('Tilbakemelding-skjemaet kunne ikke lastes. Send gjerne e-post til stian.midtdal@gmail.com istedenfor.')}"
+        aria-label="Send tilbakemelding"
+        style="position:fixed; bottom:20px; right:20px; padding:12px 18px;
+               background:#1B4332; color:white; border:none; border-radius:24px;
+               box-shadow:0 4px 16px rgba(0,0,0,0.18); cursor:pointer;
+               font-size:0.88rem; font-weight:500; z-index:9998;
+               font-family:inherit;
+               transition: transform 0.15s ease, box-shadow 0.15s ease;"
+        onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(0,0,0,0.25)';"
+        onmouseout="this.style.transform='';this.style.boxShadow='0 4px 16px rgba(0,0,0,0.18)';">
+    Tilbakemelding
+</button>
 
 </body>
 </html>
