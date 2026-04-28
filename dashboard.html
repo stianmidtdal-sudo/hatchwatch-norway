@@ -3457,8 +3457,14 @@ main();
     Tilbakemelding
 </button>
 <script>
-    // Re-apply språk for FAB-knappen siden den ble parsed etter applyLang() første kjøring
-    if (typeof applyLang === 'function') applyLang();
+    // Sett FAB-tekst direkte basert på lagret språk (selvstendig, krever ingen globale funksjoner)
+    (function() {
+        var fab = document.getElementById('tallyFAB');
+        if (!fab) return;
+        var lang;
+        try { lang = localStorage.getItem('lang') || 'no'; } catch(e) { lang = 'no'; }
+        fab.textContent = lang === 'en' ? 'Feedback' : 'Tilbakemelding';
+    })();
 </script>
 
 </body>
