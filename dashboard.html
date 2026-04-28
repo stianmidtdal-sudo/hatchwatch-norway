@@ -520,6 +520,7 @@ const LANG = localStorage.getItem('lang') || 'no';
 const T = {
   no: {
     backLink: '← Alle steder',
+    feedbackBtn: 'Tilbakemelding',
     loading: 'Henter live data fra MET Norge og NVE…',
     loadingHistAvg: 'Laster historisk gjennomsnitt…',
     seasonCalendar: '▶ Sesong klekkekalender',
@@ -656,6 +657,7 @@ const T = {
   },
   en: {
     backLink: '← All locations',
+    feedbackBtn: 'Feedback',
     loading: 'Fetching live data from MET Norway &amp; NVE…',
     loadingHistAvg: 'Loading historical average…',
     seasonCalendar: '▶ Season Hatch Calendar',
@@ -3194,7 +3196,7 @@ main();
 
 <div style="text-align:center; padding: 32px 0 24px; font-size: 0.75rem; color: #aaa;">
     Built by <strong style="color:#1B4332;">Stian Midtdal</strong> &nbsp;·&nbsp; © 2026 Hatch Watch Norway
-    &nbsp;·&nbsp; <a onclick="if(window.Tally){Tally.openPopup('EkBErN')}else{alert('Tilbakemelding-skjemaet kunne ikke lastes. Send gjerne e-post til stian.midtdal@gmail.com istedenfor.')}" style="color:#1B4332; text-decoration:none; cursor:pointer;">Tilbakemelding</a>
+    &nbsp;·&nbsp; <a onclick="if(window.Tally){Tally.openPopup('EkBErN')}else{alert('Tilbakemelding-skjemaet kunne ikke lastes. Send gjerne e-post til stian.midtdal@gmail.com istedenfor.')}" style="color:#1B4332; text-decoration:none; cursor:pointer;" data-i18n="feedbackBtn">Tilbakemelding</a>
 </div>
 
 <!-- ═══ FLOATING TILBAKEMELDING-KNAPP (alltid synlig nederst til høyre) ═══ -->
@@ -3208,7 +3210,8 @@ main();
                font-family:inherit;
                transition: transform 0.15s ease, box-shadow 0.15s ease;"
         onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(0,0,0,0.25)';"
-        onmouseout="this.style.transform='';this.style.boxShadow='0 4px 16px rgba(0,0,0,0.18)';">
+        onmouseout="this.style.transform='';this.style.boxShadow='0 4px 16px rgba(0,0,0,0.18)';"
+        data-i18n="feedbackBtn">
     Tilbakemelding
 </button>
 
