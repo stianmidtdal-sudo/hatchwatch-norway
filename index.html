@@ -362,7 +362,7 @@
 <div class="page-footer">
     <span data-i18n-html="footer">Built by <strong>Stian Midtdal</strong> &nbsp;·&nbsp; © 2026 Hatch Watch Norway</span>
     <a class="footer-about-link" onclick="openWelcome()" data-i18n="aboutLink">Om Hatch Watch</a>
-    <a class="footer-about-link" data-tally-open="EkBErN" data-tally-emoji-text="👋" data-tally-emoji-animation="wave" style="cursor:pointer;">Tilbakemelding</a>
+    <a class="footer-about-link" onclick="if(window.Tally){Tally.openPopup('EkBErN',{emoji:{text:'👋',animation:'wave'}})}else{alert('Tilbakemelding-skjemaet kunne ikke lastes. Send gjerne e-post til stian.midtdal@gmail.com istedenfor.')}" style="cursor:pointer;">Tilbakemelding</a>
 </div>
 
 <!-- ═══ VELKOMST-POPUP ═══ -->
