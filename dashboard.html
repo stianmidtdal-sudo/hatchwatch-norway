@@ -544,12 +544,12 @@ const T = {
     southSignalHeading: 'Sør-Norge-signal',
     convToday: 'I dag',
     convPrediction: 'Historisk prediksjon',
-    convBand: (unc) => `Standardavvik (±${String(unc).replace('.', ',')} d)`,
+    convBand: (unc) => `Standardavvik (±${unc.toFixed(1).replace('.', ',')} d)`,
     convBandIndicative: 'Usikkerhetsintervall',
     convHistMedian: 'Median klekkedato',
     convNotEnoughData: 'Ikke nok data for konvergensgraf — venter på første GDD-akkumulering av sesongen.',
     convCrossed: 'GDD-terskelen er allerede nådd i år.',
-    convSummaryLatest: (date, unc, stability) => `Nåværende estimat: <strong>${date}</strong> · ±${unc} d (standardavvik). ${stability}`,
+    convSummaryLatest: (date, unc, stability) => `Nåværende estimat: <strong>${date}</strong> · ±${unc.toFixed(1).replace('.', ',')} d (standardavvik). ${stability}`,
     convSummaryLatestIndicative: (date, stability) => `Nåværende estimat: <strong>${date}</strong>. ${stability}`,
     indicativeLabel: 'Indikativ prognose',
     indicativeNote: 'modellen er ikke validert mot observerte klekkedatoer for denne lokasjonen. Bruk som veiledning.',
@@ -682,12 +682,12 @@ const T = {
     southSignalHeading: 'Southern Norway signal',
     convToday: 'Today',
     convPrediction: 'Historic prediction',
-    convBand: (unc) => `Std deviation (±${unc} d)`,
+    convBand: (unc) => `Std deviation (±${unc.toFixed(1)} d)`,
     convBandIndicative: 'Uncertainty range',
     convHistMedian: 'Median hatch date',
     convNotEnoughData: 'Not enough data for convergence chart — awaiting first GDD accumulation of the season.',
     convCrossed: 'GDD threshold already crossed this year.',
-    convSummaryLatest: (date, unc, stability) => `Current estimate: <strong>${date}</strong> · ±${unc} d (std. dev.). ${stability}`,
+    convSummaryLatest: (date, unc, stability) => `Current estimate: <strong>${date}</strong> · ±${unc.toFixed(1)} d (std. dev.). ${stability}`,
     convSummaryLatestIndicative: (date, stability) => `Current estimate: <strong>${date}</strong>. ${stability}`,
     indicativeLabel: 'Indicative forecast',
     indicativeNote: 'model has not been validated against observed hatch dates for this location. Use as guidance.',
@@ -1681,6 +1681,33 @@ function buildDoyAvgTemp(airData) {
 // før denne posisjonen i koden.
 // ───────────────────────────────────────────────────────────────────────────
 
+// ── DYNAMISK USIKKERHET (innført 2026-04-28) ───────────────────────────────
+// LOC.uncertaintyDays er kalibreringsfeil ved sesongslutt (n=4-24 årlige obs
+// for kalibrerte; prior=14 for ukalibrerte). Tidlig i sesongen er det en
+// ekstra feilkilde: klimaprojeksjonen for resten av GDD-akkumulasjonen.
+//
+// Formel:  σ(d) = baseline + climateExtra · √(fraction_remaining)
+//   climateExtra = min(baseline, 6)   ← additiv, capped på 6 dager
+//
+// Eksempler ved sesongstart (100% gjenstår):
+//   Kautokeino  (baseline 2.1):  ±4.2 d
+//   Østmarka    (baseline 2.3):  ±4.6 d
+//   Nordmarka   (baseline 10):  ±16   d
+//   Vestfjella  (baseline 14):  ±20   d  (capped, ikke ±28)
+// Ved klekking (0% gjenstår): tilbake til baseline.
+//
+// Begrunnelse for additiv (i stedet for multiplikativ): klimaprojeksjons-
+// usikkerhet har en absolutt skala (~5-7 dager for full sesong-projeksjon),
+// uavhengig av om hovedmodellen er kalibrert eller ikke. Cap på 6 dager
+// hindrer at ukalibrerte lokasjoner får ulesselig brede bånd i januar.
+function getDynamicUncertainty(baselineDays, currentGDD, threshold) {
+    if (currentGDD == null || threshold == null || threshold === 0) return baselineDays;
+    const remaining = Math.max(0, Math.min(1, (threshold - currentGDD) / threshold));
+    const climateExtra = Math.min(baselineDays, 6);
+    return baselineDays + climateExtra * Math.sqrt(remaining);
+}
+// ───────────────────────────────────────────────────────────────────────────
+
 // A. Altitude lapse-rate correction (0.6°C per 100m)
 // Station may be at different altitude than fishing area.
 // Higher station → colder readings → need to warm-correct for area.
@@ -2088,10 +2115,15 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
         `${t('fiveYearAvg')} ${histADG.toFixed(1)} GDD  (${sign}${diff.toFixed(1)} GDD / ${pctSign}${pctDiff.toFixed(1)}% ${t('vsAvg')})`;
 
     // Usikkerhet: for kalibrerte lokasjoner (Kautokeino) bruker vi MAE fra Excel-valideringen
-    // (n=8 år, 2016-2025 ekskl. 2020). Det er den faktiske prediksjonsfeilen.
+    // (n=8 år, 2016-2025 ekskl. 2020). Det er den faktiske prediksjonsfeilen ved sesongslutt.
     // For ukalibrerte lokasjoner faller vi tilbake til LOC.uncertaintyDays (prior).
-    // histStats.std er år-til-år-spredning av terskelkryssingen, ikke modellfeil — brukes ikke her.
-    const uncDays   = LOC.uncertaintyDays;
+    //
+    // DYNAMISK USIKKERHET (2026-04-28): tidlig i sesongen er det en ekstra feilkilde
+    // (klimaprojeksjonen for resten av GDD-akkumulasjonen) som krymper utover sesongen.
+    // getDynamicUncertainty multipliserer baseline med (1 + √(remaining_fraction)).
+    // Ved sesongstart: ±2× baseline. Ved klekking: ±1× baseline.
+    const uncDaysBaseline = LOC.uncertaintyDays;
+    const uncDays = getDynamicUncertainty(uncDaysBaseline, currentADG, LOC.gddThreshold);
     const uncSource = LOC.calibrated
         ? (LANG === 'no'
             ? `standardavvik, ${LOC.calibNoteNo || 'validert mot observerte klekkedatoer'}`
@@ -2112,9 +2144,10 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
     // vises nå kun i modellHeading og i Indikativ-banneret.
 
     // Update model heading with actual uncertainty
-    // Kalibrerte: ±2,1 d fra Excel-validering (n=8 år). Ukalibrerte: prior-estimat.
+    // Kalibrerte: baseline ±2,1 d fra Excel-validering (n=8 år) — modulert dynamisk.
+    // Ukalibrerte: baseline 14 d (prior) — modulert dynamisk.
     document.getElementById('modelHeading').textContent = LOC.calibrated
-        ? `${t('dualTriggerLabel')} ${LOC.gddThreshold} (bt = 0°C, ${t('fromJan1')}) + ${t('waterTemp')} ≥ ${getWtThreshold(LOC)}°C · ${t('stdShort')} = ±${uncDays} ${t('daysLabel')}`
+        ? `${t('dualTriggerLabel')} ${LOC.gddThreshold} (bt = 0°C, ${t('fromJan1')}) + ${t('waterTemp')} ≥ ${getWtThreshold(LOC)}°C · ${t('stdShort')} = ±${uncDays.toFixed(1)} ${t('daysLabel')}`
         : `${t('gddPriorLabel')} ${LOC.gddThreshold} GDD (bt = 0°C) · ${t('indicativeLabel').toLowerCase()}`;
 
     // Dual-trigger: latest of GDD ≥ 520 og vanntemp ≥ 12°C.
@@ -3003,9 +3036,24 @@ function renderSouthSignal() {
 }
 
 function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate, airData) {
-    // Usikkerhet: kalibrerte bruker MAE fra Excel-validering (2.1 d, n=8 år).
-    // Ukalibrerte faller tilbake til LOC.uncertaintyDays (prior).
-    const uncDays   = LOC.uncertaintyDays;
+    // Usikkerhet: kalibrerte bruker MAE fra Excel-validering (2.1 d, n=8 år) som baseline.
+    // Ukalibrerte faller tilbake til LOC.uncertaintyDays (prior=14) som baseline.
+    //
+    // DYNAMISK USIKKERHET (2026-04-28): tidlig i sesongen multipliseres baseline med
+    // (1 + √(remaining_fraction)) for å reflektere klimaprojeksjonens egenusikkerhet.
+    // Ved sesongstart: ±2× baseline. Ved klekking: ±1× baseline. Båndet i
+    // konvergensgrafen krymper synlig gjennom sesongen.
+    const uncDaysBaseline = LOC.uncertaintyDays;
+    // Beregn nåværende observert GDD for å utlede dagens dynamiske usikkerhet
+    let _currObservedGDD = 0;
+    const _todayDoyForUnc = doy(new Date());
+    for (let _d = 1; _d <= _todayDoyForUnc; _d++) {
+        const _dt = dateFromDoy(YEAR, _d);
+        const _key = `${YEAR}-${String(_dt.getMonth()+1).padStart(2,'0')}-${String(_dt.getDate()).padStart(2,'0')}`;
+        const _v = airData?.[_key];
+        if (_v != null) _currObservedGDD += Math.max(0, _v);
+    }
+    const uncDays = getDynamicUncertainty(uncDaysBaseline, _currObservedGDD, LOC.gddThreshold);
     const uncSource = LOC.calibrated
         ? (LANG === 'no'
             ? `standardavvik, ${LOC.calibShortNo || 'kalibrert'}`
@@ -3037,7 +3085,7 @@ function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate, airDa
     }
     if (adgDate) {
         const gddNote = LOC.calibrated
-            ? `${t('gddModelShort')} — ±${uncDays} ${t('daysLabel')} (${uncSource})`
+            ? `${t('gddModelShort')} — ±${uncDays.toFixed(1)} ${t('daysLabel')} (${uncSource})`
             : `${t('gddModelShort')} — ${t('indicativeLabel').toLowerCase()}`;
         candidates.push({ date: adgDate, unc: parseFloat(uncDays), note: gddNote });
     }
@@ -3123,8 +3171,29 @@ function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate, airDa
         window.sort((a, b) => a - b);
         return window[Math.floor(window.length / 2)];
     });
-    const lowerBand = predDoys.map(v => v != null ? v - uncDays : null);
-    const upperBand = predDoys.map(v => v != null ? v + uncDays : null);
+
+    // Per-dag dynamisk usikkerhet for båndet:
+    // For hver dag d i loopen, beregn observert GDD opp til d, og utled
+    // tidsavhengig usikkerhet. Båndet krymper visuelt gjennom sesongen.
+    const lowerBand = [], upperBand = [];
+    let _accGDD = 0;
+    let _gddAtDoy = {};
+    for (let d = 1; d <= todayDoy; d++) {
+        const dt = dateFromDoy(YEAR, d);
+        const key = `${YEAR}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+        const v = airData[key];
+        if (v != null) _accGDD += Math.max(0, v);
+        _gddAtDoy[d] = _accGDD;
+    }
+    for (let i = 0; i < predDoys.length; i++) {
+        const v = predDoys[i];
+        if (v == null) { lowerBand.push(null); upperBand.push(null); continue; }
+        const d = firstDoy + i;
+        const gddAtD = _gddAtDoy[d] ?? 0;
+        const uncAtD = getDynamicUncertainty(uncDaysBaseline, gddAtD, threshold);
+        lowerBand.push(v - uncAtD);
+        upperBand.push(v + uncAtD);
+    }
 
     // 5-års median hatchdato for denne lokasjonen (fra histStats)
     const histMedianDoy = histStats?.median ?? null;
