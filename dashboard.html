@@ -855,6 +855,10 @@ const LOCATIONS = {
         calibNoteEn:  'n=5, 2020–2024 (2D grid search 2026-04-29: GDD 500, WT 12°C default)',
         calibShortNo: 'n=5 · GDD 500',
         calibShortEn: 'n=5 · GDD 500',
+        // Utvidet historikk tilbake til 2016 — modellen treffer veldokumentert tilbake
+        // dit (verifisert 2026-04-29 mot Stians hukommelse, særlig 2017 som var ekstremt
+        // sent år: model 12. juli, +12 d fra median). Andre lokasjoner bruker default 2019+.
+        histYearsStart: 2016,
         // Oppdatert 2026-04-28: byttet til Jorbajávri (sør for Cabara, ved flyplassen) —
         // dette er Stians referansevann for Kautokeino. Tidligere data var fra et annet vann.
         // Kilde: Sentinel Hub-observasjoner.
@@ -1778,14 +1782,15 @@ function calcGDDCrossingYear(airData, year, threshold) {
 //    tidlige historiske datoer (median 22. mai), mens dual-trigger med WT 14°C
 //    gir realistisk median ~1-2. juni.
 function computeHistoricalStats(airData, threshold, wtData) {
-    // Extended-modus (?extended=1) viser historikk tilbake til 2016 — kun for
-    // privat verifisering (Stian). Vanlige brukere ser fortsatt 2019+.
-    // Frost-data hentes uansett tilbake til 2016 (Math.max(2016, YEAR-10)),
-    // så ingen ekstra fetch trengs.
+    // Historikk-vindu: default 2019+ for de fleste lokasjoner, men kan overstyres
+    // per-lokasjon via LOC.histYearsStart (f.eks. Kautokeino bruker 2016 fordi
+    // modellen er veldokumentert tilbake dit, og 2017 er et viktig referanseår).
+    // ?extended=1 i URL forcer alle lokasjoner til 2016-utvidet (privat verifisering).
+    // Frost-data hentes uansett tilbake til 2016 (Math.max(2016, YEAR-10)).
     const isExtended = new URLSearchParams(location.search).get('extended') === '1';
-    const histYears = isExtended
-        ? [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
-        : [2019, 2020, 2021, 2022, 2023, 2024, 2025];
+    const startYear = isExtended ? 2016 : (LOC.histYearsStart ?? 2019);
+    const histYears = [];
+    for (let yr = startYear; yr <= 2025; yr++) histYears.push(yr);
     const wtThresh = getWtThreshold(LOC);
     const useDualTrigger = LOC.nveStation && wtData && Object.keys(wtData).length > 0;
 
