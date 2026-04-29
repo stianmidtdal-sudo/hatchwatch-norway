@@ -1778,7 +1778,14 @@ function calcGDDCrossingYear(airData, year, threshold) {
 //    tidlige historiske datoer (median 22. mai), mens dual-trigger med WT 14°C
 //    gir realistisk median ~1-2. juni.
 function computeHistoricalStats(airData, threshold, wtData) {
-    const histYears = [2019, 2020, 2021, 2022, 2023, 2024, 2025];
+    // Extended-modus (?extended=1) viser historikk tilbake til 2016 — kun for
+    // privat verifisering (Stian). Vanlige brukere ser fortsatt 2019+.
+    // Frost-data hentes uansett tilbake til 2016 (Math.max(2016, YEAR-10)),
+    // så ingen ekstra fetch trengs.
+    const isExtended = new URLSearchParams(location.search).get('extended') === '1';
+    const histYears = isExtended
+        ? [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
+        : [2019, 2020, 2021, 2022, 2023, 2024, 2025];
     const wtThresh = getWtThreshold(LOC);
     const useDualTrigger = LOC.nveStation && wtData && Object.keys(wtData).length > 0;
 
