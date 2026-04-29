@@ -1078,19 +1078,24 @@ const LOCATIONS = {
         waterStationName: 'Mønevann, Enebakk',
         calibrated: true,
         // Re-kalibrert 2026-04-29 etter luftstasjonsbytte SN4090 Vallerudåsen → SN17640 Råken
-        // (gjort 2026-04-24). Råken viste seg å akkumulere GDD langsommere enn Vallerudåsen,
-        // og gammel terskel 520 ga +18 d bom for 2022. Optimaliseringssøk på terskel 400-600
-        // mot 4 obs (2021-06-01, 2022-05-28, 2023-06-02, 2024-05-28) ga:
-        //   Best terskel: 450 · MAE 5.00 d · Bias 0.00 d · RMSE 6.75 d
-        //   Per år: 2021 0d, 2022 +10d, 2023 -1d, 2024 -9d
-        // 2022 fortsatt anomal — sannsynligvis "kald luft, varmt vann"-år som GDD ikke fanger.
-        // Dual-trigger overflødig her — vanntemp ≥ 12°C treffer alltid før GDD-terskel.
-        gddThreshold: 450,
-        uncertaintyDays: 5.0,
-        calibNoteNo:  'n=4, Børtervanna 2021–2024 (re-kalibrert 2026-04-29 etter stasjonsbytte)',
-        calibNoteEn:  'n=4, Børtervanna 2021–2024 (re-calibrated 2026-04-29 after station swap)',
-        calibShortNo: 'n=4 · Råken',
-        calibShortEn: 'n=4 · Råken',
+        // (gjort 2026-04-24). 2D-optimaliseringssøk over GDD × WT-terskler mot 4 obs
+        // (2021-06-01, 2022-05-28, 2023-06-02, 2024-05-28) avdekket at vanntemp ≥ 14°C
+        // er den biologisk bindende terskelen for Vulgata her — ikke 12°C som default.
+        //
+        // Optimum: GDD 400 + WT 14.0°C · MAE 3.75 d · Bias +1.25 d · RMSE 4.56 d
+        //   Per år: 2021 +3d, 2022 +7d, 2023 0d, 2024 -5d
+        //
+        // 25% MAE-reduksjon vs forrige iterasjon (5.00 → 3.75). 2022 fortsatt +7d
+        // — sannsynligvis "kald luft, varmt vann"-år som GDD/WT ikke fanger fullt ut.
+        // Vanntemp er bindende ved WT 14°C — GDD-terskelen er praktisk talt irrelevant
+        // i dette regimet for Østmarka.
+        gddThreshold: 400,
+        wtThreshold: 14,
+        uncertaintyDays: 3.8,
+        calibNoteNo:  'n=4, Børtervanna 2021–2024 (2D-kalibrering 2026-04-29: GDD 400 + WT 14°C)',
+        calibNoteEn:  'n=4, Børtervanna 2021–2024 (2D calibration 2026-04-29: GDD 400 + WT 14°C)',
+        calibShortNo: 'n=4 · GDD 400 + WT 14°C',
+        calibShortEn: 'n=4 · GDD 400 + WT 14°C',
         isgangWater: 'Børtervanna',
         isgangHistory: {
             2026: '2026-04-03',
