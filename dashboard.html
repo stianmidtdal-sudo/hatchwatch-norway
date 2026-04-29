@@ -3563,14 +3563,14 @@ function runCalibration(airData, wtData) {
         return;
     }
 
-    const wtThreshold = getWtThreshold(LOC);
+    const wtThresholdCurrent = getWtThreshold(LOC);
 
-    function findWTCrossing(year) {
+    function findWTCrossing(year, threshold) {
         const dates = Object.keys(wtData || {})
             .filter(d => d.startsWith(String(year)) && d >= `${year}-04-01` && d <= `${year}-08-01`)
             .sort();
         for (const d of dates) {
-            if (wtData[d] != null && wtData[d] >= wtThreshold) return d;
+            if (wtData[d] != null && wtData[d] >= threshold) return d;
         }
         return null;
     }
@@ -3580,19 +3580,23 @@ function runCalibration(airData, wtData) {
 
     const obsEntries = Object.entries(calibData.obs).map(([y, d]) => [parseInt(y), d]);
     const wtCrossings = {};
-    obsEntries.forEach(([yr]) => { wtCrossings[yr] = findWTCrossing(yr); });
+    obsEntries.forEach(([yr]) => { wtCrossings[yr] = findWTCrossing(yr, wtThresholdCurrent); });
 
-    function evaluate(threshold, useDualTrigger) {
+    function evaluate(gddT, wtT) {
+        // wtT === null betyr kun GDD (ingen dual-trigger)
         const errors = [];
         for (const [yr, obsStr] of obsEntries) {
-            const gddResult = calcGDDCrossingYear(airData, yr, threshold);
+            const gddResult = calcGDDCrossingYear(airData, yr, gddT);
             if (!gddResult) {
                 errors.push({ year: yr, predicted: null, observed: obsStr, error: null });
                 continue;
             }
             let predDateStr = gddResult.dateStr;
-            if (useDualTrigger && wtCrossings[yr]) {
-                predDateStr = predDateStr > wtCrossings[yr] ? predDateStr : wtCrossings[yr];
+            if (wtT !== null) {
+                const wtDate = findWTCrossing(yr, wtT);
+                if (wtDate) {
+                    predDateStr = predDateStr > wtDate ? predDateStr : wtDate;
+                }
             }
             const diffDays = Math.round((new Date(predDateStr) - new Date(obsStr)) / 86400000);
             errors.push({ year: yr, predicted: predDateStr, observed: obsStr, error: diffDays });
@@ -3605,11 +3609,29 @@ function runCalibration(airData, wtData) {
         return { mae, bias, rmse, errors };
     }
 
-    const resultsGddOnly = thresholds.map(t => ({ threshold: t, ...evaluate(t, false) }));
-    const resultsDual    = thresholds.map(t => ({ threshold: t, ...evaluate(t, true)  }));
+    const resultsGddOnly = thresholds.map(t => ({ threshold: t, ...evaluate(t, null) }));
+    const resultsDual    = thresholds.map(t => ({ threshold: t, ...evaluate(t, wtThresholdCurrent)  }));
 
     const bestGdd  = resultsGddOnly.filter(r => r.mae !== null).reduce((a, b) => a.mae < b.mae ? a : b);
     const bestDual = resultsDual.filter(r => r.mae !== null).reduce((a, b) => a.mae < b.mae ? a : b);
+
+    // 2D-søk: GDD × WT ───────────────────────────────────────────────
+    const gddRange = [];
+    for (let t = 400; t <= 540; t += 5) gddRange.push(t);
+    const wtRange = [];
+    for (let t = 11; t <= 17; t += 0.5) wtRange.push(t);
+
+    const grid = []; // {gdd, wt, mae, bias, rmse, errors}
+    for (const gdd of gddRange) {
+        for (const wt of wtRange) {
+            const r = evaluate(gdd, wt);
+            grid.push({ gdd, wt, ...r });
+        }
+    }
+    const valid2D = grid.filter(r => r.mae !== null);
+    const best2D = valid2D.reduce((a, b) => a.mae < b.mae ? a : b);
+    // Sortert topp-liste
+    const top2D = [...valid2D].sort((a, b) => a.mae - b.mae).slice(0, 15);
 
     function fmtErr(e) {
         if (e.error === null) return '<span style="color:#999">—</span>';
@@ -3666,8 +3688,93 @@ function runCalibration(airData, wtData) {
     }).join('');
 
     const currentThreshold = LOC.gddThreshold;
-    const currentEvalGdd = evaluate(currentThreshold, false);
-    const currentEvalDual = evaluate(currentThreshold, true);
+    const currentEvalGdd = evaluate(currentThreshold, null);
+    const currentEvalDual = evaluate(currentThreshold, wtThresholdCurrent);
+
+    // Heatmap: cellfarge basert på MAE (grønn = lav, rød = høy)
+    function maeColor(mae, minMae, maxMae) {
+        const t = (mae - minMae) / (maxMae - minMae);  // 0 = best, 1 = worst
+        // Grønn (76, 175, 80) → Gul (255, 220, 100) → Rød (200, 50, 50)
+        let r, g, b;
+        if (t < 0.5) {
+            const u = t * 2;
+            r = Math.round(76 + u * (255 - 76));
+            g = Math.round(175 + u * (220 - 175));
+            b = Math.round(80 + u * (100 - 80));
+        } else {
+            const u = (t - 0.5) * 2;
+            r = Math.round(255 - u * (255 - 200));
+            g = Math.round(220 - u * (220 - 50));
+            b = Math.round(100 - u * (100 - 50));
+        }
+        return `rgb(${r},${g},${b})`;
+    }
+
+    function renderHeatmap() {
+        const minMae = Math.min(...valid2D.map(r => r.mae));
+        const maxMae = Math.min(15, Math.max(...valid2D.map(r => r.mae)));
+        const wtHeader = wtRange.map(wt =>
+            `<th style="padding:4px 6px;text-align:center;font-size:0.78rem;background:#1B4332;color:white">${wt.toFixed(1)}</th>`
+        ).join('');
+        const rows = gddRange.map(gdd => {
+            const cells = wtRange.map(wt => {
+                const r = grid.find(g => g.gdd === gdd && g.wt === wt);
+                if (!r || r.mae === null) return '<td style="padding:4px 6px">–</td>';
+                const isBest = (r.gdd === best2D.gdd && r.wt === best2D.wt);
+                const bg = maeColor(r.mae, minMae, maxMae);
+                const star = isBest ? ' ★' : '';
+                const border = isBest ? 'border:2px solid #1B4332;' : '';
+                return `<td title="GDD ${gdd}, WT ${wt}°C: MAE ${r.mae.toFixed(2)} d, bias ${r.bias > 0 ? '+' : ''}${r.bias.toFixed(2)} d" style="padding:4px 6px;text-align:center;background:${bg};color:#000;font-size:0.75rem;${border}">${r.mae.toFixed(1)}${star}</td>`;
+            }).join('');
+            return `<tr><th style="padding:4px 8px;text-align:right;background:#f0f5f0;font-size:0.78rem">${gdd}</th>${cells}</tr>`;
+        }).join('');
+        return `
+            <h3 style="margin:18px 0 10px">C. 2D-søk — GDD × vanntemperatur</h3>
+            <p style="font-size:0.85rem;color:#666;margin:0 0 10px">Cellverdi = MAE (dager). Farge fra grønn (lav MAE = god) til rød (høy MAE = dårlig). ★ = optimal kombinasjon. Hover for detaljer.</p>
+            <div style="overflow-x:auto;margin-bottom:14px">
+                <table style="border-collapse:collapse;font-family:inherit">
+                    <thead><tr><th style="padding:4px 8px;background:#1B4332;color:white;font-size:0.78rem">GDD ↓ \\ WT °C →</th>${wtHeader}</tr></thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>`;
+    }
+
+    function renderTop2D() {
+        const yearHeaders = obsEntries.map(([y]) => `<th style="padding:6px 10px;text-align:right">${y}</th>`).join('');
+        const rows = top2D.map((r, i) => {
+            const isBest = i === 0;
+            const rowStyle = isBest ? 'background:#e8f5e9;font-weight:600' : '';
+            const errCells = obsEntries.map(([yr]) => {
+                const e = r.errors.find(x => x.year === yr) || {};
+                return `<td style="padding:6px 10px;text-align:right">${fmtErr(e)}</td>`;
+            }).join('');
+            return `<tr style="${rowStyle}">
+                <td style="padding:6px 10px">${r.gdd}${isBest ? ' ★' : ''}</td>
+                <td style="padding:6px 10px">${r.wt.toFixed(1)}°C</td>
+                <td style="padding:6px 10px;text-align:right">${r.mae.toFixed(2)}</td>
+                <td style="padding:6px 10px;text-align:right">${r.bias > 0 ? '+' : ''}${r.bias.toFixed(2)}</td>
+                <td style="padding:6px 10px;text-align:right">${r.rmse.toFixed(2)}</td>
+                ${errCells}
+            </tr>`;
+        }).join('');
+        return `
+            <h4 style="margin:14px 0 6px">Topp 15 kombinasjoner (sortert på MAE)</h4>
+            <div style="overflow-x:auto">
+                <table style="border-collapse:collapse;font-size:0.85rem;width:100%;min-width:600px">
+                    <thead>
+                        <tr style="background:#1B4332;color:white">
+                            <th style="padding:6px 10px;text-align:left">GDD</th>
+                            <th style="padding:6px 10px;text-align:left">WT°C</th>
+                            <th style="padding:6px 10px;text-align:right">MAE</th>
+                            <th style="padding:6px 10px;text-align:right">Bias</th>
+                            <th style="padding:6px 10px;text-align:right">RMSE</th>
+                            ${yearHeaders}
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>`;
+    }
 
     const panel = document.createElement('div');
     panel.id = 'calibPanel';
@@ -3681,27 +3788,30 @@ function runCalibration(airData, wtData) {
         <h3 style="margin:0 0 8px">Observasjoner brukt</h3>
         <div style="display:flex;gap:30px;flex-wrap:wrap;margin-bottom:18px">
             <table style="font-size:0.9rem"><thead><tr style="background:#f0f5f0"><th style="padding:6px 10px;text-align:left">År</th><th style="padding:6px 10px;text-align:left">${calibData.species} klekkedato</th></tr></thead><tbody>${obsTable}</tbody></table>
-            <table style="font-size:0.9rem"><thead><tr style="background:#f0f5f0"><th style="padding:6px 10px;text-align:left">År</th><th style="padding:6px 10px;text-align:left">Vanntemp ≥ ${wtThreshold}°C dato</th></tr></thead><tbody>${wtTable}</tbody></table>
+            <table style="font-size:0.9rem"><thead><tr style="background:#f0f5f0"><th style="padding:6px 10px;text-align:left">År</th><th style="padding:6px 10px;text-align:left">Vanntemp ≥ ${wtThresholdCurrent}°C dato</th></tr></thead><tbody>${wtTable}</tbody></table>
         </div>
 
         <div style="background:#fff8e1;padding:12px 16px;border-left:4px solid #f0d000;margin-bottom:18px">
-            <strong>Nåværende konfigurasjon:</strong> GDD-terskel ${currentThreshold} · Dual-trigger med vanntemp ≥ ${wtThreshold}°C<br>
+            <strong>Nåværende konfigurasjon:</strong> GDD-terskel ${currentThreshold} · Dual-trigger med vanntemp ≥ ${wtThresholdCurrent}°C<br>
             <span style="font-size:0.9rem">→ MAE (kun GDD): <strong>${currentEvalGdd.mae?.toFixed(2) || '–'} d</strong> · MAE (dual-trigger): <strong>${currentEvalDual.mae?.toFixed(2) || '–'} d</strong></span>
         </div>
 
         ${renderTable(resultsGddOnly, 'A. Optimalisering — kun GDD-modell', bestGdd)}
-        ${renderTable(resultsDual, 'B. Optimalisering — dual-trigger (siste av GDD og vanntemp ≥ ' + wtThreshold + '°C)', bestDual)}
+        ${renderTable(resultsDual, 'B. Optimalisering — dual-trigger (siste av GDD og vanntemp ≥ ' + wtThresholdCurrent + '°C, fast)', bestDual)}
+        ${renderHeatmap()}
+        ${renderTop2D()}
 
         <div style="margin-top:24px;padding:16px;background:#e8f5e9;border-radius:6px">
             <h3 style="margin:0 0 10px">Anbefaling</h3>
             <p style="margin:0 0 8px"><strong>Best kun-GDD:</strong> terskel ${bestGdd.threshold} · MAE ${bestGdd.mae.toFixed(2)} d</p>
-            <p style="margin:0 0 8px"><strong>Best dual-trigger:</strong> terskel ${bestDual.threshold} · MAE ${bestDual.mae.toFixed(2)} d</p>
+            <p style="margin:0 0 8px"><strong>Best dual-trigger (fast WT 12°C):</strong> terskel ${bestDual.threshold} · MAE ${bestDual.mae.toFixed(2)} d</p>
+            <p style="margin:0 0 8px"><strong>Best 2D (GDD × WT):</strong> GDD ${best2D.gdd} + WT ≥ ${best2D.wt.toFixed(1)}°C · MAE ${best2D.mae.toFixed(2)} d · Bias ${best2D.bias > 0 ? '+' : ''}${best2D.bias.toFixed(2)} d</p>
             <p style="margin:8px 0 0;font-size:0.9rem;color:#444">
-                Hvis dual-trigger gir markant lavere MAE, beholder vi den. Hvis kun-GDD vinner,
-                kan det tyde på at vanntemp-stasjonen ikke representerer biologisk vannmasse godt
-                (jf. Vestfjella-erfaring 2026-04-28). Sjekk vanntemp-tabellen øverst — hvis det
-                er år hvor vanntemp ≥ ${wtThreshold}°C aldri ble nådd eller kom svært sent, er
-                vanntemp-stasjonen ikke pålitelig for denne lokasjonen.
+                Hvis 2D-optimum gir markant lavere MAE enn både A og B, er det biologisk relevant
+                å heve vanntemp-terskelen for denne lokasjonen. Sett da
+                <code>wtThreshold: ${best2D.wt.toFixed(1)}</code> i LOC-blokken.
+                Hvis 2D-optimum bare ligger marginalt bedre, behold default-terskelen og rapporter
+                at vanntemp ikke er bindende her.
             </p>
         </div>
     `;
