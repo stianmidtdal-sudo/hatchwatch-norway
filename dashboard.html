@@ -3487,6 +3487,15 @@ async function main() {
         document.getElementById('loadingState').style.display = 'none';
         document.getElementById('dashboard').style.display    = '';
 
+        // ── KALIBRERINGSMODUS (?calib=1) ──────────────────────────────────
+        // Kjører optimaliseringssøk over GDD-tersklene for kjente klekke-
+        // observasjoner per lokasjon. Brukes når luftstasjon er endret og
+        // gammel terskel kan være feil-kalibrert. Resultatet vises som
+        // panel nederst på dashboardet.
+        if (new URLSearchParams(location.search).get('calib') === '1') {
+            runCalibration(airData, wtData);
+        }
+
         // GA: fire view_dashboard with rich context
         if (typeof gtag === 'function') {
             const bestEl   = document.getElementById('bestDate');
@@ -3513,6 +3522,182 @@ async function main() {
                 If the station ID is wrong, update it in <code>dashboard.html</code> → LOCATIONS config.
             </div>`;
     }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// KALIBRERINGSMODUS — søker optimal GDD-terskel mot observasjoner
+// ═══════════════════════════════════════════════════════════════════
+// Trigges av URL-param ?calib=1. Bruker LOC.observations (hardkodet per
+// lokasjon nedenfor) og kjører gjennom mulige terskler 400-600 i steg
+// av 5. Beregner MAE, bias og RMSE per terskel. Beste terskel uthevet.
+// Tar også hensyn til dual-trigger med vanntemp ≥ 12°C der relevant.
+const CALIBRATION_OBSERVATIONS = {
+    ostmarka: {
+        name: 'Østmarka (Børtervanna)',
+        species: 'Vulgata',
+        obs: {
+            2021: '2021-06-01',
+            2022: '2022-05-28',
+            2023: '2023-06-02',
+            2024: '2024-05-28',
+        },
+    },
+    // Andre lokasjoner kan legges til her ved behov
+};
+
+function runCalibration(airData, wtData) {
+    const calibData = CALIBRATION_OBSERVATIONS[LOC.id];
+    if (!calibData) {
+        const panel = document.createElement('div');
+        panel.style.cssText = 'margin:24px auto;padding:18px;max-width:900px;background:#fff8e1;border:1px solid #f0d000;border-radius:6px;font-family:inherit;';
+        panel.innerHTML = `<strong>⚠ Kalibreringsmodus aktiv</strong><br>Ingen observasjoner registrert for ${LOC.id}. Legg til i CALIBRATION_OBSERVATIONS.`;
+        document.body.appendChild(panel);
+        return;
+    }
+
+    const wtThreshold = getWtThreshold(LOC);
+
+    function findWTCrossing(year) {
+        const dates = Object.keys(wtData || {})
+            .filter(d => d.startsWith(String(year)) && d >= `${year}-04-01` && d <= `${year}-08-01`)
+            .sort();
+        for (const d of dates) {
+            if (wtData[d] != null && wtData[d] >= wtThreshold) return d;
+        }
+        return null;
+    }
+
+    const thresholds = [];
+    for (let t = 400; t <= 600; t += 5) thresholds.push(t);
+
+    const obsEntries = Object.entries(calibData.obs).map(([y, d]) => [parseInt(y), d]);
+    const wtCrossings = {};
+    obsEntries.forEach(([yr]) => { wtCrossings[yr] = findWTCrossing(yr); });
+
+    function evaluate(threshold, useDualTrigger) {
+        const errors = [];
+        for (const [yr, obsStr] of obsEntries) {
+            const gddResult = calcGDDCrossingYear(airData, yr, threshold);
+            if (!gddResult) {
+                errors.push({ year: yr, predicted: null, observed: obsStr, error: null });
+                continue;
+            }
+            let predDateStr = gddResult.dateStr;
+            if (useDualTrigger && wtCrossings[yr]) {
+                predDateStr = predDateStr > wtCrossings[yr] ? predDateStr : wtCrossings[yr];
+            }
+            const diffDays = Math.round((new Date(predDateStr) - new Date(obsStr)) / 86400000);
+            errors.push({ year: yr, predicted: predDateStr, observed: obsStr, error: diffDays });
+        }
+        const valid = errors.filter(e => e.error !== null).map(e => e.error);
+        if (valid.length === 0) return { mae: null, bias: null, rmse: null, errors };
+        const mae = valid.reduce((s, e) => s + Math.abs(e), 0) / valid.length;
+        const bias = valid.reduce((s, e) => s + e, 0) / valid.length;
+        const rmse = Math.sqrt(valid.reduce((s, e) => s + e*e, 0) / valid.length);
+        return { mae, bias, rmse, errors };
+    }
+
+    const resultsGddOnly = thresholds.map(t => ({ threshold: t, ...evaluate(t, false) }));
+    const resultsDual    = thresholds.map(t => ({ threshold: t, ...evaluate(t, true)  }));
+
+    const bestGdd  = resultsGddOnly.filter(r => r.mae !== null).reduce((a, b) => a.mae < b.mae ? a : b);
+    const bestDual = resultsDual.filter(r => r.mae !== null).reduce((a, b) => a.mae < b.mae ? a : b);
+
+    function fmtErr(e) {
+        if (e.error === null) return '<span style="color:#999">—</span>';
+        const sign = e.error > 0 ? '+' : '';
+        const color = Math.abs(e.error) <= 3 ? '#1B7A3E' : Math.abs(e.error) <= 7 ? '#cc8800' : '#80201a';
+        return `<span style="color:${color};font-weight:600">${sign}${e.error}d</span>`;
+    }
+
+    function renderTable(results, label, best) {
+        // Vis kun nær-optimale (innenfor +5 d MAE av beste)
+        const cutoff = best.mae + 5;
+        const filtered = results.filter(r => r.mae !== null && r.mae <= cutoff);
+        const yearHeaders = obsEntries.map(([y]) => `<th style="padding:6px 10px;text-align:right">${y}</th>`).join('');
+        const rows = filtered.map(r => {
+            const isBest = r.threshold === best.threshold;
+            const rowStyle = isBest
+                ? 'background:#e8f5e9;font-weight:600'
+                : '';
+            const errCells = obsEntries.map(([yr]) => {
+                const e = r.errors.find(x => x.year === yr) || {};
+                return `<td style="padding:6px 10px;text-align:right">${fmtErr(e)}</td>`;
+            }).join('');
+            return `<tr style="${rowStyle}">
+                <td style="padding:6px 10px">${r.threshold}${isBest ? ' ★' : ''}</td>
+                <td style="padding:6px 10px;text-align:right">${r.mae.toFixed(2)}</td>
+                <td style="padding:6px 10px;text-align:right">${r.bias > 0 ? '+' : ''}${r.bias.toFixed(2)}</td>
+                <td style="padding:6px 10px;text-align:right">${r.rmse.toFixed(2)}</td>
+                ${errCells}
+            </tr>`;
+        }).join('');
+        return `
+            <h3 style="margin:18px 0 10px">${label}</h3>
+            <p style="font-size:0.85rem;color:#666;margin:0 0 10px">★ = optimal terskel · viser kun terskler innenfor MAE+5 d av beste</p>
+            <div style="overflow-x:auto">
+                <table style="border-collapse:collapse;font-size:0.85rem;width:100%;min-width:600px">
+                    <thead>
+                        <tr style="background:#1B4332;color:white">
+                            <th style="padding:6px 10px;text-align:left">Terskel</th>
+                            <th style="padding:6px 10px;text-align:right">MAE (d)</th>
+                            <th style="padding:6px 10px;text-align:right">Bias (d)</th>
+                            <th style="padding:6px 10px;text-align:right">RMSE (d)</th>
+                            ${yearHeaders}
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>`;
+    }
+
+    const obsTable = obsEntries.map(([y, d]) => `<tr><td style="padding:4px 10px">${y}</td><td style="padding:4px 10px">${d}</td></tr>`).join('');
+    const wtTable = obsEntries.map(([y]) => {
+        const wt = wtCrossings[y];
+        return `<tr><td style="padding:4px 10px">${y}</td><td style="padding:4px 10px">${wt || '<span style="color:#999">ikke nådd / ingen data</span>'}</td></tr>`;
+    }).join('');
+
+    const currentThreshold = LOC.gddThreshold;
+    const currentEvalGdd = evaluate(currentThreshold, false);
+    const currentEvalDual = evaluate(currentThreshold, true);
+
+    const panel = document.createElement('div');
+    panel.id = 'calibPanel';
+    panel.style.cssText = 'margin:32px auto;padding:24px;max-width:1100px;background:#fff;border:2px solid #1B4332;border-radius:8px;font-family:inherit;box-shadow:0 4px 16px rgba(0,0,0,0.08)';
+    panel.innerHTML = `
+        <div style="background:#1B4332;color:white;padding:14px 20px;margin:-24px -24px 18px;border-radius:6px 6px 0 0">
+            <h2 style="margin:0;font-size:1.3rem">🔬 Kalibreringsmodus — ${calibData.name}</h2>
+            <div style="font-size:0.85rem;opacity:0.9;margin-top:4px">Optimal GDD-terskel for ${calibData.species}-observasjoner mot luftstasjon ${LOC.airStationName} (${LOC.frostStation})</div>
+        </div>
+
+        <h3 style="margin:0 0 8px">Observasjoner brukt</h3>
+        <div style="display:flex;gap:30px;flex-wrap:wrap;margin-bottom:18px">
+            <table style="font-size:0.9rem"><thead><tr style="background:#f0f5f0"><th style="padding:6px 10px;text-align:left">År</th><th style="padding:6px 10px;text-align:left">${calibData.species} klekkedato</th></tr></thead><tbody>${obsTable}</tbody></table>
+            <table style="font-size:0.9rem"><thead><tr style="background:#f0f5f0"><th style="padding:6px 10px;text-align:left">År</th><th style="padding:6px 10px;text-align:left">Vanntemp ≥ ${wtThreshold}°C dato</th></tr></thead><tbody>${wtTable}</tbody></table>
+        </div>
+
+        <div style="background:#fff8e1;padding:12px 16px;border-left:4px solid #f0d000;margin-bottom:18px">
+            <strong>Nåværende konfigurasjon:</strong> GDD-terskel ${currentThreshold} · Dual-trigger med vanntemp ≥ ${wtThreshold}°C<br>
+            <span style="font-size:0.9rem">→ MAE (kun GDD): <strong>${currentEvalGdd.mae?.toFixed(2) || '–'} d</strong> · MAE (dual-trigger): <strong>${currentEvalDual.mae?.toFixed(2) || '–'} d</strong></span>
+        </div>
+
+        ${renderTable(resultsGddOnly, 'A. Optimalisering — kun GDD-modell', bestGdd)}
+        ${renderTable(resultsDual, 'B. Optimalisering — dual-trigger (siste av GDD og vanntemp ≥ ' + wtThreshold + '°C)', bestDual)}
+
+        <div style="margin-top:24px;padding:16px;background:#e8f5e9;border-radius:6px">
+            <h3 style="margin:0 0 10px">Anbefaling</h3>
+            <p style="margin:0 0 8px"><strong>Best kun-GDD:</strong> terskel ${bestGdd.threshold} · MAE ${bestGdd.mae.toFixed(2)} d</p>
+            <p style="margin:0 0 8px"><strong>Best dual-trigger:</strong> terskel ${bestDual.threshold} · MAE ${bestDual.mae.toFixed(2)} d</p>
+            <p style="margin:8px 0 0;font-size:0.9rem;color:#444">
+                Hvis dual-trigger gir markant lavere MAE, beholder vi den. Hvis kun-GDD vinner,
+                kan det tyde på at vanntemp-stasjonen ikke representerer biologisk vannmasse godt
+                (jf. Vestfjella-erfaring 2026-04-28). Sjekk vanntemp-tabellen øverst — hvis det
+                er år hvor vanntemp ≥ ${wtThreshold}°C aldri ble nådd eller kom svært sent, er
+                vanntemp-stasjonen ikke pålitelig for denne lokasjonen.
+            </p>
+        </div>
+    `;
+    document.body.appendChild(panel);
 }
 
 main();
