@@ -842,12 +842,19 @@ const LOCATIONS = {
         waterStationName: 'Suohpatjohka',
         calibrated: true,
         showIce: true,
-        gddThreshold: 520,
-        uncertaintyDays: 2.1,
-        calibNoteNo:  'validert på 8 år (2016–2025)',
-        calibNoteEn:  'validated on 8 years (2016–2025)',
-        calibShortNo: '8 år',
-        calibShortEn: '8 yrs',
+        // Verifisert med 2D grid search 2026-04-29 (n=5: 2020-2024 klekkeobs i KAUTOKEINO_HIST).
+        // Heatmap viste bredt grønt felt GDD 475-525 × WT 11-15°C — modellen er robust mot
+        // parametervalg i denne sonen. Vanntemp er IKKE bindende — heving av WT-terskel gir
+        // ingen reell gevinst (artefakt av iterasjonsrekkefølge i grid search).
+        // Justert GDD 520 → 500 for marginal MAE-forbedring (~3,6 → 3,4 d).
+        // Beholder WT default 12°C — ingen biologisk grunn til å overstyre.
+        // 2020 (-10d bom) er begrensende ekstrem-år; ikke løsbart med GDD-justering.
+        gddThreshold: 500,
+        uncertaintyDays: 3.4,
+        calibNoteNo:  'n=5, 2020–2024 (2D grid search 2026-04-29: GDD 500, WT 12°C default)',
+        calibNoteEn:  'n=5, 2020–2024 (2D grid search 2026-04-29: GDD 500, WT 12°C default)',
+        calibShortNo: 'n=5 · GDD 500',
+        calibShortEn: 'n=5 · GDD 500',
         // Oppdatert 2026-04-28: byttet til Jorbajávri (sør for Cabara, ved flyplassen) —
         // dette er Stians referansevann for Kautokeino. Tidligere data var fra et annet vann.
         // Kilde: Sentinel Hub-observasjoner.
