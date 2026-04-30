@@ -2095,16 +2095,23 @@ function extrapolateWT(waterTempData) {
 // Ekstrapoler når vanntemp når terskel (default 12°C, kan overstyres per LOC).
 // Brukes både for "nåværende" estimat (asOfDate = i dag) og retrospektiv
 // prediksjonshistorikk i konvergensgrafen (asOfDate = en dag tilbake).
+//
+// STABILITETSKRAV (innført 2026-04-29 etter Stians Østmarka-spike-observasjon):
+// Ekstrapolasjon hopper når vanntemp-data er nylig ankommet og hellingen er
+// flat. Vi krever derfor minst 10 datapunkter i vinduet og current WT ≥ 5°C
+// (mot tidligere 4 / 3°C). Det utsetter dual-trigger-aktiveringen til vannet
+// faktisk har stabilisert seg, typisk tidlig mai. Spike i konvergensgrafen
+// ved sesongstart forsvinner.
 function extrapolateWTFromDate(waterTempData, asOfDate) {
     const cutoff = isoDate(asOfDate);
     const recent = Object.entries(waterTempData)
         .filter(([d]) => d.startsWith(String(YEAR)) && d <= cutoff)
         .sort(([a],[b]) => a < b ? -1 : 1)
         .slice(-21);  // 21-dags vindu — stabilere enn 14, enkeltdagsvariasjoner får mindre vekt
-    if (recent.length < 4) return null;
+    if (recent.length < 10) return null;       // STABILITETSKRAV: minst 10 datapunkter
     const temps = recent.map(([,v]) => v);
     const currentWT = temps.at(-1);
-    if (currentWT < 3) return null;
+    if (currentWT < 5) return null;            // STABILITETSKRAV: vannet må være varmet til ≥5°C
     const n = temps.length;
     const xs = temps.map((_, i) => i);
     const xm = xs.reduce((a,b) => a+b, 0) / n;
