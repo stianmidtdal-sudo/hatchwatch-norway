@@ -2237,6 +2237,65 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
     document.getElementById('hatchNote').textContent = hatchNote;
 }
 
+// ── ISOLERINGS-LEGEND-KLIKK (innført 2026-04-29) ───────────────────────────
+// Klikk på et år i legenden → vis kun det året (pluss inneværende år/terskel
+// som "alltid synlig"). Klikk samme år igjen → vis alle. Klikk et annet år →
+// bytt isolering. Terskel-linjer (f.eks. "12°C threshold") og inneværende år
+// holdes alltid synlige fordi de er kontekst, ikke et "år å sammenligne med".
+//
+// Brukes av vanntemp- og snø-grafene som har 10+ historiske år overlagt.
+// ───────────────────────────────────────────────────────────────────────────
+function makeIsolatingLegendClick() {
+    return function(e, legendItem, legend) {
+        const chart = legend.chart;
+        const datasets = chart.data.datasets;
+        const clickedIdx = legendItem.datasetIndex;
+        const clickedLabel = (datasets[clickedIdx].label || '').trim();
+
+        // Klassifiser etiketter:
+        //   '2020', '2021', ...                  → historisk år (toggle-able)
+        //   '2026 ★'                              → inneværende år (alltid synlig)
+        //   'Winter 2020', 'Winter 2021', ...    → historisk år (toggle-able)
+        //   'Winter 2026'                         → inneværende år (alltid synlig)
+        //   '12°C threshold' eller andre         → kontekst-linje (default toggle)
+        const isCurrentYear = (lbl) => {
+            if (lbl.includes('★')) return true;
+            const m = lbl.match(/^Winter (\d{4})$/);
+            if (m && parseInt(m[1]) === YEAR) return true;
+            return false;
+        };
+        const isHistoricYear = (lbl) => {
+            if (isCurrentYear(lbl)) return false;
+            if (/^\d{4}$/.test(lbl)) return true;
+            if (/^Winter \d{4}$/.test(lbl)) return true;
+            return false;
+        };
+
+        // For terskel-linjer / annet ikke-år: bruk Chart.js standard toggle
+        if (!isHistoricYear(clickedLabel)) {
+            const meta = chart.getDatasetMeta(clickedIdx);
+            meta.hidden = meta.hidden === null ? !chart.data.datasets[clickedIdx].hidden : !meta.hidden;
+            chart.update();
+            return;
+        }
+
+        // For historisk år: sjekk om vi allerede er i isolert modus
+        const visibleHistoric = datasets
+            .map((ds, i) => ({ ds, i, visible: !chart.getDatasetMeta(i).hidden }))
+            .filter(x => x.visible && isHistoricYear((x.ds.label || '').trim()));
+        const isAlreadyIsolated =
+            visibleHistoric.length === 1 && visibleHistoric[0].i === clickedIdx;
+
+        // Toggle: allerede isolert → vis alle; ellers → isoler klikket år
+        datasets.forEach((ds, i) => {
+            const lbl = (ds.label || '').trim();
+            if (!isHistoricYear(lbl)) return;  // skip terskel/inneværende år
+            chart.getDatasetMeta(i).hidden = isAlreadyIsolated ? false : (i !== clickedIdx);
+        });
+        chart.update();
+    };
+}
+
 function renderWaterTempChart(wtData) {
     if (!LOC.nveStation && !LOC.nveWaterTempStation) return;
 
@@ -2287,7 +2346,11 @@ function renderWaterTempChart(wtData) {
             responsive: true, maintainAspectRatio: false,
             interaction: { mode:'index', intersect:false },  // tooltip viser nærmeste x-posisjon, ikke krever direkte hit
             plugins: {
-                legend: { position:'right', labels: { boxWidth:14, font:{size:10}, padding:6 } },
+                legend: {
+                    position: 'right',
+                    labels: { boxWidth:14, font:{size:10}, padding:6 },
+                    onClick: makeIsolatingLegendClick(),  // klikk år → isoler det året
+                },
                 tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.parsed.y?.toFixed(1) ?? '–'} °C` } }
             },
             scales: {
@@ -2360,7 +2423,11 @@ function renderSnowChart(snowData) {
             responsive: true, maintainAspectRatio: false,
             interaction: { mode:'index', intersect:false },  // tooltip viser nærmeste x-posisjon, ikke krever direkte hit
             plugins: {
-                legend: { position:'right', labels:{boxWidth:14,font:{size:10},padding:6} },
+                legend: {
+                    position: 'right',
+                    labels: { boxWidth:14, font:{size:10}, padding:6 },
+                    onClick: makeIsolatingLegendClick(),  // klikk år → isoler det året
+                },
                 tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.parsed.y?.toFixed(0) ?? '–'} cm` } }
             },
             scales: {
