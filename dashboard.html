@@ -1809,6 +1809,17 @@ function computeHistoricalStats(airData, threshold, wtData) {
         return null;
     }
 
+    // Skuddår-fix (innført 2026-04-29 etter Stians observasjon på Kautokeino):
+    // doy() bruker hvert års eget kalenderår, så 22. juni er DOY 174 i 2024 (skuddår)
+    // men DOY 173 i 2026 (ikke-skuddår). Når vi rendret "Tidligst" via dateFromDoy(YEAR, 174)
+    // ble det 23. juni — én dag forskjøvet fra det tabellen viste (22. juni).
+    // Løsning: normaliser alle datoer til YEAR-referanse før DOY-beregning.
+    function normalizedDoy(dateStr) {
+        const dt = parseDate(dateStr);
+        const inYear = new Date(YEAR, dt.getMonth(), dt.getDate());
+        return doy(inYear);
+    }
+
     const crossings = [];
     for (const yr of histYears) {
         if (yr >= YEAR) continue;
@@ -1821,7 +1832,7 @@ function computeHistoricalStats(airData, threshold, wtData) {
                 finalDateStr = wtDate;
             }
         }
-        crossings.push({ year: yr, doy: doy(parseDate(finalDateStr)), dateStr: finalDateStr });
+        crossings.push({ year: yr, doy: normalizedDoy(finalDateStr), dateStr: finalDateStr });
     }
     if (crossings.length < 2) return null;
     const doys = crossings.map(c => c.doy).sort((a, b) => a - b);
