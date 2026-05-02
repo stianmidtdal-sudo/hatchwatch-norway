@@ -1424,6 +1424,31 @@ const LOCATIONS = {
             2019: '2019-06-13', 2018: '2018-05-30',
         },
     },
+    bergen: {
+        id: 'bergen',
+        area: 'Bergen',
+        name: 'Dyrdalsvatn',
+        place: 'Bergen',
+        region: 'Vestlandet',
+        // PLACEHOLDER-verdier — Stian må verifisere og justere lat/lon/altitude når
+        // fiskeplassens nøyaktige posisjon er bekreftet. NVE-region 55 dekker
+        // Eksingedalsvassdraget mellom Bergen og Voss.
+        lat: 60.50, lon: 5.70, altitude: 300, stationAltitude: 12,  // Bergen-Florida 12m
+        frostStation: 'SN50500',     // Bergen - Florida (urban, kan bli endret)
+        snowStation:  'SN50500',
+        nveStation:   '55.5.0',      // Dyrdalsvatn — satt opp 2026-04-29 av Stian
+        airStationName:   'Bergen - Florida',
+        waterStationName: 'Dyrdalsvatn',
+        calibrated: false,
+        gddThreshold: 520,
+        uncertaintyDays: 14,
+        isgangWater: 'Dyrdalsvatnet (samme som vanntemp-stasjon)',
+        isgangHistory: {
+            2025: '2025-05-16', 2024: '2024-04-24', 2023: '2023-04-23',
+            2022: '2022-04-29', 2021: '2021-04-19', 2020: '2020-04-13',
+            2019: '2019-04-09', 2018: '2018-05-09', 2017: '2017-04-25',
+        },
+    },
 };
 
 // ─── Kautokeino historical hatch data ─────────────────────────────
