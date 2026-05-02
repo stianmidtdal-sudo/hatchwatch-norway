@@ -1943,7 +1943,7 @@ function renderHistoricalGDDSection(stats, correctionDelta, snowData, airData) {
 
         html += `<tr>
             <td><strong>${c.year}</strong></td>
-            <td class="${cls}">${fmt(dateFromDoy(c.year, c.doy))}</td>
+            <td class="${cls}">${fmt(parseDate(c.dateStr))}</td>
             <td style="color:${col}">${sign}${diff} ${t('daysLabel')}</td>
             <td>${isgang}</td>
             <td>${snowFree}</td>
