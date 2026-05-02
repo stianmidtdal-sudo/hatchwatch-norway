@@ -835,7 +835,7 @@ const LOCATIONS = {
         name: 'Suohpatjohka',        // river used as temperature proxy
         place: 'Kautokeino',
         region: 'Finnmark',
-        lat: 69.01, lon: 23.04, altitude: 307, stationAltitude: 307,
+        lat: 69.01, lon: 23.04, altitude: 307, stationAltitude: 307, waterStationAltitude: 307,  // Suohpatjohka samme dalføre
         frostStation: 'SN93700',
         nveStation:   '212.26.0',
         airStationName:   'Kautokeino',
@@ -880,7 +880,7 @@ const LOCATIONS = {
         name: 'Altaelva',
         place: 'Alta',
         region: 'Finnmark',
-        lat: 69.97, lon: 23.27, altitude: 10, stationAltitude: 382,  // Sihccajavri 382m, fishing area ~10m
+        lat: 69.97, lon: 23.27, altitude: 10, stationAltitude: 382, waterStationAltitude: 10,  // Sihccajavri 382m luft, Kista lavlands ~10m
         frostStation: 'SN93900',
         nveStation:   '212.11.0',   // Kista — Alta
         airStationName:   'Alta',
@@ -902,7 +902,7 @@ const LOCATIONS = {
         name: 'Lakselva',
         place: 'Lakselv',
         region: 'Finnmark',
-        lat: 70.07, lon: 25.00, altitude: 10, stationAltitude: 131,  // Karasjok 131m, Lakselv ~5m
+        lat: 70.07, lon: 25.00, altitude: 10, stationAltitude: 131, waterStationAltitude: 10,  // Karasjok 131m luft, Lombola lavlands ~10m
         frostStation: 'SN97251',     // Karasjok — nearest verified station
         nveStation:   '223.2.0',    // Lombola — Porsanger
         airStationName:   'Karasjok',
@@ -924,7 +924,7 @@ const LOCATIONS = {
         name: 'Glåma',
         place: 'Røros',
         region: 'Trøndelag',
-        lat: 62.57, lon: 11.39, altitude: 628, stationAltitude: 638,
+        lat: 62.57, lon: 11.39, altitude: 628, stationAltitude: 638, waterStationAltitude: 628,  // Orva ved Røros samme høyde
         frostStation: 'SN10380',     // Røros lufthavn
         nveStation:   '2.61.0',     // Orva — sideelv til Glåma ved Røros, aktiv siden 1995
         airStationName:   'Røros lufthavn',
@@ -977,7 +977,7 @@ const LOCATIONS = {
         // Steg 2 (planlagt): klone til 'nordmarka_dyn' med altitudeAdjustable og
         //   dropdown for å velge ditt spesifikke OFA-vann. Denne entry forblir trygg baseline.
         // ─────────────────────────────────────────────────────────────────────
-        lat: 59.94, lon: 10.72, altitude: 370, stationAltitude: 380,
+        lat: 59.94, lon: 10.72, altitude: 370, stationAltitude: 380, waterStationAltitude: 370,  // Bjørnholt 380m luft, Sinnerdammen 370m vann
         frostStation: 'SN18500',     // Bjørnholt — Nordmarka, better proxy for fishing locations
         snowStation:  'SN18500',     // Bjørnholt — also has snow depth
         nveStation:   '6.71.0',     // Sinnerdammen — Nordmarka
@@ -1011,7 +1011,7 @@ const LOCATIONS = {
         name: 'Bjørnholt',
         place: 'Nordmarka',
         region: 'Østlandet',
-        lat: 59.94, lon: 10.72, altitude: 370, stationAltitude: 380,
+        lat: 59.94, lon: 10.72, altitude: 370, stationAltitude: 380, waterStationAltitude: 370,  // Bjørnholt 380m luft, Sinnerdammen 370m vann
         altitudeAdjustable: true,    // ⚡ Aktiverer dropdown for vann-valg
         ofaLakes: [                  // Kilde: OFAs liste (Oslomarka Fiskeadministrasjon)
             { name: 'Skillingen Store', altitude: 248 },
@@ -1085,7 +1085,7 @@ const LOCATIONS = {
         name: 'Børtervanna',
         place: 'Enebakk',
         region: 'Østlandet',
-        lat: 59.70, lon: 11.17, altitude: 170, stationAltitude: 130,  // Råken 130m, Børtervanna ~170m
+        lat: 59.70, lon: 11.17, altitude: 170, stationAltitude: 130, waterStationAltitude: 170,  // Råken 130m luft, Mønevann ved fiskeplass 170m
         frostStation: 'SN17640',     // FV155 Råken, Enebakk — daglig temp fra 2013-02
         snowStation:  'SN4040',      // Enebakk – Barbøl — snow depth
         nveStation:   '2.1213.0',    // Mønevann — vannstand/-temp Enebakk
@@ -1126,7 +1126,7 @@ const LOCATIONS = {
         name: 'Enningdalselva',
         place: 'Ørje',
         region: 'Østlandet',
-        lat: 59.30, lon: 11.66, altitude: 180, stationAltitude: 100,  // Rakkestad 100m
+        lat: 59.30, lon: 11.66, altitude: 180, stationAltitude: 100, waterStationAltitude: 180,  // Rakkestad 100m luft, Løkkeborg innsjø ved fiskeplass 180m
         frostStation: 'SN3290',      // Rakkestad — 100% dekning 2024-2025 (Ørje Vest SN1960 hadde kun 52% i 2025)
         snowStation:  'SN1950',      // Ørje — snow depth
         snowStationName:  'Ørje',
@@ -1153,7 +1153,7 @@ const LOCATIONS = {
         name: 'Tanaelva',
         place: 'Ifjordfjellet',
         region: 'Finnmark',
-        lat: 70.193, lon: 28.202, altitude: 10, stationAltitude: 32,  // Tana bru 32m
+        lat: 70.193, lon: 28.202, altitude: 10, stationAltitude: 32, waterStationAltitude: 10,  // Tana bru 32m luft, Polmak nye lavlands ~10m
         frostStation: 'SN96850',     // Tana bru
         snowStation:  'SN96850',
         nveStation:   '234.18.0',    // Polmak nye — Tana
@@ -1176,7 +1176,7 @@ const LOCATIONS = {
         name: 'Målselva',
         place: 'Dividalen',
         region: 'Troms',
-        lat: 68.671, lon: 19.795, altitude: 180, stationAltitude: 204,  // Dividalen II 204m
+        lat: 68.671, lon: 19.795, altitude: 180, stationAltitude: 204, waterStationAltitude: 180,  // Dividalen II 204m luft, Anjavannet ved fiskeplass 180m
         frostStation: 'SN89940',     // Dividalen II
         snowStation:  'SN89820',     // Separat snøstasjon med snødybde
         nveStation:   '196.26.0',    // Høgskarhus — Målselva
@@ -1202,7 +1202,7 @@ const LOCATIONS = {
         // offisielt "Bardufoss" siden den ligger på Bardufoss flyplass —
         // airStationName beholdes som "Bardufoss" for å reflektere faktisk
         // stasjonsdata (frost.met.no/sources viser SN89350 = Bardufoss).
-        lat: 69.036, lon: 18.820, altitude: 91, stationAltitude: 76,  // Bardufoss flyplass 76m
+        lat: 69.036, lon: 18.820, altitude: 91, stationAltitude: 76, waterStationAltitude: 91,  // Bardufoss flyplass 76m luft, Skogly ved fiskeplass 91m
         frostStation: 'SN89350',     // Bardufoss flyplass
         snowStation:  'SN89350',
         nveStation:   '196.21.0',    // Skogly (naturlig — 100% dekning for både vannføring og vanntemp, sesongvariasjon 1-18°C, nær Dividalen)
@@ -1228,7 +1228,7 @@ const LOCATIONS = {
         name: 'Taraldsvikelv / Elvegårdselva',
         place: 'Narvik',
         region: 'Nordland',
-        lat: 68.364, lon: 17.623, altitude: 50, stationAltitude: 200,  // Straumsnes 200m
+        lat: 68.364, lon: 17.623, altitude: 50, stationAltitude: 200, waterStationAltitude: 50,  // Straumsnes 200m luft, Taraldsvikelv lavlands ~50m
         frostStation: 'SN84500',     // Straumsnes
         snowStation:  'SN84500',
         nveStation:         '174.11.0',  // Taraldsvikelv — vannføring (data siden 1972)
@@ -1247,7 +1247,7 @@ const LOCATIONS = {
         name: 'Leiråga',
         place: 'Mo i Rana',
         region: 'Nordland',
-        lat: 66.360, lon: 14.692, altitude: 150, stationAltitude: 110,  // Storforshei 110m
+        lat: 66.360, lon: 14.692, altitude: 150, stationAltitude: 110, waterStationAltitude: 150,  // Storforshei 110m luft, Leiråga ved fiskeplass 150m
         frostStation: 'SN79700',     // Storforshei
         snowStation:  'SN79700',
         nveStation:   '156.27.0',    // Leiråga — Mo i Rana
@@ -1269,7 +1269,7 @@ const LOCATIONS = {
         name: 'Unkervatnet',
         place: 'Børgefjell',
         region: 'Nordland',
-        lat: 65.109, lon: 14.090, altitude: 469, stationAltitude: 460,  // Namsvatn II 460m
+        lat: 65.109, lon: 14.090, altitude: 469, stationAltitude: 460, waterStationAltitude: 469,  // Namsvatn II 460m luft, Landbru antas ved fiskeplass 469m (verifiseres)
         frostStation: 'SN74780',     // Namsvatn II
         snowStation:  'SN74780',
         nveStation:   '307.7.0',     // Landbru — byttet 2026-04-29 fra 151.70.0 Unkervatn
@@ -1291,7 +1291,7 @@ const LOCATIONS = {
         name: 'Skjellbreivatn',
         place: 'Lierne',
         region: 'Trøndelag',
-        lat: 64.185, lon: 13.145, altitude: 420, stationAltitude: 195,  // Snåsa - Kjevlia 195m
+        lat: 64.185, lon: 13.145, altitude: 420, stationAltitude: 195, waterStationAltitude: 420,  // Snåsa - Kjevlia 195m luft, Skjellbreivatn ved fiskeplass 420m
         frostStation: 'SN70850',     // Snåsa - Kjevlia
         snowStation:  'SN70850',
         nveStation:   '139.25.0',    // Skjellbreivatn — Lierne
@@ -1313,7 +1313,7 @@ const LOCATIONS = {
         name: 'Nidelva',
         place: 'Trondheim',
         region: 'Trøndelag',
-        lat: 63.483, lon: 10.812, altitude: 288, stationAltitude: 27,  // Kvithamar 27m
+        lat: 63.483, lon: 10.812, altitude: 288, stationAltitude: 27, waterStationAltitude: 288,  // Kvithamar 27m luft, Skjellbreia Bymarka ved fiskeplass 288m
         frostStation: 'SN69150',     // Kvithamar (luft)
         snowStation:  'SN68110',     // Skistua — snødybde (Kvithamar SN69150 rapporterer ikke snø)
         nveStation:   '123.95.0',    // Kobberdammen — Nidelva/Trondheim
@@ -1359,7 +1359,7 @@ const LOCATIONS = {
         // stationAltitude: 230m beholdt midlertidig — må verifiseres på
         // frost.met.no/sources for Ørnhaugen.
         // ─────────────────────────────────────────────────────────────────────
-        lat: 61.135, lon: 11.650, altitude: 209, stationAltitude: 230,  // TODO: verifiser Ørnhaugen høyde
+        lat: 61.135, lon: 11.650, altitude: 209, stationAltitude: 230, waterStationAltitude: 500,  // Ørnhaugen 230m luft. Femundselva v/Goffatømmerfloen ~500m (mellom Galtsjøen 590m og Engerdal 470m) — proxy fra naturlig elv siden Glomma-stasjoner er regulerte. Korrigerer +1°C på vanntemp for fiskeplass på 209m.
         frostStation: 'SN7420',      // Rena - Ørnhaugen (luft, mindre eksponert enn Rv3 Rena)
         snowStation:  'SN100',       // Plassen, Trysil (333m, aktiv siden 1901 — SN8140 Evenstad sluttet rapportere snø i 2002)
         snowStationName:  'Plassen, Trysil',
@@ -1383,7 +1383,7 @@ const LOCATIONS = {
         name: 'Elgtjern',
         place: 'Finnemarka',
         region: 'Østlandet',
-        lat: 59.855, lon: 10.303, altitude: 220, stationAltitude: 64,  // Geithus 64m (Modum)
+        lat: 59.855, lon: 10.303, altitude: 220, stationAltitude: 64, waterStationAltitude: 220,  // Geithus 64m luft, Elgtjern ved fiskeplass 220m
         frostStation: 'SN26500',     // Geithus, Modum (100% dekning 2024-2025, tilbake til 2016)
         snowStation:  'SN26996',     // Sande - Lauvkollmyr (437m, Holmestrand, 79-100% dekning siste vintre — bedre enn SN19930 Glitre som var glissent)
         snowStationName:  'Sande – Lauvkollmyr',
@@ -1407,7 +1407,7 @@ const LOCATIONS = {
         name: 'Kvenna',
         place: 'Hardangervidda',
         region: 'Telemark',
-        lat: 60.139, lon: 8.547, altitude: 1100, stationAltitude: 648,  // Fiskeplass: gjennomsnitt Hardangervidda ~1100m (Geitvatnet/Geitvassdalen og lignende). Stasjon: Uvdal kraftverk 648m
+        lat: 60.139, lon: 8.547, altitude: 1100, stationAltitude: 648, waterStationAltitude: 1000,  // Uvdal kraftverk 648m luft. Kvenna renner 40km fra Litlos (~1180m) til Møsvatn (919m) med 250m drop — stasjon midtveis ~1000m. Liten korreksjon (+0,35°C på vanntemp).
         frostStation: 'SN29350',     // Uvdal kraftverk
         snowStation:  'SN31080',     // Tessungdalen-Bakkhus (MET.NO, 762m, 8.6km)
         snowStationName:  'Tessungdalen-Bakkhus',
@@ -1433,7 +1433,7 @@ const LOCATIONS = {
         // PLACEHOLDER-verdier — Stian må verifisere og justere lat/lon/altitude når
         // fiskeplassens nøyaktige posisjon er bekreftet. NVE-region 55 dekker
         // Eksingedalsvassdraget mellom Bergen og Voss.
-        lat: 60.50, lon: 5.70, altitude: 300, stationAltitude: 12,  // Bergen-Florida 12m
+        lat: 60.50, lon: 5.70, altitude: 300, stationAltitude: 12, waterStationAltitude: 436,  // Bergen-Florida 12m luft, Dyrdalsvatn 436m vann
         frostStation: 'SN50500',     // Bergen - Florida (urban, kan bli endret)
         snowStation:  'SN50500',
         nveStation:   '55.5.0',      // Dyrdalsvatn — satt opp 2026-04-29 av Stian
@@ -1789,10 +1789,16 @@ function applyAltitudeCorrection(rawData) {
 
 // Vann har mildere lapse rate enn luft — typisk 0,35°C/100m.
 // Vann bufres av varmekapasitet, dybde, isavsmelting og grunnvannsinnblanding.
-// Brukes kun der fiskeplass (LOC.altitude) og stasjonshøyde (LOC.stationAltitude)
-// har meningsfull forskjell. Viktigst for høyfjellslokasjoner (Hardangervidda).
+//
+// VIKTIG (innført 2026-04-29): Tidligere brukte vi LOC.stationAltitude (luft-stasjon)
+// for vann-korreksjon også. Det var fysisk feil for lokasjoner hvor luft- og vann-
+// stasjon er på vesentlig ulike høyder (eks. Bergen: luft-stasjon 12m, vann-stasjon 436m).
+//
+// Nå bruker vi LOC.waterStationAltitude hvis satt, ellers faller tilbake til
+// LOC.stationAltitude (backward-kompatibelt). Standard for fremtidige lokasjoner:
+// sett alltid både stationAltitude (luft) og waterStationAltitude (vann), eksplisitt.
 function applyWaterAltitudeCorrection(rawData) {
-    const stationAlt = LOC.stationAltitude ?? getCurrentAltitude(LOC);
+    const stationAlt = LOC.waterStationAltitude ?? LOC.stationAltitude ?? getCurrentAltitude(LOC);
     const areaAlt    = getCurrentAltitude(LOC);
     const delta = (stationAlt - areaAlt) * 0.35 / 100;  // °C to add (vann lapse rate)
     if (Math.abs(delta) < 0.05) return { data: rawData, correction: 0 };
