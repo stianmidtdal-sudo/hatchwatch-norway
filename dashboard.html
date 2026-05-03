@@ -920,6 +920,40 @@ const LOCATIONS = {
             2019: '2019-05-19', 2018: '2018-05-23', 2017: '2017-06-10',
         },
     },
+    // ── kautokeino_test (TEST · rekalibrering med utvidet datasett) ─────────
+    // Speil av produksjons-kautokeino, men med calibrated:false og oppdatert
+    // observasjonssett (n=9 år, 2016+2018-2025) for ny grid search.
+    // Produksjons-kautokeino forblir uendret. Åpnes via:
+    //   ?loc=kautokeino_test  (vanlig dashboard)
+    //   ?loc=kautokeino_test&calib=1  (grid search heatmap)
+    // ────────────────────────────────────────────────────────────────────────
+    kautokeino_test: {
+        id: 'kautokeino_test',
+        area: 'Kautokeino (TEST)',
+        name: 'Suohpatjohka',
+        place: 'Kautokeino',
+        region: 'Finnmark',
+        lat: 69.01, lon: 23.04, altitude: 307, stationAltitude: 307, waterStationAltitude: 307,
+        frostStation: 'SN93700',
+        nveStation:   '212.26.0',
+        airStationName:   'Kautokeino',
+        waterStationName: 'Suohpatjohka',
+        calibrated: false,           // Test-modus — kjør grid search for ny optimum
+        showIce: true,
+        gddThreshold: 510,           // Start-verdi (samme som produksjon) — grid search finner ny optimum
+        uncertaintyDays: 14,         // Reset til prior til vi har ny kalibrering
+        calibNoteNo:  'TEST-lokasjon: rekalibrering med utvidet datasett (n=9 år, 2016+2018-2025). Kjør ?calib=1 for grid search.',
+        calibNoteEn:  'TEST location: re-calibration with extended dataset (n=9 years, 2016+2018-2025). Run ?calib=1 for grid search.',
+        calibShortNo: 'TEST · rekalibrering',
+        calibShortEn: 'TEST · re-calibration',
+        histYearsStart: 2016,
+        isgangWater: 'Jorbajávri (sør for Cabara)',
+        isgangHistory: {
+            2025: '2025-05-31', 2024: '2024-05-28', 2023: '2023-05-23',
+            2022: '2022-05-28', 2021: '2021-06-02', 2020: '2020-06-07',
+            2019: '2019-05-19', 2018: '2018-05-23', 2017: '2017-06-10',
+        },
+    },
     alta: {
         id: 'alta',
         area: 'Alta',
@@ -3996,6 +4030,26 @@ const CALIBRATION_OBSERVATIONS = {
             2019: '2019-06-17',  // Auretjerna 401m
             2022: '2022-06-23',  // snitt: Klattertjernet 19. + Fjellsjøen 27.
             2025: '2025-05-23',  // OFA-post — ekstrem varm vår
+        },
+    },
+    // ── kautokeino_test — utvidet datasett for rekalibrering ─────────────────
+    // n=9 år, mean per år på tvers av observasjonsstedene (sites maskert i kode).
+    // Datakilde: feltobs samlet i Excel-arket "Klekkeobs Kauto".
+    // Mean-aggregeringen håndterer at noen år har én obs, andre har 2-3 obs.
+    // Brukes for ny grid search via ?loc=kautokeino_test&calib=1.
+    kautokeino_test: {
+        name: 'Kautokeino (TEST · rekalibrering n=9)',
+        species: 'Vulgata/Grandis/Caddis',
+        obs: {
+            2016: '2016-07-03',  // mean av n=2
+            2018: '2018-07-07',  // n=1
+            2019: '2019-07-11',  // n=1
+            2020: '2020-06-27',  // n=1
+            2021: '2021-07-06',  // mean av n=2
+            2022: '2022-07-04',  // mean av n=2
+            2023: '2023-07-03',  // mean av n=3
+            2024: '2024-06-23',  // mean av n=2
+            2025: '2025-07-05',  // n=1
         },
     },
     // Andre lokasjoner kan legges til her ved behov
