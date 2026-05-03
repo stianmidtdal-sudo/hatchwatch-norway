@@ -541,6 +541,19 @@
 //  LANGUAGE / i18n
 // ═══════════════════════════════════════════════════════════════════
 const LANG = localStorage.getItem('lang') || 'no';
+// Tall-formatering med locale-bevisst desimaltegn. Brukes for ±X.Y dager o.l.
+// hvor NO-UI bruker komma (5,8) og EN-UI bruker punktum (5.8).
+// Heltall renderes uten desimal (14, ikke 14,0). Float runder til `decimals`.
+function fmtNum(n, decimals = 1) {
+    if (n == null || isNaN(n)) return '–';
+    let s;
+    if (typeof n === 'number') {
+        s = Number.isInteger(n) ? String(n) : n.toFixed(decimals);
+    } else {
+        s = String(n);
+    }
+    return LANG === 'no' ? s.replace('.', ',') : s;
+}
 const T = {
   no: {
     backLink: '← Alle steder',
@@ -679,7 +692,7 @@ const T = {
     pctOfTarget: '% av',
     fiveYearAvg: '5-årig gjennomsnitt samme dato:',
     vsAvg: 'vs. snitt',
-    latestOf: 'siste av: GDD ≥ 520 + vanntemp ≥ 12°C',
+    latestOf: (gddT, wtT) => `siste av: GDD ≥ ${gddT} + vanntemp ≥ ${wtT}°C`,
     gddTriggerOnly: 'Kun GDD-trigger — for tidlig å ekstrapolere vanntemp',
     updatedLabel: 'Oppdatert:',
     loadingText: 'Laster…',
@@ -821,7 +834,7 @@ const T = {
     pctOfTarget: '% of',
     fiveYearAvg: '5-year average same date:',
     vsAvg: 'vs avg',
-    latestOf: 'latest of: GDD ≥ 520 + water temp ≥ 12°C',
+    latestOf: (gddT, wtT) => `latest of: GDD ≥ ${gddT} + water temp ≥ ${wtT}°C`,
     gddTriggerOnly: 'GDD trigger only — too early to extrapolate water temp',
     updatedLabel: 'Updated:',
     loadingText: 'Loading…',
@@ -1644,8 +1657,8 @@ if (snowNoteEl) snowNoteEl.textContent = `${t('stationLabel')}: ${snowNoteName} 
 // Model heading
 document.getElementById('modelHeading').textContent =
     LOC.calibrated
-        ? `${t('dualTriggerLabel')} ${LOC.gddThreshold} (bt = 0°C, ${t('fromJan1')}) + ${t('waterTemp')} ≥ ${getWtThreshold(LOC)}°C · ${t('stdShort')} = ±${LOC.uncertaintyDays} ${t('daysLabel')}`
-        : `${t('gddPriorLabel')} ${LOC.gddThreshold} GDD (bt = 0°C) · ${t('priorUncLabel')} ±${LOC.uncertaintyDays} ${t('daysLabel')}`;
+        ? `${t('dualTriggerLabel')} ${LOC.gddThreshold} (bt = 0°C, ${t('fromJan1')}) + ${t('waterTemp')} ≥ ${getWtThreshold(LOC)}°C · ${t('stdShort')} = ±${fmtNum(LOC.uncertaintyDays)} ${t('daysLabel')}`
+        : `${t('gddPriorLabel')} ${LOC.gddThreshold} GDD (bt = 0°C) · ${t('priorUncLabel')} ±${fmtNum(LOC.uncertaintyDays)} ${t('daysLabel')}`;
 
 const _snowHdrStnId = LOC.snowStation || LOC.frostStation;
 const snowHdrName = LOC.snowStationName
@@ -2124,7 +2137,7 @@ function renderHistoricalGDDSection(stats, correctionDelta, snowData, airData) {
             <td>${isgang}</td>
             <td>${snowFree}</td>
             <td>${maxSnow != null ? Math.round(maxSnow) : '–'}</td>`;
-        if (LOC.showIce) html += `<td>${iceCm > 0 ? iceCm.toFixed(1) : '–'}</td>`;
+        if (LOC.showIce) html += `<td>${iceCm > 0 ? fmtNum(iceCm) : '–'}</td>`;
         html += `</tr>`;
     }
     html += `</tbody></table></div>`;
@@ -2370,17 +2383,17 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
     const remaining = Math.max(0, LOC.gddThreshold - currentADG);
     const pct = Math.min(100, currentADG / LOC.gddThreshold * 100);
 
-    document.getElementById('adgNow').textContent  = currentADG.toFixed(1);
-    document.getElementById('adgLeft').textContent = remaining.toFixed(1);
+    document.getElementById('adgNow').textContent  = fmtNum(currentADG);
+    document.getElementById('adgLeft').textContent = fmtNum(remaining);
     document.getElementById('adgBar').style.width  = pct + '%';
-    document.getElementById('adgPct').textContent  = `${pct.toFixed(1)}${t('pctOfTarget')} ${LOC.gddThreshold} GDD`;
+    document.getElementById('adgPct').textContent  = `${fmtNum(pct)}${t('pctOfTarget')} ${LOC.gddThreshold} GDD`;
 
     const diff = currentADG - histADG;
     const sign = diff >= 0 ? '+' : '';
     const pctDiff = histADG > 0 ? (diff / histADG * 100) : 0;
     const pctSign = pctDiff >= 0 ? '+' : '';
     document.getElementById('adgCompareBand').textContent =
-        `${t('fiveYearAvg')} ${histADG.toFixed(1)} GDD  (${sign}${diff.toFixed(1)} GDD / ${pctSign}${pctDiff.toFixed(1)}% ${t('vsAvg')})`;
+        `${t('fiveYearAvg')} ${fmtNum(histADG)} GDD  (${sign}${fmtNum(diff)} GDD / ${pctSign}${fmtNum(pctDiff)}% ${t('vsAvg')})`;
 
     // Usikkerhet: for kalibrerte lokasjoner (Kautokeino) bruker vi MAE fra Excel-valideringen
     // (n=8 år, 2016-2025 ekskl. 2020). Det er den faktiske prediksjonsfeilen ved sesongslutt.
@@ -2415,18 +2428,19 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
     // Kalibrerte: baseline ±2,1 d fra Excel-validering (n=8 år) — modulert dynamisk.
     // Ukalibrerte: baseline 14 d (prior) — modulert dynamisk.
     document.getElementById('modelHeading').textContent = LOC.calibrated
-        ? `${t('dualTriggerLabel')} ${LOC.gddThreshold} (bt = 0°C, ${t('fromJan1')}) + ${t('waterTemp')} ≥ ${getWtThreshold(LOC)}°C · ${t('stdShort')} = ±${uncDays.toFixed(1)} ${t('daysLabel')}`
+        ? `${t('dualTriggerLabel')} ${LOC.gddThreshold} (bt = 0°C, ${t('fromJan1')}) + ${t('waterTemp')} ≥ ${getWtThreshold(LOC)}°C · ${t('stdShort')} = ±${fmtNum(uncDays)} ${t('daysLabel')}`
         : `${t('gddPriorLabel')} ${LOC.gddThreshold} GDD (bt = 0°C) · ${t('indicativeLabel').toLowerCase()}`;
 
-    // Dual-trigger: latest of GDD ≥ 520 og vanntemp ≥ 12°C.
+    // Dual-trigger: latest of GDD ≥ LOC.gddThreshold og vanntemp ≥ getWtThreshold(LOC).
     // Gjelder ALLE lokasjoner med vanntemp-data, ikke bare kalibrerte.
-    // Vanntemp 12°C er en universell biofysisk terskel for døgnflueklekking;
-    // GDD 520 er lokalspesifikk-kalibrert. Kombinasjonen gir konservativ prediksjon.
+    // Vanntemp er en biofysisk terskel for døgnflueklekking (default 12°C, kan
+    // overstyres per LOC.wtThreshold). GDD-terskelen er lokalspesifikk-kalibrert.
+    // Kombinasjonen gir konservativ prediksjon.
     let hatchDate = adgDate;
     let hatchNote = '';
     if (adgDate && wtDate) {
         hatchDate = adgDate > wtDate ? adgDate : wtDate;
-        hatchNote = t('latestOf');
+        hatchNote = t('latestOf')(LOC.gddThreshold, getWtThreshold(LOC));
     } else if (adgDate) {
         hatchNote = t('gddTriggerOnly');
     }
@@ -3420,7 +3434,7 @@ function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate, airDa
     }
     if (adgDate) {
         const gddNote = LOC.calibrated
-            ? `${t('gddModelShort')} — ±${uncDays.toFixed(1)} ${t('daysLabel')} (${uncSource})`
+            ? `${t('gddModelShort')} — ±${fmtNum(uncDays)} ${t('daysLabel')} (${uncSource})`
             : `${t('gddModelShort')} — ${t('indicativeLabel').toLowerCase()}`;
         candidates.push({ date: adgDate, unc: parseFloat(uncDays), note: gddNote });
     }
@@ -4159,7 +4173,7 @@ function runCalibration(airData, wtData) {
         <div style="margin-top:24px;padding:16px;background:#e8f5e9;border-radius:6px">
             <h3 style="margin:0 0 10px">Anbefaling</h3>
             <p style="margin:0 0 8px"><strong>Best kun-GDD:</strong> terskel ${bestGdd.threshold} · MAE ${bestGdd.mae.toFixed(2)} d</p>
-            <p style="margin:0 0 8px"><strong>Best dual-trigger (fast WT 12°C):</strong> terskel ${bestDual.threshold} · MAE ${bestDual.mae.toFixed(2)} d</p>
+            <p style="margin:0 0 8px"><strong>Best dual-trigger (fast WT ${wtThresholdCurrent}°C):</strong> terskel ${bestDual.threshold} · MAE ${bestDual.mae.toFixed(2)} d</p>
             <p style="margin:0 0 8px"><strong>Best 2D (GDD × WT):</strong> GDD ${best2D.gdd} + WT ≥ ${best2D.wt.toFixed(1)}°C · MAE ${best2D.mae.toFixed(2)} d · Bias ${best2D.bias > 0 ? '+' : ''}${best2D.bias.toFixed(2)} d</p>
             <p style="margin:8px 0 0;font-size:0.9rem;color:#444">
                 Hvis 2D-optimum gir markant lavere MAE enn både A og B, er det biologisk relevant
