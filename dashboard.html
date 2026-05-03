@@ -295,6 +295,11 @@
         .loading-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 20px; gap: 16px; color: #555; }
         .spinner { width: 42px; height: 42px; border: 3px solid #d0e8da; border-top-color: #2D6A4F; border-radius: 50%; animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes welcome-fade {
+            from { opacity: 0; transform: translateY(-10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        #forecastTestOverlay.open { display: flex !important; }
         .error-box { background: #fff3f0; border: 1px solid #f5a090; border-radius: 10px; padding: 20px; color: #a03020; font-size: 0.86rem; line-height: 1.6; }
         .error-box strong { display: block; margin-bottom: 8px; font-size: 1rem; }
         .error-box code { background: #fde; padding: 2px 6px; border-radius: 4px; font-size: 0.82rem; }
@@ -365,12 +370,17 @@
             <span data-i18n-html="priorNoticeText">⚠ <strong>Indikativ prognose:</strong> Modellen bruker kalibrerte GDD-parametere, men er ikke validert mot observerte klekkedatoer for denne lokasjonen. Bruk som veiledning. Vær fra nærmeste MET Norge-stasjon.</span>
         </div>
 
-        <!-- ═══ TEST-BANNER FOR LANGTIDSVARSEL (vises kun for lokasjoner med useLongTermForecast) ═══ -->
-        <div id="forecastTestBanner" style="display:none; background:#e8f4ed; border:1px solid #4a9e7a; border-radius:8px; padding:14px 18px; margin:0 0 16px; position:relative; font-size:0.92rem; color:#1B4332;">
-            <strong>🧪 Ny funksjonalitet testes på denne lokasjonen</strong> — integrasjon av MET sin 9-dagers værvarsel direkte i klekkeprediksjonen.
-            Dette gjør prognosen mer presis i tiden frem til klekking, men er fortsatt under testing.
-            Hvis noe ser rart ut, er det nyttig å rapportere via tilbakemelding-knappen nederst.
-            <button id="dismissForecastBanner" aria-label="Lukk" style="position:absolute; top:8px; right:10px; background:none; border:none; cursor:pointer; font-size:1.2rem; color:#1B4332; line-height:1; padding:4px 8px;">×</button>
+        <!-- ═══ TEST-POPUP FOR LANGTIDSVARSEL (vises kun for lokasjoner med useLongTermForecast) ═══ -->
+        <!-- Vises som modal-overlay første gang brukeren åpner en lokasjon med flagget. Lukkes med × eller bakgrunnsklikk. -->
+        <div id="forecastTestOverlay" onclick="if(event.target===this){this.classList.remove('open');try{localStorage.setItem(`hw_forecast_popup_seen_${LOC.id}`,'1')}catch(e){}}" style="display:none; position:fixed; inset:0; background:rgba(13,31,23,0.78); z-index:1000; align-items:flex-start; justify-content:center; padding:40px 20px; overflow-y:auto;">
+            <div style="background:white; border-radius:14px; padding:36px 32px 30px; max-width:560px; width:100%; box-shadow:0 12px 48px rgba(0,0,0,0.25); position:relative; animation:welcome-fade 0.25s ease;">
+                <button id="forecastPopupCloseX" aria-label="Lukk" style="position:absolute; top:12px; right:16px; background:none; border:none; font-size:26px; color:#999; cursor:pointer; line-height:1; padding:4px 8px;">×</button>
+                <h2 style="font-size:1.35rem; color:#1B4332; margin-bottom:14px; font-weight:800;">Ny funksjonalitet testes</h2>
+                <p style="font-size:0.94rem; line-height:1.55; color:#2d3a35; margin-bottom:18px;">
+                    Ny funksjonalitet testes på denne lokasjonen — integrasjon av MET sitt langtidsvarsel direkte i klekkeprediksjonen. Dette gjør prognosen mer presis i tiden frem til klekking, men er fortsatt under testing. Hvis noe ser rart ut, er det nyttig å rapportere via tilbakemelding-knappen nederst.
+                </p>
+                <button id="forecastPopupDismiss" style="display:inline-block; background:#1B4332; color:white; padding:10px 26px; border:none; border-radius:8px; font-size:0.92rem; font-weight:700; cursor:pointer; margin-top:6px;">Skjønner!</button>
+            </div>
         </div>
 
         <!-- ═══ LOCATION INFO STRIP ═══ -->
@@ -1546,24 +1556,26 @@ if (!LOC.calibrated) {
     document.getElementById('priorNotice').style.display = '';
 }
 
-// Test-banner for langtidsvarsel: vis når lokasjonen har useLongTermForecast
-// og brukeren ikke har lukket banneret før (lagret per-lokasjon i localStorage).
-// ?forecast=0 i URL skjuler også banneret (ikke aktiv testing for den brukeren).
-(function setupForecastTestBanner() {
+// Test-popup for langtidsvarsel: vises som modal første gang brukeren åpner
+// en lokasjon med useLongTermForecast: true. Lukkes med × eller "Skjønner!"-knapp.
+// Lagres per-lokasjon i localStorage så brukeren ikke får den igjen.
+// ?forecast=0 i URL skjuler popupen (ikke aktiv testing for den brukeren).
+(function setupForecastTestPopup() {
     if (!LOC.useLongTermForecast) return;
     if (new URLSearchParams(location.search).get('forecast') === '0') return;
-    const dismissKey = `hw_forecast_banner_dismissed_${LOC.id}`;
-    if (localStorage.getItem(dismissKey) === '1') return;
-    const banner = document.getElementById('forecastTestBanner');
-    if (!banner) return;
-    banner.style.display = '';
-    const btn = document.getElementById('dismissForecastBanner');
-    if (btn) {
-        btn.addEventListener('click', () => {
-            localStorage.setItem(dismissKey, '1');
-            banner.style.display = 'none';
-        });
+    const seenKey = `hw_forecast_popup_seen_${LOC.id}`;
+    if (localStorage.getItem(seenKey) === '1') return;
+    const overlay = document.getElementById('forecastTestOverlay');
+    if (!overlay) return;
+    overlay.classList.add('open');
+    function dismiss() {
+        overlay.classList.remove('open');
+        try { localStorage.setItem(seenKey, '1'); } catch (e) {}
     }
+    const closeX = document.getElementById('forecastPopupCloseX');
+    const dismissBtn = document.getElementById('forecastPopupDismiss');
+    if (closeX) closeX.addEventListener('click', dismiss);
+    if (dismissBtn) dismissBtn.addEventListener('click', dismiss);
 })();
 
 // Water sections
