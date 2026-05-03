@@ -921,11 +921,13 @@ const LOCATIONS = {
         },
     },
     // ── kautokeino_test (TEST · rekalibrering med utvidet datasett) ─────────
-    // Speil av produksjons-kautokeino, men med calibrated:false og oppdatert
-    // observasjonssett (n=9 år, 2016+2018-2025) for ny grid search.
-    // Produksjons-kautokeino forblir uendret. Åpnes via:
+    // Speil av produksjons-kautokeino, men med oppdatert observasjonssett
+    // (n=9 år, 2016+2018-2025) i CALIBRATION_OBSERVATIONS for ny grid search.
+    // Parametere identiske med prod inntil ny optimum er VERIFISERT via
+    // heatmap (?calib=1). Produksjons-kautokeino forblir uendret.
+    // Åpnes via:
     //   ?loc=kautokeino_test  (vanlig dashboard)
-    //   ?loc=kautokeino_test&calib=1  (grid search heatmap)
+    //   ?loc=kautokeino_test&calib=1  (grid search heatmap — kjør for å se ny optimum)
     // ────────────────────────────────────────────────────────────────────────
     kautokeino_test: {
         id: 'kautokeino_test',
@@ -938,14 +940,14 @@ const LOCATIONS = {
         nveStation:   '212.26.0',
         airStationName:   'Kautokeino',
         waterStationName: 'Suohpatjohka',
-        calibrated: false,           // Test-modus — kjør grid search for ny optimum
+        calibrated: false,           // Ikke kalibrert ennå — venter på heatmap-resultat
         showIce: true,
-        gddThreshold: 510,           // Start-verdi (samme som produksjon) — grid search finner ny optimum
-        uncertaintyDays: 14,         // Reset til prior til vi har ny kalibrering
-        calibNoteNo:  'TEST-lokasjon: rekalibrering med utvidet datasett (n=9 år, 2016+2018-2025). Kjør ?calib=1 for grid search.',
-        calibNoteEn:  'TEST location: re-calibration with extended dataset (n=9 years, 2016+2018-2025). Run ?calib=1 for grid search.',
-        calibShortNo: 'TEST · rekalibrering',
-        calibShortEn: 'TEST · re-calibration',
+        gddThreshold: 510,           // Samme som prod — grid search finner ny optimum
+        uncertaintyDays: 14,         // Prior til ny kalibrering er bekreftet
+        calibNoteNo:  'TEST-lokasjon: utvidet observasjonssett (n=9 år, 2016+2018-2025). Parametere = prod inntil heatmap kjøres. Kjør ?calib=1 for grid search.',
+        calibNoteEn:  'TEST location: extended observations (n=9 years, 2016+2018-2025). Parameters = production until heatmap is run. Run ?calib=1 for grid search.',
+        calibShortNo: 'TEST · venter på rekalibrering',
+        calibShortEn: 'TEST · awaiting re-calibration',
         histYearsStart: 2016,
         isgangWater: 'Jorbajávri (sør for Cabara)',
         isgangHistory: {
