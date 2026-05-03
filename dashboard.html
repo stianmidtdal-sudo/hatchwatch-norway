@@ -920,11 +920,12 @@ const LOCATIONS = {
             2019: '2019-05-19', 2018: '2018-05-23', 2017: '2017-06-10',
         },
     },
-    // ── kautokeino_test (TEST · hypotese-test Site_S alene) ─────────────────
+    // ── kautokeino_test (TEST · E1 reproduksjon av Excel-modell) ────────────
     // Speil av produksjons-kautokeino, men CALIBRATION_OBSERVATIONS er nå
-    // KUN Site_S (n=5, 2021-2025) for å teste hypotesen om at WT-trigger
-    // virket før fordi data var fra ett site med konsistent termisk respons.
+    // earliest per år (alle arter) med 2020 ekskludert — matcher tankegangen
+    // i Excel-arket "Klekkeanalyse" som ga GDD 520 + WT 12°C, MAE 2.1d.
     // Parametere identiske med prod. Produksjons-kautokeino forblir uendret.
+    // Forventet: heatmap viser optimum nær GDD 520 + WT 12°C bindende.
     // Åpnes via:
     //   ?loc=kautokeino_test  (vanlig dashboard)
     //   ?loc=kautokeino_test&calib=1  (grid search heatmap — vis ny optimum)
@@ -944,10 +945,10 @@ const LOCATIONS = {
         showIce: true,
         gddThreshold: 510,           // Samme som prod — grid search finner ny optimum
         uncertaintyDays: 14,         // Prior til ny kalibrering er bekreftet
-        calibNoteNo:  'TEST-lokasjon: Site_S alene (n=5, 2021-2025) for hypotese-test av WT-trigger. Parametere = prod. Kjør ?calib=1 for grid search.',
-        calibNoteEn:  'TEST location: Site_S only (n=5, 2021-2025) for WT-trigger hypothesis test. Parameters = production. Run ?calib=1 for grid search.',
-        calibShortNo: 'TEST · Site_S hypotese-test',
-        calibShortEn: 'TEST · Site_S hypothesis test',
+        calibNoteNo:  'TEST-lokasjon: E1 earliest-per-år, 2020 ekskludert (n=8). Reproduksjon av Excel-modell. Parametere = prod. Kjør ?calib=1 for grid search.',
+        calibNoteEn:  'TEST location: E1 earliest-per-year, 2020 excluded (n=8). Reproduces Excel model. Parameters = production. Run ?calib=1 for grid search.',
+        calibShortNo: 'TEST · E1 Excel-reprod (n=8)',
+        calibShortEn: 'TEST · E1 Excel-reprod (n=8)',
         histYearsStart: 2016,
         isgangWater: 'Jorbajávri (sør for Cabara)',
         isgangHistory: {
@@ -4034,22 +4035,28 @@ const CALIBRATION_OBSERVATIONS = {
             2025: '2025-05-23',  // OFA-post — ekstrem varm vår
         },
     },
-    // ── kautokeino_test — Site_S alene (n=5) for hypotese-test ──────────────
-    // Hypotese (Stian 2026-05-03): WT-trigger ble svekket fordi mean-aggregering
-    // blandet 4 sites med ulik termisk respons mens WT-stasjon er fra én elv.
-    // Test: kjør grid search mot ÉT site (S — flest obs, jevn historie 2021-2025),
-    // se om dual-trigger nå slår kun-GDD. Hvis ja → hypotesen bekreftet.
+    // ── kautokeino_test — E1: earliest per år, 2020 ekskludert (Excel-modell) ─
+    // Reproduserer opprinnelig Excel-tankegang fra "Klekkeanalyse"-tab:
+    //   - Earliest klekkedato per år, alle arter (Vulgata/Grandis/Baetis/Caddis)
+    //   - 2020 ekskludert (eneste obs er fra WT-stasjonens elv = atypisk
+    //     termisk regime ift andre vann)
+    //   - n=8 år
+    // Excel-resultat med disse obs: GDD 520 + WT 12°C → MAE 2.1d, bias +0.4d
     // Site-koder maskert per Stians regel — ingen stedsnavn i koden.
     // Brukes for ny grid search via ?loc=kautokeino_test&calib=1.
     kautokeino_test: {
-        name: 'Kautokeino (TEST · Site_S alene n=5)',
-        species: 'Vulgata/Grandis',
+        name: 'Kautokeino (TEST · E1 earliest, ekskl. 2020, n=8)',
+        species: 'Vulgata/Grandis/Baetis/Caddis',
         obs: {
-            2021: '2021-07-06',
-            2022: '2022-07-07',
-            2023: '2023-07-01',
-            2024: '2024-06-20',
-            2025: '2025-07-05',
+            2016: '2016-06-30',  // Site_L (Vårflue) — earliest av n=2
+            2018: '2018-06-30',  // Site_L (Caddis) — earliest av n=2
+            2019: '2019-07-11',  // Site_A (Vårflue) — earliest av n=3
+            // 2020 EKSKLUDERT: earliest var fra WT-stasjonens elv
+            2021: '2021-07-05',  // Site_C (Vårflue) — earliest av n=2
+            2022: '2022-07-01',  // Site_A (Baetis) — earliest av n=2
+            2023: '2023-07-01',  // Site_S (Grandis) — earliest av n=4
+            2024: '2024-06-20',  // Site_S (Vulgata) — earliest av n=2
+            2025: '2025-07-05',  // Site_S (Grandis) — earliest av n=2
         },
     },
     // Andre lokasjoner kan legges til her ved behov
