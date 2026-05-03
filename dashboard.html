@@ -1300,6 +1300,11 @@ const LOCATIONS = {
         calibrated: false,
         gddThreshold: 520,
         uncertaintyDays: 14,
+        // ── TEST-FLAG: langtidsvarsel fra MET (innført 2026-05-02) ─────────────
+        // Aktiverer 9-dagers værprognose i konvergensgrafen og hovedprediksjonen.
+        // Sammenlign før/etter med ?forecast=0 i URL. Test-lokasjon. Hvis
+        // verdifullt, aktiver på flere lokasjoner.
+        useLongTermForecast: true,
         isgangWater: 'Djupvatnet (sør-vest for Sandsjøen)',
         isgangHistory: {
             2025: '2025-05-11', 2024: '2024-05-20', 2023: '2023-05-23',
@@ -1737,6 +1742,46 @@ function buildDoyAvgTemp(airData) {
     return avg;
 }
 
+// ── LANGTIDSVARSEL (innført 2026-05-02, test-modus på Lierne) ─────────────
+// Erstatter klimasnitt med MET 9-dagers værprognose for de neste dagene.
+// Vekting: dag 1-3 = 100% prognose, dag 4-9 = lineær fade fra 100% til 50%.
+// Etter 9 dager: 100% klimasnitt som før. Aktiveres kun når LOC har
+// useLongTermForecast: true OG ?forecast=0 IKKE er satt (toggle for sammenligning).
+function buildDoyAvgTempWithForecast(airData, forecastData) {
+    const avg = buildDoyAvgTemp(airData);
+    if (!forecastData || Object.keys(forecastData).length === 0) return avg;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let appliedDays = 0;
+
+    for (const [dateStr, temp] of Object.entries(forecastData)) {
+        const date = parseDate(dateStr);
+        if (date.getFullYear() !== YEAR) continue;
+        const daysFromNow = Math.round((date - today) / 86400000);
+        if (daysFromNow < 0 || daysFromNow > 9) continue;
+
+        // Vekting: dag 0-3 = full prognose, fade ned til 50% ved dag 9
+        let weight = 1.0;
+        if (daysFromNow > 3) {
+            weight = Math.max(0.5, 1.0 - (daysFromNow - 3) / 6 * 0.5);
+        }
+        const d = doy(date);
+        const climo = avg[d] ?? 0;
+        avg[d] = weight * temp + (1 - weight) * climo;
+        appliedDays++;
+    }
+    // Lagre debug-info på funksjonen for evt. UI-indikator
+    buildDoyAvgTempWithForecast._lastApplied = appliedDays;
+    return avg;
+}
+// Helper: skal langtidsvarsel brukes for denne lokasjonen + URL?
+function shouldUseLongTermForecast() {
+    if (!LOC.useLongTermForecast) return false;
+    if (new URLSearchParams(location.search).get('forecast') === '0') return false;
+    return true;
+}
+
 // ═══════════════════════════════════════════════════════════════════
 //  MODEL v2 — ALTITUDE CORRECTION + HISTORICAL STATS (GDD from Jan 1, per Excel)
 // ═══════════════════════════════════════════════════════════════════
@@ -2002,8 +2047,12 @@ function renderHistoricalGDDSection(stats, correctionDelta, snowData, airData) {
     document.getElementById('gddHistContent').innerHTML = html;
 }
 
-function projectADGDate(airData, currentADG) {
-    const avgTemp = buildDoyAvgTemp(airData);
+function projectADGDate(airData, currentADG, forecastData) {
+    // Bruk MET-prognose for de neste 9 dager hvis tilgjengelig (test-modus på Lierne).
+    // Etter 9 dager: 10-års klimasnitt som før.
+    const avgTemp = forecastData
+        ? buildDoyAvgTempWithForecast(airData, forecastData)
+        : buildDoyAvgTemp(airData);
     let adg = currentADG;
     const todayDoy = doy(new Date());
     for (let d = todayDoy + 1; d <= 300; d++) {
@@ -3307,10 +3356,14 @@ function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate, airDa
     renderSpeciesCalendar(isgangResult, vulgataAnchor);
 
     // ── Konvergensgraf ──
-    // Bruk SAMME avgTemp som projectADGDate (10-års DOY-snitt) slik at
-    // siste punkt i kurven er identisk med hovedprediksjonen (adgDate).
+    // Bruk SAMME avgTemp som projectADGDate (10-års DOY-snitt eller MET-prognose
+    // for de neste 9 dager hvis useLongTermForecast: true) slik at siste punkt
+    // i kurven er identisk med hovedprediksjonen (adgDate).
     const convSummary = document.getElementById('convSummary');
-    const avgTemp = buildDoyAvgTemp(airData);
+    const _forecastForConv = cachedData?.forecastData;
+    const avgTemp = _forecastForConv
+        ? buildDoyAvgTempWithForecast(airData, _forecastForConv)
+        : buildDoyAvgTemp(airData);
     const todayDoy = doy(new Date());
     const threshold = LOC.gddThreshold;
 
@@ -3411,6 +3464,13 @@ function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate, airDa
         summaryHtml = LOC.calibrated
             ? t('convSummaryLatest')(latestDateStr, uncDays, stability)
             : t('convSummaryLatestIndicative')(latestDateStr, stability);
+    }
+    // Indikator: langtidsvarsel aktivt
+    if (_forecastForConv && shouldUseLongTermForecast()) {
+        const days = buildDoyAvgTempWithForecast._lastApplied || 0;
+        if (days > 0) {
+            summaryHtml += ` <span style="color:#1B7A3E;font-size:0.85rem">🌤 Inkluderer ${days}-dagers MET-værvarsel.</span>`;
+        }
     }
     convSummary.innerHTML = summaryHtml;
 
@@ -3602,7 +3662,7 @@ let cachedData = null;  // { airData, snowData, flowData, wtData } — cached af
 
 function rebuildDashboard() {
     if (!cachedData) return;
-    const { airData, snowData, flowData, wtData } = cachedData;
+    const { airData, snowData, flowData, wtData, forecastData } = cachedData;
 
     // Apply altitude lapse-rate correction (uses getCurrentAltitude internally).
     // Luft: 0.6°C/100m (brukes gjennomgående — GDD, graf, historikk).
@@ -3618,7 +3678,7 @@ function rebuildDashboard() {
     const todayDoyN  = doy(new Date());
     const fromDoyN   = doy(parseDate(fromDate));
     const histADG    = histAvgADG(airDataCorrected, fromDoyN, todayDoyN);
-    const adgDate    = projectADGDate(airDataCorrected, currentADG);
+    const adgDate    = projectADGDate(airDataCorrected, currentADG, forecastData);
     const wtDate     = LOC.nveStation ? extrapolateWT(wtDataForPrediction) : null;
 
     // Historical statistics: run dual-trigger model (GDD + vanntemp ≥ wtThreshold)
@@ -3648,7 +3708,8 @@ async function main() {
     try {
         // Fetch in parallel
         const wtStation = LOC.nveWaterTempStation || LOC.nveStation;
-        const [airData, snowData, flowData, wtDataRaw] = await Promise.all([
+        const useForecast = shouldUseLongTermForecast();
+        const [airData, snowData, flowData, wtDataRaw, forecastData] = await Promise.all([
             fetchFrost('mean(air_temperature P1D)', dataStart, dataEnd),
             (async () => {
                 // Try duration_of_snow_covered_ground first; fall back to surface_snow_thickness
@@ -3663,12 +3724,15 @@ async function main() {
             })(),
             LOC.nveStation ? fetchNVE(1001, dataStart, dataEnd).catch(() => ({})) : Promise.resolve({}),
             wtStation ? fetchNVE(1003, dataStart, dataEnd, wtStation).catch(() => ({})) : Promise.resolve({}),
+            useForecast
+                ? fetch(`/api/forecast?lat=${LOC.lat}&lon=${LOC.lon}`).then(r => r.ok ? r.json() : null).catch(() => null)
+                : Promise.resolve(null),
         ]);
         // Fill short sensor gaps (≤7 days) with linear interpolation before rendering
         const wtData = interpolateGaps(wtDataRaw, 7);
 
         // Cache for potential rebuild on altitude-change
-        cachedData = { airData, snowData, flowData, wtData };
+        cachedData = { airData, snowData, flowData, wtData, forecastData };
 
         // Build picker UI (only renders if LOC.altitudeAdjustable)
         buildLakePickerUI();
