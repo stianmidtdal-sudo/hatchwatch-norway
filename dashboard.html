@@ -920,14 +920,14 @@ const LOCATIONS = {
             2019: '2019-05-19', 2018: '2018-05-23', 2017: '2017-06-10',
         },
     },
-    // ── kautokeino_test (TEST · rekalibrering med utvidet datasett) ─────────
-    // Speil av produksjons-kautokeino, men med oppdatert observasjonssett
-    // (n=9 år, 2016+2018-2025) i CALIBRATION_OBSERVATIONS for ny grid search.
-    // Parametere identiske med prod inntil ny optimum er VERIFISERT via
-    // heatmap (?calib=1). Produksjons-kautokeino forblir uendret.
+    // ── kautokeino_test (TEST · hypotese-test Site_S alene) ─────────────────
+    // Speil av produksjons-kautokeino, men CALIBRATION_OBSERVATIONS er nå
+    // KUN Site_S (n=5, 2021-2025) for å teste hypotesen om at WT-trigger
+    // virket før fordi data var fra ett site med konsistent termisk respons.
+    // Parametere identiske med prod. Produksjons-kautokeino forblir uendret.
     // Åpnes via:
     //   ?loc=kautokeino_test  (vanlig dashboard)
-    //   ?loc=kautokeino_test&calib=1  (grid search heatmap — kjør for å se ny optimum)
+    //   ?loc=kautokeino_test&calib=1  (grid search heatmap — vis ny optimum)
     // ────────────────────────────────────────────────────────────────────────
     kautokeino_test: {
         id: 'kautokeino_test',
@@ -944,10 +944,10 @@ const LOCATIONS = {
         showIce: true,
         gddThreshold: 510,           // Samme som prod — grid search finner ny optimum
         uncertaintyDays: 14,         // Prior til ny kalibrering er bekreftet
-        calibNoteNo:  'TEST-lokasjon: utvidet observasjonssett (n=9 år, 2016+2018-2025). Parametere = prod inntil heatmap kjøres. Kjør ?calib=1 for grid search.',
-        calibNoteEn:  'TEST location: extended observations (n=9 years, 2016+2018-2025). Parameters = production until heatmap is run. Run ?calib=1 for grid search.',
-        calibShortNo: 'TEST · venter på rekalibrering',
-        calibShortEn: 'TEST · awaiting re-calibration',
+        calibNoteNo:  'TEST-lokasjon: Site_S alene (n=5, 2021-2025) for hypotese-test av WT-trigger. Parametere = prod. Kjør ?calib=1 for grid search.',
+        calibNoteEn:  'TEST location: Site_S only (n=5, 2021-2025) for WT-trigger hypothesis test. Parameters = production. Run ?calib=1 for grid search.',
+        calibShortNo: 'TEST · Site_S hypotese-test',
+        calibShortEn: 'TEST · Site_S hypothesis test',
         histYearsStart: 2016,
         isgangWater: 'Jorbajávri (sør for Cabara)',
         isgangHistory: {
@@ -4034,24 +4034,22 @@ const CALIBRATION_OBSERVATIONS = {
             2025: '2025-05-23',  // OFA-post — ekstrem varm vår
         },
     },
-    // ── kautokeino_test — utvidet datasett for rekalibrering ─────────────────
-    // n=9 år, mean per år på tvers av observasjonsstedene (sites maskert i kode).
-    // Datakilde: feltobs samlet i Excel-arket "Klekkeobs Kauto".
-    // Mean-aggregeringen håndterer at noen år har én obs, andre har 2-3 obs.
+    // ── kautokeino_test — Site_S alene (n=5) for hypotese-test ──────────────
+    // Hypotese (Stian 2026-05-03): WT-trigger ble svekket fordi mean-aggregering
+    // blandet 4 sites med ulik termisk respons mens WT-stasjon er fra én elv.
+    // Test: kjør grid search mot ÉT site (S — flest obs, jevn historie 2021-2025),
+    // se om dual-trigger nå slår kun-GDD. Hvis ja → hypotesen bekreftet.
+    // Site-koder maskert per Stians regel — ingen stedsnavn i koden.
     // Brukes for ny grid search via ?loc=kautokeino_test&calib=1.
     kautokeino_test: {
-        name: 'Kautokeino (TEST · rekalibrering n=9)',
-        species: 'Vulgata/Grandis/Caddis',
+        name: 'Kautokeino (TEST · Site_S alene n=5)',
+        species: 'Vulgata/Grandis',
         obs: {
-            2016: '2016-07-03',  // mean av n=2
-            2018: '2018-07-07',  // n=1
-            2019: '2019-07-11',  // n=1
-            2020: '2020-06-27',  // n=1
-            2021: '2021-07-06',  // mean av n=2
-            2022: '2022-07-04',  // mean av n=2
-            2023: '2023-07-03',  // mean av n=3
-            2024: '2024-06-23',  // mean av n=2
-            2025: '2025-07-05',  // n=1
+            2021: '2021-07-06',
+            2022: '2022-07-07',
+            2023: '2023-07-01',
+            2024: '2024-06-20',
+            2025: '2025-07-05',
         },
     },
     // Andre lokasjoner kan legges til her ved behov
