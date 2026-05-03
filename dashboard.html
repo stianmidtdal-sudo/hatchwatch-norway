@@ -2055,6 +2055,42 @@ function calcGDDCrossingYear(airData, year, threshold) {
     return null;
 }
 
+// ── DUAL-TRIGGER (Excel-versjon, innført 2026-05-03) ────────────────────────
+// Finn første dag i året der BÅDE GDD ≥ gddT OG WT ≥ wtT er oppfylt SAMTIDIG.
+// Skiller seg fra "siste av første-krysning av hver" — fanger reelle "kald-dipp"-
+// perioder hvor vannet midlertidig faller under terskelen etter første krysning.
+//
+// 2019 var nøkkel-bevis: WT krysset 12°C 17/6, falt under 12 i 13 dager (kjølig
+// juniperiode), kom stabilt over 12 igjen først 11/7. Insektene ventet på
+// vedvarende varmt vann — observert klekkedato 11/7 matcher "begge oppfylt".
+//
+// Excel-modellen i Klekkeanalyse-tab definerer dual-trigger slik:
+//   "Klekking skjer den FØRSTE dagen BEGGE vilkår er oppfylt"
+//
+// Returnerer null hvis aldri oppfylt. wtT === null betyr ren GDD-modell.
+// wtData kan være null/{} for lokasjoner uten vanntemp — da kreves wtT === null.
+function findDualTriggerCrossing(airData, wtData, year, gddT, wtT) {
+    const dates = Object.keys(airData)
+        .filter(d => d.startsWith(String(year)))
+        .sort();
+    let gdd = 0;
+    for (const d of dates) {
+        const v = airData[d];
+        if (v != null) gdd += Math.max(0, v);
+        if (gdd < gddT) continue;
+        // GDD-trigger oppfylt — sjekk WT også (hvis krevet)
+        if (wtT === null) {
+            return { doy: doy(parseDate(d)), dateStr: d, gdd, wt: null };
+        }
+        const wt = wtData ? wtData[d] : null;
+        if (wt != null && wt >= wtT) {
+            return { doy: doy(parseDate(d)), dateStr: d, gdd, wt };
+        }
+        // GDD oppfylt men WT under terskel (eller mangler) — vent videre
+    }
+    return null;
+}
+
 // D. Historical statistics — run model on last N complete years
 //    BRUKER DUAL-TRIGGER: siste av GDD-krysning og vanntemp ≥ wtThreshold-krysning.
 //    Dette må matche modellen som brukes for "Estimert klekkedato i år" — ellers
@@ -2103,23 +2139,22 @@ function computeHistoricalStats(airData, threshold, wtData) {
     // Dette gir mer ærlig median: kun år hvor full modell faktisk fungerte tas med.
     // Før fix: Østmarka median 22. mai (4 av 7 år bruker bare GDD-fallback)
     // Etter fix: Østmarka median ~3. juni (kun år med fungerende dual-trigger)
+    //
+    // 2026-05-03: Dual-trigger nå "første dag begge oppfylt" (Excel-versjon) via
+    // findDualTriggerCrossing. Fanger reelle kald-dipp-perioder. Se kommentar
+    // ved findDualTriggerCrossing-definisjonen for begrunnelse (2019-eksempel).
     const crossings = [];
     for (const yr of histYears) {
         if (yr >= YEAR) continue;
-        const gddResult = calcGDDCrossingYear(airData, yr, threshold);
-        if (!gddResult) continue;
-        let finalDateStr = gddResult.dateStr;
         if (useDualTrigger) {
-            const wtDate = findWTCrossing(yr);
-            if (!wtDate) {
-                // WT-data mangler eller terskel aldri nådd → ekskluder dette året
-                continue;
-            }
-            if (wtDate > finalDateStr) {
-                finalDateStr = wtDate;
-            }
+            const result = findDualTriggerCrossing(airData, wtData, yr, threshold, wtThresh);
+            if (!result) continue;  // Aldri oppfylt eller WT mangler → ekskluder
+            crossings.push({ year: yr, doy: normalizedDoy(result.dateStr), dateStr: result.dateStr });
+        } else {
+            const gddResult = calcGDDCrossingYear(airData, yr, threshold);
+            if (!gddResult) continue;
+            crossings.push({ year: yr, doy: normalizedDoy(gddResult.dateStr), dateStr: gddResult.dateStr });
         }
-        crossings.push({ year: yr, doy: normalizedDoy(finalDateStr), dateStr: finalDateStr });
     }
     if (crossings.length < 2) return null;
     const doys = crossings.map(c => c.doy).sort((a, b) => a - b);
@@ -4092,21 +4127,18 @@ function runCalibration(airData, wtData) {
     obsEntries.forEach(([yr]) => { wtCrossings[yr] = findWTCrossing(yr, wtThresholdCurrent); });
 
     function evaluate(gddT, wtT) {
-        // wtT === null betyr kun GDD (ingen dual-trigger)
+        // wtT === null betyr kun GDD (ingen dual-trigger).
+        // Bruker findDualTriggerCrossing (Excel-versjon): første dag BEGGE er oppfylt
+        // SAMTIDIG. Fanger "kald-dipp"-perioder der vannet faller under terskelen
+        // etter første krysning og insektene venter på vedvarende varmt vann.
         const errors = [];
         for (const [yr, obsStr] of obsEntries) {
-            const gddResult = calcGDDCrossingYear(airData, yr, gddT);
-            if (!gddResult) {
+            const result = findDualTriggerCrossing(airData, wtData, yr, gddT, wtT);
+            if (!result) {
                 errors.push({ year: yr, predicted: null, observed: obsStr, error: null });
                 continue;
             }
-            let predDateStr = gddResult.dateStr;
-            if (wtT !== null) {
-                const wtDate = findWTCrossing(yr, wtT);
-                if (wtDate) {
-                    predDateStr = predDateStr > wtDate ? predDateStr : wtDate;
-                }
-            }
+            const predDateStr = result.dateStr;
             const diffDays = Math.round((new Date(predDateStr) - new Date(obsStr)) / 86400000);
             errors.push({ year: yr, predicted: predDateStr, observed: obsStr, error: diffDays });
         }
