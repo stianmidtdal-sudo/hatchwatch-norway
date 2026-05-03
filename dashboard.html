@@ -365,6 +365,14 @@
             <span data-i18n-html="priorNoticeText">⚠ <strong>Indikativ prognose:</strong> Modellen bruker kalibrerte GDD-parametere, men er ikke validert mot observerte klekkedatoer for denne lokasjonen. Bruk som veiledning. Vær fra nærmeste MET Norge-stasjon.</span>
         </div>
 
+        <!-- ═══ TEST-BANNER FOR LANGTIDSVARSEL (vises kun for lokasjoner med useLongTermForecast) ═══ -->
+        <div id="forecastTestBanner" style="display:none; background:#e8f4ed; border:1px solid #4a9e7a; border-radius:8px; padding:14px 18px; margin:0 0 16px; position:relative; font-size:0.92rem; color:#1B4332;">
+            <strong>🧪 Ny funksjonalitet testes på denne lokasjonen</strong> — integrasjon av MET sin 9-dagers værvarsel direkte i klekkeprediksjonen.
+            Dette gjør prognosen mer presis i tiden frem til klekking, men er fortsatt under testing.
+            Hvis noe ser rart ut, er det nyttig å rapportere via tilbakemelding-knappen nederst.
+            <button id="dismissForecastBanner" aria-label="Lukk" style="position:absolute; top:8px; right:10px; background:none; border:none; cursor:pointer; font-size:1.2rem; color:#1B4332; line-height:1; padding:4px 8px;">×</button>
+        </div>
+
         <!-- ═══ LOCATION INFO STRIP ═══ -->
         <div class="loc-strip" id="locStrip"></div>
 
@@ -1108,6 +1116,11 @@ const LOCATIONS = {
         gddThreshold: 400,
         wtThreshold: 14,
         uncertaintyDays: 3.8,
+        // ── TEST-FLAG: langtidsvarsel fra MET (innført 2026-05-02) ─────────────
+        // Aktiverer 9-dagers værprognose i konvergensgrafen og hovedprediksjonen.
+        // Banner "Ny funksjonalitet testes" vises på lokasjoner med dette flagget.
+        // Sammenlign før/etter med ?forecast=0 i URL.
+        useLongTermForecast: true,
         calibNoteNo:  'n=4, Børtervanna 2021–2024 (2D-kalibrering 2026-04-29: GDD 400 + WT 14°C)',
         calibNoteEn:  'n=4, Børtervanna 2021–2024 (2D calibration 2026-04-29: GDD 400 + WT 14°C)',
         calibShortNo: 'n=4 · GDD 400 + WT 14°C',
@@ -1532,6 +1545,26 @@ if (LOC.showIce) document.getElementById('iceSection').style.display = '';
 if (!LOC.calibrated) {
     document.getElementById('priorNotice').style.display = '';
 }
+
+// Test-banner for langtidsvarsel: vis når lokasjonen har useLongTermForecast
+// og brukeren ikke har lukket banneret før (lagret per-lokasjon i localStorage).
+// ?forecast=0 i URL skjuler også banneret (ikke aktiv testing for den brukeren).
+(function setupForecastTestBanner() {
+    if (!LOC.useLongTermForecast) return;
+    if (new URLSearchParams(location.search).get('forecast') === '0') return;
+    const dismissKey = `hw_forecast_banner_dismissed_${LOC.id}`;
+    if (localStorage.getItem(dismissKey) === '1') return;
+    const banner = document.getElementById('forecastTestBanner');
+    if (!banner) return;
+    banner.style.display = '';
+    const btn = document.getElementById('dismissForecastBanner');
+    if (btn) {
+        btn.addEventListener('click', () => {
+            localStorage.setItem(dismissKey, '1');
+            banner.style.display = 'none';
+        });
+    }
+})();
 
 // Water sections
 if (!LOC.nveStation) {
