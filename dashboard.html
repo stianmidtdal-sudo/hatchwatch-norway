@@ -1165,9 +1165,10 @@ const LOCATIONS = {
         waterStationName: 'Sinnerdammen, Nordmarka',
         calibrated: false,           // Test-modus — ikke verifisert
         gddThreshold: 620,           // Start-verdi (oslo-baseline) — kalibreringspanel finner optimum
+        wtThreshold: 14,             // Match nordmarka_dyn for fair sammenligning — kun luftstasjon endret
         uncertaintyDays: 14,         // Ikke kalibrert ennå
-        calibNoteNo:  'TEST-lokasjon: luftstasjon byttet fra Bjørnholt (SN18500) til Tryvannshøgda (SN18950). Ukalibrert, kjør ?calib=1 for grid search.',
-        calibNoteEn:  'TEST location: air station swapped from Bjørnholt (SN18500) to Tryvannshøgda (SN18950). Uncalibrated, run ?calib=1 for grid search.',
+        calibNoteNo:  'TEST-lokasjon: luftstasjon byttet fra Bjørnholt (SN18500) til Tryvannshøgda (SN18950). WT 14°C matcher nordmarka_dyn. Ukalibrert, kjør ?calib=1 for grid search.',
+        calibNoteEn:  'TEST location: air station swapped from Bjørnholt (SN18500) to Tryvannshøgda (SN18950). WT 14°C matches nordmarka_dyn. Uncalibrated, run ?calib=1 for grid search.',
         calibShortNo: 'TEST · Tryvann',
         calibShortEn: 'TEST · Tryvann',
         isgangWater: 'Katnosa, Nordmarka',
