@@ -668,7 +668,7 @@ const T = {
     gddUnit: 'Akkumulerte døgngrader · base 0°C',
     remaining: 'Gjenstående til terskel',
     remainingUnit: 'GDD-enheter til terskel',
-    estHatchDate: 'Estimert klekkedato',
+    estHatchDate: 'Klekking starter',
     shortSeason: 'Kort sesong — tidspunkt for klekkinger komprimeres til en dato.',
     noNveStation: 'Ingen NVE-stasjon konfigurert',
     requiresNve: 'Krever NVE vanntemperaturdata',
@@ -677,7 +677,7 @@ const T = {
     histLatest: 'Senest',
     histStd: 'Spredning',
     histYrCol: 'År',
-    histGddCrossed: 'Estimert klekkedato',
+    histGddCrossed: 'Klekking starter',
     histVsMedian: 'vs. median',
     histIceBreakup: 'Isgang',
     histSnowFree: 'Snøfri',
@@ -811,7 +811,7 @@ const T = {
     gddUnit: 'Growing Degree Days · base 0°C',
     remaining: 'Remaining to Target',
     remainingUnit: 'GDD units until threshold',
-    estHatchDate: 'Estimated Hatch Date',
+    estHatchDate: 'Hatch starts',
     shortSeason: 'Short season — hatches compress to a single date.',
     noNveStation: 'No NVE station configured',
     requiresNve: 'Requires NVE water temp data',
@@ -820,7 +820,7 @@ const T = {
     histLatest: 'Latest',
     histStd: 'Spread',
     histYrCol: 'Year',
-    histGddCrossed: 'Estimated hatch date',
+    histGddCrossed: 'Hatch starts',
     histVsMedian: 'vs. median',
     histIceBreakup: 'Ice breakup',
     histSnowFree: 'Snow free',
@@ -3114,7 +3114,7 @@ function renderSpeciesCalendar(isgangResult, vulgataDate) {
         grid.innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;padding-top:4px">
                 <div style="font-size:2.1rem;font-weight:700">${dateStr}</div>
-                <div style="font-size:0.78rem;opacity:0.55;font-style:italic;max-width:320px;text-align:right">
+                <div style="font-size:0.78rem;opacity:0.55;font-style:italic;text-align:right;white-space:nowrap">
                     ${t('shortSeason')}
                 </div>
             </div>`;
