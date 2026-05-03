@@ -3620,8 +3620,11 @@ function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate, airDa
     }
 
     // Beregn daglig prediksjon fra firstDoy til today.
-    // Dual-trigger: latest of GDD-520-dato og vanntemp-12°C-dato for hver dag d.
-    // Gir konsistens med "Estimert klekkedato"-kortet som bruker samme logikk.
+    // Live-prediksjon (ekstrapolasjon framover): siste av forventet GDD-krysning
+    // og forventet vanntemp-krysning. Konsistent med "Estimert klekkedato"-kortet.
+    // (NB: historikk og kalibrering bruker "første dag begge oppfylt"-logikk fra
+    // findDualTriggerCrossing — se 2026-05-03-fix. Live er ekstrapolasjon, så vi
+    // har ikke daglig data å sjekke "begge oppfylt"-kriteriet mot framover.)
     const labels = [];
     const rawPredDoys = [];
     for (let d = firstDoy; d <= todayDoy; d++) {
