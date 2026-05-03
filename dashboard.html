@@ -883,29 +883,34 @@ const LOCATIONS = {
         waterStationName: 'Suohpatjohka',
         calibrated: true,
         showIce: true,
-        // Verifisert med 2D grid search 2026-04-29 (n=5: 2020-2024 klekkeobs i KAUTOKEINO_HIST).
-        // Heatmap viste bredt grønt felt GDD 475-525 × WT 11-15°C — modellen er robust mot
-        // parametervalg i denne sonen. Vanntemp er IKKE bindende — heving av WT-terskel gir
-        // ingen reell gevinst (artefakt av iterasjonsrekkefølge i grid search).
+        // ── KALIBRERING 2026-05-03 (Excel-reproduksjon) ───────────────────────
+        // Stor rekalibrering etter to funn:
+        //   1) De gamle CALIBRATION_OBSERVATIONS-datoene var "Optimal fiskedag"
+        //      fra Excel-Historikk-tabben, ikke earliest klekkeobs. Vasket fasit
+        //      flyttet flere år 5-13 d senere. Stian valgte earliest som mål.
+        //   2) Kodens dual-trigger var "max av første-krysning" i stedet for
+        //      Excel sin "første dag begge oppfylt". Sentralt for år som 2019
+        //      der vannet falt under 12°C i 13 dager etter første krysning.
+        //      Endring i findDualTriggerCrossing fikset dette globalt.
         //
-        // Iterasjon 2 (2026-04-29): MAE-optimum (GDD 500) ga negativ bias (-0,8 d) — modellen
-        // var systematisk litt for tidlig (særlig 2020 -8d). Stian foretrekker bias-balanse
-        // over ren MAE-minimering (samme valg som Row 1 på Østmarka). Justert GDD 500 → 510
-        // for å skifte bias mot null. Estimat ny bias +0,8 d, MAE ~3,2 d (uendret).
+        // Grid search etter fix (n=8, earliest, 2020 ekskludert):
+        //   - Best dual-trigger: GDD 555 + WT 12°C, MAE 2.13, bias +1.63 (for sen)
+        //   - Bias-balansert: GDD 530 + WT 12°C, MAE 2.13, bias +0.13 ★
+        //   - Ekvivalent på 2D: GDD 530 + WT 12-13°C, identiske resultater
+        // Reproduserer Excel sin MAE 2.1d nøyaktig.
         //
-        // Beholder WT default 12°C — ingen biologisk grunn til å overstyre.
-        // 2020 (-6d bom estimat) er begrensende ekstrem-år; ikke løsbart med GDD-justering.
-        gddThreshold: 510,
-        uncertaintyDays: 3.4,
+        // Stian foretrekker bias-balanse → GDD 530 valgt over MAE-min 555.
+        gddThreshold: 530,
+        uncertaintyDays: 2.1,
         // ── TEST-FLAG: langtidsvarsel fra MET (innført 2026-05-04) ─────────────
         // Aktiverer 9-dagers værprognose i konvergensgrafen og hovedprediksjonen.
         // Banner "Ny funksjonalitet testes" vises på lokasjoner med dette flagget.
         // Sammenlign før/etter med ?forecast=0 i URL.
         useLongTermForecast: true,
-        calibNoteNo:  'n=5, 2020–2024 (2D grid search 2026-04-29: GDD 510, WT 12°C default, bias-balansert)',
-        calibNoteEn:  'n=5, 2020–2024 (2D grid search 2026-04-29: GDD 510, WT 12°C default, bias-balanced)',
-        calibShortNo: 'n=5 · GDD 510',
-        calibShortEn: 'n=5 · GDD 510',
+        calibNoteNo:  'n=8, 2016–2025 ekskl. 2020 (Excel-reproduksjon 2026-05-03: GDD 530 + WT 12°C, dual-trigger "begge oppfylt", MAE 2.13 d, bias +0.13)',
+        calibNoteEn:  'n=8, 2016–2025 excl. 2020 (Excel reproduction 2026-05-03: GDD 530 + WT 12°C, dual-trigger "both met", MAE 2.13 d, bias +0.13)',
+        calibShortNo: 'n=8 · GDD 530 + WT 12°C',
+        calibShortEn: 'n=8 · GDD 530 + WT 12°C',
         // Utvidet historikk tilbake til 2016 — modellen treffer veldokumentert tilbake
         // dit (verifisert 2026-04-29 mot Stians hukommelse, særlig 2017 som var ekstremt
         // sent år: model 12. juli, +12 d fra median). Andre lokasjoner bruker default 2019+.
