@@ -644,6 +644,7 @@ const T = {
     priorLabel: 'Prior',
     priorUncLabel: 'Prior usikkerhet',
     yrDataSuffix: 'års data',
+    yrsShort: 'år',
     calibVerifiedText: 'Kalibrert modell · Kautokeino GDD-parametere er verifisert mot feltobservasjoner.',
     modelUncertaintyText: 'Modellusikkerhet',
     dataDrivenText: 'datadrevet fra år med GDD-modell',
@@ -652,7 +653,7 @@ const T = {
     priorLower: 'prior',
     uncalibratedLower: 'ukalibrert',
     gddModelShort: 'GDD-modell',
-    wtExtrapolation: 'Vanntempekstrapolering',
+    wtExtrapolation: 'Vanntemperaturtrend',
     toHatch: 'til klekking',
     snowFreePlus32: 'Snøfri dato + 32 dager',
     earlySignal: 'tidlig signal',
@@ -786,6 +787,7 @@ const T = {
     priorLabel: 'Prior',
     priorUncLabel: 'Prior uncertainty',
     yrDataSuffix: 'yr data',
+    yrsShort: 'yrs',
     calibVerifiedText: 'Calibrated model · Kautokeino GDD parameters verified against field observations.',
     modelUncertaintyText: 'Model uncertainty',
     dataDrivenText: 'data-driven from years of GDD model',
@@ -794,7 +796,7 @@ const T = {
     priorLower: 'prior',
     uncalibratedLower: 'uncalibrated',
     gddModelShort: 'GDD model',
-    wtExtrapolation: 'Water temp extrapolation',
+    wtExtrapolation: 'Water temperature trend',
     toHatch: 'to hatch',
     snowFreePlus32: 'Snow-free date + 32 days',
     earlySignal: 'early signal',
@@ -2089,7 +2091,7 @@ function renderHistoricalGDDSection(stats, correctionDelta, snowData, airData) {
 
     let html = `<div class="hist-gdd-summary">
         <div class="hist-gdd-stat">
-            <div class="hist-gdd-label">${t('histEarliest')} (${stats.n} yrs)</div>
+            <div class="hist-gdd-label">${t('histEarliest')} (${stats.n} ${t('yrsShort')})</div>
             <div class="hist-gdd-val yr-early">${e}</div>
         </div>
         <div class="hist-gdd-stat hist-gdd-median">
