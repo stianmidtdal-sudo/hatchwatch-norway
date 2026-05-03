@@ -372,7 +372,7 @@
 
         <!-- ═══ TEST-POPUP FOR LANGTIDSVARSEL (vises kun for lokasjoner med useLongTermForecast) ═══ -->
         <!-- Vises som modal-overlay første gang brukeren åpner en lokasjon med flagget. Lukkes med × eller bakgrunnsklikk. -->
-        <div id="forecastTestOverlay" onclick="if(event.target===this){this.classList.remove('open');try{localStorage.setItem(`hw_forecast_popup_seen_${LOC.id}`,'1')}catch(e){}}" style="display:none; position:fixed; inset:0; background:rgba(13,31,23,0.78); z-index:1000; align-items:center; justify-content:center; padding:40px 20px; overflow-y:auto;">
+        <div id="forecastTestOverlay" onclick="if(event.target===this){this.classList.remove('open');try{localStorage.setItem('hw_forecast_popup_seen_global','1')}catch(e){}}" style="display:none; position:fixed; inset:0; background:rgba(13,31,23,0.78); z-index:1000; align-items:center; justify-content:center; padding:40px 20px; overflow-y:auto;">
             <div style="background:white; border-radius:14px; padding:36px 32px 30px; max-width:560px; width:100%; box-shadow:0 12px 48px rgba(0,0,0,0.25); position:relative; animation:welcome-fade 0.25s ease;">
                 <button id="forecastPopupCloseX" aria-label="Lukk" style="position:absolute; top:12px; right:16px; background:none; border:none; font-size:26px; color:#999; cursor:pointer; line-height:1; padding:4px 8px;">×</button>
                 <h2 id="forecastPopupTitle" style="font-size:1.35rem; color:#1B4332; margin-bottom:14px; font-weight:800;">Ny funksjonalitet testes</h2>
@@ -655,7 +655,7 @@ const T = {
     remaining: 'Gjenstående til terskel',
     remainingUnit: 'GDD-enheter til terskel',
     estHatchDate: 'Estimert klekkedato',
-    shortSeason: 'Kort sesong — klekking komprimeres til ett enkelt vindu her.',
+    shortSeason: 'Kort sesong — tidspunkt for klekkinger komprimeres til en dato.',
     noNveStation: 'Ingen NVE-stasjon konfigurert',
     requiresNve: 'Krever NVE vanntemperaturdata',
     histEarliest: 'Tidligst',
@@ -797,7 +797,7 @@ const T = {
     remaining: 'Remaining to Target',
     remainingUnit: 'GDD units until threshold',
     estHatchDate: 'Estimated Hatch Date',
-    shortSeason: 'Short season — hatches compress into a single window here.',
+    shortSeason: 'Short season — hatches compress to a single date.',
     noNveStation: 'No NVE station configured',
     requiresNve: 'Requires NVE water temp data',
     histEarliest: 'Earliest',
@@ -1570,14 +1570,17 @@ if (!LOC.calibrated) {
 }
 
 // Test-popup for langtidsvarsel: vises som modal første gang brukeren åpner
-// en lokasjon med useLongTermForecast: true. Lukkes med × eller knapp.
-// Lagres per-lokasjon i localStorage så brukeren ikke får den igjen.
+// en lokasjon der useLongTermForecast er aktivert. Lukkes med × eller knapp.
+//
+// LAGRING (oppdatert 2026-05-04): Global per-bruker (ikke per-lokasjon) siden
+// langtidsvarsel nå er default for alle lokasjoner. Brukeren får popup kun
+// EN gang, og forstår at funksjonen gjelder hele siden.
+//
 // ?forecast=0 i URL skjuler popupen (ikke aktiv testing for den brukeren).
 // Tekst oversettes via t() — både norsk og engelsk versjon.
 (function setupForecastTestPopup() {
-    if (!LOC.useLongTermForecast) return;
-    if (new URLSearchParams(location.search).get('forecast') === '0') return;
-    const seenKey = `hw_forecast_popup_seen_${LOC.id}`;
+    if (!shouldUseLongTermForecast()) return;
+    const seenKey = 'hw_forecast_popup_seen_global';  // global, ikke per-loc
     if (localStorage.getItem(seenKey) === '1') return;
     const overlay = document.getElementById('forecastTestOverlay');
     if (!overlay) return;
@@ -1847,7 +1850,10 @@ function buildDoyAvgTempWithForecast(airData, forecastData) {
 }
 // Helper: skal langtidsvarsel brukes for denne lokasjonen + URL?
 function shouldUseLongTermForecast() {
-    if (!LOC.useLongTermForecast) return false;
+    // Default: aktivert for alle lokasjoner (innført 2026-05-04 etter test på
+    // Lierne, Østmarka og Kautokeino).
+    // En lokasjon kan eksplisitt deaktivere med useLongTermForecast: false.
+    if (LOC.useLongTermForecast === false) return false;
     if (new URLSearchParams(location.search).get('forecast') === '0') return false;
     return true;
 }
