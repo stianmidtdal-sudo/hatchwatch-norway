@@ -882,6 +882,11 @@ const LOCATIONS = {
         // 2020 (-6d bom estimat) er begrensende ekstrem-år; ikke løsbart med GDD-justering.
         gddThreshold: 510,
         uncertaintyDays: 3.4,
+        // ── TEST-FLAG: langtidsvarsel fra MET (innført 2026-05-04) ─────────────
+        // Aktiverer 9-dagers værprognose i konvergensgrafen og hovedprediksjonen.
+        // Banner "Ny funksjonalitet testes" vises på lokasjoner med dette flagget.
+        // Sammenlign før/etter med ?forecast=0 i URL.
+        useLongTermForecast: true,
         calibNoteNo:  'n=5, 2020–2024 (2D grid search 2026-04-29: GDD 510, WT 12°C default, bias-balansert)',
         calibNoteEn:  'n=5, 2020–2024 (2D grid search 2026-04-29: GDD 510, WT 12°C default, bias-balanced)',
         calibShortNo: 'n=5 · GDD 510',
