@@ -477,6 +477,12 @@
             <div id="gddHistContent" data-i18n="loadingText">Loading…</div>
         </section>
 
+        <!-- ═══ FORECAST-EFFEKT-VARSLING (kun lokasjoner med useLongTermForecast,
+                 trigget når 9-dagers MET-prognose flytter prognose ≥ 4 dager) ═══ -->
+        <section id="forecastEffectSection" style="display:none;margin-top:14px">
+            <div id="forecastEffectBanner" style="padding:14px 16px;border-radius:8px;border:1px solid;font-size:0.92rem"></div>
+        </section>
+
         <!-- ═══ WATER TEMPERATURE CHART ═══ -->
         <section id="wtSection">
             <h2 id="wtHeading" data-i18n="waterTempChart">Water Temperature May–July · Year-by-Year</h2>
@@ -695,6 +701,8 @@ const T = {
     vsAvg: 'vs. snitt',
     latestOf: (gddT, wtT) => `siste av: GDD ≥ ${gddT} + vanntemp ≥ ${wtT}°C`,
     gddTriggerOnly: 'Kun GDD-trigger — for tidlig å ekstrapolere vanntemp',
+    forecastEffectEarlier: (days) => `<strong>🌡 Langtidsvarselet påvirker prognosen.</strong> 9-dagers værvarsel fra MET tilsier varmere vær enn klimasnittet. Estimert klekketidspunkt er fremskyndet ~${days} dager.`,
+    forecastEffectLater: (days) => `<strong>❄ Langtidsvarselet påvirker prognosen.</strong> 9-dagers værvarsel fra MET tilsier kaldere vær enn klimasnittet. Estimert klekketidspunkt er forsinket ~${days} dager.`,
     updatedLabel: 'Oppdatert:',
     loadingText: 'Laster…',
   },
@@ -838,6 +846,8 @@ const T = {
     vsAvg: 'vs avg',
     latestOf: (gddT, wtT) => `latest of: GDD ≥ ${gddT} + water temp ≥ ${wtT}°C`,
     gddTriggerOnly: 'GDD trigger only — too early to extrapolate water temp',
+    forecastEffectEarlier: (days) => `<strong>🌡 Long-term forecast affects the prediction.</strong> MET's 9-day forecast suggests warmer weather than climate average. Estimated hatch is brought forward ~${days} days.`,
+    forecastEffectLater: (days) => `<strong>❄ Long-term forecast affects the prediction.</strong> MET's 9-day forecast suggests colder weather than climate average. Estimated hatch is delayed ~${days} days.`,
     updatedLabel: 'Updated:',
     loadingText: 'Loading…',
   }
@@ -2580,6 +2590,51 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
     document.getElementById('hatchNote').textContent = hatchNote;
 }
 
+// ── FORECAST-EFFEKT-BANNER (innført 2026-05-04) ────────────────────────────
+// Viser varsling KUN dersom 9-dagers MET-prognose flytter prognosen ≥ FORECAST_EFFECT_THRESHOLD_DAYS
+// fra modellen kjørt UTEN forecast (dvs ren klimasnitt-ekstrapolasjon).
+//
+// Brukerverdi: forklarer hvorfor prognosen avviker fra "normalt" når en hetebølge
+// eller kuldegirsel er varslet. X=4 valgt fordi:
+//   - 9-dagers forecast har ~±3°C usikkerhet → ~2-3 d effekt-usikkerhet
+//   - X=4 fanger reelle hendelser uten støy fra normal værvariasjon
+//   - Typisk hetebølge gir ~5-8 d effekt → trigger godt
+//
+// Skjules hvis: lokasjon ikke har useLongTermForecast, forecast mangler, eller
+// |effekt| < terskel. Plassert under prediksjonshistorikk per Stian-design 2026-05-04.
+const FORECAST_EFFECT_THRESHOLD_DAYS = 4;
+
+function renderForecastEffectBanner(adgDateWith, adgDateWithout) {
+    const section = document.getElementById('forecastEffectSection');
+    const banner = document.getElementById('forecastEffectBanner');
+    if (!section || !banner) return;
+    if (!adgDateWith || !adgDateWithout) {
+        section.style.display = 'none';
+        return;
+    }
+    // Effekt = uten - med. Positiv = forecast gjør prognose tidligere (varmere fremover).
+    const effectMs = adgDateWithout.getTime() - adgDateWith.getTime();
+    const effectDays = Math.round(effectMs / 86400000);
+    if (Math.abs(effectDays) < FORECAST_EFFECT_THRESHOLD_DAYS) {
+        section.style.display = 'none';
+        return;
+    }
+    if (effectDays > 0) {
+        // Forecast fremskynder klekking — varmere enn klima-snittet
+        banner.style.background = '#fff4e6';
+        banner.style.borderColor = '#f0a020';
+        banner.style.color = '#7a4400';
+        banner.innerHTML = t('forecastEffectEarlier')(effectDays);
+    } else {
+        // Forecast forsinker klekking — kaldere enn klima-snittet
+        banner.style.background = '#e8f0f7';
+        banner.style.borderColor = '#5b8db8';
+        banner.style.color = '#1f4060';
+        banner.innerHTML = t('forecastEffectLater')(Math.abs(effectDays));
+    }
+    section.style.display = '';
+}
+
 // ── ISOLERINGS-LEGEND-KLIKK (innført 2026-04-29) ───────────────────────────
 // Klikk på et år i legenden → vis kun det året (pluss inneværende år/terskel
 // som "alltid synlig"). Klikk samme år igjen → vis alle. Klikk et annet år →
@@ -3924,6 +3979,13 @@ function rebuildDashboard() {
     const adgDate    = projectADGDate(airDataCorrected, currentADG, forecastData);
     const wtDate     = LOC.nveStation ? extrapolateWT(wtDataForPrediction) : null;
 
+    // Forecast-effekt-banner (innført 2026-05-04): kjør modellen også UTEN forecast
+    // og sammenlign. Hvis differansen ≥ 4 dager, vis varsling under historikk-seksjonen.
+    // Aktiveres når forecastData finnes (impliserer at lokasjonen har forecast aktivt).
+    const adgDateNoForecast = forecastData
+        ? projectADGDate(airDataCorrected, currentADG, null)
+        : null;
+
     // Historical statistics: run dual-trigger model (GDD + vanntemp ≥ wtThreshold)
     // på 2019–2025 → data-driven uncertainty. Konsistent med "Estimert klekkedato"-kortet.
     const histStats  = computeHistoricalStats(airDataCorrected, LOC.gddThreshold, wtDataForPrediction);
@@ -3932,6 +3994,7 @@ function rebuildDashboard() {
     renderKPIs(airData, snowData, flowData, wtData);   // Vann: rå (uten høydekorreksjon)
     renderModel(airDataCorrected, currentADG, histADG, adgDate, wtDate, histStats);
     renderHistoricalGDDSection(histStats, altCorrection, snowData, airDataCorrected);
+    renderForecastEffectBanner(adgDate, adgDateNoForecast);
     renderWaterTempChart(wtData);                       // Graf: rå verdier fra stasjon
     renderSnowChart(snowData);
     renderIceChart(airDataCorrected, snowData);
