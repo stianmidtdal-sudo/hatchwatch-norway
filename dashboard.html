@@ -1169,9 +1169,16 @@ const LOCATIONS = {
         nveStation:   '2.1036.0',    // Løkkeborg — Østfold/Halden, byttet fra Tverråa 2026-04-28
         airStationName:   'Rakkestad',
         waterStationName: 'Løkkeborg',
-        calibrated: false,
-        gddThreshold: 520,
-        uncertaintyDays: 14,
+        calibrated: false,  // Forblir indikativ — vi har ingen klekkeobs for Vestfjella
+        // Parametere overført fra Østmarka 2026-05-04: Vestfjella har isgang ~14 dager
+        // tidligere enn Østmarka (tidlig vår på Halden/Ørje), klimatisk svært likt eller
+        // varmere enn Enebakk-området. Default-parametere (GDD 520 + WT 12) ga senere
+        // klekking enn Østmarka — biologisk feil retning. Stians lokal-erfaring tilsier
+        // at Vestfjella er minst like tidlig som Østmarka. Holder usikkerhet litt høyere
+        // (6 d vs Østmarka 3,8 d) fordi vi ikke har egne obs til å validere mot.
+        gddThreshold: 400,
+        wtThreshold: 14,
+        uncertaintyDays: 6.0,
         // Merk: bruker internt id 'vestfjella' (samme nøkkel som gammel Østfold-entry).
         // Tidligere bookmarks til ?loc=vestfjella vil nå lande her, på Halden/Ørje-området,
         // mens Enebakk/Børtervanna-delen er flyttet til 'ostmarka'.
