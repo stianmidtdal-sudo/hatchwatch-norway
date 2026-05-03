@@ -1125,6 +1125,58 @@ const LOCATIONS = {
             2019: '2019-05-10', 2018: '2018-05-13', 2017: '2017-05-16',
         },
     },
+    // ── nordmarka_test_a (TEST B — luft-bytte, vann beholdt) ─────────────────
+    // Eksperimentell skjult lokasjon for å teste alternativ luftstasjon.
+    // Hypotese: Bjørnholt (SN18500) er åpen kolle og kan ha varm bias relativt
+    // til typiske skogsvann i Nordmarka. Tryvannshøgda (SN18950) ligger sør i
+    // Marka, høyere men med god lang historikk — gir alternativ GDD-profil
+    // (etter altitude-korreksjon ned til 370m fiskested) for OFA-vannene.
+    //
+    // Hva som er endret vs statisk oslo:
+    //   - frostStation: SN18500 (Bjørnholt 380m) → SN18950 (Tryvannshøgda 528m)
+    //   - snowStation:  uendret (Bjørnholt har best snødekning lokalt)
+    //   - nveStation:   uendret (6.71.0 Sinnerdammen — venter med vann-bytte)
+    //   - stationAltitude: 380 → 528 (Tryvann er høyere; korrigeres ned til
+    //                                  fiskeplass 370m via lapse rate 0.6°C/100m)
+    //   - calibrated: true → false (denne lokasjonen er ikke verifisert)
+    //   - gddThreshold: starter på 620 (samme som oslo) — kalibreringspanel
+    //                   finner optimum ved ?calib=1
+    //
+    // OFA-observasjoner brukt for grid search (i CALIBRATION_OBSERVATIONS):
+    //   - 2019: 17. juni (Auretjerna 401m — nær standard 370m)
+    //   - 2022: 23. juni (snitt av Klattertjernet 19. + Fjellsjøen 27.)
+    //   - 2025: 23. mai  (OFA-post — ekstrem varm vår)
+    //
+    // Åpnes med: ?loc=nordmarka_test_a
+    // Grid search: ?loc=nordmarka_test_a&calib=1
+    // ────────────────────────────────────────────────────────────────────────
+    nordmarka_test_a: {
+        id: 'nordmarka_test_a',
+        area: 'Nordmarka (TEST · Tryvann)',
+        name: 'Tryvannshøgda',
+        place: 'Nordmarka',
+        region: 'Østlandet',
+        lat: 59.98, lon: 10.67, altitude: 370, stationAltitude: 528, waterStationAltitude: 370,
+        frostStation: 'SN18950',     // Tryvannshøgda — TEST kandidat
+        snowStation:  'SN18500',     // Bjørnholt beholdt for snødata
+        snowStationName:  'Bjørnholt, Nordmarka',
+        nveStation:   '6.71.0',      // Sinnerdammen — uendret
+        airStationName:   'Tryvannshøgda',
+        waterStationName: 'Sinnerdammen, Nordmarka',
+        calibrated: false,           // Test-modus — ikke verifisert
+        gddThreshold: 620,           // Start-verdi (oslo-baseline) — kalibreringspanel finner optimum
+        uncertaintyDays: 14,         // Ikke kalibrert ennå
+        calibNoteNo:  'TEST-lokasjon: luftstasjon byttet fra Bjørnholt (SN18500) til Tryvannshøgda (SN18950). Ukalibrert, kjør ?calib=1 for grid search.',
+        calibNoteEn:  'TEST location: air station swapped from Bjørnholt (SN18500) to Tryvannshøgda (SN18950). Uncalibrated, run ?calib=1 for grid search.',
+        calibShortNo: 'TEST · Tryvann',
+        calibShortEn: 'TEST · Tryvann',
+        isgangWater: 'Katnosa, Nordmarka',
+        isgangHistory: {
+            2025: '2025-04-25', 2024: '2024-05-09', 2023: '2023-05-23',
+            2022: '2022-05-04', 2021: '2021-05-22', 2020: '2020-05-17',
+            2019: '2019-05-10', 2018: '2018-05-13', 2017: '2017-05-16',
+        },
+    },
     ostmarka: {
         id: 'ostmarka',
         area: 'Østmarka',            // Enebakk / Børtervanna-området
@@ -3919,6 +3971,30 @@ const CALIBRATION_OBSERVATIONS = {
             2022: '2022-06-27',
             2023: '2023-06-20',
             2024: '2024-06-20',
+        },
+    },
+    // ── Nordmarka — OFA-observasjoner (samme datasett for baseline og test) ─
+    // Brukes til 2D grid search via ?calib=1 for å sammenligne Tryvann
+    // (nordmarka_test_a) med Bjørnholt-baselinen (oslo). OBS: 2022-datoen er
+    // snitt av Klattertjernet (19. juni, 433m) og Fjellsjøen (27. juni, 423m).
+    // 2019 Auretjerna 401m er valgt fremfor S. Heggelivatn 500m (mulig
+    // outlier per memory). 2025 er OFAs generelle "3 uker tidlig"-rapport.
+    oslo: {
+        name: 'Nordmarka — Bjørnholt baseline',
+        species: 'Vulgata',
+        obs: {
+            2019: '2019-06-17',
+            2022: '2022-06-23',
+            2025: '2025-05-23',
+        },
+    },
+    nordmarka_test_a: {
+        name: 'Nordmarka (TEST · Tryvann)',
+        species: 'Vulgata',
+        obs: {
+            2019: '2019-06-17',  // Auretjerna 401m
+            2022: '2022-06-23',  // snitt: Klattertjernet 19. + Fjellsjøen 27.
+            2025: '2025-05-23',  // OFA-post — ekstrem varm vår
         },
     },
     // Andre lokasjoner kan legges til her ved behov
