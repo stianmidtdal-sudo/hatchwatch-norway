@@ -4245,7 +4245,8 @@ function runCalibration(airData, wtData) {
     }
 
     const thresholds = [];
-    for (let t = 400; t <= 600; t += 5) thresholds.push(t);
+    // Utvidet 2026-05-04: 100-700 dekker både Tb=0 (typisk 400-600) og Tb=5 (typisk 100-300).
+    for (let t = 100; t <= 700; t += 5) thresholds.push(t);
 
     const obsEntries = Object.entries(calibData.obs).map(([y, d]) => [parseInt(y), d]);
     const wtCrossings = {};
@@ -4312,7 +4313,8 @@ function runCalibration(airData, wtData) {
 
     // 2D-søk: GDD × WT ───────────────────────────────────────────────
     const gddRange = [];
-    for (let t = 400; t <= 540; t += 5) gddRange.push(t);
+    // Utvidet 2026-05-04: 100-540 dekker både Tb=0 og Tb=5-test-lokasjoner.
+    for (let t = 100; t <= 540; t += 5) gddRange.push(t);
     const wtRange = [];
     for (let t = 11; t <= 17; t += 0.5) wtRange.push(t);
 
