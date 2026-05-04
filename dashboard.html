@@ -1276,6 +1276,49 @@ const LOCATIONS = {
             2019: '2019-04-20', 2018: '2018-05-01', 2017: '2017-04-19',
         },
     },
+    // ── ostmarka_tb5 (TEST · biologisk basetemp Tb=5°C) ────────────────────────
+    // Speil av prod-Østmarka, men kalibreringspanelet (?calib=1) bruker GDD
+    // akkumulert med basetemp 5°C i stedet for 0°C. Hypotese: milde-vinter-år
+    // (særlig 2024) ble overestimerte fordi Tb=0 teller temperatur 1-4°C som
+    // biologisk irrelevant for ektoterme insekter. Tb=5 ekskluderer disse.
+    //
+    // VIKTIG: kun ?calib=1 leser dette. Live-prediksjon, historikk-tabell og
+    // header bruker fortsatt Tb=0 (global atferd urørt). Lokasjonen er hidden
+    // i index.html. Skal ikke promoteres til prod uten dokumentert vinning.
+    //
+    // Initial GDD-terskel 200 er gjetning — grid search finner ny optimum.
+    // Forventet område: 150-300 (Tb=5 reduserer akkumulering ~40-50% vs Tb=0).
+    // ────────────────────────────────────────────────────────────────────────
+    ostmarka_tb5: {
+        id: 'ostmarka_tb5',
+        area: 'Østmarka (TEST · Tb=5°C)',
+        name: 'Børtervanna',
+        place: 'Enebakk',
+        region: 'Østlandet',
+        lat: 59.70, lon: 11.17, altitude: 170, stationAltitude: 130, waterStationAltitude: 170,
+        frostStation: 'SN17640',
+        snowStation:  'SN4040',
+        nveStation:   '2.1213.0',
+        airStationName:   'Råken',
+        snowStationName:  'Enebakk – Barbøl',
+        waterStationName: 'Mønevann, Enebakk',
+        calibrated: false,
+        gddThreshold: 200,           // Start-verdi — grid search finner ny optimum med Tb=5
+        gddBaseTemp: 5,              // ⚠ TEST-FELT: kun lest av runCalibration. Ikke i bruk i live-modell.
+        wtThreshold: 14,
+        uncertaintyDays: 6.0,
+        calibNoteNo:  'TEST-lokasjon: GDD med basetemp 5°C i stedet for 0°C. Kun grid search-panelet bruker Tb=5. Kjør ?calib=1.',
+        calibNoteEn:  'TEST location: GDD with base temp 5°C instead of 0°C. Only grid search panel uses Tb=5. Run ?calib=1.',
+        calibShortNo: 'TEST · Tb=5°C',
+        calibShortEn: 'TEST · Tb=5°C',
+        isgangWater: 'Børtervanna',
+        isgangHistory: {
+            2026: '2026-04-03',
+            2025: '2025-04-11', 2024: '2024-04-24', 2023: '2023-05-06',
+            2022: '2022-04-22', 2021: '2021-04-22', 2020: '2020-04-01',
+            2019: '2019-04-20', 2018: '2018-05-01', 2017: '2017-04-19',
+        },
+    },
     vestfjella: {
         id: 'vestfjella',
         area: 'Vestfjella',          // Vestfjella skogsområde / Halden-Ørje
@@ -4105,6 +4148,17 @@ const CALIBRATION_OBSERVATIONS = {
             2024: '2024-05-28',
         },
     },
+    // Test-lokasjon: samme obs som ostmarka, men basetemp Tb=5 i grid search
+    ostmarka_tb5: {
+        name: 'Østmarka TEST · Tb=5°C',
+        species: 'Vulgata',
+        obs: {
+            2021: '2021-06-01',
+            2022: '2022-05-28',
+            2023: '2023-06-02',
+            2024: '2024-05-28',
+        },
+    },
     kautokeino: {
         name: 'Kautokeino (Suohpatjohka / Cabara-området)',
         species: 'Vulgata',
@@ -4197,14 +4251,43 @@ function runCalibration(airData, wtData) {
     const wtCrossings = {};
     obsEntries.forEach(([yr]) => { wtCrossings[yr] = findWTCrossing(yr, wtThresholdCurrent); });
 
+    // 2026-05-04: Test-only basetemp-overstyring. Hvis LOC.gddBaseTemp er satt og > 0,
+    // bruker grid search en lokal akkumulering med (temp - baseTemp) i stedet for
+    // standard (temp). Eksisterende kall til findDualTriggerCrossing globalt er IKKE
+    // berørt. Dette er en isolert test-mekanisme for prove-of-concept-kalibrering på
+    // test-lokasjoner som ostmarka_tb5. Når Tb=0 (default for prod): identisk oppførsel.
+    const _gddBaseTemp = LOC.gddBaseTemp ?? 0;
+
+    function findDualTriggerLocal(year, gddT, wtT) {
+        const dates = Object.keys(airData).filter(d => d.startsWith(String(year))).sort();
+        let gdd = 0;
+        for (const d of dates) {
+            const v = airData[d];
+            if (v != null) gdd += Math.max(0, v - _gddBaseTemp);
+            if (gdd < gddT) continue;
+            if (wtT === null) {
+                return { doy: doy(parseDate(d)), dateStr: d, gdd, wt: null };
+            }
+            const wt = wtData ? wtData[d] : null;
+            if (wt != null && wt >= wtT) {
+                return { doy: doy(parseDate(d)), dateStr: d, gdd, wt };
+            }
+        }
+        return null;
+    }
+
     function evaluate(gddT, wtT) {
         // wtT === null betyr kun GDD (ingen dual-trigger).
         // Bruker findDualTriggerCrossing (Excel-versjon): første dag BEGGE er oppfylt
         // SAMTIDIG. Fanger "kald-dipp"-perioder der vannet faller under terskelen
         // etter første krysning og insektene venter på vedvarende varmt vann.
+        // For test-lokasjoner med LOC.gddBaseTemp > 0: bruker lokal versjon med
+        // justert basetemp. Prod-lokasjoner (uten gddBaseTemp): identisk gammel atferd.
         const errors = [];
         for (const [yr, obsStr] of obsEntries) {
-            const result = findDualTriggerCrossing(airData, wtData, yr, gddT, wtT);
+            const result = (_gddBaseTemp > 0)
+                ? findDualTriggerLocal(yr, gddT, wtT)
+                : findDualTriggerCrossing(airData, wtData, yr, gddT, wtT);
             if (!result) {
                 errors.push({ year: yr, predicted: null, observed: obsStr, error: null });
                 continue;
