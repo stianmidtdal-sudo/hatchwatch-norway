@@ -300,6 +300,7 @@
             to   { opacity: 1; transform: translateY(0); }
         }
         #forecastTestOverlay.open { display: flex !important; }
+        #nordmarkaUpdateOverlay.open { display: flex !important; }
         .error-box { background: #fff3f0; border: 1px solid #f5a090; border-radius: 10px; padding: 20px; color: #a03020; font-size: 0.86rem; line-height: 1.6; }
         .error-box strong { display: block; margin-bottom: 8px; font-size: 1rem; }
         .error-box code { background: #fde; padding: 2px 6px; border-radius: 4px; font-size: 0.82rem; }
@@ -368,6 +369,19 @@
         <!-- ═══ PRIOR MODEL NOTICE (shown for uncalibrated) ═══ -->
         <div id="priorNotice" class="prior-notice" style="display:none">
             <span data-i18n-html="priorNoticeText">⚠ <strong>Indikativ prognose:</strong> Modellen bruker kalibrerte GDD-parametere, men er ikke validert mot observerte klekkedatoer for denne lokasjonen. Bruk som veiledning. Vær fra nærmeste MET Norge-stasjon.</span>
+        </div>
+
+        <!-- ═══ NORDMARKA-OPPDATERINGSPOPUP (vises kun på oslo + nordmarka_dyn, én gang per bruker) ═══ -->
+        <div id="nordmarkaUpdateOverlay" onclick="if(event.target===this){this.classList.remove('open');try{localStorage.setItem('hw_nordmarka_update_seen','1')}catch(e){}}" style="display:none; position:fixed; inset:0; background:rgba(13,31,23,0.78); z-index:1000; align-items:center; justify-content:center; padding:40px 20px; overflow-y:auto;">
+            <div style="background:white; border-radius:14px; padding:36px 32px 30px; max-width:580px; width:100%; box-shadow:0 12px 48px rgba(0,0,0,0.25); position:relative; animation:welcome-fade 0.25s ease;">
+                <button id="nordmarkaPopupCloseX" aria-label="Lukk" style="position:absolute; top:12px; right:16px; background:none; border:none; font-size:26px; color:#999; cursor:pointer; line-height:1; padding:4px 8px;">×</button>
+                <h2 id="nordmarkaPopupTitle" style="font-size:1.35rem; color:#1B4332; margin-bottom:14px; font-weight:800;">Nordmarka — stor oppdatering</h2>
+                <p id="nordmarkaPopupBody" style="font-size:0.94rem; line-height:1.55; color:#2d3a35; margin-bottom:18px;">
+                    Klekkemodellen for Nordmarka er nå betydelig forbedret. Klekketidspunktet for mygg, marginata og vespertina vil nå treffe en del bedre.<br><br>
+                    Stor takk til alle som har sendt tilbakemeldinger og observasjoner. Det er nettopp slike bidrag som gjør modellen mer treffsikker over tid.
+                </p>
+                <button id="nordmarkaPopupDismiss" style="display:inline-block; background:#1B4332; color:white; padding:10px 26px; border:none; border-radius:8px; font-size:0.92rem; font-weight:700; cursor:pointer; margin-top:6px;">Skjønner!</button>
+            </div>
         </div>
 
         <!-- ═══ TEST-POPUP FOR LANGTIDSVARSEL (vises kun for lokasjoner med useLongTermForecast) ═══ -->
@@ -1090,7 +1104,7 @@ const LOCATIONS = {
         calibShortEn: 'n=24+5, OFA',
         isgangWater: 'Katnosa, Nordmarka',
         isgangHistory: {
-            2025: '2025-04-25', 2024: '2024-05-09', 2023: '2023-05-23',
+            2026: '2026-04-27', 2025: '2025-04-25', 2024: '2024-05-09', 2023: '2023-05-23',
             2022: '2022-05-04', 2021: '2021-05-22', 2020: '2020-05-17',
             2019: '2019-05-10', 2018: '2018-05-13', 2017: '2017-05-16',
         },
@@ -1158,7 +1172,7 @@ const LOCATIONS = {
                 2018: '2018-05-08', 2017: '2017-05-07',
             }},
             { name: 'Blankvann',        altitude: 351, isgangHistory: {
-                2026: '2026-04-20', 2025: '2025-04-18', 2024: '2024-05-03', 2023: '2023-05-04',
+                2026: '2026-04-20', 2025: '2025-04-18', 2024: '2024-05-03', 2023: '2023-05-14',
                 2022: '2022-04-30', 2021: '2021-05-06', 2020: '2020-04-25', 2019: '2019-05-01',
                 2018: '2018-05-11', 2017: '2017-05-08',
             }},
@@ -1197,8 +1211,16 @@ const LOCATIONS = {
                 2022: '2022-05-02', 2021: '2021-05-14', 2020: '2020-05-02', 2019: '2019-05-03',
                 2018: '2018-05-11', 2017: '2017-05-10',
             }},
-            { name: 'Auretjern Nord',   altitude: 395 },
-            { name: 'Auretjern Sør',    altitude: 395 },
+            { name: 'Auretjern Nord',   altitude: 395, isgangHistory: {
+                2026: '2026-04-25', 2025: '2025-04-24', 2024: '2024-05-08', 2023: '2023-05-19',
+                2022: '2022-05-06', 2021: '2021-05-14', 2020: '2020-05-06', 2019: '2019-05-06',
+                2018: '2018-05-11', 2017: '2017-05-11',
+            }},
+            { name: 'Auretjern Sør',    altitude: 395, isgangHistory: {
+                2026: '2026-04-25', 2025: '2025-04-24', 2024: '2024-05-08', 2023: '2023-05-19',
+                2022: '2022-05-06', 2021: '2021-05-14', 2020: '2020-05-06', 2019: '2019-05-06',
+                2018: '2018-05-11', 2017: '2017-05-11',
+            }},
             { name: 'Daltjuven Lille',  altitude: 408, isgangHistory: {
                 2026: '2026-04-27', 2025: '2025-04-19', 2024: '2024-05-04', 2023: '2023-05-20',
                 2022: '2022-05-01', 2021: '2021-05-10', 2020: '2020-05-07', 2019: '2019-05-05',
@@ -1214,9 +1236,13 @@ const LOCATIONS = {
                 2022: '2022-05-02', 2021: '2021-05-11', 2020: '2020-05-09', 2019: '2019-05-06',
                 2018: '2018-05-12', 2017: '2017-05-12',
             }},
-            { name: 'Manntjern',        altitude: 444 },
+            { name: 'Manntjern',        altitude: 444, isgangHistory: {
+                2026: '2026-04-25', 2025: '2025-04-24', 2024: '2024-05-08', 2023: '2023-05-19',
+                2022: '2022-05-06', 2021: '2021-05-14', 2020: '2020-05-06', 2019: '2019-05-06',
+                2018: '2018-05-11', 2017: '2017-05-11',
+            }},
             { name: 'Katnosa',          altitude: 464, isgangHistory: {
-                2025: '2025-04-25', 2024: '2024-05-09', 2023: '2023-05-23',
+                2026: '2026-04-27', 2025: '2025-04-25', 2024: '2024-05-09', 2023: '2023-05-23',
                 2022: '2022-05-04', 2021: '2021-05-22', 2020: '2020-05-17',
                 2019: '2019-05-10', 2018: '2018-05-13', 2017: '2017-05-16',
             }},
@@ -1257,7 +1283,7 @@ const LOCATIONS = {
         calibShortEn: 'n=24+5, OFA · GDD 620 + WT 14°C',
         isgangWater: 'Katnosa, Nordmarka',
         isgangHistory: {
-            2025: '2025-04-25', 2024: '2024-05-09', 2023: '2023-05-23',
+            2026: '2026-04-27', 2025: '2025-04-25', 2024: '2024-05-09', 2023: '2023-05-23',
             2022: '2022-05-04', 2021: '2021-05-22', 2020: '2020-05-17',
             2019: '2019-05-10', 2018: '2018-05-13', 2017: '2017-05-16',
         },
@@ -1310,7 +1336,7 @@ const LOCATIONS = {
         calibShortEn: 'TEST · Tryvann',
         isgangWater: 'Katnosa, Nordmarka',
         isgangHistory: {
-            2025: '2025-04-25', 2024: '2024-05-09', 2023: '2023-05-23',
+            2026: '2026-04-27', 2025: '2025-04-25', 2024: '2024-05-09', 2023: '2023-05-23',
             2022: '2022-05-04', 2021: '2021-05-22', 2020: '2020-05-17',
             2019: '2019-05-10', 2018: '2018-05-13', 2017: '2017-05-16',
         },
@@ -1833,6 +1859,29 @@ if (!LOC.calibrated) {
 //
 // ?forecast=0 i URL skjuler popupen (ikke aktiv testing for den brukeren).
 // Tekst oversettes via t() — både norsk og engelsk versjon.
+// Nordmarka-oppdaterings-popup (innført 2026-05-07).
+// Vises kun for lokasjoner i Nordmarka-området (oslo + nordmarka_dyn).
+// Vises én gang per bruker, og kun frem til SHOW_UNTIL-datoen — etter det
+// dukker den ikke opp lenger uansett. localStorage-flag forhindrer gjentatt visning.
+(function setupNordmarkaUpdatePopup() {
+    if (LOC.id !== 'oslo' && LOC.id !== 'nordmarka_dyn') return;
+    const SHOW_UNTIL = new Date('2026-05-14T23:59:59');  // ~1 uke fra deploy
+    if (new Date() > SHOW_UNTIL) return;
+    const seenKey = 'hw_nordmarka_update_seen';
+    if (localStorage.getItem(seenKey) === '1') return;
+    const overlay = document.getElementById('nordmarkaUpdateOverlay');
+    if (!overlay) return;
+    overlay.classList.add('open');
+    function dismiss() {
+        overlay.classList.remove('open');
+        try { localStorage.setItem(seenKey, '1'); } catch (e) {}
+    }
+    const closeX = document.getElementById('nordmarkaPopupCloseX');
+    if (closeX) closeX.addEventListener('click', dismiss);
+    const btn = document.getElementById('nordmarkaPopupDismiss');
+    if (btn) btn.addEventListener('click', dismiss);
+})();
+
 (function setupForecastTestPopup() {
     if (!shouldUseLongTermForecast()) return;
     const seenKey = 'hw_forecast_popup_seen_global';  // global, ikke per-loc
