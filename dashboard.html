@@ -1111,30 +1111,86 @@ const LOCATIONS = {
         region: 'Østlandet',
         lat: 59.94, lon: 10.72, altitude: 370, stationAltitude: 380, waterStationAltitude: 370,  // Bjørnholt 380m luft, Sinnerdammen 370m vann
         altitudeAdjustable: true,    // ⚡ Aktiverer dropdown for vann-valg
+        // Per-vann isgang-historikk innført 2026-05-04 (Sentinel Hub-data fra Stian).
+        // Når bruker velger et vann fra dropdown, brukes vannets egen isgang-historikk
+        // for Mygg/Marginata/Vespertina-prediksjoner i stedet for default Katnosa-data.
+        // Vann uten isgangHistory bruker LOC.isgangHistory som fallback (Katnosa).
+        // Hybrid-ismodellen håndterer ekstrapolering for år uten observasjon.
         ofaLakes: [                  // Kilde: OFAs liste (Oslomarka Fiskeadministrasjon)
             { name: 'Skillingen Store', altitude: 248 },
-            { name: 'Øyungen',          altitude: 283 },
-            { name: 'Gåslungen',        altitude: 283 },
+            { name: 'Øyungen',          altitude: 283, isgangHistory: {
+                2026: '2026-04-17', 2025: '2025-04-16', 2024: '2024-05-02', 2023: '2023-05-15',
+                2022: '2022-04-27', 2021: '2021-05-06', 2020: '2020-04-23', 2019: '2019-05-02',
+                2018: '2018-05-10', 2017: '2017-05-08',
+            }},
+            { name: 'Gåslungen',        altitude: 283, isgangHistory: {
+                2026: '2026-04-17', 2025: '2025-04-16', 2024: '2024-05-02', 2023: '2023-05-15',
+                2022: '2022-04-27', 2021: '2021-05-06', 2020: '2020-04-23', 2019: '2019-05-02',
+                2018: '2018-05-10', 2017: '2017-05-08',
+            }},
             { name: 'Åklungen Lille',   altitude: 293 },
             { name: 'Åklungen Store',   altitude: 293 },
-            { name: 'Bjørnsjøen',       altitude: 337 },
-            { name: 'Elvann',           altitude: 341 },
-            { name: 'Langvann',         altitude: 342 },
+            { name: 'Bjørnsjøen',       altitude: 337, isgangHistory: {
+                2026: '2026-04-22', 2025: '2025-04-20', 2024: '2024-05-04', 2023: '2023-05-17',
+                2022: '2022-05-03', 2021: '2021-05-17', 2020: '2020-05-03', 2019: '2019-05-05',
+                2018: '2018-05-10', 2017: '2017-05-10',
+            }},
+            { name: 'Elvann',           altitude: 341, isgangHistory: {
+                2021: '2021-05-12', 2020: '2020-04-29', 2019: '2019-04-30',
+                2018: '2018-05-09', 2017: '2017-05-07',
+            }},
+            { name: 'Langvann',         altitude: 342, isgangHistory: {
+                2021: '2021-05-11', 2020: '2020-04-29', 2019: '2019-04-30',
+                2018: '2018-05-08', 2017: '2017-05-07',
+            }},
             { name: 'Blankvann',        altitude: 351 },
-            { name: 'Helgeren',         altitude: 358 },
-            { name: 'Trehørningen',     altitude: 360 },
-            { name: 'Gørja Lille',      altitude: 371 },
-            { name: 'Gørja Store',      altitude: 376 },
-            { name: 'Kalvsjøen',        altitude: 387 },
-            { name: 'Måsjøen Sør',      altitude: 391 },
-            { name: 'Måsjøen Nord',     altitude: 392 },
+            { name: 'Helgeren',         altitude: 358, isgangHistory: {
+                2026: '2026-04-21', 2025: '2025-04-20', 2024: '2024-05-04', 2023: '2023-05-18',
+                2022: '2022-05-03', 2021: '2021-05-17', 2020: '2020-05-03', 2019: '2019-05-05',
+                2018: '2018-05-09', 2017: '2017-05-08',
+            }},
+            { name: 'Trehørningen',     altitude: 360, isgangHistory: {
+                2021: '2021-05-14', 2020: '2020-05-01', 2019: '2019-05-03',
+                2018: '2018-05-11', 2017: '2017-05-10',
+            }},
+            { name: 'Gørja Lille',      altitude: 371, isgangHistory: {
+                2026: '2026-04-22', 2025: '2025-04-21', 2024: '2024-05-04', 2023: '2023-05-19',
+                2022: '2022-05-04', 2021: '2021-05-18', 2020: '2020-05-05', 2019: '2019-05-06',
+                2018: '2018-05-11', 2017: '2017-05-10',
+            }},
+            { name: 'Gørja Store',      altitude: 376, isgangHistory: {
+                2026: '2026-04-24', 2025: '2025-04-22', 2024: '2024-05-06', 2023: '2023-05-20',
+                2022: '2022-05-06', 2021: '2021-05-20', 2020: '2020-05-07', 2019: '2019-05-08',
+                2018: '2018-05-13', 2017: '2017-05-12',
+            }},
+            { name: 'Kalvsjøen',        altitude: 387, isgangHistory: {
+                2026: '2026-04-24', 2025: '2025-04-22', 2024: '2024-05-07', 2023: '2023-05-21',
+                2022: '2022-05-06', 2021: '2021-05-20', 2020: '2020-05-07', 2019: '2019-05-08',
+                2018: '2018-05-13', 2017: '2017-05-12',
+            }},
+            { name: 'Måsjøen Sør',      altitude: 391, isgangHistory: {
+                2021: '2021-05-14', 2020: '2020-05-02', 2019: '2019-05-03',
+                2018: '2018-05-11', 2017: '2017-05-10',
+            }},
+            { name: 'Måsjøen Nord',     altitude: 392, isgangHistory: {
+                2021: '2021-05-14', 2020: '2020-05-02', 2019: '2019-05-03',
+                2018: '2018-05-11', 2017: '2017-05-10',
+            }},
             { name: 'Auretjern Nord',   altitude: 395 },
             { name: 'Auretjern Sør',    altitude: 395 },
             { name: 'Daltjuven Lille',  altitude: 408 },
-            { name: 'Fjellsjøen',       altitude: 425 },
+            { name: 'Fjellsjøen',       altitude: 425, isgangHistory: {
+                2026: '2026-04-23', 2025: '2025-04-22', 2024: '2024-05-06', 2023: '2023-05-20',
+                2022: '2022-05-03', 2021: '2021-05-21', 2020: '2020-05-06', 2019: '2019-05-08',
+                2018: '2018-05-12', 2017: '2017-05-15',
+            }},
             { name: 'Daltjuven Store',  altitude: 442 },
             { name: 'Manntjern',        altitude: 444 },
-            { name: 'Katnosa',          altitude: 464 },
+            { name: 'Katnosa',          altitude: 464, isgangHistory: {
+                2025: '2025-04-25', 2024: '2024-05-09', 2023: '2023-05-23',
+                2022: '2022-05-04', 2021: '2021-05-22', 2020: '2020-05-17',
+                2019: '2019-05-10', 2018: '2018-05-13', 2017: '2017-05-16',
+            }},
             { name: 'Spålen',           altitude: 478 },
         ],
         frostStation: 'SN18500',
@@ -3291,7 +3347,14 @@ function predictIsgangHybrid(airData, alpha, beta, hist) {
 //           2. Hybrid prediction (Stefan + climate-adjusted median, 50/50 blend)
 //           3. Fallback chain: snowFree+12d / fromDate / back-calc / hist.mean
 function resolveIsgang(airData, fromDate, snowFree, vulgataDate) {
+    // 2026-05-04: For lokasjoner med altitudeAdjustable + ofaLakes (nordmarka_dyn),
+    // sjekk om det valgte vannet har sin egen isgangHistory. Hvis ja, bruk den —
+    // ellers fall tilbake til LOC.isgangHistory (default-vann, typisk Katnosa).
     var hist = LOC.isgangHistory;
+    if (LOC.altitudeAdjustable && LOC.ofaLakes && userSelectedLakeName) {
+        var lake = LOC.ofaLakes.find(function(l) { return l.name === userSelectedLakeName; });
+        if (lake && lake.isgangHistory) hist = lake.isgangHistory;
+    }
 
     // 1 — directly observed this season
     if (hist && hist[YEAR]) {
