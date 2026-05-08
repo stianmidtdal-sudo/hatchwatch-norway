@@ -545,24 +545,25 @@ buildCards();
 <button id="observationFAB"
         onclick="if(window.Tally){Tally.openPopup('VLvGQE')}else{alert('Skjemaet kunne ikke lastes. Send gjerne e-post til stian.midtdal@gmail.com istedenfor.')}"
         aria-label="Bidra med klekkeobservasjoner"
-        style="position:fixed; bottom:20px; right:20px; padding:10px 16px;
-               background:white; color:#1B4332; border:1.5px solid #1B4332; border-radius:24px;
-               box-shadow:0 2px 8px rgba(0,0,0,0.10); cursor:pointer;
+        style="position:fixed; bottom:20px; right:20px; padding:8px 16px;
+               background:#1B4332; color:white; border:1.5px solid white; border-radius:24px;
+               box-shadow:0 2px 8px rgba(0,0,0,0.18); cursor:pointer;
                font-size:0.78rem; font-weight:500; z-index:9998;
                font-family:inherit;
+               line-height:1.25; text-align:center;
                transition: transform 0.15s ease, box-shadow 0.15s ease;"
-        onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)';"
-        onmouseout="this.style.transform='';this.style.boxShadow='0 2px 8px rgba(0,0,0,0.10)';">
-    Bidra med klekkeobservasjoner
+        onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 14px rgba(0,0,0,0.25)';"
+        onmouseout="this.style.transform='';this.style.boxShadow='0 2px 8px rgba(0,0,0,0.18)';">
+    Bidra med<br>klekkeobservasjoner
 </button>
 <script>
 // FAB-tekst settes etter elementet eksisterer i DOM.
 (function() {
     var _lang = localStorage.getItem('lang') || 'no';
     var _obsFab = document.getElementById('observationFAB');
-    if (_obsFab) _obsFab.textContent = _lang === 'no'
-        ? 'Bidra med klekkeobservasjoner'
-        : 'Submit hatch observations';
+    if (_obsFab) _obsFab.innerHTML = _lang === 'no'
+        ? 'Bidra med<br>klekkeobservasjoner'
+        : 'Submit hatch<br>observations';
 })();
 </script>
 </body>
