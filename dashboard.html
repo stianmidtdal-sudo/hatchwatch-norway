@@ -15,6 +15,28 @@
     </script>
     <!-- Tally embed for tilbakemeldinger (popup utløses av footer-link) -->
     <script async src="https://tally.so/widgets/embed.js"></script>
+    <script>
+    // Wrapper for Tally-popup som lukker ved klikk utenfor (Tally's innebygde
+    // overlay-klikk virker ikke alltid pålitelig). Innført 2026-05-08.
+    window.openHatchForm = function(formId) {
+        if (!window.Tally) {
+            alert('Skjemaet kunne ikke lastes. Send gjerne e-post til stian.midtdal@gmail.com istedenfor.');
+            return;
+        }
+        Tally.openPopup(formId);
+        setTimeout(function() {
+            var iframe = document.querySelector('iframe[src*="tally.so"]');
+            if (!iframe) return;
+            var clickHandler = function(e) {
+                if (!iframe.contains(e.target)) {
+                    Tally.closePopup(formId);
+                    document.removeEventListener('mousedown', clickHandler, true);
+                }
+            };
+            document.addEventListener('mousedown', clickHandler, true);
+        }, 300);
+    };
+    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -450,7 +472,7 @@
 
         <!-- ═══ KLEKKEOBSERVASJON-BANNER (alltid synlig — bidrar til modellen) ═══ -->
         <div id="observationBanner"
-             onclick="if(window.Tally){Tally.openPopup('VLvGQE')}else{alert('Skjemaet kunne ikke lastes. Send gjerne e-post til stian.midtdal@gmail.com istedenfor.')}"
+             onclick="openHatchForm('VLvGQE')"
              style="margin: 18px 0 24px; padding: 16px 20px; background: linear-gradient(135deg, #f6faf7 0%, #e8f0ea 100%);
                     border: 1px solid #c8d6cb; border-radius: 10px; cursor: pointer;
                     display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px;
@@ -1185,16 +1207,10 @@ const LOCATIONS = {
                 2022: '2022-05-03', 2021: '2021-05-17', 2020: '2020-05-03', 2019: '2019-05-05',
                 2018: '2018-05-10', 2017: '2017-05-10',
             }},
-            { name: 'Elvann',           altitude: 341, isgangHistory: {
-                2026: '2026-04-18', 2025: '2025-04-16', 2024: '2024-05-03', 2023: '2023-05-15',
-                2022: '2022-04-29', 2021: '2021-05-12', 2020: '2020-04-29', 2019: '2019-04-30',
-                2018: '2018-05-09', 2017: '2017-05-07',
-            }},
-            { name: 'Langvann',         altitude: 342, isgangHistory: {
-                2026: '2026-04-18', 2025: '2025-04-17', 2024: '2024-05-03', 2023: '2023-05-15',
-                2022: '2022-04-28', 2021: '2021-05-11', 2020: '2020-04-29', 2019: '2019-04-30',
-                2018: '2018-05-08', 2017: '2017-05-07',
-            }},
+            // Fjernet 2026-05-09 etter tilbakemelding fra Knut (NFF):
+            //   Elvann (341 m) — sjeldne vulgata-funn, "ubetydelig" bestand
+            //   Langvann (342 m) — samme
+            //   Trehørningen (360 m) — samme
             { name: 'Blankvann',        altitude: 351, isgangHistory: {
                 2026: '2026-04-20', 2025: '2025-04-18', 2024: '2024-05-03', 2023: '2023-05-14',
                 2022: '2022-04-30', 2021: '2021-05-06', 2020: '2020-04-25', 2019: '2019-05-01',
@@ -1204,11 +1220,6 @@ const LOCATIONS = {
                 2026: '2026-04-21', 2025: '2025-04-20', 2024: '2024-05-04', 2023: '2023-05-18',
                 2022: '2022-05-03', 2021: '2021-05-17', 2020: '2020-05-03', 2019: '2019-05-05',
                 2018: '2018-05-09', 2017: '2017-05-08',
-            }},
-            { name: 'Trehørningen',     altitude: 360, isgangHistory: {
-                2026: '2026-04-22', 2025: '2025-04-20', 2024: '2024-05-06', 2023: '2023-05-18',
-                2022: '2022-05-01', 2021: '2021-05-14', 2020: '2020-05-01', 2019: '2019-05-03',
-                2018: '2018-05-11', 2017: '2017-05-10',
             }},
             { name: 'Gørja Lille',      altitude: 371, isgangHistory: {
                 2026: '2026-04-22', 2025: '2025-04-21', 2024: '2024-05-04', 2023: '2023-05-19',
@@ -4685,8 +4696,8 @@ main();
 
 <div style="text-align:center; padding: 32px 0 24px; font-size: 0.75rem; color: #aaa;">
     Built by <strong style="color:#1B4332;">Stian Midtdal</strong> &nbsp;·&nbsp; © 2026 Hatch Watch Norway
-    &nbsp;·&nbsp; <a onclick="if(window.Tally){Tally.openPopup('EkBErN')}else{alert('Tilbakemelding-skjemaet kunne ikke lastes. Send gjerne e-post til stian.midtdal@gmail.com istedenfor.')}" style="color:#1B4332; text-decoration:none; cursor:pointer;" data-i18n="feedbackBtn">Tilbakemelding</a>
-    &nbsp;·&nbsp; <a onclick="if(window.Tally){Tally.openPopup('VLvGQE')}else{alert('Skjemaet kunne ikke lastes. Send gjerne e-post til stian.midtdal@gmail.com istedenfor.')}" style="color:#1B4332; text-decoration:none; cursor:pointer;" data-i18n="observationBtn">Send klekkeobservasjon</a>
+    &nbsp;·&nbsp; <a onclick="openHatchForm('EkBErN')" style="color:#1B4332; text-decoration:none; cursor:pointer;" data-i18n="feedbackBtn">Tilbakemelding</a>
+    &nbsp;·&nbsp; <a onclick="openHatchForm('VLvGQE')" style="color:#1B4332; text-decoration:none; cursor:pointer;" data-i18n="observationBtn">Send klekkeobservasjon</a>
 </div>
 
 <!-- ═══ FLOATING KLEKKEOBS-FAB (alltid synlig nederst til høyre) ═══ -->
@@ -4694,7 +4705,7 @@ main();
      er fortsatt tilgjengelig som lenke i footer. Klekkeobs-FAB beholdes
      med diskret outline-styling for å ta minst mulig plass. -->
 <button id="observationFAB"
-        onclick="if(window.Tally){Tally.openPopup('VLvGQE')}else{alert('Skjemaet kunne ikke lastes. Send gjerne e-post til stian.midtdal@gmail.com istedenfor.')}"
+        onclick="openHatchForm('VLvGQE')"
         aria-label="Bidra med klekkeobservasjoner"
         style="position:fixed; bottom:20px; right:20px; padding:8px 16px;
                background:#1B4332; color:white; border:1.5px solid white; border-radius:24px;
