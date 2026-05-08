@@ -572,7 +572,20 @@ buildCards();
                transition: transform 0.15s ease, box-shadow 0.15s ease;"
         onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(0,0,0,0.25)';"
         onmouseout="this.style.transform='';this.style.boxShadow='0 4px 16px rgba(0,0,0,0.18)';">
-    Feedback
+    Tilbakemelding
 </button>
+<script>
+// FAB-tekst settes i henhold til valgt språk (default norsk).
+// Bug 2026-05-08: knappen sto fast på "Feedback" i index.html selv om
+// brukeren hadde norsk som default — fordi det ikke var noen språk-logikk
+// på forsiden (kun på dashboard.html).
+(function() {
+    var _fab = document.getElementById('tallyFAB');
+    if (_fab) {
+        var _lang = localStorage.getItem('lang') || 'no';
+        _fab.textContent = _lang === 'no' ? 'Tilbakemelding' : 'Feedback';
+    }
+})();
+</script>
 </body>
 </html>
