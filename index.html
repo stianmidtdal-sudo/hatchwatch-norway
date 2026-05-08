@@ -334,28 +334,17 @@
     <div class="eyebrow" data-i18n="howEyebrow">How it works</div>
     <div class="how-grid">
         <div class="item">
-            <strong data-i18n="dualTitle">Dual Trigger Model</strong>
-            <p data-i18n="dualDesc">Two independent models run in parallel — one tracking accumulated heat units (GDD), the other the live water temperature trend. Each blends real observations with a forward projection to its respective threshold. The estimated hatch date is where the last condition is met.</p>
+            <strong data-i18n="modelTitle">Prediksjonsmodell</strong>
+            <p data-i18n="modelDesc">Klekkemodellen er basert på to biologiske krav som må være oppfylt samtidig: akkumulert varme i lufta og vanntemperatur over en gitt terskel. Klekkedatoen estimeres som den første dagen begge krav er oppfylt samtidig. For dager fram i tid blandes faktiske målinger med 10-årssnittet for samme dato. Tersklene er kalibrert lokasjonsspesifikt mot historiske klekkeobservasjoner.</p>
         </div>
         <div class="item">
-            <strong data-i18n="gddTitle">GDD · Growing Degree Days</strong>
-            <p data-i18n="gddDesc">Heat accumulates from January 1st. Each species crosses a calibrated thermal threshold — that crossing is the forecast.</p>
+            <strong data-i18n="dataTitle">Datakilder</strong>
+            <p data-i18n-html="dataDesc">Modellen bygger på flere kilder: klekkeobservasjoner fra fluefiskere rundt om i landet (du kan selv bidra med egne klekkeobservasjoner <a onclick="if(window.Tally){Tally.openPopup('VLvGQE')}else{alert('Skjemaet kunne ikke lastes. Send gjerne e-post til stian.midtdal@gmail.com istedenfor.')}" style="color:#1B4332;text-decoration:underline;cursor:pointer;">her</a>), lufttemperatur og snødybde fra Meteorologisk institutts Frost API, vanntemperatur fra NVE sin HydAPI, samt isgang-datoer fra satellitt-observasjoner via Sentinel Hub. Værdata oppdateres daglig.</p>
         </div>
         <div class="item">
-            <strong data-i18n="stefanTitle">Stefan Ice Model</strong>
-            <p data-i18n="stefanDesc">Ice-out is predicted using Stefan's law — a physical growth/melt model calibrated against satellite-observed records from each location.</p>
+            <strong data-i18n="uncertaintyTitle">Usikkerhet</strong>
+            <p data-i18n="uncertaintyDesc">Tenk på klekkeprognosen som en værmelding: tidlig i sesongen er usikkerheten større fordi mer av vær- og vannutviklingen ligger fram i tid. Etter hvert som faktiske målinger kommer inn dag for dag, krymper estimatet og treffsikkerheten øker. Modellen er kalibrert mot mange års observasjoner og treffer typisk innenfor noen få dager for godt dokumenterte lokasjoner. Naturen er uforutsigbar. Bruk dette verktøyet som veiledning, ikke fasit.</p>
         </div>
-        <div class="item">
-            <strong data-i18n="dataTitle">Data Sources</strong>
-            <p data-i18n="dataDesc">Air temperature and snow cover from MET Norway's Frost API. Water temperature from NVE HydAPI. Updated daily.</p>
-        </div>
-        <div class="item">
-            <strong data-i18n="altitudeTitle">🏔 Altitude correction</strong>
-            <p data-i18n="altitudeDesc">Weather stations often sit lower than fishing areas. Air temperatures are adjusted by 0.6°C per 100m (standard atmospheric lapse rate) to estimate conditions at the actual fishing location. This affects the GDD accumulation. Water temperatures used in the prediction model are adjusted by 0.35°C per 100m.</p>
-        </div>
-    </div>
-    <div class="how-note" data-i18n-html="howNote">
-        <strong>It's either very clever, or deeply unnecessary.</strong> Possibly both.
     </div>
 </div>
 
@@ -402,12 +391,10 @@ const T = {
     heroSpan: 'i sanntid',
     heroP: 'Klekketidspunkt estimert fra løpende vanntemperatur og akkumulerte døgngrader (GDD)',
     howEyebrow: 'Slik fungerer det',
-    dualTitle: 'Dobbelttrigger-modell',
-    dualDesc: 'To uavhengige modeller kjører parallelt — én sporer akkumulerte døgngrader (GDD), den andre den løpende vanntemperaturtrenden. Hver blander faktiske observasjoner med en fremskriving til sin respektive terskel. Estimert klekkedato er der den siste betingelsen oppfylles.',
-    gddTitle: 'GDD · Akkumulerte døgngrader',
-    gddDesc: 'Varme akkumuleres fra 1. januar. Hver art krysser en kalibrert termisk terskel — denne kryssingen er prognosen.',
-    altitudeTitle: '🏔 Høydekorreksjon',
-    altitudeDesc: 'Værstasjoner ligger ofte lavere enn fiskeplassene. Lufttemperaturer justeres med 0,6°C per 100m (standard atmosfærisk temperaturgradient) for å estimere forholdene der folk faktisk fisker. Dette påvirker GDD-akkumuleringen. Vanntemperaturer brukt i prediksjonsmodellen justeres med 0,35°C per 100m.',
+    modelTitle: 'Prediksjonsmodell',
+    modelDesc: 'Klekkemodellen er basert på to biologiske krav som må være oppfylt samtidig: akkumulert varme i lufta og vanntemperatur over en gitt terskel. Klekkedatoen estimeres som den første dagen begge krav er oppfylt samtidig. For dager fram i tid blandes faktiske målinger med 10-årssnittet for samme dato. Tersklene er kalibrert lokasjonsspesifikt mot historiske klekkeobservasjoner.',
+    uncertaintyTitle: 'Usikkerhet',
+    uncertaintyDesc: 'Tenk på klekkeprognosen som en værmelding: tidlig i sesongen er usikkerheten større fordi mer av vær- og vannutviklingen ligger fram i tid. Etter hvert som faktiske målinger kommer inn dag for dag, krymper estimatet og treffsikkerheten øker. Modellen er kalibrert mot mange års observasjoner og treffer typisk innenfor noen få dager for godt dokumenterte lokasjoner. Naturen er uforutsigbar. Bruk dette verktøyet som veiledning, ikke fasit.',
     aboutLink: 'Om Hatch Watch',
     feedbackBtn: 'Tilbakemelding',
     welcomeDismiss: 'Lukk',
@@ -417,11 +404,8 @@ const T = {
         <p><strong>Det er åpenbart at naturen aldri kan forutses helt nøyaktig</strong> — det vet vi fra værmeldingen. Men det viser seg at historisk data og statistisk modellering tar oss overraskende langt i å forutse når klekkinger faktisk skjer.</p>
         <p>Lokasjoner merket med ⭐ Kalibrert er validert mot observerte klekkedatoer og treffer typisk innen 2-4 dager. For andre er prognosen indikativ — fortsatt langt bedre enn å gjette, men bruk den som veiledning, ikke fasit. Kombiner alltid med egen fiskefølelse og lokalkunnskap.</p>
         <p><strong>Tilbakemeldinger gjør siden bedre.</strong> Forbedringspotensiale, nye lokasjoner og kanskje aller mest verdifult — klekkeobservasjoner. Feltobservasjoner trener modellen og gjør den enda skarpere.</p>`,
-    stefanTitle: 'Stefan ismodell',
-    stefanDesc: 'Istykkelse estimeres med Stefans ligning — en fysisk vekstmodell for innsjøis basert på akkumulerte kuldegrader.',
     dataTitle: 'Datakilder',
-    dataDesc: 'Lufttemperatur og snødybde fra Meteorologisk institutts Frost API. Vanntemperatur fra NVE HydAPI. Oppdateres daglig.',
-    howNote: '<strong>Dette er enten veldig smart, eller veldig unødvendig.</strong> Sannsynligvis begge deler.',
+    dataDesc: 'Modellen bygger på flere kilder: klekkeobservasjoner fra fluefiskere rundt om i landet (du kan selv bidra med egne klekkeobservasjoner <a onclick="if(window.Tally){Tally.openPopup(\'VLvGQE\')}else{alert(\'Skjemaet kunne ikke lastes. Send gjerne e-post til stian.midtdal@gmail.com istedenfor.\')}" style="color:#1B4332;text-decoration:underline;cursor:pointer;">her</a>), lufttemperatur og snødybde fra Meteorologisk institutts Frost API, vanntemperatur fra NVE sin HydAPI, samt isgang-datoer fra satellitt-observasjoner via Sentinel Hub. Værdata oppdateres daglig.',
     footer: 'Laget av <strong>Stian Midtdal</strong> &nbsp;·&nbsp; © 2026 Hatch Watch Norway',
     viewForecast: 'Se prognose →',
     calibratedBadge: '⭐ Kalibrert',
@@ -431,17 +415,12 @@ const T = {
     heroSpan: 'emergence forecasting',
     heroP: 'Hatch timing estimated from live water temperature data and accumulated heat units (GDD)',
     howEyebrow: 'How it works',
-    dualTitle: 'Dual Trigger Model',
-    dualDesc: 'Two independent models run in parallel — one tracking accumulated heat units (GDD), the other the live water temperature trend. Each blends real observations with a forward projection to its respective threshold. The estimated hatch date is where the last condition is met.',
-    gddTitle: 'GDD · Growing Degree Days',
-    gddDesc: 'Heat accumulates from January 1st. Each species crosses a calibrated thermal threshold — that crossing is the forecast.',
-    altitudeTitle: '🏔 Altitude correction',
-    altitudeDesc: 'Weather stations often sit lower than fishing areas. Air temperatures are adjusted by 0.6°C per 100m (standard atmospheric lapse rate) to estimate conditions at the actual fishing location. This affects the GDD accumulation. Water temperatures used in the prediction model are adjusted by 0.35°C per 100m.',
-    stefanTitle: 'Stefan Ice Model',
-    stefanDesc: 'Ice thickness is estimated using the Stefan equation — a physical growth model for lake ice based on accumulated freezing degree days.',
+    modelTitle: 'Prediction model',
+    modelDesc: 'The hatch model is based on two biological requirements that must be met simultaneously: accumulated heat in the air and water temperature above a given threshold. The hatch date is estimated as the first day both requirements are met at the same time. For days ahead, actual measurements are blended with the 10-year average for that date. The thresholds are calibrated location-specifically against historical hatch observations.',
+    uncertaintyTitle: 'Uncertainty',
+    uncertaintyDesc: "Think of the hatch forecast like a weather forecast: early in the season, uncertainty is greater because more of the weather and water development lies ahead. As actual measurements come in day by day, the estimate narrows and accuracy improves. The model is calibrated against many years of observations and typically hits within a few days for well-documented locations. Nature is unpredictable. Use this tool as guidance, not gospel.",
     dataTitle: 'Data Sources',
-    dataDesc: "Air temperature and snow cover from MET Norway's Frost API. Water temperature from NVE HydAPI. Updated daily.",
-    howNote: "<strong>It's either very clever, or deeply unnecessary.</strong> Possibly both.",
+    dataDesc: "The model draws on several sources: hatch observations from fly fishers around the country (you can contribute your own <a onclick=\"if(window.Tally){Tally.openPopup('VLvGQE')}else{alert('The form could not be loaded. Email stian.midtdal@gmail.com instead.')}\" style=\"color:#1B4332;text-decoration:underline;cursor:pointer;\">here</a>), air temperature and snow depth from MET Norway's Frost API, water temperature from NVE's HydAPI, and ice-out dates from satellite observations via Sentinel Hub. Weather data is updated daily.",
     footer: 'Built by <strong>Stian Midtdal</strong> &nbsp;·&nbsp; © 2026 Hatch Watch Norway',
     viewForecast: 'View forecast →',
     calibratedBadge: '⭐ Calibrated',
@@ -565,16 +544,17 @@ buildCards();
      modellen mest. Tilbakemelding under, mer diskret outline-styling. -->
 <button id="observationFAB"
         onclick="if(window.Tally){Tally.openPopup('VLvGQE')}else{alert('Skjemaet kunne ikke lastes. Send gjerne e-post til stian.midtdal@gmail.com istedenfor.')}"
-        aria-label="Send klekkeobservasjon"
-        style="position:fixed; bottom:72px; right:20px; padding:12px 18px;
+        aria-label="Bidra med klekkeobservasjoner"
+        style="position:fixed; bottom:80px; right:20px; padding:10px 18px;
                background:#1B4332; color:white; border:none; border-radius:24px;
                box-shadow:0 4px 16px rgba(0,0,0,0.18); cursor:pointer;
-               font-size:0.88rem; font-weight:600; z-index:9998;
+               font-size:0.85rem; font-weight:600; z-index:9998;
                font-family:inherit;
+               line-height:1.25; text-align:center;
                transition: transform 0.15s ease, box-shadow 0.15s ease;"
         onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(0,0,0,0.25)';"
         onmouseout="this.style.transform='';this.style.boxShadow='0 4px 16px rgba(0,0,0,0.18)';">
-    Send klekkeobs
+    Bidra med<br>klekkeobservasjoner
 </button>
 <button id="tallyFAB"
         onclick="if(window.Tally){Tally.openPopup('EkBErN')}else{alert('Tilbakemelding-skjemaet kunne ikke lastes. Send gjerne e-post til stian.midtdal@gmail.com istedenfor.')}"
@@ -596,7 +576,9 @@ buildCards();
     var _fab = document.getElementById('tallyFAB');
     if (_fab) _fab.textContent = _lang === 'no' ? 'Tilbakemelding' : 'Feedback';
     var _obsFab = document.getElementById('observationFAB');
-    if (_obsFab) _obsFab.textContent = _lang === 'no' ? 'Send klekkeobs' : 'Submit hatch obs';
+    if (_obsFab) _obsFab.innerHTML = _lang === 'no'
+        ? 'Bidra med<br>klekkeobservasjoner'
+        : 'Submit hatch<br>observations';
 })();
 </script>
 </body>
