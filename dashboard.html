@@ -448,6 +448,22 @@
             <span id="bestDate" style="display:none"></span>
         </div>
 
+        <!-- ═══ KLEKKEOBSERVASJON-BANNER (alltid synlig — bidrar til modellen) ═══ -->
+        <div id="observationBanner"
+             onclick="if(window.Tally){Tally.openPopup('VLvGQE')}else{alert('Skjemaet kunne ikke lastes. Send gjerne e-post til stian.midtdal@gmail.com istedenfor.')}"
+             style="margin: 18px 0 24px; padding: 16px 20px; background: linear-gradient(135deg, #f6faf7 0%, #e8f0ea 100%);
+                    border: 1px solid #c8d6cb; border-radius: 10px; cursor: pointer;
+                    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px;
+                    transition: transform 0.15s ease, box-shadow 0.15s ease;"
+             onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 14px rgba(27,67,50,0.10)';"
+             onmouseout="this.style.transform='';this.style.boxShadow='';">
+            <div style="flex: 1; min-width: 260px;">
+                <div id="observationBannerTitleEl" style="font-size: 1.02rem; font-weight: 700; color: #1B4332; margin-bottom: 4px;" data-i18n="observationBannerTitle">Har du sett klekking?</div>
+                <div id="observationBannerBodyEl" style="font-size: 0.86rem; color: #2d3a35; line-height: 1.45;" data-i18n="observationBannerBody">Bidra med en observasjon — det styrker modellen og gir mer treffsikre prediksjoner. Også gamle observasjoner fra dagboken er gull.</div>
+            </div>
+            <div id="observationBannerCtaEl" style="background: #1B4332; color: white; padding: 10px 18px; border-radius: 8px; font-size: 0.88rem; font-weight: 600; white-space: nowrap;" data-i18n="observationBannerCta">Send observasjon →</div>
+        </div>
+
         <!-- ═══ PREDICTION CONVERGENCE ═══ -->
         <section id="convergenceSection">
             <h2 data-i18n="convergenceHeading">Prediction history</h2>
@@ -578,6 +594,10 @@ const T = {
   no: {
     backLink: '← Alle steder',
     feedbackBtn: 'Tilbakemelding',
+    observationBtn: 'Send klekkeobservasjon',
+    observationBannerTitle: 'Har du sett klekking?',
+    observationBannerBody: 'Bidra med en observasjon — det styrker modellen og gir mer treffsikre prediksjoner. Også gamle observasjoner fra dagboken er gull.',
+    observationBannerCta: 'Send observasjon →',
     loading: 'Henter live data fra MET Norge og NVE…',
     loadingHistAvg: 'Laster historisk gjennomsnitt…',
     seasonCalendar: '▶ Sesong klekkekalender',
@@ -723,6 +743,10 @@ const T = {
   en: {
     backLink: '← All locations',
     feedbackBtn: 'Feedback',
+    observationBtn: 'Submit hatch observation',
+    observationBannerTitle: 'Have you seen a hatch?',
+    observationBannerBody: 'Submit an observation — it strengthens the model and produces more accurate predictions. Past observations from your fishing log are gold too.',
+    observationBannerCta: 'Submit observation →',
     loading: 'Fetching live data from MET Norway &amp; NVE…',
     loadingHistAvg: 'Loading historical average…',
     seasonCalendar: '▶ Season Hatch Calendar',
@@ -4662,6 +4686,7 @@ main();
 <div style="text-align:center; padding: 32px 0 24px; font-size: 0.75rem; color: #aaa;">
     Built by <strong style="color:#1B4332;">Stian Midtdal</strong> &nbsp;·&nbsp; © 2026 Hatch Watch Norway
     &nbsp;·&nbsp; <a onclick="if(window.Tally){Tally.openPopup('EkBErN')}else{alert('Tilbakemelding-skjemaet kunne ikke lastes. Send gjerne e-post til stian.midtdal@gmail.com istedenfor.')}" style="color:#1B4332; text-decoration:none; cursor:pointer;" data-i18n="feedbackBtn">Tilbakemelding</a>
+    &nbsp;·&nbsp; <a onclick="if(window.Tally){Tally.openPopup('VLvGQE')}else{alert('Skjemaet kunne ikke lastes. Send gjerne e-post til stian.midtdal@gmail.com istedenfor.')}" style="color:#1B4332; text-decoration:none; cursor:pointer;" data-i18n="observationBtn">Send klekkeobservasjon</a>
 </div>
 
 <!-- ═══ FLOATING TILBAKEMELDING-KNAPP (alltid synlig nederst til høyre) ═══ -->
