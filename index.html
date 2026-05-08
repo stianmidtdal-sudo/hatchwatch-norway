@@ -335,11 +335,11 @@
     <div class="how-grid">
         <div class="item">
             <strong data-i18n="modelTitle">Prediksjonsmodell</strong>
-            <p data-i18n="modelDesc">Klekkemodellen er basert på to biologiske krav som må være oppfylt samtidig: akkumulert varme i lufta og vanntemperatur over en gitt terskel. Klekkedatoen estimeres som den første dagen begge krav er oppfylt samtidig. For dager fram i tid blandes faktiske målinger med 10-årssnittet for samme dato. Tersklene er kalibrert lokasjonsspesifikt mot historiske klekkeobservasjoner.</p>
+            <p data-i18n="modelDesc">Klekkemodellen er basert på to biologiske krav som må være oppfylt samtidig: akkumulert varme i lufta og vanntemperatur over en gitt terskel. Klekkedatoen estimeres som den første dagen begge krav er oppfylt samtidig. For dager fram i tid blandes faktiske målinger med MET sitt langtidsvarsel, og deretter 10-årssnittet for resten av sesongen. Tersklene er kalibrert lokasjonsspesifikt mot historiske klekkeobservasjoner.</p>
         </div>
         <div class="item">
             <strong data-i18n="dataTitle">Datakilder</strong>
-            <p data-i18n-html="dataDesc">Modellen bygger på flere kilder: klekkeobservasjoner fra fluefiskere rundt om i landet (du kan selv bidra med egne klekkeobservasjoner <a onclick="if(window.Tally){Tally.openPopup('VLvGQE')}else{alert('Skjemaet kunne ikke lastes. Send gjerne e-post til stian.midtdal@gmail.com istedenfor.')}" style="color:#1B4332;text-decoration:underline;cursor:pointer;">her</a>), lufttemperatur og snødybde fra Meteorologisk institutts Frost API, vanntemperatur fra NVE sin HydAPI, samt isgang-datoer fra satellitt-observasjoner via Sentinel Hub. Værdata oppdateres daglig.</p>
+            <p data-i18n-html="dataDesc">Modellen bygger på flere kilder: klekkeobservasjoner fra fluefiskere rundt om i landet (du kan selv bidra med egne klekkeobservasjoner <a onclick="if(window.Tally){Tally.openPopup('VLvGQE')}else{alert('Skjemaet kunne ikke lastes. Send gjerne e-post til stian.midtdal@gmail.com istedenfor.')}" style="color:#1B4332;text-decoration:underline;cursor:pointer;">her</a>), lufttemperatur, snødybde og 10-dagers værvarsel fra Meteorologisk institutts Frost API, vanntemperatur fra NVE sin HydAPI, samt isgang-datoer fra satellitt-observasjoner via Sentinel Hub. Værdata oppdateres daglig.</p>
         </div>
         <div class="item">
             <strong data-i18n="uncertaintyTitle">Usikkerhet</strong>
@@ -392,7 +392,7 @@ const T = {
     heroP: 'Klekketidspunkt estimert fra løpende vanntemperatur og akkumulerte døgngrader (GDD)',
     howEyebrow: 'Slik fungerer det',
     modelTitle: 'Prediksjonsmodell',
-    modelDesc: 'Klekkemodellen er basert på to biologiske krav som må være oppfylt samtidig: akkumulert varme i lufta og vanntemperatur over en gitt terskel. Klekkedatoen estimeres som den første dagen begge krav er oppfylt samtidig. For dager fram i tid blandes faktiske målinger med 10-årssnittet for samme dato. Tersklene er kalibrert lokasjonsspesifikt mot historiske klekkeobservasjoner.',
+    modelDesc: 'Klekkemodellen er basert på to biologiske krav som må være oppfylt samtidig: akkumulert varme i lufta og vanntemperatur over en gitt terskel. Klekkedatoen estimeres som den første dagen begge krav er oppfylt samtidig. For dager fram i tid blandes faktiske målinger med MET sitt langtidsvarsel, og deretter 10-årssnittet for resten av sesongen. Tersklene er kalibrert lokasjonsspesifikt mot historiske klekkeobservasjoner.',
     uncertaintyTitle: 'Usikkerhet',
     uncertaintyDesc: 'Tenk på klekkeprognosen som en værmelding: tidlig i sesongen er usikkerheten større fordi mer av vær- og vannutviklingen ligger fram i tid. Etter hvert som faktiske målinger kommer inn dag for dag, krymper estimatet og treffsikkerheten øker. Modellen er kalibrert mot mange års observasjoner og treffer typisk innenfor noen få dager for godt dokumenterte lokasjoner. Naturen er uforutsigbar. Bruk dette verktøyet som veiledning, ikke fasit.',
     aboutLink: 'Om Hatch Watch',
@@ -405,7 +405,7 @@ const T = {
         <p>Lokasjoner merket med ⭐ Kalibrert er validert mot observerte klekkedatoer og treffer typisk innen 2-4 dager. For andre er prognosen indikativ — fortsatt langt bedre enn å gjette, men bruk den som veiledning, ikke fasit. Kombiner alltid med egen fiskefølelse og lokalkunnskap.</p>
         <p><strong>Tilbakemeldinger gjør siden bedre.</strong> Forbedringspotensiale, nye lokasjoner og kanskje aller mest verdifult — klekkeobservasjoner. Feltobservasjoner trener modellen og gjør den enda skarpere.</p>`,
     dataTitle: 'Datakilder',
-    dataDesc: 'Modellen bygger på flere kilder: klekkeobservasjoner fra fluefiskere rundt om i landet (du kan selv bidra med egne klekkeobservasjoner <a onclick="if(window.Tally){Tally.openPopup(\'VLvGQE\')}else{alert(\'Skjemaet kunne ikke lastes. Send gjerne e-post til stian.midtdal@gmail.com istedenfor.\')}" style="color:#1B4332;text-decoration:underline;cursor:pointer;">her</a>), lufttemperatur og snødybde fra Meteorologisk institutts Frost API, vanntemperatur fra NVE sin HydAPI, samt isgang-datoer fra satellitt-observasjoner via Sentinel Hub. Værdata oppdateres daglig.',
+    dataDesc: 'Modellen bygger på flere kilder: klekkeobservasjoner fra fluefiskere rundt om i landet (du kan selv bidra med egne klekkeobservasjoner <a onclick="if(window.Tally){Tally.openPopup(\'VLvGQE\')}else{alert(\'Skjemaet kunne ikke lastes. Send gjerne e-post til stian.midtdal@gmail.com istedenfor.\')}" style="color:#1B4332;text-decoration:underline;cursor:pointer;">her</a>), lufttemperatur, snødybde og 10-dagers værvarsel fra Meteorologisk institutts Frost API, vanntemperatur fra NVE sin HydAPI, samt isgang-datoer fra satellitt-observasjoner via Sentinel Hub. Værdata oppdateres daglig.',
     footer: 'Laget av <strong>Stian Midtdal</strong> &nbsp;·&nbsp; © 2026 Hatch Watch Norway',
     viewForecast: 'Se prognose →',
     calibratedBadge: '⭐ Kalibrert',
@@ -416,11 +416,11 @@ const T = {
     heroP: 'Hatch timing estimated from live water temperature data and accumulated heat units (GDD)',
     howEyebrow: 'How it works',
     modelTitle: 'Prediction model',
-    modelDesc: 'The hatch model is based on two biological requirements that must be met simultaneously: accumulated heat in the air and water temperature above a given threshold. The hatch date is estimated as the first day both requirements are met at the same time. For days ahead, actual measurements are blended with the 10-year average for that date. The thresholds are calibrated location-specifically against historical hatch observations.',
+    modelDesc: "The hatch model is based on two biological requirements that must be met simultaneously: accumulated heat in the air and water temperature above a given threshold. The hatch date is estimated as the first day both requirements are met at the same time. For days ahead, actual measurements are blended with MET's long-term forecast, and then with the 10-year average for the rest of the season. The thresholds are calibrated location-specifically against historical hatch observations.",
     uncertaintyTitle: 'Uncertainty',
     uncertaintyDesc: "Think of the hatch forecast like a weather forecast: early in the season, uncertainty is greater because more of the weather and water development lies ahead. As actual measurements come in day by day, the estimate narrows and accuracy improves. The model is calibrated against many years of observations and typically hits within a few days for well-documented locations. Nature is unpredictable. Use this tool as guidance, not gospel.",
     dataTitle: 'Data Sources',
-    dataDesc: "The model draws on several sources: hatch observations from fly fishers around the country (you can contribute your own <a onclick=\"if(window.Tally){Tally.openPopup('VLvGQE')}else{alert('The form could not be loaded. Email stian.midtdal@gmail.com instead.')}\" style=\"color:#1B4332;text-decoration:underline;cursor:pointer;\">here</a>), air temperature and snow depth from MET Norway's Frost API, water temperature from NVE's HydAPI, and ice-out dates from satellite observations via Sentinel Hub. Weather data is updated daily.",
+    dataDesc: "The model draws on several sources: hatch observations from fly fishers around the country (you can contribute your own <a onclick=\"if(window.Tally){Tally.openPopup('VLvGQE')}else{alert('The form could not be loaded. Email stian.midtdal@gmail.com instead.')}\" style=\"color:#1B4332;text-decoration:underline;cursor:pointer;\">here</a>), air temperature, snow depth and 10-day weather forecast from MET Norway's Frost API, water temperature from NVE's HydAPI, and ice-out dates from satellite observations via Sentinel Hub. Weather data is updated daily.",
     footer: 'Built by <strong>Stian Midtdal</strong> &nbsp;·&nbsp; © 2026 Hatch Watch Norway',
     viewForecast: 'View forecast →',
     calibratedBadge: '⭐ Calibrated',
