@@ -470,6 +470,16 @@
             <span id="bestDate" style="display:none"></span>
         </div>
 
+        <!-- ═══ SPINNERFALL-VAKT (skumringstema, vises kun i/nær vulgata-sesongen) ═══ -->
+        <section id="spinnerfallSection" style="display:none; margin: 20px 0 28px; padding: 20px 22px; background: linear-gradient(135deg, #1a1f2e 0%, #2d2238 55%, #3d2820 100%); border-radius: 12px; color: #f4e4c1; box-shadow: 0 6px 20px rgba(0,0,0,0.18);">
+            <div style="display:flex; align-items:baseline; flex-wrap:wrap; gap:10px;">
+                <div id="spinnerfallTitle" style="font-size:0.78rem; font-weight:700; letter-spacing:1.5px; color:#ffd789; text-transform:uppercase;" data-i18n="spinnerfallTitle">▶ Spinnerfall-vakt</div>
+                <div id="spinnerfallSub" style="font-size:0.8rem; color:rgba(244,228,193,0.72);" data-i18n="spinnerfallSub">Sannsynlighet for vulgataspinnerfall · kveld 19–22</div>
+            </div>
+            <div id="spinnerfallGrid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px; margin-top:14px;"></div>
+            <div id="spinnerfallFooter" style="font-size:0.72rem; color:rgba(244,228,193,0.6); margin-top:12px; line-height:1.55;" data-i18n-html="spinnerfallFooter">Modell vurderer vind, lufttemperatur, skydekke og nedbør for kveldstimene 19–22 (lokal tid) basert på MET-prognose. Vindstille, varme og lite skyer gir best sjanse. Modellen er ikke validert mot observasjoner.</div>
+        </section>
+
         <!-- ═══ PREDICTION CONVERGENCE ═══ -->
         <section id="convergenceSection">
             <h2 data-i18n="convergenceHeading">Prediction history</h2>
@@ -740,6 +750,9 @@ const T = {
     gddTriggerOnly: 'Kun GDD-trigger — for tidlig å ekstrapolere vanntemp',
     forecastEffectEarlier: (days) => `<strong>🌡 Langtidsvarselet påvirker prognosen.</strong> 9-dagers værvarsel fra MET tilsier varmere vær enn klimasnittet. Estimert klekketidspunkt er fremskyndet ~${days} dager.`,
     forecastEffectLater: (days) => `<strong>❄ Langtidsvarselet påvirker prognosen.</strong> 9-dagers værvarsel fra MET tilsier kaldere vær enn klimasnittet. Estimert klekketidspunkt er forsinket ~${days} dager.`,
+    spinnerfallTitle: '▶ Spinnerfall-vakt',
+    spinnerfallSub: 'Sannsynlighet for vulgataspinnerfall · kveld 19–22',
+    spinnerfallFooter: 'Modell vurderer vind, lufttemperatur, skydekke og nedbør for kveldstimene 19–22 (lokal tid) basert på MET-prognose. Vindstille, varme og lite skyer gir best sjanse. Modellen er ikke validert mot observasjoner.',
     updatedLabel: 'Oppdatert:',
     loadingText: 'Laster…',
   },
@@ -886,6 +899,9 @@ const T = {
     gddTriggerOnly: 'GDD trigger only — too early to extrapolate water temp',
     forecastEffectEarlier: (days) => `<strong>🌡 Long-term forecast affects the prediction.</strong> MET's 9-day forecast suggests warmer weather than climate average. Estimated hatch is brought forward ~${days} days.`,
     forecastEffectLater: (days) => `<strong>❄ Long-term forecast affects the prediction.</strong> MET's 9-day forecast suggests colder weather than climate average. Estimated hatch is delayed ~${days} days.`,
+    spinnerfallTitle: '▶ Spinner Fall Watch',
+    spinnerfallSub: 'Probability of vulgata spinner fall · evening 19–22',
+    spinnerfallFooter: 'Model assesses wind, air temperature, cloud cover, and precipitation for evening hours 19–22 (local time) based on MET forecast. Calm, warm, and clear evenings give the highest chance. The model has not been validated against observations.',
     updatedLabel: 'Updated:',
     loadingText: 'Loading…',
   }
@@ -2825,6 +2841,185 @@ function renderForecastEffectBanner(adgDateWith, adgDateWithout) {
     section.style.display = '';
 }
 
+// ── SPINNERFALL-VAKT (innført 2026-05-10) ──────────────────────────────────
+// Sannsynlighetsmodell for vulgata-spinnerfall i kveldstimene (19-22 lokal tid).
+//
+// Tre-lags modell:
+//   1) klekkestatus  — gate basert på hvor langt inn i vulgata-sesongen vi er
+//   2) værscore      — multiplikativ score over vind, temp, skydekke, nedbør
+//   3) P = klekkestatus × værscore                       (range 0–1)
+//
+// Logikk pr Lars Nilssen (larsoglars.no, 2017): vulgata krever vindstille,
+// varme og helst solrike kvelder. Spinnerfall skjer i overgangstimene til
+// sommernatten, ofte 1-2 uker etter klekkestart men kan komme samme døgn.
+//
+// Verdier per faktor er kalibrert mot biologisk fornuft, IKKE observasjoner.
+// Når vi får brukerrapporter på spinnerfall, kan parametrene justeres.
+//
+// Input:
+//   eveningData  — objekt fra /api/spinnerfall: { 'YYYY-MM-DD': {wind, temp, cloud, precip, n} }
+//   vulgataDate  — Date — modellens prediksjon for vulgata-onset
+// Output:
+//   array av {date, prob, label, factors, hatchPhase} for inntil 5 kvelder fram
+function computeSpinnerfallForecast(eveningData, vulgataDate) {
+    if (!eveningData || !vulgataDate) return [];
+
+    // Klekkestatus-multiplikator basert på dager fra vulgata-onset
+    function hatchStatusMult(daysSinceOnset) {
+        if (daysSinceOnset < 0) return 0;          // Ikke startet
+        if (daysSinceOnset <= 3) return 0.55;       // Tidlig — paringsdans bygger seg
+        if (daysSinceOnset <= 14) return 1.0;       // Kjerne-vinduet
+        if (daysSinceOnset <= 21) return 0.6;       // Avtagende
+        return 0.2;                                 // Sjelden
+    }
+
+    // Værscore — multiplikativ (AND-betingelse)
+    function weatherScore(w) {
+        // Vind dominerer — vindstille er hardt krav
+        let windFactor;
+        if (w.wind <= 1.0)      windFactor = 1.0;
+        else if (w.wind <= 2.0) windFactor = 0.7;
+        else if (w.wind <= 3.0) windFactor = 0.3;
+        else                    windFactor = 0.05;
+
+        // Temp — lavt nivå dreper, høyt er ideelt
+        let tempFactor;
+        if (w.temp >= 18)      tempFactor = 1.0;
+        else if (w.temp >= 16) tempFactor = 0.85;
+        else if (w.temp >= 14) tempFactor = 0.5;
+        else                   tempFactor = 0.15;
+
+        // Skydekke (0-100%) — solrike kvelder bedre
+        let cloudFactor;
+        if (w.cloud < 30)      cloudFactor = 1.0;
+        else if (w.cloud < 70) cloudFactor = 0.9;
+        else                   cloudFactor = 0.75;
+
+        // Nedbør — mm sum over 4 timer
+        let precipFactor;
+        if (w.precip < 0.1)      precipFactor = 1.0;
+        else if (w.precip < 0.5) precipFactor = 0.6;
+        else                     precipFactor = 0.2;
+
+        return windFactor * tempFactor * cloudFactor * precipFactor;
+    }
+
+    // Iter over de neste dagene, plukk ut inntil 5
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const out = [];
+
+    for (let i = 0; i < 9; i++) {
+        const d = new Date(today);
+        d.setDate(d.getDate() + i);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        const dateKey = `${yyyy}-${mm}-${dd}`;
+
+        const w = eveningData[dateKey];
+        if (!w) continue;
+
+        const daysSinceOnset = Math.round((d - vulgataDate) / 86400000);
+        const hatchMult = hatchStatusMult(daysSinceOnset);
+        const wscore = weatherScore(w);
+        const prob = hatchMult * wscore;
+
+        let label;
+        if (hatchMult === 0)     label = 'outOfSeason';
+        else if (prob >= 0.6)    label = 'high';
+        else if (prob >= 0.35)   label = 'moderate';
+        else if (prob >= 0.12)   label = 'low';
+        else                     label = 'veryLow';
+
+        out.push({
+            date: d,
+            dateKey,
+            prob,
+            label,
+            hatchMult,
+            wscore,
+            weather: w,
+            daysSinceOnset
+        });
+        if (out.length >= 5) break;
+    }
+    return out;
+}
+
+function renderSpinnerfallSection(eveningData, vulgataDate) {
+    const section = document.getElementById('spinnerfallSection');
+    const grid = document.getElementById('spinnerfallGrid');
+    if (!section || !grid) return;
+
+    if (!eveningData || !vulgataDate) {
+        section.style.display = 'none';
+        return;
+    }
+
+    const forecast = computeSpinnerfallForecast(eveningData, vulgataDate);
+
+    // Skjul hvis ingen kveld er innenfor sesongen
+    const anyInSeason = forecast.some(f => f.hatchMult > 0);
+    if (!anyInSeason || forecast.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+
+    const lang = (typeof LANG !== 'undefined' && LANG) ? LANG : 'no';
+    const dayNames = lang === 'no'
+        ? ['søn','man','tir','ons','tor','fre','lør']
+        : ['sun','mon','tue','wed','thu','fri','sat'];
+    const monthNames = lang === 'no'
+        ? ['jan','feb','mar','apr','mai','jun','jul','aug','sep','okt','nov','des']
+        : ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+    const labelText = ({
+        no: { high:'Høy sjanse', moderate:'Moderat', low:'Lav', veryLow:'Svært lav', outOfSeason:'Utenfor sesong' },
+        en: { high:'High chance', moderate:'Moderate', low:'Low', veryLow:'Very low', outOfSeason:'Out of season' }
+    })[lang] || {};
+
+    grid.innerHTML = forecast.map(f => {
+        const pct = Math.round(f.prob * 100);
+        const labelStr = labelText[f.label] || '';
+        const day = dayNames[f.date.getDay()];
+        const dateStr = `${f.date.getDate()}. ${monthNames[f.date.getMonth()]}`;
+
+        // Fargeskjema basert på sannsynlighet
+        let probColor, barFill, cardBorder;
+        if (f.label === 'high') {
+            probColor = '#ffd789'; cardBorder = 'rgba(255,215,137,0.45)';
+            barFill = 'linear-gradient(90deg, #ffb347 0%, #ffd789 100%)';
+        } else if (f.label === 'moderate') {
+            probColor = '#f4e4c1'; cardBorder = 'rgba(255,215,137,0.22)';
+            barFill = 'linear-gradient(90deg, #b88a55 0%, #d6a866 100%)';
+        } else {
+            probColor = 'rgba(244,228,193,0.55)'; cardBorder = 'rgba(255,215,137,0.10)';
+            barFill = 'rgba(244,228,193,0.25)';
+        }
+
+        // Faktorlinjer — vind | temp | skydekke
+        const w = f.weather;
+        const windStr = `${w.wind} m/s`;
+        const tempStr = `${Math.round(w.temp)}°C`;
+        const cloudStr = `${w.cloud}% sky`;
+        const precipStr = w.precip > 0.1 ? ` · ${w.precip.toFixed(1)} mm` : '';
+
+        return `<div style="background:rgba(255,255,255,0.05); border:1px solid ${cardBorder}; border-radius:8px; padding:12px 13px;">
+            <div style="font-size:0.7rem; color:rgba(244,228,193,0.65); text-transform:uppercase; letter-spacing:0.7px;">${day} ${dateStr}</div>
+            <div style="font-size:1.7rem; font-weight:800; color:${probColor}; margin-top:4px; line-height:1;">${pct}%</div>
+            <div style="font-size:0.72rem; color:${probColor}; margin-top:2px; font-weight:600;">${labelStr}</div>
+            <div style="height:4px; border-radius:3px; background:rgba(255,255,255,0.08); margin-top:10px; overflow:hidden;">
+                <div style="height:100%; width:${pct}%; background:${barFill};"></div>
+            </div>
+            <div style="font-size:0.7rem; color:rgba(244,228,193,0.62); margin-top:9px; line-height:1.5;">
+                💨 ${windStr}<br>🌡 ${tempStr}<br>☁ ${cloudStr}${precipStr}
+            </div>
+        </div>`;
+    }).join('');
+
+    section.style.display = '';
+}
+
 // ── ISOLERINGS-LEGEND-KLIKK (innført 2026-04-29) ───────────────────────────
 // Klikk på et år i legenden → vis kun det året (pluss inneværende år/terskel
 // som "alltid synlig"). Klikk samme år igjen → vis alle. Klikk et annet år →
@@ -3547,8 +3742,8 @@ function renderSpeciesCalendar(isgangResult, vulgataDate) {
             name: 'Vulgata · Grandis',
             sci: 'E. vulgata · P. grandis',
             onset: vulgataDate || null,
-            peak: vulgataDate ? dOff(vulgataDate, 4) : null,
-            end: vulgataDate ? dOff(vulgataDate, 7) : null,
+            peak: vulgataDate ? dOff(vulgataDate, 7) : null,
+            end: vulgataDate ? dOff(vulgataDate, 14) : null,
             endLabel: null,
             anchor: 'GDD model',
             isAnchor: true
@@ -4157,7 +4352,7 @@ let cachedData = null;  // { airData, snowData, flowData, wtData } — cached af
 
 function rebuildDashboard() {
     if (!cachedData) return;
-    const { airData, snowData, flowData, wtData, forecastData } = cachedData;
+    const { airData, snowData, flowData, wtData, forecastData, eveningData } = cachedData;
 
     // Apply altitude lapse-rate correction (uses getCurrentAltitude internally).
     // Luft: 0.6°C/100m (brukes gjennomgående — GDD, graf, historikk).
@@ -4192,6 +4387,7 @@ function rebuildDashboard() {
     renderModel(airDataCorrected, currentADG, histADG, adgDate, wtDate, histStats);
     renderHistoricalGDDSection(histStats, altCorrection, snowData, airDataCorrected);
     renderForecastEffectBanner(adgDate, adgDateNoForecast);
+    renderSpinnerfallSection(eveningData, adgDate);     // Spinnerfall-vakt (skjult utenfor vulgata-sesongen)
     renderWaterTempChart(wtData);                       // Graf: rå verdier fra stasjon
     renderSnowChart(snowData);
     renderIceChart(airDataCorrected, snowData);
@@ -4212,7 +4408,7 @@ async function main() {
         // Fetch in parallel
         const wtStation = LOC.nveWaterTempStation || LOC.nveStation;
         const useForecast = shouldUseLongTermForecast();
-        const [airData, snowData, flowData, wtDataRaw, forecastData] = await Promise.all([
+        const [airData, snowData, flowData, wtDataRaw, forecastData, eveningData] = await Promise.all([
             fetchFrost('mean(air_temperature P1D)', dataStart, dataEnd),
             (async () => {
                 // Try duration_of_snow_covered_ground first; fall back to surface_snow_thickness
@@ -4230,12 +4426,17 @@ async function main() {
             useForecast
                 ? fetch(`/api/forecast?lat=${LOC.lat}&lon=${LOC.lon}`).then(r => r.ok ? r.json() : null).catch(() => null)
                 : Promise.resolve(null),
+            // Spinnerfall: kveldsvindu-aggregering (innført 2026-05-10). Stand-alone fetch,
+            // egen endpoint, brukes kun til Spinnerfall-vakten.
+            (LOC.lat != null && LOC.lon != null)
+                ? fetch(`/api/spinnerfall?lat=${LOC.lat}&lon=${LOC.lon}`).then(r => r.ok ? r.json() : null).catch(() => null)
+                : Promise.resolve(null),
         ]);
         // Fill short sensor gaps (≤7 days) with linear interpolation before rendering
         const wtData = interpolateGaps(wtDataRaw, 7);
 
         // Cache for potential rebuild on altitude-change
-        cachedData = { airData, snowData, flowData, wtData, forecastData };
+        cachedData = { airData, snowData, flowData, wtData, forecastData, eveningData };
 
         // Build picker UI (only renders if LOC.altitudeAdjustable)
         buildLakePickerUI();
