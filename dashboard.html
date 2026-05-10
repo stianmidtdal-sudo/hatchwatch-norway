@@ -624,7 +624,7 @@ const T = {
   no: {
     backLink: '← Alle steder',
     feedbackBtn: 'Tilbakemelding',
-    observationBtn: 'Send klekkeobservasjon',
+    observationBtn: 'Send observasjon',
     loading: 'Henter live data fra MET Norge og NVE…',
     loadingHistAvg: 'Laster historisk gjennomsnitt…',
     seasonCalendar: '▶ Sesong klekkekalender',
@@ -776,7 +776,7 @@ const T = {
   en: {
     backLink: '← All locations',
     feedbackBtn: 'Feedback',
-    observationBtn: 'Submit hatch observation',
+    observationBtn: 'Submit observation',
     loading: 'Fetching live data from MET Norway &amp; NVE…',
     loadingHistAvg: 'Loading historical average…',
     seasonCalendar: '▶ Season Hatch Calendar',
@@ -5056,7 +5056,7 @@ main();
 <div style="text-align:center; padding: 32px 0 24px; font-size: 0.75rem; color: #aaa;">
     Built by <strong style="color:#1B4332;">Stian Midtdal</strong> &nbsp;·&nbsp; © 2026 Hatch Watch Norway
     &nbsp;·&nbsp; <a onclick="openHatchForm('EkBErN')" style="color:#1B4332; text-decoration:none; cursor:pointer;" data-i18n="feedbackBtn">Tilbakemelding</a>
-    &nbsp;·&nbsp; <a onclick="openHatchForm('VLvGQE')" style="color:#1B4332; text-decoration:none; cursor:pointer;" data-i18n="observationBtn">Send klekkeobservasjon</a>
+    &nbsp;·&nbsp; <a onclick="openHatchForm('VLvGQE')" style="color:#1B4332; text-decoration:none; cursor:pointer;" data-i18n="observationBtn">Send observasjon</a>
 </div>
 
 <!-- ═══ FLOATING KLEKKEOBS-FAB (alltid synlig nederst til høyre) ═══ -->
@@ -5065,7 +5065,7 @@ main();
      med diskret outline-styling for å ta minst mulig plass. -->
 <button id="observationFAB"
         onclick="openHatchForm('VLvGQE')"
-        aria-label="Bidra med klekkeobservasjoner"
+        aria-label="Bidra med observasjon"
         style="position:fixed; bottom:20px; right:20px; padding:8px 16px;
                background:#1B4332; color:white; border:1.5px solid white; border-radius:24px;
                box-shadow:0 2px 8px rgba(0,0,0,0.18); cursor:pointer;
@@ -5075,7 +5075,7 @@ main();
                transition: transform 0.15s ease, box-shadow 0.15s ease;"
         onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 14px rgba(0,0,0,0.25)';"
         onmouseout="this.style.transform='';this.style.boxShadow='0 2px 8px rgba(0,0,0,0.18)';">
-    Bidra med<br>klekkeobservasjoner
+    Bidra med<br>observasjon
 </button>
 <script>
 // FAB-tekst settes etter elementet eksisterer i DOM.
@@ -5083,8 +5083,8 @@ main();
     var _lang = localStorage.getItem('lang') || 'no';
     var _obsFab = document.getElementById('observationFAB');
     if (_obsFab) _obsFab.innerHTML = _lang === 'no'
-        ? 'Bidra med<br>klekkeobservasjoner'
-        : 'Submit hatch<br>observations';
+        ? 'Bidra med<br>observasjon'
+        : 'Submit<br>observation';
 })();
 </script>
 
