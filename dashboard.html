@@ -2984,14 +2984,37 @@ function renderSpinnerfallSection(eveningData, vulgataDate) {
     if (!section || !grid) return;
 
     // Test-modus: ?spinnerfall=test flytter "vulgata-onset" til 4 dager siden,
-    // så vi alltid er i kjernevinduet (hatchMult = 1.0). Lar oss verifisere
-    // visning og værscore-logikk uavhengig av faktisk klekkesesong.
+    // og demonstrerer modellen med en kuratert sekvens av kveldsvær som viser
+    // alle scenarioer (blæs, ideell kveld, backlog-boost, regn).
     const testMode = new URLSearchParams(location.search).get('spinnerfall') === 'test';
     if (testMode) {
         const simulated = new Date();
         simulated.setHours(0, 0, 0, 0);
         simulated.setDate(simulated.getDate() - 4);
         vulgataDate = simulated;
+
+        // Erstatt eveningData med kuratert testsekvens:
+        //   Dag 1 — blæs (vind 4 m/s, 14°C, klart)             → lav, backlog 1
+        //   Dag 2 — sterk vind + regn (5 m/s, 12°C, regn)      → svært lav, backlog 2
+        //   Dag 3 — fortsatt blæs (3.5 m/s, 13°C, overskyet)   → lav, backlog 3
+        //   Dag 4 — IDEELL (vindstille, 18°C, klart)           → høy + boost-badge
+        //   Dag 5 — bra (1.5 m/s, 17°C, halvskyet)             → moderat
+        const today = new Date(); today.setHours(0,0,0,0);
+        const synthetic = {};
+        const seq = [
+            { wind: 4.0, temp: 14, cloud: 15, precip: 0,   n: 4 },
+            { wind: 5.0, temp: 12, cloud: 90, precip: 1.8, n: 4 },
+            { wind: 3.5, temp: 13, cloud: 75, precip: 0.2, n: 4 },
+            { wind: 0.6, temp: 18, cloud: 12, precip: 0,   n: 4 },
+            { wind: 1.5, temp: 17, cloud: 50, precip: 0,   n: 4 },
+        ];
+        for (let i = 0; i < seq.length; i++) {
+            const d = new Date(today);
+            d.setDate(d.getDate() + i);
+            const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            synthetic[k] = seq[i];
+        }
+        eveningData = synthetic;
     }
 
     if (!eveningData || !vulgataDate) {
