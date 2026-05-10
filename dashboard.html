@@ -2904,10 +2904,29 @@ function computeSpinnerfallForecast(eveningData, vulgataDate) {
         return windFactor * tempFactor * cloudFactor * precipFactor;
     }
 
-    // Iter over de neste dagene, plukk ut inntil 5
+    // ── BACKLOG-AKKUMULERING (innført 2026-05-10) ───────────────────────
+    // Lars Nilssen: spinnere lever flere dager etter klekking og venter på
+    // riktig kveld. Dårlige kvelder hoper opp spinnere → første gode kveld
+    // etter en blæse-/regnperiode gir et "ekstra fett" spinnerfall.
+    //
+    // Begrensning: vi har ikke vær-historikk (MET Locationforecast gir kun
+    // fremtid). Vi kjeder resonnement INNEN forecast-vinduet — hvis dag 1
+    // er dårlig, får dag 2 et lite løft; 3 dager dårlig på rad → dag 4 et
+    // betydelig løft. Kveldenes første dag starter alltid med backlog 0.
+    //
+    // Logikk:
+    //   - dårlig kveld (wscore < 0.4) → backlog += 1
+    //   - god/moderat kveld (wscore ≥ 0.4) → boost utløses, backlog = 0
+    //   - boost = 1 + min(0.6, backlog * 0.15)
+    //   - capped på 1.6x; sannsynlighet capped på 100%
+    function backlogBoost(backlogDays) {
+        return 1 + Math.min(0.6, backlogDays * 0.15);
+    }
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const out = [];
+    let backlog = 0;
 
     for (let i = 0; i < 9; i++) {
         const d = new Date(today);
@@ -2923,7 +2942,17 @@ function computeSpinnerfallForecast(eveningData, vulgataDate) {
         const daysSinceOnset = Math.round((d - vulgataDate) / 86400000);
         const hatchMult = hatchStatusMult(daysSinceOnset);
         const wscore = weatherScore(w);
-        const prob = hatchMult * wscore;
+
+        // Backlog-boost gjelder kun når vi faktisk er i sesongen og denne
+        // kvelden er god nok til å "tømme lageret"
+        const boost = (hatchMult > 0 && wscore >= 0.4) ? backlogBoost(backlog) : 1;
+        const prob = Math.min(1.0, hatchMult * wscore * boost);
+
+        // Oppdater backlog for neste iterasjon
+        if (hatchMult > 0) {
+            if (wscore < 0.4) backlog += 1;
+            else              backlog = 0;
+        }
 
         let label;
         if (hatchMult === 0)     label = 'outOfSeason';
@@ -2940,7 +2969,9 @@ function computeSpinnerfallForecast(eveningData, vulgataDate) {
             hatchMult,
             wscore,
             weather: w,
-            daysSinceOnset
+            daysSinceOnset,
+            boost,                            // 1.0 = ingen boost; >1 = backlog-effekt
+            backlogBefore: backlog - (wscore < 0.4 && hatchMult > 0 ? 1 : 0)
         });
         if (out.length >= 5) break;
     }
@@ -2952,6 +2983,17 @@ function renderSpinnerfallSection(eveningData, vulgataDate) {
     const grid = document.getElementById('spinnerfallGrid');
     if (!section || !grid) return;
 
+    // Test-modus: ?spinnerfall=test flytter "vulgata-onset" til 4 dager siden,
+    // så vi alltid er i kjernevinduet (hatchMult = 1.0). Lar oss verifisere
+    // visning og værscore-logikk uavhengig av faktisk klekkesesong.
+    const testMode = new URLSearchParams(location.search).get('spinnerfall') === 'test';
+    if (testMode) {
+        const simulated = new Date();
+        simulated.setHours(0, 0, 0, 0);
+        simulated.setDate(simulated.getDate() - 4);
+        vulgataDate = simulated;
+    }
+
     if (!eveningData || !vulgataDate) {
         section.style.display = 'none';
         return;
@@ -2959,9 +3001,9 @@ function renderSpinnerfallSection(eveningData, vulgataDate) {
 
     const forecast = computeSpinnerfallForecast(eveningData, vulgataDate);
 
-    // Skjul hvis ingen kveld er innenfor sesongen
+    // Skjul hvis ingen kveld er innenfor sesongen (med mindre vi er i test-modus)
     const anyInSeason = forecast.some(f => f.hatchMult > 0);
-    if (!anyInSeason || forecast.length === 0) {
+    if ((!anyInSeason || forecast.length === 0) && !testMode) {
         section.style.display = 'none';
         return;
     }
@@ -2977,6 +3019,26 @@ function renderSpinnerfallSection(eveningData, vulgataDate) {
         no: { high:'Høy sjanse', moderate:'Moderat', low:'Lav', veryLow:'Svært lav', outOfSeason:'Utenfor sesong' },
         en: { high:'High chance', moderate:'Moderate', low:'Low', veryLow:'Very low', outOfSeason:'Out of season' }
     })[lang] || {};
+
+    // Test-modus-indikator
+    const subEl = document.getElementById('spinnerfallSub');
+    if (subEl) {
+        if (testMode) {
+            subEl.innerHTML = (lang === 'no'
+                ? 'TEST-MODUS · simulert klekkestart 4 dager siden'
+                : 'TEST MODE · simulated hatch onset 4 days ago');
+            subEl.style.color = '#ff9d50';
+            subEl.style.fontWeight = '700';
+        } else {
+            // Reset til vanlig undertittel hvis tidligere overstyrt
+            const defaultSub = lang === 'no'
+                ? 'Sannsynlighet for vulgataspinnerfall · kveld 19–22'
+                : 'Probability of vulgata spinner fall · evening 19–22';
+            subEl.textContent = defaultSub;
+            subEl.style.color = 'rgba(244,228,193,0.72)';
+            subEl.style.fontWeight = '';
+        }
+    }
 
     grid.innerHTML = forecast.map(f => {
         const pct = Math.round(f.prob * 100);
@@ -3004,10 +3066,20 @@ function renderSpinnerfallSection(eveningData, vulgataDate) {
         const cloudStr = `${w.cloud}% sky`;
         const precipStr = w.precip > 0.1 ? ` · ${w.precip.toFixed(1)} mm` : '';
 
+        // Backlog-boost-badge (kun synlig når boost > 1.1)
+        let boostBadge = '';
+        if (f.boost > 1.1) {
+            const boostText = lang === 'no'
+                ? `+${Math.round((f.boost - 1) * 100)}% etter dårlig vær`
+                : `+${Math.round((f.boost - 1) * 100)}% after bad weather`;
+            boostBadge = `<div style="display:inline-block; margin-top:6px; padding:2px 7px; background:rgba(255,179,71,0.18); border:1px solid rgba(255,179,71,0.4); border-radius:4px; font-size:0.66rem; color:#ffb347; font-weight:600;">↑ ${boostText}</div>`;
+        }
+
         return `<div style="background:rgba(255,255,255,0.05); border:1px solid ${cardBorder}; border-radius:8px; padding:12px 13px;">
             <div style="font-size:0.7rem; color:rgba(244,228,193,0.65); text-transform:uppercase; letter-spacing:0.7px;">${day} ${dateStr}</div>
             <div style="font-size:1.7rem; font-weight:800; color:${probColor}; margin-top:4px; line-height:1;">${pct}%</div>
             <div style="font-size:0.72rem; color:${probColor}; margin-top:2px; font-weight:600;">${labelStr}</div>
+            ${boostBadge}
             <div style="height:4px; border-radius:3px; background:rgba(255,255,255,0.08); margin-top:10px; overflow:hidden;">
                 <div style="height:100%; width:${pct}%; background:${barFill};"></div>
             </div>
