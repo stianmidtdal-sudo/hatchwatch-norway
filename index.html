@@ -684,7 +684,7 @@ buildCards();
      er fortsatt tilgjengelig som lenke i footer. -->
 <button id="observationFAB"
         onclick="openHatchForm('VLvGQE')"
-        aria-label="Bidra med klekkeobservasjoner"
+        aria-label="Bidra med observasjon"
         style="position:fixed; bottom:20px; right:20px; padding:8px 16px;
                background:#1B4332; color:white; border:1.5px solid white; border-radius:24px;
                box-shadow:0 2px 8px rgba(0,0,0,0.18); cursor:pointer;
@@ -694,7 +694,7 @@ buildCards();
                transition: transform 0.15s ease, box-shadow 0.15s ease;"
         onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 14px rgba(0,0,0,0.25)';"
         onmouseout="this.style.transform='';this.style.boxShadow='0 2px 8px rgba(0,0,0,0.18)';">
-    Bidra med<br>klekkeobservasjoner
+    Bidra med<br>observasjon
 </button>
 <script>
 // FAB-tekst settes etter elementet eksisterer i DOM.
@@ -702,8 +702,8 @@ buildCards();
     var _lang = localStorage.getItem('lang') || 'no';
     var _obsFab = document.getElementById('observationFAB');
     if (_obsFab) _obsFab.innerHTML = _lang === 'no'
-        ? 'Bidra med<br>klekkeobservasjoner'
-        : 'Submit hatch<br>observations';
+        ? 'Bidra med<br>observasjon'
+        : 'Submit<br>observation';
 })();
 </script>
 </body>
