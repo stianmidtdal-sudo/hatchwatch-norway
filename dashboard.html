@@ -323,6 +323,7 @@
         }
         #forecastTestOverlay.open { display: flex !important; }
         #nordmarkaUpdateOverlay.open { display: flex !important; }
+        #spinnerfallIntroOverlay.open { display: flex !important; }
         .error-box { background: #fff3f0; border: 1px solid #f5a090; border-radius: 10px; padding: 20px; color: #a03020; font-size: 0.86rem; line-height: 1.6; }
         .error-box strong { display: block; margin-bottom: 8px; font-size: 1rem; }
         .error-box code { background: #fde; padding: 2px 6px; border-radius: 4px; font-size: 0.82rem; }
@@ -403,6 +404,19 @@
                     Stor takk til alle som har sendt tilbakemeldinger og observasjoner. Det er nettopp slike bidrag som gjør modellen mer treffsikker over tid.
                 </p>
                 <button id="nordmarkaPopupDismiss" style="display:inline-block; background:#1B4332; color:white; padding:10px 26px; border:none; border-radius:8px; font-size:0.92rem; font-weight:700; cursor:pointer; margin-top:6px;">Skjønner!</button>
+            </div>
+        </div>
+
+        <!-- ═══ SPINNERFALL-VAKT INTRO-POPUP (vises første gang seksjonen aktiveres) ═══ -->
+        <div id="spinnerfallIntroOverlay" onclick="if(event.target===this){this.classList.remove('open');try{localStorage.setItem('hw_spinnerfall_intro_seen','1')}catch(e){}}" style="display:none; position:fixed; inset:0; background:rgba(13,31,23,0.78); z-index:1000; align-items:center; justify-content:center; padding:40px 20px; overflow-y:auto;">
+            <div style="background:linear-gradient(135deg, #1a1f2e 0%, #2d2238 55%, #3d2820 100%); border-radius:14px; padding:36px 32px 30px; max-width:560px; width:100%; box-shadow:0 12px 48px rgba(0,0,0,0.4); position:relative; animation:welcome-fade 0.25s ease; color:#f4e4c1;">
+                <button id="spinnerfallIntroCloseX" aria-label="Lukk" style="position:absolute; top:12px; right:16px; background:none; border:none; font-size:26px; color:rgba(244,228,193,0.55); cursor:pointer; line-height:1; padding:4px 8px;">×</button>
+                <h2 id="spinnerfallIntroTitle" style="font-size:1.35rem; color:#ffd789; margin-bottom:14px; font-weight:800;">Ny funksjon: Spinnerfall-vakt</h2>
+                <p id="spinnerfallIntroBody" style="font-size:0.94rem; line-height:1.6; color:#f4e4c1; margin-bottom:18px;">
+                    Vulgata-spinnerfallet er det mest spektakulære, men også mest uforutsigbare i fluefiskerens kalender. Hatch Watch vurderer nå sannsynligheten for spinnerfall i kveldstimene basert på vind, temperatur, skydekke og nedbør — og hvor mange dårlige kvelder det har vært i forkant.<br><br>
+                    Modellen er ikke validert mot observasjoner ennå. Bidra gjerne med en spinnerfall-rapport via observasjonsknappen når du opplever det i felt — det styrker modellen for alle.
+                </p>
+                <button id="spinnerfallIntroDismiss" style="display:inline-block; background:#ffd789; color:#1a1f2e; padding:10px 26px; border:none; border-radius:8px; font-size:0.92rem; font-weight:700; cursor:pointer; margin-top:6px;">Skjønner!</button>
             </div>
         </div>
 
@@ -753,6 +767,9 @@ const T = {
     spinnerfallTitle: '▶ Spinnerfall-vakt',
     spinnerfallSub: 'Sannsynlighet for vulgataspinnerfall · kveld 19–22',
     spinnerfallFooter: 'Modell vurderer vind, lufttemperatur, skydekke og nedbør for kveldstimene 19–22 (lokal tid) basert på MET-prognose. Vindstille, varme og lite skyer gir best sjanse. Modellen er ikke validert mot observasjoner.',
+    spinnerfallIntroTitle: 'Ny funksjon: Spinnerfall-vakt',
+    spinnerfallIntroBody: 'Vulgata-spinnerfallet er det mest spektakulære, men også mest uforutsigbare i fluefiskerens kalender. Hatch Watch vurderer nå sannsynligheten for spinnerfall i kveldstimene basert på vind, temperatur, skydekke og nedbør — og hvor mange dårlige kvelder det har vært i forkant.\n\nModellen er ikke validert mot observasjoner ennå. Bidra gjerne med en spinnerfall-rapport via observasjonsknappen når du opplever det i felt — det styrker modellen for alle.',
+    spinnerfallIntroBtn: 'Skjønner!',
     updatedLabel: 'Oppdatert:',
     loadingText: 'Laster…',
   },
@@ -902,6 +919,9 @@ const T = {
     spinnerfallTitle: '▶ Spinner Fall Watch',
     spinnerfallSub: 'Probability of vulgata spinner fall · evening 19–22',
     spinnerfallFooter: 'Model assesses wind, air temperature, cloud cover, and precipitation for evening hours 19–22 (local time) based on MET forecast. Calm, warm, and clear evenings give the highest chance. The model has not been validated against observations.',
+    spinnerfallIntroTitle: 'New feature: Spinner Fall Watch',
+    spinnerfallIntroBody: 'The vulgata spinner fall is the most spectacular, yet most unpredictable event in the fly fisher\'s calendar. Hatch Watch now assesses the probability of a spinner fall in the evening hours based on wind, temperature, cloud cover, and precipitation — plus how many bad evenings preceded it.\n\nThe model has not yet been validated against observations. Please contribute a spinner fall report via the observation button when you witness one in the field — it strengthens the model for everyone.',
+    spinnerfallIntroBtn: 'Got it!',
     updatedLabel: 'Updated:',
     loadingText: 'Loading…',
   }
@@ -3147,6 +3167,32 @@ function renderSpinnerfallSection(eveningData, vulgataDate, historyData) {
     }).join('');
 
     section.style.display = '';
+
+    // Onboarding-popup første gang seksjonen vises (ikke i test-modus)
+    if (!testMode) {
+        try {
+            const seenKey = 'hw_spinnerfall_intro_seen';
+            if (localStorage.getItem(seenKey) !== '1') {
+                const overlay = document.getElementById('spinnerfallIntroOverlay');
+                if (overlay) {
+                    const titleEl = document.getElementById('spinnerfallIntroTitle');
+                    const bodyEl  = document.getElementById('spinnerfallIntroBody');
+                    const btnEl   = document.getElementById('spinnerfallIntroDismiss');
+                    if (titleEl) titleEl.textContent = t('spinnerfallIntroTitle');
+                    if (bodyEl)  bodyEl.textContent  = t('spinnerfallIntroBody');
+                    if (btnEl)   btnEl.textContent   = t('spinnerfallIntroBtn');
+                    overlay.classList.add('open');
+                    function dismiss() {
+                        overlay.classList.remove('open');
+                        try { localStorage.setItem(seenKey, '1'); } catch (e) {}
+                    }
+                    const closeX = document.getElementById('spinnerfallIntroCloseX');
+                    if (closeX) closeX.addEventListener('click', dismiss, { once: true });
+                    if (btnEl)  btnEl.addEventListener('click', dismiss, { once: true });
+                }
+            }
+        } catch (e) { /* localStorage ikke tilgjengelig — bare hopp over */ }
+    }
 }
 
 // ── ISOLERINGS-LEGEND-KLIKK (innført 2026-04-29) ───────────────────────────
