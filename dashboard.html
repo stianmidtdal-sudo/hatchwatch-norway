@@ -2857,11 +2857,13 @@ function renderForecastEffectBanner(adgDateWith, adgDateWithout) {
 // Når vi får brukerrapporter på spinnerfall, kan parametrene justeres.
 //
 // Input:
-//   eveningData  — objekt fra /api/spinnerfall: { 'YYYY-MM-DD': {wind, temp, cloud, precip, n} }
-//   vulgataDate  — Date — modellens prediksjon for vulgata-onset
+//   eveningData     — objekt fra /api/spinnerfall: { 'YYYY-MM-DD': {wind, temp, cloud, precip, n} }
+//   vulgataDate     — Date — modellens prediksjon for vulgata-onset
+//   historyData     — (valgfri) objekt fra /api/spinnerfall_history med samme format
+//                     for siste N dager. Brukes til å fylle starting-backlog.
 // Output:
 //   array av {date, prob, label, factors, hatchPhase} for inntil 5 kvelder fram
-function computeSpinnerfallForecast(eveningData, vulgataDate) {
+function computeSpinnerfallForecast(eveningData, vulgataDate, historyData) {
     if (!eveningData || !vulgataDate) return [];
 
     // Klekkestatus-multiplikator basert på dager fra vulgata-onset
@@ -2928,6 +2930,38 @@ function computeSpinnerfallForecast(eveningData, vulgataDate) {
     const out = [];
     let backlog = 0;
 
+    // ── HISTORISK BACKLOG-BEREGNING ──────────────────────────────────────
+    // Hvis vi har observasjoner fra siste 7 dager: tell dårlige kvelder
+    // siden klekkestart frem til i går. Tom dag uten data hopper vi over
+    // (ingen straffeffekt). Kvelden i går er nyligste vi ser bakover på.
+    if (historyData && Object.keys(historyData).length > 0) {
+        // Hent dager fra (vulgataDate eller today-7) til i går
+        const earliestLookback = new Date(today);
+        earliestLookback.setDate(earliestLookback.getDate() - 7);
+        const start = vulgataDate > earliestLookback ? new Date(vulgataDate) : earliestLookback;
+        start.setHours(0, 0, 0, 0);
+
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        for (let d = new Date(start); d <= yesterday; d.setDate(d.getDate() + 1)) {
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            const k = `${yyyy}-${mm}-${dd}`;
+            const w = historyData[k];
+            if (!w) continue;
+
+            // Bare regn med dager der vi faktisk er i sesongen
+            const daysSince = Math.round((d - vulgataDate) / 86400000);
+            if (hatchStatusMult(daysSince) === 0) continue;
+
+            const wscore = weatherScore(w);
+            if (wscore < 0.4) backlog += 1;
+            else              backlog = 0;
+        }
+    }
+
     for (let i = 0; i < 9; i++) {
         const d = new Date(today);
         d.setDate(d.getDate() + i);
@@ -2978,7 +3012,7 @@ function computeSpinnerfallForecast(eveningData, vulgataDate) {
     return out;
 }
 
-function renderSpinnerfallSection(eveningData, vulgataDate) {
+function renderSpinnerfallSection(eveningData, vulgataDate, historyData) {
     const section = document.getElementById('spinnerfallSection');
     const grid = document.getElementById('spinnerfallGrid');
     if (!section || !grid) return;
@@ -3022,7 +3056,7 @@ function renderSpinnerfallSection(eveningData, vulgataDate) {
         return;
     }
 
-    const forecast = computeSpinnerfallForecast(eveningData, vulgataDate);
+    const forecast = computeSpinnerfallForecast(eveningData, vulgataDate, historyData);
 
     // Skjul hvis ingen kveld er innenfor sesongen (med mindre vi er i test-modus)
     const anyInSeason = forecast.some(f => f.hatchMult > 0);
@@ -4447,7 +4481,7 @@ let cachedData = null;  // { airData, snowData, flowData, wtData } — cached af
 
 function rebuildDashboard() {
     if (!cachedData) return;
-    const { airData, snowData, flowData, wtData, forecastData, eveningData } = cachedData;
+    const { airData, snowData, flowData, wtData, forecastData, eveningData, eveningHistory } = cachedData;
 
     // Apply altitude lapse-rate correction (uses getCurrentAltitude internally).
     // Luft: 0.6°C/100m (brukes gjennomgående — GDD, graf, historikk).
@@ -4482,7 +4516,7 @@ function rebuildDashboard() {
     renderModel(airDataCorrected, currentADG, histADG, adgDate, wtDate, histStats);
     renderHistoricalGDDSection(histStats, altCorrection, snowData, airDataCorrected);
     renderForecastEffectBanner(adgDate, adgDateNoForecast);
-    renderSpinnerfallSection(eveningData, adgDate);     // Spinnerfall-vakt (skjult utenfor vulgata-sesongen)
+    renderSpinnerfallSection(eveningData, adgDate, eveningHistory);  // Spinnerfall-vakt (skjult utenfor vulgata-sesongen)
     renderWaterTempChart(wtData);                       // Graf: rå verdier fra stasjon
     renderSnowChart(snowData);
     renderIceChart(airDataCorrected, snowData);
@@ -4503,7 +4537,7 @@ async function main() {
         // Fetch in parallel
         const wtStation = LOC.nveWaterTempStation || LOC.nveStation;
         const useForecast = shouldUseLongTermForecast();
-        const [airData, snowData, flowData, wtDataRaw, forecastData, eveningData] = await Promise.all([
+        const [airData, snowData, flowData, wtDataRaw, forecastData, eveningData, eveningHistory] = await Promise.all([
             fetchFrost('mean(air_temperature P1D)', dataStart, dataEnd),
             (async () => {
                 // Try duration_of_snow_covered_ground first; fall back to surface_snow_thickness
@@ -4526,12 +4560,17 @@ async function main() {
             (LOC.lat != null && LOC.lon != null)
                 ? fetch(`/api/spinnerfall?lat=${LOC.lat}&lon=${LOC.lon}`).then(r => r.ok ? r.json() : null).catch(() => null)
                 : Promise.resolve(null),
+            // Spinnerfall-historikk: time-data fra Frost siste 7 dager → fyller
+            // starting-backlog. Hopper hvis frostStation mangler.
+            LOC.frostStation
+                ? fetch(`/api/spinnerfall_history?station=${LOC.frostStation}&days=7`).then(r => r.ok ? r.json() : null).catch(() => null)
+                : Promise.resolve(null),
         ]);
         // Fill short sensor gaps (≤7 days) with linear interpolation before rendering
         const wtData = interpolateGaps(wtDataRaw, 7);
 
         // Cache for potential rebuild on altitude-change
-        cachedData = { airData, snowData, flowData, wtData, forecastData, eveningData };
+        cachedData = { airData, snowData, flowData, wtData, forecastData, eveningData, eveningHistory };
 
         // Build picker UI (only renders if LOC.altitudeAdjustable)
         buildLakePickerUI();
