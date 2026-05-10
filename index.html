@@ -180,6 +180,31 @@
         }
         .card-arrow { margin-top: 10px; font-size: 11px; color: #c0ccc0; font-weight: 500; }
 
+        /* Skumringsbadge — vises når spinnerfall-vær er gunstig i kveld */
+        .spinnerfall-tag {
+            position: absolute;
+            top: 9px;
+            right: 9px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            background: linear-gradient(135deg, #2d2238 0%, #3d2820 100%);
+            color: #ffd789;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 215, 137, 0.35);
+            box-shadow: 0 2px 6px rgba(45, 34, 56, 0.2);
+        }
+        .spinnerfall-tag.high {
+            background: linear-gradient(135deg, #3d2820 0%, #5a2d10 100%);
+            color: #ffe4a3;
+            border-color: rgba(255, 215, 137, 0.55);
+        }
+
         /* ── How it works ────────────────────────────── */
         .how {
             background: #1B4332;
@@ -479,29 +504,29 @@ applyLang();
 // ── Area data ────────────────────────────────────────────────────────
 // Ordered north → south by latitude.
 const RIVERS = [
-    { id: "kautokeino",    area: "Kautokeino",    river: "Kautokeino",      waterRiver: "Suohpatjohka",          snowRiver: "Kautokeino",          region: "Finnmark",   lat: 69.01, calibrated: true,  uncertainty: "±2.1 days" },
-    { id: "kautokeino_test", area: "Kautokeino (TEST)", river: "Kautokeino", waterRiver: "Suohpatjohka",          snowRiver: "Kautokeino",          region: "Finnmark",   lat: 69.01, calibrated: false, uncertainty: "±14 days", hidden: true },
-    { id: "alta",          area: "Alta",          river: "Sihccajavri",     waterRiver: "Kista (Altaelva)",      snowRiver: "Sihccajavri",         region: "Finnmark",   lat: 69.97, calibrated: false, uncertainty: "±10 days" },
-    { id: "porsanger",     area: "Porsanger",     river: "Karasjok",        waterRiver: "Lombola (Lakselva)",    snowRiver: "Karasjok",            region: "Finnmark",   lat: 70.07, calibrated: false, uncertainty: "±10 days" },
-    { id: "ifjordfjellet", area: "Ifjordfjellet", river: "Tana bru",        waterRiver: "Polmak nye (Tanaelva)", snowRiver: "Tana bru",            region: "Finnmark",   lat: 70.19, calibrated: false, uncertainty: "±14 days", hidden: true },
-    { id: "dividalen",     area: "Dividalen",     river: "Dividalen",       waterRiver: "Høgskarhus (Målselva)", snowRiver: "Dividalen",           region: "Troms",      lat: 68.67, calibrated: false, uncertainty: "±14 days", hidden: true },
-    { id: "bardu",         area: "Bardu",         river: "Bardufoss",       waterRiver: "Skogly",                snowRiver: "Bardufoss",           region: "Troms",      lat: 69.04, calibrated: false, uncertainty: "±14 days" },
-    { id: "narvik",        area: "Narvik",        river: "Straumsnes",      waterRiver: "Taraldsvikelv / Elvegårdselva", snowRiver: "Straumsnes",  region: "Nordland",   lat: 68.36, calibrated: false, uncertainty: "±14 days", hidden: true },
-    { id: "mo_i_rana",     area: "Mo i Rana",     river: "Storforshei",     waterRiver: "Leiråga",               snowRiver: "Storforshei",         region: "Nordland",   lat: 66.36, calibrated: false, uncertainty: "±14 days" },
-    { id: "borgefjell",    area: "Børgefjell",    river: "Namsvatn II",     waterRiver: "Landbru",               snowRiver: "Namsvatn",            region: "Nordland",   lat: 65.11, calibrated: false, uncertainty: "±14 days" },
-    { id: "roros",         area: "Røros",         river: "Røros lufthavn",  waterRiver: "Orva (Glåma)",          snowRiver: "Røros lufthavn",      region: "Trøndelag",  lat: 62.57, calibrated: false, uncertainty: "±12 days" },
-    { id: "lierne",        area: "Lierne",        river: "Snåsa - Kjevlia", waterRiver: "Skjellbreivatn",        snowRiver: "Snåsa",               region: "Trøndelag",  lat: 64.19, calibrated: false, uncertainty: "±14 days", hidden: true },
-    { id: "trondheim",     area: "Trondheim",     river: "Kvithamar",       waterRiver: "Kobberdammen (Nidelva)",snowRiver: "Skistua",             region: "Trøndelag",  lat: 63.48, calibrated: false, uncertainty: "±14 days" },
-    { id: "rena",          area: "Rena",          river: "Rena - Ørnhaugen", waterRiver: "Femundselva",          snowRiver: "Plassen, Trysil",    region: "Innlandet",  lat: 61.14, calibrated: false, uncertainty: "±14 days" },
-    { id: "oslo",          area: "Nordmarka (statisk backup)", river: "Bjørnholt", waterRiver: "Sinnerdammen, Nordmarka", snowRiver: "Bjørnholt", region: "Østlandet",  lat: 59.99, calibrated: true,  uncertainty: "±10 days", hidden: true },
-    { id: "nordmarka_dyn", area: "Nordmarka",     river: "Bjørnholt",       waterRiver: "Sinnerdammen, Nordmarka", snowRiver: "Bjørnholt",         region: "Østlandet",  lat: 59.99, calibrated: true,  uncertainty: "±10 days" },
-    { id: "nordmarka_test_a", area: "Nordmarka (TEST · Tryvann)", river: "Tryvannshøgda", waterRiver: "Sinnerdammen, Nordmarka", snowRiver: "Bjørnholt", region: "Østlandet", lat: 59.98, calibrated: false, uncertainty: "±14 days", hidden: true },
-    { id: "finnemarka",    area: "Finnemarka",    river: "Geithus",         waterRiver: "Elgtjern",              snowRiver: "Sande – Lauvkollmyr", region: "Østlandet",  lat: 59.86, calibrated: false, uncertainty: "±14 days" },
-    { id: "ostmarka",      area: "Østmarka",      river: "Råken",           waterRiver: "Mønevann, Enebakk",     snowRiver: "Enebakk – Barbøl",    region: "Østlandet",  lat: 59.70, calibrated: true,  uncertainty: "±3.8 days" },
-    { id: "ostmarka_tb5",  area: "Østmarka (TEST · Tb=5°C)", river: "Råken", waterRiver: "Mønevann, Enebakk", snowRiver: "Enebakk – Barbøl", region: "Østlandet", lat: 59.70, calibrated: false, uncertainty: "±6 days", hidden: true },
-    { id: "vestfjella",    area: "Vestfjella",    river: "Rakkestad",       waterRiver: "Løkkeborg",             snowRiver: "Ørje",              region: "Østlandet",  lat: 59.30, calibrated: false, uncertainty: "±6 days" },
-    { id: "hardangervidda",area: "Hardangervidda",river: "Uvdal",           waterRiver: "Kvenna",                snowRiver: "Tessungdalen-Bakkhus",region: "Telemark",   lat: 60.14, calibrated: false, uncertainty: "±14 days" },
-    { id: "bergen",        area: "Bergen",        river: "Bergen - Florida",waterRiver: "Dyrdalsvatn",           snowRiver: "Bergen - Florida",    region: "Vestlandet", lat: 60.50, calibrated: false, uncertainty: "±14 days" },
+    { id: "kautokeino",    area: "Kautokeino",    river: "Kautokeino",      waterRiver: "Suohpatjohka",          snowRiver: "Kautokeino",          region: "Finnmark",   lat: 69.01, lon: 23.04, calibrated: true,  uncertainty: "±2.1 days" },
+    { id: "kautokeino_test", area: "Kautokeino (TEST)", river: "Kautokeino", waterRiver: "Suohpatjohka",          snowRiver: "Kautokeino",          region: "Finnmark",   lat: 69.01, lon: 23.04, calibrated: false, uncertainty: "±14 days", hidden: true },
+    { id: "alta",          area: "Alta",          river: "Sihccajavri",     waterRiver: "Kista (Altaelva)",      snowRiver: "Sihccajavri",         region: "Finnmark",   lat: 69.97, lon: 23.27, calibrated: false, uncertainty: "±10 days" },
+    { id: "porsanger",     area: "Porsanger",     river: "Karasjok",        waterRiver: "Lombola (Lakselva)",    snowRiver: "Karasjok",            region: "Finnmark",   lat: 70.07, lon: 25.00, calibrated: false, uncertainty: "±10 days" },
+    { id: "ifjordfjellet", area: "Ifjordfjellet", river: "Tana bru",        waterRiver: "Polmak nye (Tanaelva)", snowRiver: "Tana bru",            region: "Finnmark",   lat: 70.19, lon: 28.20, calibrated: false, uncertainty: "±14 days", hidden: true },
+    { id: "dividalen",     area: "Dividalen",     river: "Dividalen",       waterRiver: "Høgskarhus (Målselva)", snowRiver: "Dividalen",           region: "Troms",      lat: 68.67, lon: 19.80, calibrated: false, uncertainty: "±14 days", hidden: true },
+    { id: "bardu",         area: "Bardu",         river: "Bardufoss",       waterRiver: "Skogly",                snowRiver: "Bardufoss",           region: "Troms",      lat: 69.04, lon: 18.82, calibrated: false, uncertainty: "±14 days" },
+    { id: "narvik",        area: "Narvik",        river: "Straumsnes",      waterRiver: "Taraldsvikelv / Elvegårdselva", snowRiver: "Straumsnes",  region: "Nordland",   lat: 68.36, lon: 17.62, calibrated: false, uncertainty: "±14 days", hidden: true },
+    { id: "mo_i_rana",     area: "Mo i Rana",     river: "Storforshei",     waterRiver: "Leiråga",               snowRiver: "Storforshei",         region: "Nordland",   lat: 66.36, lon: 14.69, calibrated: false, uncertainty: "±14 days" },
+    { id: "borgefjell",    area: "Børgefjell",    river: "Namsvatn II",     waterRiver: "Landbru",               snowRiver: "Namsvatn",            region: "Nordland",   lat: 65.11, lon: 14.09, calibrated: false, uncertainty: "±14 days" },
+    { id: "roros",         area: "Røros",         river: "Røros lufthavn",  waterRiver: "Orva (Glåma)",          snowRiver: "Røros lufthavn",      region: "Trøndelag",  lat: 62.57, lon: 11.39, calibrated: false, uncertainty: "±12 days" },
+    { id: "lierne",        area: "Lierne",        river: "Snåsa - Kjevlia", waterRiver: "Skjellbreivatn",        snowRiver: "Snåsa",               region: "Trøndelag",  lat: 64.19, lon: 13.15, calibrated: false, uncertainty: "±14 days", hidden: true },
+    { id: "trondheim",     area: "Trondheim",     river: "Kvithamar",       waterRiver: "Kobberdammen (Nidelva)",snowRiver: "Skistua",             region: "Trøndelag",  lat: 63.48, lon: 10.81, calibrated: false, uncertainty: "±14 days" },
+    { id: "rena",          area: "Rena",          river: "Rena - Ørnhaugen", waterRiver: "Femundselva",          snowRiver: "Plassen, Trysil",    region: "Innlandet",  lat: 61.14, lon: 11.65, calibrated: false, uncertainty: "±14 days" },
+    { id: "oslo",          area: "Nordmarka (statisk backup)", river: "Bjørnholt", waterRiver: "Sinnerdammen, Nordmarka", snowRiver: "Bjørnholt", region: "Østlandet",  lat: 59.94, lon: 10.72, calibrated: true,  uncertainty: "±10 days", hidden: true },
+    { id: "nordmarka_dyn", area: "Nordmarka",     river: "Bjørnholt",       waterRiver: "Sinnerdammen, Nordmarka", snowRiver: "Bjørnholt",         region: "Østlandet",  lat: 59.94, lon: 10.72, calibrated: true,  uncertainty: "±10 days" },
+    { id: "nordmarka_test_a", area: "Nordmarka (TEST · Tryvann)", river: "Tryvannshøgda", waterRiver: "Sinnerdammen, Nordmarka", snowRiver: "Bjørnholt", region: "Østlandet", lat: 59.98, lon: 10.67, calibrated: false, uncertainty: "±14 days", hidden: true },
+    { id: "finnemarka",    area: "Finnemarka",    river: "Geithus",         waterRiver: "Elgtjern",              snowRiver: "Sande – Lauvkollmyr", region: "Østlandet",  lat: 59.86, lon: 10.30, calibrated: false, uncertainty: "±14 days" },
+    { id: "ostmarka",      area: "Østmarka",      river: "Råken",           waterRiver: "Mønevann, Enebakk",     snowRiver: "Enebakk – Barbøl",    region: "Østlandet",  lat: 59.70, lon: 11.17, calibrated: true,  uncertainty: "±3.8 days" },
+    { id: "ostmarka_tb5",  area: "Østmarka (TEST · Tb=5°C)", river: "Råken", waterRiver: "Mønevann, Enebakk", snowRiver: "Enebakk – Barbøl", region: "Østlandet", lat: 59.70, lon: 11.17, calibrated: false, uncertainty: "±6 days", hidden: true },
+    { id: "vestfjella",    area: "Vestfjella",    river: "Rakkestad",       waterRiver: "Løkkeborg",             snowRiver: "Ørje",              region: "Østlandet",  lat: 59.30, lon: 11.66, calibrated: false, uncertainty: "±6 days" },
+    { id: "hardangervidda",area: "Hardangervidda",river: "Uvdal",           waterRiver: "Kvenna",                snowRiver: "Tessungdalen-Bakkhus",region: "Telemark",   lat: 60.14, lon: 8.55, calibrated: false, uncertainty: "±14 days" },
+    { id: "bergen",        area: "Bergen",        river: "Bergen - Florida",waterRiver: "Dyrdalsvatn",           snowRiver: "Bergen - Florida",    region: "Vestlandet", lat: 60.50, lon: 5.70, calibrated: false, uncertainty: "±14 days" },
 ];
 
 // ── Group by region (preserving N→S order) ────────────────────────────
@@ -559,6 +584,99 @@ function buildCards() {
 }
 
 buildCards();
+
+// ── SPINNERFALL-BADGE PÅ LOKASJONSKORT (innført 2026-05-10) ────────────
+// Etter at kortene er bygget, fetch /api/spinnerfall per lokasjon og vis
+// en gylden skumringsbadge på de lokasjonene som har gunstig spinnerfall-
+// vær i kveld. Lazy — blokkerer ikke initial rendering.
+//
+// Vises kun innenfor en regional vulgata-sesong (~mai-juli avhengig av
+// breddegrad), så vi ikke misleder brukerne på Kauto i mai.
+//
+// Klikker man på kortet uansett, får man full kontekst på dashboardet —
+// dette er bare en oppdagelses-pekepinn.
+(function setupSpinnerfallBadges() {
+    const today = new Date();
+    function isInVulgataSeason(region) {
+        const m = today.getMonth() + 1;
+        const d = today.getDate();
+        const md = m * 100 + d;
+        if (region === 'Østlandet' || region === 'Telemark' || region === 'Vestlandet') {
+            return md >= 515 && md <= 625;
+        }
+        if (region === 'Innlandet') {
+            return md >= 525 && md <= 705;
+        }
+        if (region === 'Trøndelag') {
+            return md >= 601 && md <= 710;
+        }
+        if (region === 'Nordland' || region === 'Troms' || region === 'Finnmark') {
+            return md >= 615 && md <= 715;
+        }
+        return false;
+    }
+
+    function todaysWeatherScore(eveningData) {
+        if (!eveningData) return null;
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        const w = eveningData[`${yyyy}-${mm}-${dd}`];
+        if (!w) return null;
+
+        let windFactor;
+        if (w.wind <= 1.0)      windFactor = 1.0;
+        else if (w.wind <= 2.0) windFactor = 0.7;
+        else if (w.wind <= 3.0) windFactor = 0.3;
+        else                    windFactor = 0.05;
+
+        let tempFactor;
+        if (w.temp >= 18)      tempFactor = 1.0;
+        else if (w.temp >= 16) tempFactor = 0.85;
+        else if (w.temp >= 14) tempFactor = 0.5;
+        else                   tempFactor = 0.15;
+
+        let cloudFactor;
+        if (w.cloud < 30)      cloudFactor = 1.0;
+        else if (w.cloud < 70) cloudFactor = 0.9;
+        else                   cloudFactor = 0.75;
+
+        let precipFactor;
+        if (w.precip < 0.1)      precipFactor = 1.0;
+        else if (w.precip < 0.5) precipFactor = 0.6;
+        else                     precipFactor = 0.2;
+
+        return windFactor * tempFactor * cloudFactor * precipFactor;
+    }
+
+    const cards = document.querySelectorAll('.card');
+    let cardIdx = 0;
+    const visible = RIVERS.filter(r => !r.hidden);
+
+    visible.forEach((r, i) => {
+        if (!isInVulgataSeason(r.region)) return;
+        if (r.lat == null) return;
+        // Vi har ikke lon i RIVERS-arrayen, må derfor bruke en proxy. Hopper
+        // over hvis lon mangler. (Lon er ikke nødvendig for endepunktet — det
+        // godtar uansett, men API krever koordinatpar.)
+        if (r.lon == null) return;
+
+        const card = cards[i];
+        if (!card) return;
+
+        fetch(`/api/spinnerfall?lat=${r.lat}&lon=${r.lon}`)
+            .then(res => res.ok ? res.json() : null)
+            .then(data => {
+                const score = todaysWeatherScore(data);
+                if (score == null || score < 0.5) return;
+                const tag = document.createElement('div');
+                tag.className = 'spinnerfall-tag' + (score >= 0.75 ? ' high' : '');
+                tag.innerHTML = score >= 0.75 ? '🌒 Spinnerfall-vær' : '🌒 Bra kveld';
+                card.appendChild(tag);
+            })
+            .catch(() => {});
+    });
+})();
 </script>
 
 <!-- ═══ FLOATING KLEKKEOBS-FAB (alltid synlig nederst til høyre) ═══ -->
