@@ -1888,6 +1888,23 @@ const TODAY = new Date().toISOString().slice(0, 10);
     LOC.airStationName = override + ' (TEST)';
 })();
 
+// URL-flag for å overstyre vannstasjon (innført 2026-05-11)
+// Brukes for å teste alternative NVE-stasjoner for vanntemp og vannføring.
+// F.eks. ?loc=vestfjella&nve=2.999.0 bytter til 2.999.0.
+(function overrideWaterStation() {
+    const override = new URLSearchParams(location.search).get('nve');
+    if (!override) return;
+    LOC._originalNveStation = LOC.nveStation;
+    LOC._originalWaterStationName = LOC.waterStationName;
+    LOC.nveStation = override;
+    // Også overstyre nveWaterTempStation hvis lokasjonen bruker det
+    if (LOC.nveWaterTempStation) {
+        LOC._originalNveWaterTempStation = LOC.nveWaterTempStation;
+        LOC.nveWaterTempStation = override;
+    }
+    LOC.waterStationName = override + ' (TEST)';
+})();
+
 // Restore user's altitude pick from localStorage BEFORE headerSub renders
 // (returnerer-bruker skal se sin valgte høyde umiddelbart, ikke standardhøyden)
 if (LOC.altitudeAdjustable) {
