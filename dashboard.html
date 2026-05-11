@@ -1508,12 +1508,15 @@ const LOCATIONS = {
         waterStationName: 'Løkkeborg',
         calibrated: false,  // Forblir indikativ — vi har ingen klekkeobs for Vestfjella
         // Waterproxy (innført 2026-05-11): bruker Mønevann (Østmarka) som vannbasis
-        // og justerer med (Rakkestad - Råken) × 0.5 for å fange Vestfjella sin
-        // klimatologisk varmere posisjon. Løkkeborg-stasjonen er strukturelt treig
+        // og justerer med klima-snitt (Rakkestad - Råken) × 1.0 for å fange Vestfjella
+        // sin klimatologisk varmere posisjon. Løkkeborg-stasjonen er strukturelt treig
         // pga størrelse — Mønevann er bedre proxy for vulgata-småvann.
+        // k=1.0 reflekterer langtids-likevekt mellom luft og vann (vannet søker mot
+        // klimatologisk luft-temperatur over uker). Klima-airDelta ~+0.68°C gir
+        // ~0.68°C varmere Vestfjella-vann og ~2 dager tidligere prediksjon enn Østmarka.
         waterProxy: {
             fromLocId: 'ostmarka',
-            kFactor: 0.5
+            kFactor: 1.0
         },
         // Parametere overført fra Østmarka 2026-05-04: Vestfjella har isgang ~14 dager
         // tidligere enn Østmarka (tidlig vår på Halden/Ørje), klimatisk svært likt eller
