@@ -2818,110 +2818,52 @@ function shouldUseThermalWTModel() {
     return new URLSearchParams(location.search).get('wtmodel') !== 'linear';
 }
 
-// Klima-vannstigning per DOY: gjennomsnittlig daglig endring (ΔWT) i wtData
-// for hver dag-på-året fra siste 7 år. Direkte analog til klima-luft-temp
-// per DOY brukt i GDD-modellen.
-function computeClimaWTRiseByDoy(wtData) {
-    const byDoy = {};  // {doy: {sum, n}}
+// Lookup-basert vanntemp-prediksjon (innført 2026-05-11)
+// For dagens WT, finn historisk hvor mange dager det tar å nå terskelen fra
+// samme WT i hvert av de siste 5-7 år. Snitt = forventet dager til klekking.
+//
+// Eksempel: hvis vannet i dag er 11.5°C og det historisk har tatt 8 dager
+// (snitt over 5 år) fra 11.5°C til 14°C, så er predikert klekkedato = i dag + 8.
+//
+// Enkel, empirisk og robust. Bruker direkte historiske sekvenser, ikke
+// modellert klima-stigning eller MET-modulasjon.
+function projectWTByLookup(currentWT, asOfDate, wtData, wtTrigger) {
     const years = [];
     for (let y = YEAR - 1; y >= YEAR - 7; y--) years.push(y);
+    const daysToTrigger = [];
+
     for (const yr of years) {
         const dates = Object.keys(wtData)
             .filter(d => d.startsWith(String(yr)))
             .sort();
-        for (let i = 0; i < dates.length - 1; i++) {
-            const d = dates[i];
-            const dNext = dates[i + 1];
+        let crossingFromWT = null;
+        let crossingTrigger = null;
+        for (const d of dates) {
             const wt = wtData[d];
-            const wtNext = wtData[dNext];
-            if (wt == null || wtNext == null) continue;
-            const daysDiff = Math.round((parseDate(dNext) - parseDate(d)) / 86400000);
-            if (daysDiff !== 1) continue;
-            const k = doy(parseDate(d));
-            if (!byDoy[k]) byDoy[k] = { sum: 0, n: 0 };
-            byDoy[k].sum += (wtNext - wt);
-            byDoy[k].n++;
+            if (wt == null) continue;
+            // Finn første dato det året da WT var >= currentWT
+            if (crossingFromWT == null && wt >= currentWT) {
+                crossingFromWT = d;
+            }
+            // Finn første dato (etter crossingFromWT) da WT nådde terskelen
+            if (crossingFromWT && wt >= wtTrigger) {
+                crossingTrigger = d;
+                break;
+            }
+        }
+        if (crossingFromWT && crossingTrigger) {
+            const days = (parseDate(crossingTrigger) - parseDate(crossingFromWT)) / 86400000;
+            if (days >= 0 && days <= 60) daysToTrigger.push(days);
         }
     }
-    const result = {};
-    let totalSamples = 0;
-    for (const k in byDoy) {
-        if (byDoy[k].n >= 2) {
-            result[k] = byDoy[k].sum / byDoy[k].n;
-            totalSamples += byDoy[k].n;
-        }
-    }
-    window._lastWTSampleCount = totalSamples;
+
+    window._lastWTSampleCount = daysToTrigger.length;
+    if (daysToTrigger.length < 2) return null;
+    const avgDays = daysToTrigger.reduce((a, b) => a + b, 0) / daysToTrigger.length;
+    window._lastWTAvgDays = avgDays;
+    const result = new Date(asOfDate);
+    result.setDate(result.getDate() + Math.round(avgDays));
     return result;
-}
-
-// Klima-luft per DOY: gjennomsnittlig luft-temp for hver dag-på-året, brukt
-// til å beregne MET-anomali (forventet luft minus klima).
-function computeClimaAirByDoy(airData) {
-    const byDoy = {};
-    const years = [];
-    for (let y = YEAR - 1; y >= YEAR - 5; y--) years.push(y);
-    for (const yr of years) {
-        for (const [d, v] of Object.entries(airData)) {
-            if (!d.startsWith(String(yr)) || v == null) continue;
-            const k = doy(parseDate(d));
-            if (!byDoy[k]) byDoy[k] = { sum: 0, n: 0 };
-            byDoy[k].sum += v;
-            byDoy[k].n++;
-        }
-    }
-    const result = {};
-    for (const k in byDoy) {
-        if (byDoy[k].n >= 2) result[k] = byDoy[k].sum / byDoy[k].n;
-    }
-    return result;
-}
-
-// Forward-projeksjon — speilvendt GDD-modellen:
-//   For dag 1-3:  bruk MET-luft-anomali for å modulere klima-vannstigning
-//   For dag 4-9:  fade MET-modulasjon mot ren klima-stigning
-//   For dag 10+:  bruk ren klima-vannstigning
-//
-// Klima-stigning hentes per DOY fra historisk wtData (typisk 0.1-0.4°C/dag i mai).
-// MET-modulasjon: +1°C luft-anomali → +5% bump på klima-stigning den dagen.
-function projectWTForward(currentWT, asOfDate, wtData, airData, forecastData, wtTrigger) {
-    const climaRiseByDoy = computeClimaWTRiseByDoy(wtData);
-    const climaAirByDoy = computeClimaAirByDoy(airData);
-    let wt = currentWT;
-    const today = new Date(asOfDate);
-    today.setHours(0, 0, 0, 0);
-
-    let totalRise = 0;
-    for (let d = 1; d <= 90; d++) {
-        const dayDate = new Date(today);
-        dayDate.setDate(dayDate.getDate() + d);
-        const dateStr = isoDate(dayDate);
-        const dayDoy = doy(dayDate);
-
-        const baseRise = climaRiseByDoy[dayDoy];
-        if (baseRise == null) return null;  // Ikke nok klima-data for denne DOY
-
-        let effectiveRise = baseRise;
-        const metAir = forecastData ? forecastData[dateStr] : null;
-        const climaAir = climaAirByDoy[dayDoy];
-
-        if (metAir != null && climaAir != null && d <= 9) {
-            const airAnomaly = metAir - climaAir;
-            let metWeight;
-            if (d <= 3) metWeight = 1.0;
-            else metWeight = Math.max(0, 1 - (d - 3) / 6);
-            // 5% bump per °C luft-anomali (kalibrerbar)
-            effectiveRise = baseRise * (1 + airAnomaly * 0.05 * metWeight);
-        }
-
-        wt += effectiveRise;
-        totalRise += effectiveRise;
-        if (wt >= wtTrigger) {
-            window._lastWTAvgRise = totalRise / d;
-            return dayDate;
-        }
-    }
-    return null;
 }
 
 // MET-luft-basert vanntemp-boost (innført 2026-05-11 som flag, default 2026-05-11)
@@ -3052,20 +2994,14 @@ function extrapolateWTFromDate(waterTempData, asOfDate, opts) {
     const currentWT = temps.at(-1);
     if (currentWT < wtFloor) return null;       // STABILITETSKRAV: vannet må være varmet til ≥wtFloor°C
 
-    // Forward-projeksjon (default 2026-05-11, kan skrus av med ?wtmodel=linear)
-    // Speilvendt GDD-modellen: klima-vannstigning per DOY + MET-anomali for dag 1-9.
-    // Kjøres for ALLE asOfDate-er (også retrospektive) — for retrospektive
-    // prediksjoner brukes bare klima-stigning (uten MET-modulasjon siden MET
-    // ikke er lagret historisk). Glatter ut historikk-graf.
+    // Lookup-modell (default 2026-05-11, kan skrus av med ?wtmodel=linear)
+    // Empirisk: dagens WT + snitt antall dager fra denne WT til terskel
+    // over siste 5-7 år. Enkel, transparent og robust.
     if (shouldUseThermalWTModel() && cachedData) {
         const wtTrigger = getWtThreshold(LOC);
-        const forwardDate = projectWTForward(
-            currentWT, asOfDate, waterTempData,
-            cachedData.airData, cachedData.forecastData, wtTrigger
-        );
-        if (forwardDate) return forwardDate;
-        // Fallback: forward feilet (for lite klima-data) — fall tilbake til lineær
-        // og sett flag så vi kan varsle brukeren via banner
+        const lookupDate = projectWTByLookup(currentWT, asOfDate, waterTempData, wtTrigger);
+        if (lookupDate) return lookupDate;
+        // Fallback: for lite historisk data — fall tilbake til lineær med varsel
         window._lastWTFallbackToLinear = true;
     }
     const liveSlope = computeWTSlope(temps);
@@ -3615,12 +3551,12 @@ function renderThermalWTBanner(wtDate) {
         banner.style.background = '#fff3cd';
         banner.style.borderLeftColor = '#f59e0b';
         const samples = window._lastWTSampleCount || 0;
-        info.innerHTML = `Forward-modellen (klima-vannstigning) mangler tilstrekkelig historisk data for <strong>${LOC.area || LOC.id}</strong> (kun ${samples} dag-par). Faller tilbake til lineær regresjon for denne lokasjonen. Modellen er midlertidig mindre presis.`;
+        info.innerHTML = `Lookup-modellen mangler tilstrekkelig historisk data for <strong>${LOC.area || LOC.id}</strong> (kun ${samples} år å lære fra). Faller tilbake til lineær regresjon for denne lokasjonen. Modellen er midlertidig mindre presis.`;
     } else if (isLinearOverride) {
         if (title) title.innerHTML = '🔧 Lineær modell aktiv (DEBUG)';
         banner.style.background = '#e0e7ff';
         banner.style.borderLeftColor = '#6366f1';
-        info.innerHTML = `Du har skrudd modellen tilbake til lineær regresjon via <code>?wtmodel=linear</code>. Sammenlign med <a href="${location.pathname}?loc=${LOC.id}" style="color:#4338ca;text-decoration:underline">forward-modell (default)</a>.`;
+        info.innerHTML = `Du har skrudd modellen tilbake til lineær regresjon via <code>?wtmodel=linear</code>. Sammenlign med <a href="${location.pathname}?loc=${LOC.id}" style="color:#4338ca;text-decoration:underline">lookup-modell (default)</a>.`;
     }
 
     banner.style.display = '';
