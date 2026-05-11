@@ -438,11 +438,11 @@
 
         <!-- ═══ DYNAMIC ALTITUDE PICKER (kun for nordmarka_dyn / LOC.altitudeAdjustable) ═══ -->
         <div id="lakePickerWrap" style="display:none; margin: 16px 0 24px; padding: 16px 18px; background: #f6faf7; border: 1px solid #d4e3d6; border-radius: 8px;">
-            <label for="lakePicker" style="display:block; font-size: 0.78rem; color: #1B4332; font-weight: 600; margin-bottom: 6px; letter-spacing: 0.04em; text-transform: uppercase;">
+            <label for="lakePicker" style="display:block; font-size: 0.78rem; color: #1B4332; font-weight: 600; margin-bottom: 6px; letter-spacing: 0.04em; text-transform: uppercase;" data-i18n="lakePickerLabel">
                 Velg vann i Nordmarka
             </label>
             <select id="lakePicker" style="width: 100%; max-width: 480px; padding: 8px 10px; font-size: 0.95rem; border: 1px solid #b8cbb9; border-radius: 6px; background: #fff; color: #1B4332;"></select>
-            <div id="lakePickerNote" style="font-size: 0.72rem; color: #666; margin-top: 8px;">
+            <div id="lakePickerNote" style="font-size: 0.72rem; color: #666; margin-top: 8px;" data-i18n="lakePickerNote">
                 Alle vannene i listen har dokumentert vulgata-klekking. Kilde: OFA (Oslomarka Fiskeadministrasjon). Modellen justerer prediksjonen basert på valgt høyde.
             </div>
         </div>
@@ -770,6 +770,8 @@ const T = {
     spinnerfallIntroTitle: 'Ny funksjon: Spinnerfall-vakt',
     spinnerfallIntroBody: 'Vulgata-spinnerfallet er det mest spektakulære, men også mest uforutsigbare i fluefiskerens kalender. Hatch Watch vurderer nå sannsynligheten for spinnerfall i kveldstimene basert på vind, temperatur, skydekke og nedbør — og hvor mange dårlige kvelder det har vært i forkant.\n\nModellen er ikke validert mot observasjoner ennå. Bidra gjerne med en spinnerfall-rapport via observasjonsknappen når du opplever det i felt — det styrker modellen for alle.',
     spinnerfallIntroBtn: 'Skjønner!',
+    lakePickerLabel: 'Velg vann i Nordmarka',
+    lakePickerNote: 'Alle vannene i listen har dokumentert vulgata-klekking. Kilde: OFA (Oslomarka Fiskeadministrasjon). Modellen justerer prediksjonen basert på valgt høyde.',
     updatedLabel: 'Oppdatert:',
     loadingText: 'Laster…',
   },
@@ -922,6 +924,8 @@ const T = {
     spinnerfallIntroTitle: 'New feature: Spinner Fall Watch',
     spinnerfallIntroBody: 'The vulgata spinner fall is the most spectacular, yet most unpredictable event in the fly fisher\'s calendar. Hatch Watch now assesses the probability of a spinner fall in the evening hours based on wind, temperature, cloud cover, and precipitation — plus how many bad evenings preceded it.\n\nThe model has not yet been validated against observations. Please contribute a spinner fall report via the observation button when you witness one in the field — it strengthens the model for everyone.',
     spinnerfallIntroBtn: 'Got it!',
+    lakePickerLabel: 'Choose lake in Nordmarka',
+    lakePickerNote: 'All lakes in the list have documented vulgata hatches. Source: OFA (Oslomarka Fish Authority). The model adjusts the prediction based on the selected altitude.',
     updatedLabel: 'Updated:',
     loadingText: 'Loading…',
   }
@@ -2670,6 +2674,49 @@ function extrapolateWT(waterTempData) {
     return extrapolateWTFromDate(waterTempData, new Date());
 }
 
+// URL-flag for klima-prior på vanntemp-prediksjon (innført 2026-05-11)
+function shouldUseClimaWTPrior() {
+    return new URLSearchParams(location.search).get('wtprior') === '1';
+}
+
+// Hjelper: lineær regresjon-slope for en serie temperaturer.
+// Returnerer null hvis under 10 datapunkter eller degenererende.
+function computeWTSlope(temps) {
+    if (temps.length < 10) return null;
+    const n = temps.length;
+    const xs = temps.map((_, i) => i);
+    const xm = xs.reduce((a,b) => a+b, 0) / n;
+    const ym = temps.reduce((a,b) => a+b, 0) / n;
+    const denom = xs.reduce((s, x) => s + (x - xm) ** 2, 0);
+    if (denom === 0) return null;
+    return xs.reduce((s, x, i) => s + (x - xm) * (temps[i] - ym), 0) / denom;
+}
+
+// Klima-slope: gjennomsnittlig vanntemp-stigning for samme 21-dagers DOY-vindu
+// over de siste 7 årene (eksklusivt nåværende år). Brukes som prior i
+// klima-blandet ekstrapolering for å unngå overreaksjon på flate live-vinduer.
+//
+// Returnerer null hvis vi har < 2 historiske år med ≥10 datapunkter i vinduet.
+function computeClimateWTSlope(waterTempData, asOfDate) {
+    const todayDoy = doy(asOfDate);
+    const climaSlopes = [];
+    for (let yr = YEAR - 1; yr >= YEAR - 7; yr--) {
+        const yrTemps = Object.entries(waterTempData)
+            .filter(([d]) => {
+                const ddt = parseDate(d);
+                if (ddt.getFullYear() !== yr) return false;
+                const dDoy = doy(ddt);
+                return dDoy <= todayDoy && dDoy > todayDoy - 21;
+            })
+            .sort(([a],[b]) => a < b ? -1 : 1)
+            .map(([,v]) => v);
+        const yrSlope = computeWTSlope(yrTemps);
+        if (yrSlope != null && yrSlope > 0) climaSlopes.push(yrSlope);
+    }
+    if (climaSlopes.length < 2) return null;
+    return climaSlopes.reduce((a,b) => a+b, 0) / climaSlopes.length;
+}
+
 // Ekstrapoler når vanntemp når terskel (default 12°C, kan overstyres per LOC).
 // Brukes både for "nåværende" estimat (asOfDate = i dag) og retrospektiv
 // prediksjonshistorikk i konvergensgrafen (asOfDate = en dag tilbake).
@@ -2680,6 +2727,13 @@ function extrapolateWT(waterTempData) {
 // (mot tidligere 4 / 3°C). Det utsetter dual-trigger-aktiveringen til vannet
 // faktisk har stabilisert seg, typisk tidlig mai. Spike i konvergensgrafen
 // ved sesongstart forsvinner.
+//
+// KLIMA-PRIOR (innført 2026-05-11, aktiveres via URL-flag ?wtprior=1):
+// Lineær regresjon over 21 dager overreagerer på flate perioder tidlig på
+// våren — vannet følger en S-kurve, ikke en rett linje. Klima-prior blander
+// live-slope 50/50 med snittet av historiske års slope for samme DOY-vindu.
+// Drar prediksjonen mot historisk normal når live-slope avviker mye, uten å
+// blokkere ekte signaler. Forblir av som default inntil verifisert.
 function extrapolateWTFromDate(waterTempData, asOfDate) {
     const cutoff = isoDate(asOfDate);
     const recent = Object.entries(waterTempData)
@@ -2690,15 +2744,19 @@ function extrapolateWTFromDate(waterTempData, asOfDate) {
     const temps = recent.map(([,v]) => v);
     const currentWT = temps.at(-1);
     if (currentWT < 5) return null;            // STABILITETSKRAV: vannet må være varmet til ≥5°C
-    const n = temps.length;
-    const xs = temps.map((_, i) => i);
-    const xm = xs.reduce((a,b) => a+b, 0) / n;
-    const ym = temps.reduce((a,b) => a+b, 0) / n;
-    const slope = xs.reduce((s, x, i) => s + (x - xm) * (temps[i] - ym), 0)
-                / xs.reduce((s, x) => s + (x - xm) ** 2, 0);
-    if (slope <= 0) return null;
+    const liveSlope = computeWTSlope(temps);
+    if (liveSlope == null || liveSlope <= 0) return null;
+
+    let effectiveSlope = liveSlope;
+    if (shouldUseClimaWTPrior()) {
+        const climaSlope = computeClimateWTSlope(waterTempData, asOfDate);
+        if (climaSlope != null) {
+            effectiveSlope = 0.5 * liveSlope + 0.5 * climaSlope;
+        }
+    }
+
     const wtTrigger = getWtThreshold(LOC);
-    const daysNeeded = (wtTrigger - currentWT) / slope;
+    const daysNeeded = (wtTrigger - currentWT) / effectiveSlope;
     if (daysNeeded < 0 || daysNeeded > 60) return null;
     const result = new Date(asOfDate);
     result.setDate(result.getDate() + Math.round(daysNeeded));
@@ -3168,8 +3226,9 @@ function renderSpinnerfallSection(eveningData, vulgataDate, historyData) {
 
     section.style.display = '';
 
-    // Onboarding-popup første gang seksjonen vises (ikke i test-modus)
-    if (!testMode) {
+    // Onboarding-popup første gang seksjonen vises (også i test-modus så
+    // den kan verifiseres uten å vente på faktisk sesong)
+    {
         try {
             const seenKey = 'hw_spinnerfall_intro_seen';
             if (localStorage.getItem(seenKey) !== '1') {
