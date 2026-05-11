@@ -371,7 +371,7 @@
 <div class="hero">
     <div class="tag">Beta v1.0</div>
     <h1><span data-i18n="heroLine1">Aquatic insect</span><br><span data-i18n="heroSpan">emergence forecasting</span></h1>
-    <p data-i18n="heroP">Hatch timing estimated from live water temperature data and accumulated heat units (GDD)</p>
+    <p data-i18n="heroP">Hatch timing estimated from ice-out, water temperature and accumulated heat units (GDD)</p>
 </div>
 
 <div class="cards" id="main"></div>
@@ -436,7 +436,7 @@ const T = {
   no: {
     heroLine1: 'Klekkevarsel',
     heroSpan: 'i sanntid',
-    heroP: 'Klekketidspunkt estimert fra løpende vanntemperatur og akkumulerte døgngrader (GDD)',
+    heroP: 'Klekketidspunkt estimert basert på isgang, vanntemperatur og varmesum',
     howEyebrow: 'Slik fungerer det',
     modelTitle: 'Prediksjonsmodell',
     modelDesc: 'Klekkemodellen er basert på to biologiske krav som må være oppfylt samtidig: akkumulert varme i lufta og vanntemperatur over en gitt terskel. Klekkedatoen estimeres som den første dagen begge krav er oppfylt samtidig. For dager fram i tid blandes faktiske målinger med MET sitt langtidsvarsel, og deretter 10-årssnittet for resten av sesongen. Tersklene er kalibrert lokasjonsspesifikt mot historiske klekkeobservasjoner.',
@@ -460,7 +460,7 @@ const T = {
   en: {
     heroLine1: 'Aquatic insect',
     heroSpan: 'emergence forecasting',
-    heroP: 'Hatch timing estimated from live water temperature data and accumulated heat units (GDD)',
+    heroP: 'Hatch timing estimated from ice-out, water temperature and accumulated heat units (GDD)',
     howEyebrow: 'How it works',
     modelTitle: 'Prediction model',
     modelDesc: "The hatch model is based on two biological requirements that must be met simultaneously: accumulated heat in the air and water temperature above a given threshold. The hatch date is estimated as the first day both requirements are met at the same time. For days ahead, actual measurements are blended with MET's long-term forecast, and then with the 10-year average for the rest of the season. The thresholds are calibrated location-specifically against historical hatch observations.",
