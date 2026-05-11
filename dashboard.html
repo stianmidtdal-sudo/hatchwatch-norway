@@ -4640,6 +4640,12 @@ function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate, airDa
     // (NB: historikk og kalibrering bruker "første dag begge oppfylt"-logikk fra
     // findDualTriggerCrossing — se 2026-05-03-fix. Live er ekstrapolasjon, så vi
     // har ikke daglig data å sjekke "begge oppfylt"-kriteriet mot framover.)
+    //
+    // Når WT-prediksjon mangler (typisk januar-april før vannet er varmt nok til
+    // ekstrapolering), bruk historisk median som nedre grense. Det hindrer at
+    // grafen viser unaturlig tidlig dato basert kun på GDD-prediksjon i en
+    // periode der vannet er bindende historisk.
+    const _histMedianDoyForCap = histStats?.median ?? null;
     const labels = [];
     const rawPredDoys = [];
     for (let d = firstDoy; d <= todayDoy; d++) {
@@ -4652,7 +4658,11 @@ function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate, airDa
         if (gddPred != null && wtPredDoy != null) {
             pred = Math.max(gddPred, wtPredDoy);  // siste av de to triggerne
         } else if (gddPred != null) {
-            pred = gddPred;
+            // WT-prediksjon mangler — bruk historisk median som "minimum"
+            // for å unngå unaturlig tidlig GDD-bound dato.
+            pred = _histMedianDoyForCap != null
+                ? Math.max(gddPred, _histMedianDoyForCap)
+                : gddPred;
         }
 
         labels.push(fmt(dt));
