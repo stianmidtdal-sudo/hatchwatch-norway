@@ -2146,21 +2146,52 @@ function getWaterProxyConfig() {
     };
 }
 
-// Juster wtData med airDelta × k for hver dag.
-// wt_proxy[d] = wt_basis[d] + (lokal_luft[d] - proxy_luft[d]) × k
+// Beregn klima-airDelta per DOY: gjennomsnittlig (lokal_luft - proxy_luft)
+// for hver dag-på-året over siste 5 år. Brukes som forutsigbar offset
+// istedenfor dag-for-dag-variasjoner.
+function computeClimaAirDeltaByDoy(localAirData, proxyAirData) {
+    const byDoy = {};
+    for (let yr = YEAR - 1; yr >= YEAR - 5; yr--) {
+        for (const [d, localT] of Object.entries(localAirData)) {
+            if (!d.startsWith(String(yr)) || localT == null) continue;
+            const proxyT = proxyAirData[d];
+            if (proxyT == null) continue;
+            const k = doy(parseDate(d));
+            if (!byDoy[k]) byDoy[k] = { sum: 0, n: 0 };
+            byDoy[k].sum += (localT - proxyT);
+            byDoy[k].n++;
+        }
+    }
+    const result = {};
+    let totalDelta = 0, totalN = 0;
+    for (const k in byDoy) {
+        if (byDoy[k].n >= 2) {
+            result[k] = byDoy[k].sum / byDoy[k].n;
+            totalDelta += byDoy[k].sum;
+            totalN += byDoy[k].n;
+        }
+    }
+    // Lagre snitt for diagnostikk i banner
+    window._lastClimaAirDelta = totalN > 0 ? totalDelta / totalN : null;
+    return result;
+}
+
+// Juster wtData med klima-airDelta × k for hver dag.
+// wt_proxy[d] = wt_basis[d] + (klima_airDelta[doy] × k)
+// Bruker klima-snitt istedenfor dag-for-dag for å gi forutsigbar offset uten
+// dag-til-dag-støy (dvs fanger klimatologi, ikke kortvarige værsvingninger).
 function adjustWTWithAirProxy(wtBasisData, localAirData, proxyAirData, k) {
+    const climaDeltaByDoy = computeClimaAirDeltaByDoy(localAirData, proxyAirData);
     const result = {};
     for (const [d, wt] of Object.entries(wtBasisData)) {
         if (wt == null) continue;
-        const localAir = localAirData[d];
-        const proxyAir = proxyAirData[d];
-        if (localAir == null || proxyAir == null) {
-            // Ingen luft-data for å justere — bruk basis
+        const dDoy = doy(parseDate(d));
+        const climaDelta = climaDeltaByDoy[dDoy];
+        if (climaDelta == null) {
             result[d] = wt;
             continue;
         }
-        const airDelta = localAir - proxyAir;
-        result[d] = wt + airDelta * k;
+        result[d] = wt + climaDelta * k;
     }
     return result;
 }
@@ -3608,8 +3639,12 @@ function renderWaterProxyBanner() {
     }
     const proxyLoc = LOCATIONS[config.fromLocId];
     const proxyName = proxyLoc ? (proxyLoc.area || config.fromLocId) : config.fromLocId;
+    const climaDelta = window._lastClimaAirDelta;
+    const climaDeltaStr = climaDelta != null
+        ? `Klima-snitt airDelta: <strong>${climaDelta > 0 ? '+' : ''}${climaDelta.toFixed(2)}°C</strong> (snitt over 5 år). Vann-justering: ${(climaDelta * config.k).toFixed(2)}°C.`
+        : 'Klima-snitt ikke beregnet.';
     info.innerHTML = `Bruker <strong>${proxyName}</strong> sin vannstasjon (${config.nveStation}) som basis. ` +
-        `Justering: <code>wt + (${LOC.airStationName || LOC.frostStation} - ${proxyLoc.airStationName || config.frostStation}) × ${config.k}</code>. ` +
+        `${climaDeltaStr} ` +
         `Sammenlign med <a href="${location.pathname}?loc=${LOC.id}" style="color:#4338ca;text-decoration:underline">basis-modell</a>.`;
     banner.style.display = '';
 }
