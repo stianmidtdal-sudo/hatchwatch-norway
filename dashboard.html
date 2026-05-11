@@ -2998,19 +2998,15 @@ function extrapolateWTFromDate(waterTempData, asOfDate, opts) {
     // Empirisk: dagens WT + snitt antall dager fra denne WT til terskel
     // over siste 5-7 år. Enkel, transparent og robust.
     //
-    // Kun aktiv for "nåværende" prediksjon (innenfor 2 dager fra i dag) — for
-    // retrospektive datoer i historikkgrafen brukes lineær regresjon, slik at
-    // grafen fortsatt viser hvordan modellen ville sagt på den datoen.
+    // Aktiv for BÅDE nåværende prediksjon OG retrospektive datoer i historikk-
+    // grafen — gir konsistent oppførsel og fjerner spikes fra lineær regresjon
+    // på flate vann-perioder i april.
     if (shouldUseThermalWTModel() && cachedData) {
-        const todayCheck = new Date(); todayCheck.setHours(0, 0, 0, 0);
-        const daysFromToday = Math.abs((todayCheck - asOfDate) / 86400000);
-        if (daysFromToday < 2) {
-            const wtTrigger = getWtThreshold(LOC);
-            const lookupDate = projectWTByLookup(currentWT, asOfDate, waterTempData, wtTrigger);
-            if (lookupDate) return lookupDate;
-            // Fallback: for lite historisk data — fall tilbake til lineær med varsel
-            window._lastWTFallbackToLinear = true;
-        }
+        const wtTrigger = getWtThreshold(LOC);
+        const lookupDate = projectWTByLookup(currentWT, asOfDate, waterTempData, wtTrigger);
+        if (lookupDate) return lookupDate;
+        // Fallback: for lite historisk data — fall tilbake til lineær med varsel
+        window._lastWTFallbackToLinear = true;
     }
     const liveSlope = computeWTSlope(temps);
     if (liveSlope == null || liveSlope <= 0) return null;
