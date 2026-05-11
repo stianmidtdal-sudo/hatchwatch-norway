@@ -1869,6 +1869,20 @@ const LOC = LOCATIONS[URL_LOC] || LOCATIONS.kautokeino;
 const YEAR = new Date().getFullYear();
 const TODAY = new Date().toISOString().slice(0, 10);
 
+// URL-flag for å overstyre luftstasjon (innført 2026-05-11)
+// Brukes for å teste alternative Frost-stasjoner uten å endre LOC-konfigurasjonen.
+// F.eks. ?loc=vestfjella&frost=SN1950 bytter til SN1950 (Ørje) for lufttemp.
+// Hvis satt: overstyrer LOC.frostStation og LOC.airStationName.
+(function overrideAirStation() {
+    const override = new URLSearchParams(location.search).get('frost');
+    if (!override) return;
+    // Lagre original for visuell feedback
+    LOC._originalFrostStation = LOC.frostStation;
+    LOC._originalAirStationName = LOC.airStationName;
+    LOC.frostStation = override;
+    LOC.airStationName = override + ' (TEST)';
+})();
+
 // Restore user's altitude pick from localStorage BEFORE headerSub renders
 // (returnerer-bruker skal se sin valgte høyde umiddelbart, ikke standardhøyden)
 if (LOC.altitudeAdjustable) {
