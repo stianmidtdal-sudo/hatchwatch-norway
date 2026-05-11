@@ -2712,7 +2712,7 @@ function shouldUseThermalWTModel() {
 function computeThermalTau(airData, wtData) {
     const samples = [];
     const years = [];
-    for (let y = YEAR - 1; y >= YEAR - 6; y--) years.push(y);
+    for (let y = YEAR - 1; y >= YEAR - 8; y--) years.push(y);  // Utvidet til 8 år bakover
 
     for (const yr of years) {
         const dates = Object.keys(wtData)
@@ -2722,11 +2722,12 @@ function computeThermalTau(airData, wtData) {
             const d = dates[i];
             const dNext = dates[i + 1];
             const month = parseInt(d.substring(5, 7));
-            if (month < 4 || month > 7) continue;  // April-juli — våroppvarming
+            if (month < 4 || month > 8) continue;  // April-august — våroppvarming inkl. sub-arktiske sene starter
             const wt = wtData[d];
             const wtNext = wtData[dNext];
             const air = airData[d];
             if (wt == null || wtNext == null || air == null) continue;
+            if (wt < 0.5) continue;  // Skipp dager rett etter isgang — usikre målinger
             const daysDiff = Math.round((parseDate(dNext) - parseDate(d)) / 86400000);
             if (daysDiff !== 1) continue;
             const deltaWT = wtNext - wt;
@@ -2734,7 +2735,8 @@ function computeThermalTau(airData, wtData) {
             samples.push({ driver, deltaWT });
         }
     }
-    if (samples.length < 50) return null;
+    window._lastThermalSampleCount = samples.length;  // Diagnostikk
+    if (samples.length < 20) return null;  // Senket fra 50 — nok for stabilt regresjon
     const num = samples.reduce((s, p) => s + p.driver * p.deltaWT, 0);
     const denom = samples.reduce((s, p) => s + p.driver * p.driver, 0);
     if (denom === 0) return null;
@@ -3481,11 +3483,12 @@ function renderThermalWTBanner(wtDate) {
     }
 
     const tau = window._lastThermalTau;
+    const samples = window._lastThermalSampleCount;
     let infoText = '';
     if (tau != null) {
-        infoText = `Termisk tidskonstant τ = <strong>${tau.toFixed(1)} dager</strong> (auto-kalibrert fra historiske luft/vann-par for ${LOC.area || LOC.id}). `;
+        infoText = `Termisk tidskonstant τ = <strong>${tau.toFixed(1)} dager</strong> (auto-kalibrert fra ${samples || '?'} historiske luft/vann-par for ${LOC.area || LOC.id}). `;
     } else {
-        infoText = `Termisk modell kunne ikke kalibreres (for lite data). Faller tilbake til lineær regresjon. `;
+        infoText = `Termisk modell kunne ikke kalibreres (kun ${samples || 0} samples, trenger ≥20). Faller tilbake til lineær regresjon. `;
     }
     if (wtDate) {
         const fmt = wtDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
