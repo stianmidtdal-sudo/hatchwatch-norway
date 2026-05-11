@@ -2693,11 +2693,16 @@ function shouldUseClimaWTPrior() {
     return new URLSearchParams(location.search).get('wtprior') === '1';
 }
 
-// URL-flag for MET-luft-basert vanntemp-boost (innført 2026-05-11)
+// MET-luft-basert vanntemp-boost (innført 2026-05-11 som flag, default 2026-05-11)
 // Justerer vann-slope basert på forventet luft kommende 10 dager.
 // Varmere forventet luft → raskere vannstigning, kaldere → saktere.
+//
+// Strukturell konsistens: GDD-siden av dual-trigger bruker allerede MET-luft-
+// prognose via buildDoyAvgTempWithForecast. WT-siden skal også gjøre det,
+// ellers er modellen asymmetrisk — vannet varmes jo av luften.
+// Kan skrus av for sammenligning med ?wtmet=0.
 function shouldUseMETForecastWT() {
-    return new URLSearchParams(location.search).get('wtmet') === '1';
+    return new URLSearchParams(location.search).get('wtmet') !== '0';
 }
 
 // Beregner forventet boost på vann-slope basert på forskjellen mellom
