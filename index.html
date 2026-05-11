@@ -504,7 +504,7 @@ applyLang();
 // ── Area data ────────────────────────────────────────────────────────
 // Ordered north → south by latitude.
 const RIVERS = [
-    { id: "kautokeino",    area: "Kautokeino",    river: "Kautokeino",      waterRiver: "Suohpatjohka",          snowRiver: "Kautokeino",          region: "Finnmark",   lat: 69.01, lon: 23.04, calibrated: true,  uncertainty: "±2.1 days" },
+    { id: "kautokeino",    area: "Kautokeino",    river: "Kautokeino",      waterRiver: "Suohpatjohka",          snowRiver: "Kautokeino",          region: "Finnmark",   lat: 69.01, lon: 23.04, calibrated: true,  calibrationLevel: 3, uncertainty: "±2.1 days" },
     { id: "kautokeino_test", area: "Kautokeino (TEST)", river: "Kautokeino", waterRiver: "Suohpatjohka",          snowRiver: "Kautokeino",          region: "Finnmark",   lat: 69.01, lon: 23.04, calibrated: false, uncertainty: "±14 days", hidden: true },
     { id: "alta",          area: "Alta",          river: "Sihccajavri",     waterRiver: "Kista (Altaelva)",      snowRiver: "Sihccajavri",         region: "Finnmark",   lat: 69.97, lon: 23.27, calibrated: false, uncertainty: "±10 days" },
     { id: "porsanger",     area: "Porsanger",     river: "Karasjok",        waterRiver: "Lombola (Lakselva)",    snowRiver: "Karasjok",            region: "Finnmark",   lat: 70.07, lon: 25.00, calibrated: false, uncertainty: "±10 days" },
@@ -518,11 +518,11 @@ const RIVERS = [
     { id: "lierne",        area: "Lierne",        river: "Snåsa - Kjevlia", waterRiver: "Skjellbreivatn",        snowRiver: "Snåsa",               region: "Trøndelag",  lat: 64.19, lon: 13.15, calibrated: false, uncertainty: "±14 days", hidden: true },
     { id: "trondheim",     area: "Trondheim",     river: "Kvithamar",       waterRiver: "Kobberdammen (Nidelva)",snowRiver: "Skistua",             region: "Trøndelag",  lat: 63.48, lon: 10.81, calibrated: false, uncertainty: "±14 days" },
     { id: "rena",          area: "Rena",          river: "Rena - Ørnhaugen", waterRiver: "Femundselva",          snowRiver: "Plassen, Trysil",    region: "Innlandet",  lat: 61.14, lon: 11.65, calibrated: false, uncertainty: "±14 days" },
-    { id: "oslo",          area: "Nordmarka (statisk backup)", river: "Bjørnholt", waterRiver: "Sinnerdammen, Nordmarka", snowRiver: "Bjørnholt", region: "Østlandet",  lat: 59.94, lon: 10.72, calibrated: true,  uncertainty: "±10 days", hidden: true },
-    { id: "nordmarka_dyn", area: "Nordmarka",     river: "Bjørnholt",       waterRiver: "Sinnerdammen, Nordmarka", snowRiver: "Bjørnholt",         region: "Østlandet",  lat: 59.94, lon: 10.72, calibrated: true,  uncertainty: "±10 days" },
+    { id: "oslo",          area: "Nordmarka (statisk backup)", river: "Bjørnholt", waterRiver: "Sinnerdammen, Nordmarka", snowRiver: "Bjørnholt", region: "Østlandet",  lat: 59.94, lon: 10.72, calibrated: true,  calibrationLevel: 1, uncertainty: "±10 days", hidden: true },
+    { id: "nordmarka_dyn", area: "Nordmarka",     river: "Bjørnholt",       waterRiver: "Sinnerdammen, Nordmarka", snowRiver: "Bjørnholt",         region: "Østlandet",  lat: 59.94, lon: 10.72, calibrated: true,  calibrationLevel: 1, uncertainty: "±10 days" },
     { id: "nordmarka_test_a", area: "Nordmarka (TEST · Tryvann)", river: "Tryvannshøgda", waterRiver: "Sinnerdammen, Nordmarka", snowRiver: "Bjørnholt", region: "Østlandet", lat: 59.98, lon: 10.67, calibrated: false, uncertainty: "±14 days", hidden: true },
     { id: "finnemarka",    area: "Finnemarka",    river: "Geithus",         waterRiver: "Elgtjern",              snowRiver: "Sande – Lauvkollmyr", region: "Østlandet",  lat: 59.86, lon: 10.30, calibrated: false, uncertainty: "±14 days" },
-    { id: "ostmarka",      area: "Østmarka",      river: "Råken",           waterRiver: "Mønevann, Enebakk",     snowRiver: "Enebakk – Barbøl",    region: "Østlandet",  lat: 59.70, lon: 11.17, calibrated: true,  uncertainty: "±3.8 days" },
+    { id: "ostmarka",      area: "Østmarka",      river: "Råken",           waterRiver: "Mønevann, Enebakk",     snowRiver: "Enebakk – Barbøl",    region: "Østlandet",  lat: 59.70, lon: 11.17, calibrated: true,  calibrationLevel: 1, uncertainty: "±3.8 days" },
     { id: "ostmarka_tb5",  area: "Østmarka (TEST · Tb=5°C)", river: "Råken", waterRiver: "Mønevann, Enebakk", snowRiver: "Enebakk – Barbøl", region: "Østlandet", lat: 59.70, lon: 11.17, calibrated: false, uncertainty: "±6 days", hidden: true },
     { id: "vestfjella",    area: "Vestfjella",    river: "Rakkestad",       waterRiver: "Løkkeborg",             snowRiver: "Ørje",              region: "Østlandet",  lat: 59.30, lon: 11.66, calibrated: false, uncertainty: "±6 days" },
     { id: "hardangervidda",area: "Hardangervidda",river: "Uvdal",           waterRiver: "Kvenna",                snowRiver: "Tessungdalen-Bakkhus",region: "Telemark",   lat: 60.14, lon: 8.55, calibrated: false, uncertainty: "±14 days" },
@@ -573,7 +573,7 @@ function buildCards() {
                 <div class="card-river">${r.area}</div>
                 <div class="card-place">${r.region} · ${r.lat.toFixed(1)}°N</div>
                 <div class="card-stations">🌡 ${r.river}<br>💧 ${r.waterRiver}<br>❄ ${r.snowRiver || r.river}</div>
-                ${r.calibrated ? `<div class="badge">${t('calibratedBadge')}</div>` : ''}
+                ${r.calibrated ? `<div class="badge">${'⭐'.repeat(r.calibrationLevel || 1)} ${t('calibratedBadge').replace(/⭐\s*/, '')}</div>` : ''}
                 <div class="card-arrow">${t('viewForecast')}</div>`;
 
             grid.appendChild(a);
