@@ -2679,6 +2679,58 @@ function shouldUseClimaWTPrior() {
     return new URLSearchParams(location.search).get('wtprior') === '1';
 }
 
+// URL-flag for MET-luft-basert vanntemp-boost (innført 2026-05-11)
+// Justerer vann-slope basert på forventet luft kommende 10 dager.
+// Varmere forventet luft → raskere vannstigning, kaldere → saktere.
+function shouldUseMETForecastWT() {
+    return new URLSearchParams(location.search).get('wtmet') === '1';
+}
+
+// Beregner forventet boost på vann-slope basert på forskjellen mellom
+// nylig faktisk luft (siste 14 dager) og MET-prognose (kommende 10 dager).
+//
+// Logikk: hvis MET sier det blir 5°C varmere enn det har vært, øker vi
+// vann-slope tilsvarende. Hvis 5°C kaldere, demper vi.
+//
+// Multiplikator: 1 + boost, der boost = airDiff × 0.10, capped i [-0.5, +1.0]
+// Det betyr:
+//   +5°C varmere → slope × 1.5  (mer aggressiv oppvarming)
+//   -5°C kaldere → slope × 0.5  (halvert oppvarming)
+//   0°C diff     → slope × 1.0  (ingen endring)
+//
+// Returnerer 1.0 hvis data mangler (no-op).
+function computeMETForecastBoost(airData, forecastData, asOfDate) {
+    if (!forecastData || Object.keys(forecastData).length === 0) return 1.0;
+
+    // Avg faktisk luft siste 14 dager (før asOfDate)
+    const cutoff = isoDate(asOfDate);
+    const recentAir = Object.entries(airData)
+        .filter(([d]) => d.startsWith(String(YEAR)) && d <= cutoff)
+        .sort(([a],[b]) => a < b ? -1 : 1)
+        .slice(-14)
+        .map(([,v]) => v);
+    if (recentAir.length < 7) return 1.0;
+    const avgRecent = recentAir.reduce((a,b) => a+b, 0) / recentAir.length;
+
+    // Avg MET-prognose neste 10 dager fra asOfDate
+    const today = new Date(asOfDate);
+    today.setHours(0, 0, 0, 0);
+    const forecastTemps = [];
+    for (const [dateStr, temp] of Object.entries(forecastData)) {
+        const d = parseDate(dateStr);
+        const daysFromNow = Math.round((d - today) / 86400000);
+        if (daysFromNow >= 0 && daysFromNow <= 10) {
+            forecastTemps.push(temp);
+        }
+    }
+    if (forecastTemps.length < 3) return 1.0;
+    const avgForecast = forecastTemps.reduce((a,b) => a+b, 0) / forecastTemps.length;
+
+    const airDiff = avgForecast - avgRecent;
+    const boost = Math.max(-0.5, Math.min(1.0, airDiff * 0.10));
+    return 1 + boost;
+}
+
 // Hjelper: lineær regresjon-slope for en serie temperaturer.
 // Returnerer null hvis under 10 datapunkter eller degenererende.
 function computeWTSlope(temps) {
@@ -2752,6 +2804,17 @@ function extrapolateWTFromDate(waterTempData, asOfDate) {
         const climaSlope = computeClimateWTSlope(waterTempData, asOfDate);
         if (climaSlope != null) {
             effectiveSlope = 0.5 * liveSlope + 0.5 * climaSlope;
+        }
+    }
+    if (shouldUseMETForecastWT() && cachedData) {
+        // MET-prognose er kun gyldig for "nåværende" prediksjon, ikke retrospektive
+        // datoer i historikk-grafen (MET-data finnes bare for fremtiden).
+        // Sjekk at asOfDate er innenfor 2 dager fra i dag.
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const daysFromToday = Math.abs((today - asOfDate) / 86400000);
+        if (daysFromToday < 2) {
+            const boost = computeMETForecastBoost(cachedData.airData, cachedData.forecastData, asOfDate);
+            effectiveSlope = effectiveSlope * boost;
         }
     }
 
