@@ -2941,19 +2941,16 @@ function extrapolateWTFromDate(waterTempData, asOfDate, opts) {
 
     // Forward-projeksjon (URL-flag wtmodel=thermal, innført 2026-05-11)
     // Speilvendt GDD-modellen: klima-vannstigning per DOY + MET-anomali for dag 1-9.
-    // Kun aktiv for "nåværende" prediksjon (innenfor 2 dager fra i dag) — historiske
-    // år bruker fortsatt lineær regresjon i konvergensgrafen.
+    // Kjøres for ALLE asOfDate-er (også retrospektive) — for retrospektive
+    // prediksjoner brukes bare klima-stigning (uten MET-modulasjon siden MET
+    // ikke er lagret historisk). Glatter ut historikk-graf.
     if (shouldUseThermalWTModel() && cachedData) {
-        const todayCheck = new Date(); todayCheck.setHours(0, 0, 0, 0);
-        const daysFromToday = Math.abs((todayCheck - asOfDate) / 86400000);
-        if (daysFromToday < 2) {
-            const wtTrigger = getWtThreshold(LOC);
-            const forwardDate = projectWTForward(
-                currentWT, asOfDate, waterTempData,
-                cachedData.airData, cachedData.forecastData, wtTrigger
-            );
-            if (forwardDate) return forwardDate;
-        }
+        const wtTrigger = getWtThreshold(LOC);
+        const forwardDate = projectWTForward(
+            currentWT, asOfDate, waterTempData,
+            cachedData.airData, cachedData.forecastData, wtTrigger
+        );
+        if (forwardDate) return forwardDate;
     }
     const liveSlope = computeWTSlope(temps);
     if (liveSlope == null || liveSlope <= 0) return null;
