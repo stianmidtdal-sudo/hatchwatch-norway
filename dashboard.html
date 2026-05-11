@@ -539,14 +539,14 @@
 
         <!-- ═══ FORECAST-EFFEKT-VARSLING (kun lokasjoner med useLongTermForecast,
                  trigget når 9-dagers MET-prognose flytter prognose ≥ 4 dager) ═══ -->
-        <!-- ═══ FORWARD WT-MODELL TEST-BANNER (vises kun når ?wtmodel=thermal) ═══ -->
-        <div id="thermalWTBanner" style="display:none; margin: 14px 0; padding: 12px 16px; background: #f3e8ff; border-left: 4px solid #8b5cf6; border-radius: 6px; font-size: 0.9rem;">
-            <strong>🧪 Forward vannmodell aktiv (TEST)</strong> &mdash; <span id="thermalWTBannerInfo">Beregner...</span>
+        <!-- ═══ WT-MODELL VARSEL-BANNER (vises kun ved fallback eller URL-flag) ═══ -->
+        <div id="thermalWTBanner" style="display:none; margin: 14px 0; padding: 12px 16px; border-left: 4px solid #f59e0b; background: #fff3cd; border-radius: 6px; font-size: 0.9rem;">
+            <strong id="thermalWTBannerTitle">⚠ Vannmodell-varsel</strong> &mdash; <span id="thermalWTBannerInfo">Beregner...</span>
         </div>
 
-        <!-- ═══ WATERPROXY TEST-BANNER (vises kun når ?waterproxy=... er satt) ═══ -->
-        <div id="waterProxyBanner" style="display:none; margin: 14px 0; padding: 12px 16px; background: #fff3cd; border-left: 4px solid #f59e0b; border-radius: 6px; font-size: 0.9rem;">
-            <strong>🔁 Vann-proxy aktiv (TEST)</strong> &mdash; <span id="waterProxyBannerInfo">Beregner...</span>
+        <!-- ═══ WATERPROXY DEBUG-BANNER (vises kun når ?waterproxy=... URL-flag er satt) ═══ -->
+        <div id="waterProxyBanner" style="display:none; margin: 14px 0; padding: 12px 16px; background: #e0e7ff; border-left: 4px solid #6366f1; border-radius: 6px; font-size: 0.9rem;">
+            <strong>🔁 Vann-proxy aktiv (DEBUG)</strong> &mdash; <span id="waterProxyBannerInfo">Beregner...</span>
         </div>
 
         <section id="forecastEffectSection" style="display:none;margin-top:14px">
@@ -1507,6 +1507,14 @@ const LOCATIONS = {
         airStationName:   'Rakkestad',
         waterStationName: 'Løkkeborg',
         calibrated: false,  // Forblir indikativ — vi har ingen klekkeobs for Vestfjella
+        // Waterproxy (innført 2026-05-11): bruker Mønevann (Østmarka) som vannbasis
+        // og justerer med (Rakkestad - Råken) × 0.5 for å fange Vestfjella sin
+        // klimatologisk varmere posisjon. Løkkeborg-stasjonen er strukturelt treig
+        // pga størrelse — Mønevann er bedre proxy for vulgata-småvann.
+        waterProxy: {
+            fromLocId: 'ostmarka',
+            kFactor: 0.5
+        },
         // Parametere overført fra Østmarka 2026-05-04: Vestfjella har isgang ~14 dager
         // tidligere enn Østmarka (tidlig vår på Halden/Ørje), klimatisk svært likt eller
         // varmere enn Enebakk-området. Default-parametere (GDD 520 + WT 12) ga senere
@@ -2108,16 +2116,27 @@ async function fetchFrost(element, start, end, stationOverride) {
     return out;
 }
 
-// URL-flag for vannproxy (innført 2026-05-11)
-// Bruker en annen lokasjons vannstasjon som basis, og justerer med luft-delta.
-// F.eks. ?loc=vestfjella&waterproxy=ostmarka → bruk Mønevann + (Rakkestad - Råken) × k
+// Vannproxy-konfigurasjon (innført 2026-05-11)
+// Sjekker først URL-flag ?waterproxy=loc, deretter LOC.waterProxy fra konfig.
+// URL-flag overstyrer LOC for testing.
 function getWaterProxyConfig() {
-    const proxyLocId = new URLSearchParams(location.search).get('waterproxy');
-    if (!proxyLocId) return null;
+    const urlProxyLocId = new URLSearchParams(location.search).get('waterproxy');
+    const urlKParam = new URLSearchParams(location.search).get('waterproxy_k');
+
+    let proxyLocId, k;
+    if (urlProxyLocId) {
+        proxyLocId = urlProxyLocId;
+        const kParsed = parseFloat(urlKParam || '0.5');
+        k = isNaN(kParsed) ? 0.5 : kParsed;
+    } else if (LOC.waterProxy) {
+        proxyLocId = LOC.waterProxy.fromLocId;
+        k = LOC.waterProxy.kFactor || 0.5;
+    } else {
+        return null;
+    }
+
     const proxyLoc = LOCATIONS[proxyLocId];
     if (!proxyLoc) return null;
-    const kParam = parseFloat(new URLSearchParams(location.search).get('waterproxy_k') || '0.5');
-    const k = isNaN(kParam) ? 0.5 : kParam;
     return {
         fromLocId: proxyLocId,
         proxyLoc,
@@ -2758,11 +2777,11 @@ function shouldUseClimaWTPrior() {
     return new URLSearchParams(location.search).get('wtprior') === '1';
 }
 
-// URL-flag for forward-projeksjon på vanntemp-prediksjon (innført 2026-05-11)
-// Speilvendt GDD-struktur: bruker klima-vannstigning per DOY som baseline,
-// modulert med MET-luft-anomali for dag 1-9.
+// Forward-projeksjon for vanntemp (default 2026-05-11)
+// Speilvendt GDD-struktur: klima-vannstigning per DOY + MET-luft-modulasjon dag 1-9.
+// Aktiv som default. Kan skrus av med ?wtmodel=linear (tilbakerull-flag).
 function shouldUseThermalWTModel() {
-    return new URLSearchParams(location.search).get('wtmodel') === 'thermal';
+    return new URLSearchParams(location.search).get('wtmodel') !== 'linear';
 }
 
 // Klima-vannstigning per DOY: gjennomsnittlig daglig endring (ΔWT) i wtData
@@ -2999,7 +3018,7 @@ function extrapolateWTFromDate(waterTempData, asOfDate, opts) {
     const currentWT = temps.at(-1);
     if (currentWT < wtFloor) return null;       // STABILITETSKRAV: vannet må være varmet til ≥wtFloor°C
 
-    // Forward-projeksjon (URL-flag wtmodel=thermal, innført 2026-05-11)
+    // Forward-projeksjon (default 2026-05-11, kan skrus av med ?wtmodel=linear)
     // Speilvendt GDD-modellen: klima-vannstigning per DOY + MET-anomali for dag 1-9.
     // Kjøres for ALLE asOfDate-er (også retrospektive) — for retrospektive
     // prediksjoner brukes bare klima-stigning (uten MET-modulasjon siden MET
@@ -3011,6 +3030,9 @@ function extrapolateWTFromDate(waterTempData, asOfDate, opts) {
             cachedData.airData, cachedData.forecastData, wtTrigger
         );
         if (forwardDate) return forwardDate;
+        // Fallback: forward feilet (for lite klima-data) — fall tilbake til lineær
+        // og sett flag så vi kan varsle brukeren via banner
+        window._lastWTFallbackToLinear = true;
     }
     const liveSlope = computeWTSlope(temps);
     if (liveSlope == null || liveSlope <= 0) return null;
@@ -3540,30 +3562,33 @@ function renderSpinnerfallSection(eveningData, vulgataDate, historyData) {
 function renderThermalWTBanner(wtDate) {
     const banner = document.getElementById('thermalWTBanner');
     const info = document.getElementById('thermalWTBannerInfo');
+    const title = document.getElementById('thermalWTBannerTitle');
     if (!banner || !info) return;
 
-    if (!shouldUseThermalWTModel()) {
+    const isLinearOverride = new URLSearchParams(location.search).get('wtmodel') === 'linear';
+    const isFallback = window._lastWTFallbackToLinear === true;
+
+    // Vis banner KUN i 2 tilfeller:
+    // 1) Bruker har eksplisitt aktivert lineær via URL (debug-modus)
+    // 2) Forward feilet og vi falt tilbake til lineær (varsel)
+    if (!isLinearOverride && !isFallback) {
         banner.style.display = 'none';
         return;
     }
 
-    const samples = window._lastWTSampleCount;
-    const avgRise = window._lastWTAvgRise;
-    let infoText = '';
-    if (samples != null && samples > 50) {
-        infoText = `Klima-vannstigning fra ${samples} historiske dag-par for ${LOC.area || LOC.id}. `;
-        if (avgRise != null) {
-            infoText += `Snitt fremover: <strong>${(avgRise * 1000 / 1000).toFixed(2)}°C/dag</strong>. `;
-        }
-    } else {
-        infoText = `For lite historisk vannstigning-data (kun ${samples || 0} dag-par). Faller tilbake til lineær regresjon. `;
+    if (isFallback) {
+        if (title) title.innerHTML = '⚠ Vannmodell-varsel';
+        banner.style.background = '#fff3cd';
+        banner.style.borderLeftColor = '#f59e0b';
+        const samples = window._lastWTSampleCount || 0;
+        info.innerHTML = `Forward-modellen (klima-vannstigning) mangler tilstrekkelig historisk data for <strong>${LOC.area || LOC.id}</strong> (kun ${samples} dag-par). Faller tilbake til lineær regresjon for denne lokasjonen. Modellen er midlertidig mindre presis.`;
+    } else if (isLinearOverride) {
+        if (title) title.innerHTML = '🔧 Lineær modell aktiv (DEBUG)';
+        banner.style.background = '#e0e7ff';
+        banner.style.borderLeftColor = '#6366f1';
+        info.innerHTML = `Du har skrudd modellen tilbake til lineær regresjon via <code>?wtmodel=linear</code>. Sammenlign med <a href="${location.pathname}?loc=${LOC.id}" style="color:#4338ca;text-decoration:underline">forward-modell (default)</a>.`;
     }
-    if (wtDate) {
-        const fmt = wtDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-        infoText += `Predikert vanntemp ≥ ${getWtThreshold(LOC)}°C: <strong>${fmt}</strong>. `;
-    }
-    infoText += `Sammenlign med <a href="${location.pathname}?loc=${LOC.id}" style="color:#7c3aed;text-decoration:underline">lineær modell</a>.`;
-    info.innerHTML = infoText;
+
     banner.style.display = '';
 }
 
@@ -3574,8 +3599,10 @@ function renderWaterProxyBanner() {
     const banner = document.getElementById('waterProxyBanner');
     const info = document.getElementById('waterProxyBannerInfo');
     if (!banner || !info) return;
+    // Vis banner KUN når waterproxy er URL-flag-overstyring (ikke fra LOC-config)
+    const urlProxyLocId = new URLSearchParams(location.search).get('waterproxy');
     const config = window._lastWaterProxyInfo;
-    if (!config) {
+    if (!urlProxyLocId || !config) {
         banner.style.display = 'none';
         return;
     }
@@ -3583,7 +3610,7 @@ function renderWaterProxyBanner() {
     const proxyName = proxyLoc ? (proxyLoc.area || config.fromLocId) : config.fromLocId;
     info.innerHTML = `Bruker <strong>${proxyName}</strong> sin vannstasjon (${config.nveStation}) som basis. ` +
         `Justering: <code>wt + (${LOC.airStationName || LOC.frostStation} - ${proxyLoc.airStationName || config.frostStation}) × ${config.k}</code>. ` +
-        `Sammenlign med <a href="${location.pathname}?loc=${LOC.id}" style="color:#b45309;text-decoration:underline">basis-modell</a>.`;
+        `Sammenlign med <a href="${location.pathname}?loc=${LOC.id}" style="color:#4338ca;text-decoration:underline">basis-modell</a>.`;
     banner.style.display = '';
 }
 
@@ -4919,6 +4946,8 @@ let cachedData = null;  // { airData, snowData, flowData, wtData } — cached af
 
 function rebuildDashboard() {
     if (!cachedData) return;
+    // Nullstill diagnose-flagg før hver rebuild
+    window._lastWTFallbackToLinear = false;
     const { airData, snowData, flowData, wtData, forecastData, eveningData, eveningHistory } = cachedData;
 
     // Apply altitude lapse-rate correction (uses getCurrentAltitude internally).
