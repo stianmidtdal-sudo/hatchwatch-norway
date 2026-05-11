@@ -597,6 +597,11 @@ buildCards();
 // dette er bare en oppdagelses-pekepinn.
 (function setupSpinnerfallBadges() {
     const today = new Date();
+    const _badgeLang = localStorage.getItem('lang') || 'no';
+    const _badgeText = {
+        no: { high: '🌒 Spinnerfall-vær', good: '🌒 Bra kveld' },
+        en: { high: '🌒 Spinner fall weather', good: '🌒 Good evening' }
+    }[_badgeLang] || { high: '🌒 Spinnerfall-vær', good: '🌒 Bra kveld' };
     function isInVulgataSeason(region) {
         const m = today.getMonth() + 1;
         const d = today.getDate();
@@ -671,7 +676,7 @@ buildCards();
                 if (score == null || score < 0.5) return;
                 const tag = document.createElement('div');
                 tag.className = 'spinnerfall-tag' + (score >= 0.75 ? ' high' : '');
-                tag.innerHTML = score >= 0.75 ? '🌒 Spinnerfall-vær' : '🌒 Bra kveld';
+                tag.innerHTML = score >= 0.75 ? _badgeText.high : _badgeText.good;
                 card.appendChild(tag);
             })
             .catch(() => {});
