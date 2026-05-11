@@ -544,6 +544,11 @@
             <strong>🧪 Forward vannmodell aktiv (TEST)</strong> &mdash; <span id="thermalWTBannerInfo">Beregner...</span>
         </div>
 
+        <!-- ═══ WATERPROXY TEST-BANNER (vises kun når ?waterproxy=... er satt) ═══ -->
+        <div id="waterProxyBanner" style="display:none; margin: 14px 0; padding: 12px 16px; background: #fff3cd; border-left: 4px solid #f59e0b; border-radius: 6px; font-size: 0.9rem;">
+            <strong>🔁 Vann-proxy aktiv (TEST)</strong> &mdash; <span id="waterProxyBannerInfo">Beregner...</span>
+        </div>
+
         <section id="forecastEffectSection" style="display:none;margin-top:14px">
             <div id="forecastEffectBanner" style="padding:14px 16px;border-radius:8px;border:1px solid;font-size:0.92rem"></div>
         </section>
@@ -2103,6 +2108,44 @@ async function fetchFrost(element, start, end, stationOverride) {
     return out;
 }
 
+// URL-flag for vannproxy (innført 2026-05-11)
+// Bruker en annen lokasjons vannstasjon som basis, og justerer med luft-delta.
+// F.eks. ?loc=vestfjella&waterproxy=ostmarka → bruk Mønevann + (Rakkestad - Råken) × k
+function getWaterProxyConfig() {
+    const proxyLocId = new URLSearchParams(location.search).get('waterproxy');
+    if (!proxyLocId) return null;
+    const proxyLoc = LOCATIONS[proxyLocId];
+    if (!proxyLoc) return null;
+    const kParam = parseFloat(new URLSearchParams(location.search).get('waterproxy_k') || '0.5');
+    const k = isNaN(kParam) ? 0.5 : kParam;
+    return {
+        fromLocId: proxyLocId,
+        proxyLoc,
+        nveStation: proxyLoc.nveWaterTempStation || proxyLoc.nveStation,
+        frostStation: proxyLoc.frostStation,
+        k
+    };
+}
+
+// Juster wtData med airDelta × k for hver dag.
+// wt_proxy[d] = wt_basis[d] + (lokal_luft[d] - proxy_luft[d]) × k
+function adjustWTWithAirProxy(wtBasisData, localAirData, proxyAirData, k) {
+    const result = {};
+    for (const [d, wt] of Object.entries(wtBasisData)) {
+        if (wt == null) continue;
+        const localAir = localAirData[d];
+        const proxyAir = proxyAirData[d];
+        if (localAir == null || proxyAir == null) {
+            // Ingen luft-data for å justere — bruk basis
+            result[d] = wt;
+            continue;
+        }
+        const airDelta = localAir - proxyAir;
+        result[d] = wt + airDelta * k;
+    }
+    return result;
+}
+
 async function fetchNVE(parameter, start, end, stationId) {
     const station = stationId || LOC.nveStation;
     if (!station) return {};
@@ -3524,6 +3567,26 @@ function renderThermalWTBanner(wtDate) {
     banner.style.display = '';
 }
 
+// ── WATERPROXY TEST-BANNER (innført 2026-05-11) ──────────────────────────
+// Vises kun når URL-flag ?waterproxy=loc er satt. Viser hvilken vannstasjon
+// som brukes som basis og k-faktoren for luft-justeringen.
+function renderWaterProxyBanner() {
+    const banner = document.getElementById('waterProxyBanner');
+    const info = document.getElementById('waterProxyBannerInfo');
+    if (!banner || !info) return;
+    const config = window._lastWaterProxyInfo;
+    if (!config) {
+        banner.style.display = 'none';
+        return;
+    }
+    const proxyLoc = LOCATIONS[config.fromLocId];
+    const proxyName = proxyLoc ? (proxyLoc.area || config.fromLocId) : config.fromLocId;
+    info.innerHTML = `Bruker <strong>${proxyName}</strong> sin vannstasjon (${config.nveStation}) som basis. ` +
+        `Justering: <code>wt + (${LOC.airStationName || LOC.frostStation} - ${proxyLoc.airStationName || config.frostStation}) × ${config.k}</code>. ` +
+        `Sammenlign med <a href="${location.pathname}?loc=${LOC.id}" style="color:#b45309;text-decoration:underline">basis-modell</a>.`;
+    banner.style.display = '';
+}
+
 // ── ISOLERINGS-LEGEND-KLIKK (innført 2026-04-29) ───────────────────────────
 // Klikk på et år i legenden → vis kun det året (pluss inneværende år/terskel
 // som "alltid synlig"). Klikk samme år igjen → vis alle. Klikk et annet år →
@@ -4892,6 +4955,7 @@ function rebuildDashboard() {
     renderHistoricalGDDSection(histStats, altCorrection, snowData, airDataCorrected);
     renderForecastEffectBanner(adgDate, adgDateNoForecast);
     renderThermalWTBanner(wtDate);                       // Termisk WT-modell test-banner
+    renderWaterProxyBanner();                            // Waterproxy test-banner
     renderSpinnerfallSection(eveningData, adgDate, eveningHistory);  // Spinnerfall-vakt (skjult utenfor vulgata-sesongen)
     renderWaterTempChart(wtData);                       // Graf: rå verdier fra stasjon
     renderSnowChart(snowData);
@@ -4911,7 +4975,11 @@ async function main() {
 
     try {
         // Fetch in parallel
-        const wtStation = LOC.nveWaterTempStation || LOC.nveStation;
+        // Waterproxy: hvis aktiv, bytt vannstasjon til proxy lokasjonen sin.
+        const waterProxy = getWaterProxyConfig();
+        const wtStation = waterProxy
+            ? waterProxy.nveStation
+            : (LOC.nveWaterTempStation || LOC.nveStation);
         const useForecast = shouldUseLongTermForecast();
         const [airData, snowData, flowData, wtDataRaw, forecastData, eveningData, eveningHistory] = await Promise.all([
             fetchFrost('mean(air_temperature P1D)', dataStart, dataEnd),
@@ -4943,7 +5011,26 @@ async function main() {
                 : Promise.resolve(null),
         ]);
         // Fill short sensor gaps (≤7 days) with linear interpolation before rendering
-        const wtData = interpolateGaps(wtDataRaw, 7);
+        let wtData = interpolateGaps(wtDataRaw, 7);
+
+        // Waterproxy: hent proxy-luft og juster wtData med (lokal_luft - proxy_luft) × k
+        if (waterProxy) {
+            try {
+                const proxyAirData = await fetchFrost(
+                    'mean(air_temperature P1D)', dataStart, dataEnd, waterProxy.frostStation
+                );
+                wtData = adjustWTWithAirProxy(wtData, airData, proxyAirData, waterProxy.k);
+                // Lagre diagnose-info for banner
+                window._lastWaterProxyInfo = {
+                    fromLocId: waterProxy.fromLocId,
+                    nveStation: waterProxy.nveStation,
+                    frostStation: waterProxy.frostStation,
+                    k: waterProxy.k
+                };
+            } catch (e) {
+                console.warn('Waterproxy: kunne ikke hente proxy-luft', e);
+            }
+        }
 
         // Cache for potential rebuild on altitude-change
         cachedData = { airData, snowData, flowData, wtData, forecastData, eveningData, eveningHistory };
