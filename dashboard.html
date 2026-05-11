@@ -539,6 +539,11 @@
 
         <!-- ═══ FORECAST-EFFEKT-VARSLING (kun lokasjoner med useLongTermForecast,
                  trigget når 9-dagers MET-prognose flytter prognose ≥ 4 dager) ═══ -->
+        <!-- ═══ TERMISK WT-MODELL TEST-BANNER (vises kun når ?wtmodel=thermal) ═══ -->
+        <div id="thermalWTBanner" style="display:none; margin: 14px 0; padding: 12px 16px; background: #f3e8ff; border-left: 4px solid #8b5cf6; border-radius: 6px; font-size: 0.9rem;">
+            <strong>🧪 Termisk vannmodell aktiv (TEST)</strong> &mdash; <span id="thermalWTBannerInfo">Beregner...</span>
+        </div>
+
         <section id="forecastEffectSection" style="display:none;margin-top:14px">
             <div id="forecastEffectBanner" style="padding:14px 16px;border-radius:8px;border:1px solid;font-size:0.92rem"></div>
         </section>
@@ -2693,6 +2698,102 @@ function shouldUseClimaWTPrior() {
     return new URLSearchParams(location.search).get('wtprior') === '1';
 }
 
+// URL-flag for termisk balanse-modell på vanntemp-prediksjon (innført 2026-05-11)
+// Bruker fysikkbasert modell: dWT/dt = (T_air - WT) / τ
+// τ kalibreres automatisk fra historiske luft/vann-par for hver lokasjon.
+function shouldUseThermalWTModel() {
+    return new URLSearchParams(location.search).get('wtmodel') === 'thermal';
+}
+
+// Auto-kalibrering av termisk tidskonstant τ for en lokasjon.
+// For hvert par (dag-N, dag-N+1) av historiske data: beregn driver = T_air[N] - WT[N]
+// og deltaWT = WT[N+1] - WT[N]. Ved termisk balanse skal deltaWT ≈ driver/τ.
+// Lineær regresjon gjennom origo gir 1/τ.
+function computeThermalTau(airData, wtData) {
+    const samples = [];
+    const years = [];
+    for (let y = YEAR - 1; y >= YEAR - 6; y--) years.push(y);
+
+    for (const yr of years) {
+        const dates = Object.keys(wtData)
+            .filter(d => d.startsWith(String(yr)))
+            .sort();
+        for (let i = 0; i < dates.length - 1; i++) {
+            const d = dates[i];
+            const dNext = dates[i + 1];
+            const month = parseInt(d.substring(5, 7));
+            if (month < 4 || month > 7) continue;  // April-juli — våroppvarming
+            const wt = wtData[d];
+            const wtNext = wtData[dNext];
+            const air = airData[d];
+            if (wt == null || wtNext == null || air == null) continue;
+            const daysDiff = Math.round((parseDate(dNext) - parseDate(d)) / 86400000);
+            if (daysDiff !== 1) continue;
+            const deltaWT = wtNext - wt;
+            const driver = air - wt;
+            samples.push({ driver, deltaWT });
+        }
+    }
+    if (samples.length < 50) return null;
+    const num = samples.reduce((s, p) => s + p.driver * p.deltaWT, 0);
+    const denom = samples.reduce((s, p) => s + p.driver * p.driver, 0);
+    if (denom === 0) return null;
+    const invTau = num / denom;
+    if (invTau <= 0) return null;
+    const tau = 1 / invTau;
+    // Begrens til biologisk rimelig område (3-30 dager)
+    return Math.max(3, Math.min(30, tau));
+}
+
+// Termisk projeksjon: WT[t+1] = WT[t] + (T_air[t] - WT[t]) / τ
+// Bruker MET-prognose for dag 1-9 (med fade) og klimasnitt for dag 10+.
+function projectWTThermal(currentWT, asOfDate, airData, forecastData, wtTrigger, tau) {
+    let wt = currentWT;
+    const today = new Date(asOfDate);
+    today.setHours(0, 0, 0, 0);
+
+    // Bygg klimasnitt-luft per DOY (siste 5 år)
+    const climaByDoy = {};
+    for (let yr = YEAR - 1; yr >= YEAR - 5; yr--) {
+        for (const [d, v] of Object.entries(airData)) {
+            if (!d.startsWith(String(yr)) || v == null) continue;
+            const k = doy(parseDate(d));
+            if (!climaByDoy[k]) climaByDoy[k] = { sum: 0, n: 0 };
+            climaByDoy[k].sum += v;
+            climaByDoy[k].n++;
+        }
+    }
+    function climaAir(d) {
+        const k = doy(d);
+        const c = climaByDoy[k];
+        return c && c.n > 0 ? c.sum / c.n : null;
+    }
+
+    for (let d = 1; d <= 90; d++) {
+        const dayDate = new Date(today);
+        dayDate.setDate(dayDate.getDate() + d);
+        const dateStr = isoDate(dayDate);
+
+        let tAir;
+        const metVal = forecastData ? forecastData[dateStr] : null;
+        const cVal = climaAir(dayDate);
+        if (metVal != null && d <= 3) {
+            tAir = metVal;
+        } else if (metVal != null && d <= 9) {
+            const weight = Math.max(0.5, 1 - (d - 3) / 6 * 0.5);
+            tAir = weight * metVal + (1 - weight) * (cVal != null ? cVal : metVal);
+        } else if (cVal != null) {
+            tAir = cVal;
+        } else {
+            return null;  // Ingen data
+        }
+
+        wt = wt + (tAir - wt) / tau;
+        if (wt >= wtTrigger) return dayDate;
+    }
+    return null;
+}
+
 // MET-luft-basert vanntemp-boost (innført 2026-05-11 som flag, default 2026-05-11)
 // Justerer vann-slope basert på forventet luft kommende 10 dager.
 // Varmere forventet luft → raskere vannstigning, kaldere → saktere.
@@ -2820,6 +2921,30 @@ function extrapolateWTFromDate(waterTempData, asOfDate, opts) {
     const temps = recent.map(([,v]) => v);
     const currentWT = temps.at(-1);
     if (currentWT < wtFloor) return null;       // STABILITETSKRAV: vannet må være varmet til ≥wtFloor°C
+
+    // Termisk balanse-modell (URL-flag wtmodel=thermal, innført 2026-05-11)
+    // Bytter ut lineær regresjon med fysikkbasert: dWT/dt = (T_air - WT) / τ
+    // Kun aktiv for "nåværende" prediksjon (innenfor 2 dager fra i dag) — historiske
+    // år bruker fortsatt lineær regresjon i konvergensgrafen.
+    if (shouldUseThermalWTModel() && cachedData) {
+        const todayCheck = new Date(); todayCheck.setHours(0, 0, 0, 0);
+        const daysFromToday = Math.abs((todayCheck - asOfDate) / 86400000);
+        if (daysFromToday < 2) {
+            const tau = computeThermalTau(cachedData.airData, waterTempData);
+            if (tau != null) {
+                const wtTrigger = getWtThreshold(LOC);
+                const thermalDate = projectWTThermal(
+                    currentWT, asOfDate, cachedData.airData,
+                    cachedData.forecastData, wtTrigger, tau
+                );
+                if (thermalDate) {
+                    // Lagre tau for visning i info-banner
+                    window._lastThermalTau = tau;
+                    return thermalDate;
+                }
+            }
+        }
+    }
     const liveSlope = computeWTSlope(temps);
     if (liveSlope == null || liveSlope <= 0) return null;
 
@@ -3339,6 +3464,36 @@ function renderSpinnerfallSection(eveningData, vulgataDate, historyData) {
             }
         } catch (e) { /* localStorage ikke tilgjengelig — bare hopp over */ }
     }
+}
+
+// ── TERMISK WT-MODELL TEST-BANNER (innført 2026-05-11) ───────────────────
+// Vises kun når URL-flag ?wtmodel=thermal er satt. Forteller brukeren at
+// vanntemp-prediksjonen bruker fysikkbasert termisk balanse-modell istedenfor
+// lineær regresjon, og viser den auto-kalibrerte tau-verdien.
+function renderThermalWTBanner(wtDate) {
+    const banner = document.getElementById('thermalWTBanner');
+    const info = document.getElementById('thermalWTBannerInfo');
+    if (!banner || !info) return;
+
+    if (!shouldUseThermalWTModel()) {
+        banner.style.display = 'none';
+        return;
+    }
+
+    const tau = window._lastThermalTau;
+    let infoText = '';
+    if (tau != null) {
+        infoText = `Termisk tidskonstant τ = <strong>${tau.toFixed(1)} dager</strong> (auto-kalibrert fra historiske luft/vann-par for ${LOC.area || LOC.id}). `;
+    } else {
+        infoText = `Termisk modell kunne ikke kalibreres (for lite data). Faller tilbake til lineær regresjon. `;
+    }
+    if (wtDate) {
+        const fmt = wtDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+        infoText += `Predikert vanntemp ≥ ${getWtThreshold(LOC)}°C: <strong>${fmt}</strong>. `;
+    }
+    infoText += `Sammenlign med <a href="${location.pathname}?loc=${LOC.id}" style="color:#7c3aed;text-decoration:underline">lineær modell</a>.`;
+    info.innerHTML = infoText;
+    banner.style.display = '';
 }
 
 // ── ISOLERINGS-LEGEND-KLIKK (innført 2026-04-29) ───────────────────────────
@@ -4708,6 +4863,7 @@ function rebuildDashboard() {
     renderModel(airDataCorrected, currentADG, histADG, adgDate, wtDate, histStats);
     renderHistoricalGDDSection(histStats, altCorrection, snowData, airDataCorrected);
     renderForecastEffectBanner(adgDate, adgDateNoForecast);
+    renderThermalWTBanner(wtDate);                       // Termisk WT-modell test-banner
     renderSpinnerfallSection(eveningData, adgDate, eveningHistory);  // Spinnerfall-vakt (skjult utenfor vulgata-sesongen)
     renderWaterTempChart(wtData);                       // Graf: rå verdier fra stasjon
     renderSnowChart(snowData);
