@@ -2727,11 +2727,14 @@ function computeThermalTau(airData, wtData) {
             const wtNext = wtData[dNext];
             const air = airData[d];
             if (wt == null || wtNext == null || air == null) continue;
-            if (wt < 0.5) continue;  // Skipp dager rett etter isgang — usikre målinger
+            // Skipp tidlig vår (vannet henger pga is-rest, store driver med liten WT-endring)
+            if (wt < 5) continue;
+            // Skipp ekstreme driver-verdier (over 12°C diff) — typisk anomale dager
+            const driver = air - wt;
+            if (Math.abs(driver) > 12) continue;
             const daysDiff = Math.round((parseDate(dNext) - parseDate(d)) / 86400000);
             if (daysDiff !== 1) continue;
             const deltaWT = wtNext - wt;
-            const driver = air - wt;
             samples.push({ driver, deltaWT });
         }
     }
@@ -2743,8 +2746,8 @@ function computeThermalTau(airData, wtData) {
     const invTau = num / denom;
     if (invTau <= 0) return null;
     const tau = 1 / invTau;
-    // Begrens til biologisk rimelig område (3-30 dager)
-    return Math.max(3, Math.min(30, tau));
+    // Begrens til biologisk rimelig område for små innsjøer (3-15 dager)
+    return Math.max(3, Math.min(15, tau));
 }
 
 // Termisk projeksjon: WT[t+1] = WT[t] + (T_air[t] - WT[t]) / τ
