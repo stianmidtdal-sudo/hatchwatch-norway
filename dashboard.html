@@ -5560,11 +5560,18 @@ function rebuildDashboard() {
     renderConvergence(snowFree, wtDataForPrediction, adgDate, histStats, fromDate, airDataCorrected);
 
     // Sesongforklaring (?explain=1) — driver-narrativ rett under Sesong klekkekalender.
-    // Krever histStats.median + adgDate for Δdager vs. median.
+    // Krever histStats.median + dual-trigger-dato for Δdager vs. median.
+    // VIKTIG: histStats.median er dual-trigger-basert (latest of GDD og WT) når lokasjonen
+    // har nveStation. Vi MÅ derfor sammenligne med samme type dato i år — ikke kun adgDate.
+    // Bug 2026-05-13 (Stian): brukte adgDate alene → Østmarka viste -14 d i stedet for -10 d
+    // fordi adgDate er GDD-only (tidligere) mens hatchDate er max(adgDate, wtDate).
     if (shouldShowSeasonExplain()) {
         const isgangForExplain = resolveIsgang(airDataCorrected || {}, fromDate, snowFree, adgDate);
-        const deltaDays = (histStats && adgDate)
-            ? (doy(adgDate) - histStats.median)
+        const thisYearHatch = (adgDate && wtDate)
+            ? (adgDate > wtDate ? adgDate : wtDate)
+            : adgDate;
+        const deltaDays = (histStats && thisYearHatch)
+            ? (doy(thisYearHatch) - histStats.median)
             : null;
         renderSeasonExplain({
             currentADG, histADG,
