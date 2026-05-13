@@ -446,6 +446,14 @@
         }
         #forecastTestOverlay.open { display: flex !important; }
         #spinnerfallIntroOverlay.open { display: flex !important; }
+
+        /* ── VISUELT SKILLE: predikert (over) / historikk (under) ── */
+        #gddHistSection {
+            margin-top: 40px;
+            padding-top: 32px;
+            border-top: 1px solid rgba(27,67,50,0.12);
+        }
+
         .error-box { background: #fff3f0; border: 1px solid #f5a090; border-radius: 10px; padding: 20px; color: #a03020; font-size: 0.86rem; line-height: 1.6; }
         .error-box strong { display: block; margin-bottom: 8px; font-size: 1rem; }
         .error-box code { background: #fde; padding: 2px 6px; border-radius: 4px; font-size: 0.82rem; }
@@ -716,8 +724,10 @@
             </div>
         </section>
 
-        <!-- ═══ SEASON INDICATORS ═══ -->
-        <section>
+        <!-- ═══ SEASON INDICATORS ═══
+             Skjules i hatch-sesongen (mai-sept) — der er vintersignalene utdatert.
+             Vises okt-april for sesongplanlegging. Styres i loadDashboard. -->
+        <section id="seasonIndicatorsSection">
             <h2 data-i18n="seasonIndicators">Season Indicators</h2>
             <div class="table-wrap">
                 <table>
@@ -5580,6 +5590,20 @@ function rebuildDashboard() {
             snowData,
             deltaDays,
         });
+    }
+
+    // Sesongmarkører: skjul i hatch-sesongen (mai-september).
+    // Vintersignalene (snødybde des-apr, snøfri-dato) har gjort jobben sin når
+    // klekkingen nærmer seg eller pågår. Vis okt-april for sesongplanlegging.
+    // Måneds-basert regel valgt over snøfri-dato-basert fordi snøfri mangler for
+    // noen lokasjoner og fordi månedsbruddet matcher hvordan brukerne tenker.
+    {
+        const month = new Date().getMonth();  // 0 = jan, 4 = mai, 8 = sept
+        const inHatchSeason = month >= 4 && month <= 8;
+        const indSec = document.getElementById('seasonIndicatorsSection');
+        if (indSec && inHatchSeason) {
+            indSec.style.display = 'none';
+        }
     }
 }
 
