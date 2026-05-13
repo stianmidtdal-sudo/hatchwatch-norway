@@ -616,11 +616,11 @@
                 <div class="explain-tempo-marker" id="seasonExplainMarker" style="left: 50%;"></div>
             </div>
             <div class="explain-tempo-labels" id="seasonExplainTempoLabels">
-                <span>Ekstremt tidlig</span>
+                <span>Veldig tidlig</span>
                 <span>Tidlig</span>
                 <span>Normal</span>
                 <span>Sen</span>
-                <span>Ekstremt sen</span>
+                <span>Veldig sen</span>
             </div>
             <div class="explain-drivers" id="seasonExplainDrivers"></div>
             <div class="explain-text" id="seasonExplainText"></div>
@@ -933,11 +933,11 @@ const T = {
     seasonExplainLabel: '▶ Sesongforklaring',
     seasonExplainMeta: (area, dateStr) => `${area} · ${dateStr}`,
     seasonExplainEmpty: 'Ikke nok historikk for å sammenligne mot snitt på denne lokasjonen.',
-    tempoExtremeEarly: 'Ekstremt tidlig',
+    tempoExtremeEarly: 'Veldig tidlig',
     tempoEarly: 'Tidlig',
     tempoNormal: 'Normal',
     tempoLate: 'Sen',
-    tempoExtremeLate: 'Ekstremt sen',
+    tempoExtremeLate: 'Veldig sen',
     drvVarmesum: 'Varmesum',
     drvIsgang: 'Isgang',
     drvVanntemp: 'Vanntemp',
@@ -973,13 +973,13 @@ const T = {
     explainSentenceSnowHigh:   () => `snødybden ligger godt over det normale`,
     explainSentenceSnowGone:   () => `snøen er borte`,
     explainSentenceAllNormal: 'Varmesum, isgang, vanntemperatur og snødybde ligger alle nær 5-årssnittet.',
-    explainVerdictExtremeEarly: (days) => `<span class="verdict-early-strong">ekstremt tidlig klekkestart</span> — anslagsvis ${days} dager tidligere enn vanlig`,
+    explainVerdictExtremeEarly: (days) => `<span class="verdict-early-strong">veldig tidlig klekkestart</span> — anslagsvis ${days} dager tidligere enn vanlig`,
     explainVerdictEarlyStrong:  (days) => `<span class="verdict-early-strong">tydelig tidlig klekkestart</span> — anslagsvis ${days} dager tidligere enn vanlig`,
     explainVerdictEarlyMild:    (days) => `<span class="verdict-early-mild">noe tidlig klekkestart</span> — anslagsvis ${days} dager tidligere enn vanlig`,
     explainVerdictNormal:       ()     => `<span class="verdict-normal">normal klekkestart</span> — innenfor det vanlige rommet`,
     explainVerdictLateMild:     (days) => `<span class="verdict-late-mild">noe sen klekkestart</span> — anslagsvis ${days} dager senere enn vanlig`,
     explainVerdictLateStrong:   (days) => `<span class="verdict-late-strong">tydelig sen klekkestart</span> — anslagsvis ${days} dager senere enn vanlig`,
-    explainVerdictExtremeLate:  (days) => `<span class="verdict-late-strong">ekstremt sen klekkestart</span> — anslagsvis ${days} dager senere enn vanlig`,
+    explainVerdictExtremeLate:  (days) => `<span class="verdict-late-strong">veldig sen klekkestart</span> — anslagsvis ${days} dager senere enn vanlig`,
     explainBridgeEarly: 'Drivkraftene peker mot',
     explainBridgeLate:  'Drivkraftene peker mot',
     explainBridgeNormal: 'Drivkraftene balanserer omtrent ut til',
@@ -1143,11 +1143,11 @@ const T = {
     seasonExplainLabel: '▶ Season Explanation',
     seasonExplainMeta: (area, dateStr) => `${area} · ${dateStr}`,
     seasonExplainEmpty: 'Not enough historical data to compare against the average at this location.',
-    tempoExtremeEarly: 'Extremely early',
+    tempoExtremeEarly: 'Very early',
     tempoEarly: 'Early',
     tempoNormal: 'Normal',
     tempoLate: 'Late',
-    tempoExtremeLate: 'Extremely late',
+    tempoExtremeLate: 'Very late',
     drvVarmesum: 'GDD',
     drvIsgang: 'Ice-out',
     drvVanntemp: 'Water temp',
@@ -1183,13 +1183,13 @@ const T = {
     explainSentenceSnowHigh:   () => `snow depth is well above normal`,
     explainSentenceSnowGone:   () => `snow is gone`,
     explainSentenceAllNormal: 'GDD, ice-out, water temperature, and snow depth are all near the 5-year average.',
-    explainVerdictExtremeEarly: (days) => `<span class="verdict-early-strong">extremely early hatch start</span> — roughly ${days} days earlier than usual`,
+    explainVerdictExtremeEarly: (days) => `<span class="verdict-early-strong">very early hatch start</span> — roughly ${days} days earlier than usual`,
     explainVerdictEarlyStrong:  (days) => `<span class="verdict-early-strong">clearly early hatch start</span> — roughly ${days} days earlier than usual`,
     explainVerdictEarlyMild:    (days) => `<span class="verdict-early-mild">somewhat early hatch start</span> — roughly ${days} days earlier than usual`,
     explainVerdictNormal:       ()     => `<span class="verdict-normal">normal hatch start</span> — within the usual range`,
     explainVerdictLateMild:     (days) => `<span class="verdict-late-mild">somewhat late hatch start</span> — roughly ${days} days later than usual`,
     explainVerdictLateStrong:   (days) => `<span class="verdict-late-strong">clearly late hatch start</span> — roughly ${days} days later than usual`,
-    explainVerdictExtremeLate:  (days) => `<span class="verdict-late-strong">extremely late hatch start</span> — roughly ${days} days later than usual`,
+    explainVerdictExtremeLate:  (days) => `<span class="verdict-late-strong">very late hatch start</span> — roughly ${days} days later than usual`,
     explainBridgeEarly: 'The drivers point toward',
     explainBridgeLate:  'The drivers point toward',
     explainBridgeNormal: 'The drivers roughly balance out to',
