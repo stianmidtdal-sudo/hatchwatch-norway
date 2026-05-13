@@ -4496,7 +4496,9 @@ function resolveIsgang(airData, fromDate, snowFree, vulgataDate) {
 // flagget og vises som default.
 
 function shouldShowSeasonExplain() {
-    return new URLSearchParams(location.search).get('explain') === '1';
+    // Vises by default fra 2026-05-13. Skjules med ?explain=0 (kill-switch
+    // hvis vi finner en lokasjon der setningen leser rart, uten ny deploy).
+    return new URLSearchParams(location.search).get('explain') !== '0';
 }
 
 // Historisk gjennomsnitt for samme DOY ± dayWindow over yearsBack siste år
