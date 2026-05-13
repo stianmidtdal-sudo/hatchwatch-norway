@@ -959,6 +959,7 @@ const T = {
     drvSnowNear: 'Nær normalen',
     drvSnowLow: 'Mindre enn vanlig',
     drvSnowHigh: 'Mer enn vanlig',
+    drvIsgangPending: 'Ennå ikke gått',
     explainSentenceVarmesumStrong: (pct) => `varmesumen ligger ${pct} % over snittet`,
     explainSentenceVarmesumMild:   (pct) => `varmesumen er ${pct} % over snittet`,
     explainSentenceVarmesumUnderStrong: (pct) => `varmesumen ligger ${pct} % under snittet`,
@@ -1172,6 +1173,7 @@ const T = {
     drvSnowNear: 'Near normal',
     drvSnowLow: 'Less than usual',
     drvSnowHigh: 'More than usual',
+    drvIsgangPending: 'Not yet',
     explainSentenceVarmesumStrong: (pct) => `GDD is ${pct}% above average`,
     explainSentenceVarmesumMild:   (pct) => `GDD is ${pct}% above average`,
     explainSentenceVarmesumUnderStrong: (pct) => `GDD is ${pct}% below average`,
@@ -4581,12 +4583,22 @@ function computeIsgangDriver(isgangResult, isgangHistory) {
     const medianDoy = computeHistMedianIsgangDoy(isgangHistory, YEAR);
     if (medianDoy == null) return null;
     const thisDt = isgangResult.date;
+    const isPast = thisDt < new Date();
+    // Hvis isgangen ikke har skjedd ennå: vis "pending"-tilstand uten tall.
+    // Modellen kan predikere, men det er ikke en observasjon — derfor unngår vi
+    // å vise "+3 d" som om vi har målt noe. Bug 2026-05-13 (Kauto).
+    if (!isPast) {
+        return {
+            kind: 'isgang', icon: '❄️',
+            isPast: false,
+            anomaly: 'normal', direction: 'neutral',
+            statusKey: 'drvIsgangPending', cssClass: '',
+            valueLabel: '—',
+        };
+    }
     const thisDoy = doy(new Date(YEAR, thisDt.getMonth(), thisDt.getDate()));
     const delta = thisDoy - medianDoy;
     const abs = Math.abs(delta);
-    // isPast: er isgangen i fortid (skjedd) eller framtid (predikert)?
-    // Brukes til å velge mellom "isen gikk" og "isen forventes å gå" i setningen.
-    const isPast = thisDt < new Date();
     let anomaly = 'normal', direction = 'neutral', statusKey = 'drvNear', cssClass = '';
     if (abs >= 14) {
         anomaly = 'strong';
@@ -4602,7 +4614,7 @@ function computeIsgangDriver(isgangResult, isgangHistory) {
     const sign = delta >= 0 ? '+' : '−';
     return {
         kind: 'isgang', icon: '❄️',
-        deltaDays: delta, isPast,
+        deltaDays: delta, isPast: true,
         anomaly, direction, statusKey, cssClass,
         valueLabel: `${sign}${Math.round(Math.abs(delta))} d`,
     };
