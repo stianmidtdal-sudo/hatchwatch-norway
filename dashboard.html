@@ -595,7 +595,7 @@
         <!-- ═══ SEASON HATCH CALENDAR ═══ -->
         <div class="best-wrap">
             <div class="best-header">
-                <div class="best-label" id="bestLabel">▶ Season Hatch Calendar</div>
+                <div class="best-label" id="bestLabel">▶ Hatch Forecast</div>
                 <div class="best-note" id="bestNote">Loading…</div>
             </div>
             <div id="speciesCalendar" class="species-grid"></div>
@@ -781,7 +781,7 @@ const T = {
     observationBtn: 'Send observasjon',
     loading: 'Henter live data fra MET Norge og NVE…',
     loadingHistAvg: 'Laster historisk gjennomsnitt…',
-    seasonCalendar: '▶ Sesong klekkekalender',
+    seasonCalendar: '▶ Klekkeprognose',
     bestEstimateNow: '▶ Beste estimat nå',
     todayStatus: 'Dagens status',
     airTemp: 'Lufttemperatur',
@@ -963,10 +963,13 @@ const T = {
     explainSentenceVarmesumMild:   (pct) => `varmesumen er ${pct} % over snittet`,
     explainSentenceVarmesumUnderStrong: (pct) => `varmesumen ligger ${pct} % under snittet`,
     explainSentenceVarmesumUnderMild:   (pct) => `varmesumen er ${pct} % under snittet`,
-    explainSentenceIsgangEarlyStrong: (d) => `isen gikk ${d} dager tidligere enn vanlig`,
-    explainSentenceIsgangEarly:       (d) => `isen gikk ${d} dager tidligere enn vanlig`,
-    explainSentenceIsgangLate:        (d) => `isen gikk ${d} dager senere enn vanlig`,
-    explainSentenceIsgangLateStrong:  (d) => `isen gikk ${d} dager senere enn vanlig`,
+    // Isgang: skill mellom fortid (skjedd) og framtid (predikert) for å unngå
+    // bug 2026-05-13 (Kauto viste "isen gikk 3 dager etter snittet" mens isen
+    // fortsatt lå på vannet — predikert dato lå 3 d etter mediandato).
+    explainSentenceIsgangPastEarly:   (d) => `isen gikk ${d} dager tidligere enn vanlig`,
+    explainSentenceIsgangPastLate:    (d) => `isen gikk ${d} dager senere enn vanlig`,
+    explainSentenceIsgangFutureEarly: (d) => `isen forventes å gå ${d} dager tidligere enn vanlig`,
+    explainSentenceIsgangFutureLate:  (d) => `isen forventes å gå ${d} dager senere enn vanlig`,
     explainSentenceVanntempWarm:   (deg) => `vanntemperaturen er ${deg} °C over snittet`,
     explainSentenceVanntempCold:   (deg) => `vanntemperaturen er ${deg} °C under snittet`,
     explainSentenceSnowLow:    () => `snødybden ligger godt under det normale`,
@@ -991,7 +994,7 @@ const T = {
     observationBtn: 'Submit observation',
     loading: 'Fetching live data from MET Norway &amp; NVE…',
     loadingHistAvg: 'Loading historical average…',
-    seasonCalendar: '▶ Season Hatch Calendar',
+    seasonCalendar: '▶ Hatch Forecast',
     bestEstimateNow: '▶ Best Estimate Now',
     todayStatus: "Today's Status",
     airTemp: 'Air Temperature',
@@ -1173,10 +1176,13 @@ const T = {
     explainSentenceVarmesumMild:   (pct) => `GDD is ${pct}% above average`,
     explainSentenceVarmesumUnderStrong: (pct) => `GDD is ${pct}% below average`,
     explainSentenceVarmesumUnderMild:   (pct) => `GDD is ${pct}% below average`,
-    explainSentenceIsgangEarlyStrong: (d) => `the ice went out ${d} days earlier than usual`,
-    explainSentenceIsgangEarly:       (d) => `the ice went out ${d} days earlier than usual`,
-    explainSentenceIsgangLate:        (d) => `the ice went out ${d} days later than usual`,
-    explainSentenceIsgangLateStrong:  (d) => `the ice went out ${d} days later than usual`,
+    // Ice-out: distinguish past (broken up) from future (predicted) to avoid
+    // bug 2026-05-13 where Kauto showed "the ice went out 3 days after usual"
+    // while ice was still on the lake — predicted date was 3 d after median.
+    explainSentenceIsgangPastEarly:   (d) => `the ice went out ${d} days earlier than usual`,
+    explainSentenceIsgangPastLate:    (d) => `the ice went out ${d} days later than usual`,
+    explainSentenceIsgangFutureEarly: (d) => `the ice is expected to break up ${d} days earlier than usual`,
+    explainSentenceIsgangFutureLate:  (d) => `the ice is expected to break up ${d} days later than usual`,
     explainSentenceVanntempWarm:   (deg) => `water temperature is ${deg} °C above average`,
     explainSentenceVanntempCold:   (deg) => `water temperature is ${deg} °C below average`,
     explainSentenceSnowLow:    () => `snow depth is well below normal`,
@@ -4578,6 +4584,9 @@ function computeIsgangDriver(isgangResult, isgangHistory) {
     const thisDoy = doy(new Date(YEAR, thisDt.getMonth(), thisDt.getDate()));
     const delta = thisDoy - medianDoy;
     const abs = Math.abs(delta);
+    // isPast: er isgangen i fortid (skjedd) eller framtid (predikert)?
+    // Brukes til å velge mellom "isen gikk" og "isen forventes å gå" i setningen.
+    const isPast = thisDt < new Date();
     let anomaly = 'normal', direction = 'neutral', statusKey = 'drvNear', cssClass = '';
     if (abs >= 14) {
         anomaly = 'strong';
@@ -4593,7 +4602,7 @@ function computeIsgangDriver(isgangResult, isgangHistory) {
     const sign = delta >= 0 ? '+' : '−';
     return {
         kind: 'isgang', icon: '❄️',
-        deltaDays: delta,
+        deltaDays: delta, isPast,
         anomaly, direction, statusKey, cssClass,
         valueLabel: `${sign}${Math.round(Math.abs(delta))} d`,
     };
@@ -4718,13 +4727,13 @@ function driverFragmentText(d) {
     if (d.kind === 'isgang') {
         const days = Math.abs(d.deltaDays);
         if (d.deltaDays < 0) {
-            return d.anomaly === 'strong'
-                ? t('explainSentenceIsgangEarlyStrong')(days)
-                : t('explainSentenceIsgangEarly')(days);
+            return d.isPast
+                ? t('explainSentenceIsgangPastEarly')(days)
+                : t('explainSentenceIsgangFutureEarly')(days);
         }
-        return d.anomaly === 'strong'
-            ? t('explainSentenceIsgangLateStrong')(days)
-            : t('explainSentenceIsgangLate')(days);
+        return d.isPast
+            ? t('explainSentenceIsgangPastLate')(days)
+            : t('explainSentenceIsgangFutureLate')(days);
     }
     if (d.kind === 'vanntemp') {
         const deg = fmtNum(Math.abs(d.deltaDeg), 1);
