@@ -297,6 +297,129 @@
             margin-top: 6px;
         }
 
+        /* ── SESONGFORKLARING (?explain=1) ── */
+        .explain-wrap {
+            background: white;
+            border-radius: 12px;
+            padding: 18px 22px;
+            margin-top: -14px;  /* trekker den tett inntil best-wrap */
+            margin-bottom: 24px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            border-top: 4px solid #2D6A4F;
+        }
+        .explain-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .explain-label {
+            font-size: 0.72rem;
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: #1B4332;
+            font-weight: 700;
+        }
+        .explain-meta {
+            font-size: 0.72rem;
+            opacity: 0.55;
+            color: #1B4332;
+        }
+        .explain-tempo {
+            position: relative;
+            height: 8px;
+            background: linear-gradient(90deg, #2D6A4F 0%, #74C69D 25%, #d0d0c8 50%, #f4a261 75%, #c1431f 100%);
+            border-radius: 999px;
+            margin: 16px 8px 6px;
+            opacity: 0.85;
+        }
+        .explain-tempo-tick {
+            position: absolute;
+            top: -3px;
+            bottom: -3px;
+            width: 1px;
+            background: rgba(0,0,0,0.15);
+        }
+        .explain-tempo-marker {
+            position: absolute;
+            top: -5px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #1B4332;
+            border: 3px solid white;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+            transform: translateX(-50%);
+            transition: left 0.4s ease;
+        }
+        .explain-tempo-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.65rem;
+            color: rgba(27,67,50,0.55);
+            margin: 0 4px 16px;
+            font-weight: 600;
+        }
+        .explain-drivers {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        .drv-cell {
+            background: #f5f3ec;
+            border-radius: 8px;
+            padding: 10px 12px;
+        }
+        .drv-cell.drv-anom-mild  { background: #eaf3de; }
+        .drv-cell.drv-anom-strong{ background: #d8ecbf; }
+        .drv-cell.drv-anom-late-mild   { background: #fdecd9; }
+        .drv-cell.drv-anom-late-strong { background: #f9d6b5; }
+        .drv-head {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: rgba(27,67,50,0.7);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .drv-icon { font-size: 0.85rem; opacity: 0.85; }
+        .drv-value {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #1B4332;
+            line-height: 1.2;
+        }
+        .drv-cell.drv-anom-mild .drv-value,
+        .drv-cell.drv-anom-strong .drv-value { color: #2D6A4F; }
+        .drv-cell.drv-anom-late-mild .drv-value,
+        .drv-cell.drv-anom-late-strong .drv-value { color: #8a3b13; }
+        .drv-status {
+            font-size: 0.66rem;
+            opacity: 0.65;
+            margin-top: 2px;
+            color: #1B4332;
+        }
+        .explain-text {
+            font-size: 0.92rem;
+            line-height: 1.55;
+            color: #2a2a2a;
+            border-top: 1px solid rgba(27,67,50,0.1);
+            padding-top: 12px;
+        }
+        .explain-text strong { color: #1B4332; }
+        .explain-text .verdict-early-strong { color: #2D6A4F; font-weight: 700; }
+        .explain-text .verdict-early-mild   { color: #2D6A4F; font-weight: 600; }
+        .explain-text .verdict-normal       { color: #555;    font-weight: 600; }
+        .explain-text .verdict-late-mild    { color: #8a3b13; font-weight: 600; }
+        .explain-text .verdict-late-strong  { color: #8a3b13; font-weight: 700; }
+
         /* ── LOCATION INFO STRIP ── */
         .loc-strip {
             background: white;
@@ -334,6 +457,7 @@
             .conv-intro { font-size: 0.78rem; }
             .species-grid { grid-template-columns: repeat(2, 1fr); }
             .best-note { text-align: left; }
+            .explain-drivers { grid-template-columns: 1fr 1fr; }
         }
         @media (max-width: 520px) {
             header { flex-direction: column; gap: 8px; }
@@ -468,6 +592,30 @@
             </div>
             <div id="speciesCalendar" class="species-grid"></div>
             <span id="bestDate" style="display:none"></span>
+        </div>
+
+        <!-- ═══ SESONGFORKLARING (eksperimentell, ?explain=1) ═══
+             Plassert rett under Sesong klekkekalender. Forklarer hvorfor
+             prediksjonen er som den er via 4 drivere (varmesum/isgang/
+             vanntemp/snødybde) sammenliknet med 5-årssnitt. -->
+        <div id="seasonExplainSection" class="explain-wrap" style="display:none;">
+            <div class="explain-header">
+                <div class="explain-label" id="seasonExplainLabel">▶ Sesongforklaring</div>
+                <div class="explain-meta" id="seasonExplainMeta"></div>
+            </div>
+            <div class="explain-tempo">
+                <div class="explain-tempo-tick" style="left: 50%;"></div>
+                <div class="explain-tempo-marker" id="seasonExplainMarker" style="left: 50%;"></div>
+            </div>
+            <div class="explain-tempo-labels" id="seasonExplainTempoLabels">
+                <span>Ekstremt tidlig</span>
+                <span>Tidlig</span>
+                <span>Normal</span>
+                <span>Sen</span>
+                <span>Ekstremt sen</span>
+            </div>
+            <div class="explain-drivers" id="seasonExplainDrivers"></div>
+            <div class="explain-text" id="seasonExplainText"></div>
         </div>
 
         <!-- ═══ SPINNERFALL-VAKT (skumringstema, vises kun i/nær vulgata-sesongen) ═══ -->
@@ -770,6 +918,62 @@ const T = {
     lakePickerNote: 'Alle vannene i listen har dokumentert vulgata-klekking. Kilde: OFA (Oslomarka Fiskeadministrasjon). Modellen justerer prediksjonen basert på valgt høyde.',
     updatedLabel: 'Oppdatert:',
     loadingText: 'Laster…',
+    // Sesongforklaring (?explain=1) — driver-basert narrativ for hvorfor
+    // prediksjonen ligger der den ligger.
+    seasonExplainLabel: '▶ Sesongforklaring',
+    seasonExplainMeta: (area, dateStr) => `${area} · ${dateStr}`,
+    seasonExplainEmpty: 'Ikke nok historikk for å sammenligne mot snitt på denne lokasjonen.',
+    tempoExtremeEarly: 'Ekstremt tidlig',
+    tempoEarly: 'Tidlig',
+    tempoNormal: 'Normal',
+    tempoLate: 'Sen',
+    tempoExtremeLate: 'Ekstremt sen',
+    drvVarmesum: 'Varmesum',
+    drvIsgang: 'Isgang',
+    drvVanntemp: 'Vanntemp',
+    drvSnoedybde: 'Snødybde',
+    drvStrongOver: 'Kraftig over snitt',
+    drvOver: 'Over snitt',
+    drvNear: 'Nær normalen',
+    drvUnder: 'Under snitt',
+    drvStrongUnder: 'Kraftig under snitt',
+    drvEarlyStrong: 'Kraftig tidligere',
+    drvEarly: 'Tydelig tidligere',
+    drvLate: 'Tydelig senere',
+    drvLateStrong: 'Kraftig senere',
+    drvWarmerStrong: 'Tydelig varmere',
+    drvWarmer: 'Noe varmere',
+    drvColder: 'Noe kaldere',
+    drvColderStrong: 'Tydelig kaldere',
+    drvSnowGone: 'Borte',
+    drvSnowNear: 'Nær normalen',
+    drvSnowLow: 'Mindre enn vanlig',
+    drvSnowHigh: 'Mer enn vanlig',
+    explainSentenceVarmesumStrong: (pct) => `varmesumen ligger ${pct} % over snittet`,
+    explainSentenceVarmesumMild:   (pct) => `varmesumen er ${pct} % over snittet`,
+    explainSentenceVarmesumUnderStrong: (pct) => `varmesumen ligger ${pct} % under snittet`,
+    explainSentenceVarmesumUnderMild:   (pct) => `varmesumen er ${pct} % under snittet`,
+    explainSentenceIsgangEarlyStrong: (d) => `isgangen kom ${d} dager tidligere enn vanlig`,
+    explainSentenceIsgangEarly:       (d) => `isgangen kom ${d} dager tidligere enn vanlig`,
+    explainSentenceIsgangLate:        (d) => `isgangen kom ${d} dager senere enn vanlig`,
+    explainSentenceIsgangLateStrong:  (d) => `isgangen kom ${d} dager senere enn vanlig`,
+    explainSentenceVanntempWarm:   (deg) => `vanntemperaturen er ${deg} °C over snittet`,
+    explainSentenceVanntempCold:   (deg) => `vanntemperaturen er ${deg} °C under snittet`,
+    explainSentenceSnowLow:    () => `snødybden ligger godt under det normale`,
+    explainSentenceSnowHigh:   () => `snødybden ligger godt over det normale`,
+    explainSentenceSnowGone:   () => `snøen er borte`,
+    explainSentenceAllNormal: 'Varmesum, isgang, vanntemperatur og snødybde ligger alle nær 5-årssnittet.',
+    explainVerdictExtremeEarly: (days) => `<span class="verdict-early-strong">ekstremt tidlig klekkestart</span> — anslagsvis ${days} dager tidligere enn vanlig`,
+    explainVerdictEarlyStrong:  (days) => `<span class="verdict-early-strong">tydelig tidlig klekkestart</span> — anslagsvis ${days} dager tidligere enn vanlig`,
+    explainVerdictEarlyMild:    (days) => `<span class="verdict-early-mild">noe tidlig klekkestart</span> — anslagsvis ${days} dager tidligere enn vanlig`,
+    explainVerdictNormal:       ()     => `<span class="verdict-normal">normal klekkestart</span> — innenfor det vanlige rommet`,
+    explainVerdictLateMild:     (days) => `<span class="verdict-late-mild">noe sen klekkestart</span> — anslagsvis ${days} dager senere enn vanlig`,
+    explainVerdictLateStrong:   (days) => `<span class="verdict-late-strong">tydelig sen klekkestart</span> — anslagsvis ${days} dager senere enn vanlig`,
+    explainVerdictExtremeLate:  (days) => `<span class="verdict-late-strong">ekstremt sen klekkestart</span> — anslagsvis ${days} dager senere enn vanlig`,
+    explainBridgeEarly: 'Drivkraftene peker mot',
+    explainBridgeLate:  'Drivkraftene peker mot',
+    explainBridgeNormal: 'Drivkraftene balanserer omtrent ut til',
+    explainBridgeConflict: 'Drivkraftene trekker mot hverandre, og resultatet ender på',
   },
   en: {
     backLink: '← All locations',
@@ -924,6 +1128,62 @@ const T = {
     lakePickerNote: 'All lakes in the list have documented vulgata hatches. Source: OFA (Oslomarka Fish Authority). The model adjusts the prediction based on the selected altitude.',
     updatedLabel: 'Updated:',
     loadingText: 'Loading…',
+    // Season Explanation (?explain=1) — driver-based narrative for why
+    // the prediction lands where it does.
+    seasonExplainLabel: '▶ Season Explanation',
+    seasonExplainMeta: (area, dateStr) => `${area} · ${dateStr}`,
+    seasonExplainEmpty: 'Not enough historical data to compare against the average at this location.',
+    tempoExtremeEarly: 'Extremely early',
+    tempoEarly: 'Early',
+    tempoNormal: 'Normal',
+    tempoLate: 'Late',
+    tempoExtremeLate: 'Extremely late',
+    drvVarmesum: 'GDD',
+    drvIsgang: 'Ice-out',
+    drvVanntemp: 'Water temp',
+    drvSnoedybde: 'Snow depth',
+    drvStrongOver: 'Strongly above avg',
+    drvOver: 'Above avg',
+    drvNear: 'Near normal',
+    drvUnder: 'Below avg',
+    drvStrongUnder: 'Strongly below avg',
+    drvEarlyStrong: 'Strongly earlier',
+    drvEarly: 'Clearly earlier',
+    drvLate: 'Clearly later',
+    drvLateStrong: 'Strongly later',
+    drvWarmerStrong: 'Clearly warmer',
+    drvWarmer: 'Slightly warmer',
+    drvColder: 'Slightly colder',
+    drvColderStrong: 'Clearly colder',
+    drvSnowGone: 'Gone',
+    drvSnowNear: 'Near normal',
+    drvSnowLow: 'Less than usual',
+    drvSnowHigh: 'More than usual',
+    explainSentenceVarmesumStrong: (pct) => `GDD is ${pct}% above average`,
+    explainSentenceVarmesumMild:   (pct) => `GDD is ${pct}% above average`,
+    explainSentenceVarmesumUnderStrong: (pct) => `GDD is ${pct}% below average`,
+    explainSentenceVarmesumUnderMild:   (pct) => `GDD is ${pct}% below average`,
+    explainSentenceIsgangEarlyStrong: (d) => `ice-out arrived ${d} days earlier than usual`,
+    explainSentenceIsgangEarly:       (d) => `ice-out arrived ${d} days earlier than usual`,
+    explainSentenceIsgangLate:        (d) => `ice-out arrived ${d} days later than usual`,
+    explainSentenceIsgangLateStrong:  (d) => `ice-out arrived ${d} days later than usual`,
+    explainSentenceVanntempWarm:   (deg) => `water temperature is ${deg} °C above average`,
+    explainSentenceVanntempCold:   (deg) => `water temperature is ${deg} °C below average`,
+    explainSentenceSnowLow:    () => `snow depth is well below normal`,
+    explainSentenceSnowHigh:   () => `snow depth is well above normal`,
+    explainSentenceSnowGone:   () => `snow is gone`,
+    explainSentenceAllNormal: 'GDD, ice-out, water temperature, and snow depth are all near the 5-year average.',
+    explainVerdictExtremeEarly: (days) => `<span class="verdict-early-strong">extremely early hatch start</span> — roughly ${days} days earlier than usual`,
+    explainVerdictEarlyStrong:  (days) => `<span class="verdict-early-strong">clearly early hatch start</span> — roughly ${days} days earlier than usual`,
+    explainVerdictEarlyMild:    (days) => `<span class="verdict-early-mild">somewhat early hatch start</span> — roughly ${days} days earlier than usual`,
+    explainVerdictNormal:       ()     => `<span class="verdict-normal">normal hatch start</span> — within the usual range`,
+    explainVerdictLateMild:     (days) => `<span class="verdict-late-mild">somewhat late hatch start</span> — roughly ${days} days later than usual`,
+    explainVerdictLateStrong:   (days) => `<span class="verdict-late-strong">clearly late hatch start</span> — roughly ${days} days later than usual`,
+    explainVerdictExtremeLate:  (days) => `<span class="verdict-late-strong">extremely late hatch start</span> — roughly ${days} days later than usual`,
+    explainBridgeEarly: 'The drivers point toward',
+    explainBridgeLate:  'The drivers point toward',
+    explainBridgeNormal: 'The drivers roughly balance out to',
+    explainBridgeConflict: 'The drivers pull against each other, with the net result being',
   }
 };
 function t(key) { return (T[LANG] && T[LANG][key] != null) ? T[LANG][key] : (T['en'][key] || key); }
@@ -4214,6 +4474,370 @@ function resolveIsgang(airData, fromDate, snowFree, vulgataDate) {
     return { date: new Date(YEAR, 4, 26), source: 'hist. mean' };
 }
 
+// ═══════════════════════════════════════════════════════════════════
+//  SESONGFORKLARING (?explain=1) — innført 2026-05-13
+// ═══════════════════════════════════════════════════════════════════
+// Driver-basert narrativ som forklarer hvorfor prediksjonen ligger der
+// den gjør. 4 drivere (varmesum, isgang, vanntemp, snødybde) sammen-
+// liknes mot 5-årssnitt. Kategoriseres som normal/mild/strong avvik,
+// settes sammen til én forklarings-setning + tempo-stripe-markør.
+//
+// Aktiveres via ?explain=1 mens vi tester. Når Stian er fornøyd → fjernes
+// flagget og vises som default.
+
+function shouldShowSeasonExplain() {
+    return new URLSearchParams(location.search).get('explain') === '1';
+}
+
+// Historisk gjennomsnitt for samme DOY ± dayWindow over yearsBack siste år
+// (eksklusiv inneværende). Returnerer null hvis < 3 år med data.
+function computeHistAvgForDoy(data, targetDoy, dayWindow, yearsBack) {
+    const values = [];
+    for (let yr = YEAR - 1; yr >= YEAR - yearsBack; yr--) {
+        const yrVals = Object.entries(data || {})
+            .filter(([d, v]) => {
+                if (v == null) return false;
+                const dt = parseDate(d);
+                if (dt.getFullYear() !== yr) return false;
+                const dDoy = doy(dt);
+                return Math.abs(dDoy - targetDoy) <= dayWindow;
+            })
+            .map(([, v]) => v);
+        if (yrVals.length > 0) {
+            values.push(yrVals.reduce((a, b) => a + b, 0) / yrVals.length);
+        }
+    }
+    if (values.length < 3) return null;
+    return values.reduce((a, b) => a + b, 0) / values.length;
+}
+
+// Median DOY av isgang fra LOC.isgangHistory.
+function computeHistMedianIsgangDoy(hist, excludeYear) {
+    if (!hist) return null;
+    const doys = [];
+    for (const [yr, dateStr] of Object.entries(hist)) {
+        if (parseInt(yr, 10) === excludeYear) continue;
+        if (!dateStr) continue;
+        const dt = parseDate(dateStr);
+        const inYear = new Date(YEAR, dt.getMonth(), dt.getDate());
+        doys.push(doy(inYear));
+    }
+    if (doys.length < 3) return null;
+    doys.sort((a, b) => a - b);
+    const n = doys.length;
+    return n % 2 === 0
+        ? (doys[n/2 - 1] + doys[n/2]) / 2
+        : doys[Math.floor(n/2)];
+}
+
+// Driver-objekt: { kind, icon, value, anomaly, direction, statusKey,
+//                  cssClass, valueLabel, ...kind-spesifikke felt } | null
+
+function computeVarmesumDriver(currentADG, histADG) {
+    if (histADG == null || histADG <= 0) return null;
+    const pct = (currentADG - histADG) / histADG * 100;
+    const abs = Math.abs(pct);
+    let anomaly = 'normal', direction = 'neutral', statusKey = 'drvNear', cssClass = '';
+    if (abs >= 30) {
+        anomaly = 'strong';
+        direction = pct > 0 ? 'early' : 'late';
+        statusKey = pct > 0 ? 'drvStrongOver' : 'drvStrongUnder';
+        cssClass = pct > 0 ? 'drv-anom-strong' : 'drv-anom-late-strong';
+    } else if (abs >= 10) {
+        anomaly = 'mild';
+        direction = pct > 0 ? 'early' : 'late';
+        statusKey = pct > 0 ? 'drvOver' : 'drvUnder';
+        cssClass = pct > 0 ? 'drv-anom-mild' : 'drv-anom-late-mild';
+    }
+    const sign = pct >= 0 ? '+' : '−';
+    return {
+        kind: 'varmesum', icon: '🌡',
+        deltaPct: pct,
+        anomaly, direction, statusKey, cssClass,
+        valueLabel: `${sign}${Math.round(Math.abs(pct))} %`,
+    };
+}
+
+function computeIsgangDriver(isgangResult, isgangHistory) {
+    if (!isgangResult || !isgangResult.date) return null;
+    const medianDoy = computeHistMedianIsgangDoy(isgangHistory, YEAR);
+    if (medianDoy == null) return null;
+    const thisDt = isgangResult.date;
+    const thisDoy = doy(new Date(YEAR, thisDt.getMonth(), thisDt.getDate()));
+    const delta = thisDoy - medianDoy;
+    const abs = Math.abs(delta);
+    let anomaly = 'normal', direction = 'neutral', statusKey = 'drvNear', cssClass = '';
+    if (abs >= 14) {
+        anomaly = 'strong';
+        direction = delta < 0 ? 'early' : 'late';
+        statusKey = delta < 0 ? 'drvEarlyStrong' : 'drvLateStrong';
+        cssClass = delta < 0 ? 'drv-anom-strong' : 'drv-anom-late-strong';
+    } else if (abs >= 5) {
+        anomaly = 'mild';
+        direction = delta < 0 ? 'early' : 'late';
+        statusKey = delta < 0 ? 'drvEarly' : 'drvLate';
+        cssClass = delta < 0 ? 'drv-anom-mild' : 'drv-anom-late-mild';
+    }
+    const sign = delta >= 0 ? '+' : '−';
+    return {
+        kind: 'isgang', icon: '❄️',
+        deltaDays: delta,
+        anomaly, direction, statusKey, cssClass,
+        valueLabel: `${sign}${Math.round(Math.abs(delta))} d`,
+    };
+}
+
+function computeVanntempDriver(wtData) {
+    if (!wtData) return null;
+    const recent = Object.entries(wtData)
+        .filter(([d, v]) => v != null && d.startsWith(String(YEAR)))
+        .sort();
+    if (recent.length === 0) return null;
+    const currentWT = recent.at(-1)[1];
+    const targetDoy = doy(new Date());
+    const histAvg = computeHistAvgForDoy(wtData, targetDoy, 3, 5);
+    if (histAvg == null) return null;
+    const delta = currentWT - histAvg;
+    const abs = Math.abs(delta);
+    let anomaly = 'normal', direction = 'neutral', statusKey = 'drvNear', cssClass = '';
+    if (abs >= 1.5) {
+        anomaly = 'strong';
+        direction = delta > 0 ? 'early' : 'late';
+        statusKey = delta > 0 ? 'drvWarmerStrong' : 'drvColderStrong';
+        cssClass = delta > 0 ? 'drv-anom-strong' : 'drv-anom-late-strong';
+    } else if (abs >= 0.5) {
+        anomaly = 'mild';
+        direction = delta > 0 ? 'early' : 'late';
+        statusKey = delta > 0 ? 'drvWarmer' : 'drvColder';
+        cssClass = delta > 0 ? 'drv-anom-mild' : 'drv-anom-late-mild';
+    }
+    const sign = delta >= 0 ? '+' : '−';
+    return {
+        kind: 'vanntemp', icon: '💧',
+        deltaDeg: delta,
+        anomaly, direction, statusKey, cssClass,
+        valueLabel: `${sign}${fmtNum(Math.abs(delta), 1)} °C`,
+    };
+}
+
+function computeSnoeDriver(snowData) {
+    if (!snowData) return null;
+    const recent = Object.entries(snowData)
+        .filter(([d, v]) => v != null && d.startsWith(String(YEAR)))
+        .sort();
+    if (recent.length === 0) return null;
+    const currentSn = recent.at(-1)[1];
+    const targetDoy = doy(new Date());
+    const histAvg = computeHistAvgForDoy(snowData, targetDoy, 3, 5);
+    if (histAvg == null) return null;
+    // Begge små (< 3 cm) → "Borte", ingen anomali
+    if (currentSn <= 3 && histAvg <= 3) {
+        return {
+            kind: 'snoe', icon: '❄',
+            anomaly: 'normal', direction: 'neutral',
+            statusKey: 'drvSnowGone', cssClass: '',
+            valueLabel: '0 cm',
+        };
+    }
+    let anomaly = 'normal', direction = 'neutral', statusKey = 'drvSnowNear', cssClass = '';
+    if (histAvg > 5) {
+        const pct = (currentSn - histAvg) / histAvg * 100;
+        const abs = Math.abs(pct);
+        if (abs >= 75) {
+            anomaly = 'strong';
+            direction = pct < 0 ? 'early' : 'late';
+            statusKey = pct < 0 ? 'drvSnowLow' : 'drvSnowHigh';
+            cssClass = pct < 0 ? 'drv-anom-strong' : 'drv-anom-late-strong';
+        } else if (abs >= 25) {
+            anomaly = 'mild';
+            direction = pct < 0 ? 'early' : 'late';
+            statusKey = pct < 0 ? 'drvSnowLow' : 'drvSnowHigh';
+            cssClass = pct < 0 ? 'drv-anom-mild' : 'drv-anom-late-mild';
+        }
+    }
+    return {
+        kind: 'snoe', icon: '❄',
+        anomaly, direction, statusKey, cssClass,
+        valueLabel: `${Math.round(currentSn)} cm`,
+    };
+}
+
+function computeSeasonDrivers(args) {
+    const { currentADG, histADG, isgangResult, wtData, snowData } = args;
+    return [
+        computeVarmesumDriver(currentADG, histADG),
+        computeIsgangDriver(isgangResult, LOC.isgangHistory),
+        computeVanntempDriver(wtData),
+        computeSnoeDriver(snowData),
+    ];
+}
+
+// Tempo-markør: 0-100% basert på Δdager vs. median (clamped -25..+25).
+function computeTempoPosition(deltaDays) {
+    if (deltaDays == null) return 50;
+    const d = Math.max(-25, Math.min(25, deltaDays));
+    return ((d + 25) / 50) * 100;
+}
+
+// Verdict-kategori basert på Δdager
+function categorizeDelta(deltaDays) {
+    if (deltaDays == null) return { key: 'explainVerdictNormal', days: 0 };
+    if (deltaDays <= -15) return { key: 'explainVerdictExtremeEarly', days: Math.abs(deltaDays) };
+    if (deltaDays <= -10) return { key: 'explainVerdictEarlyStrong',  days: Math.abs(deltaDays) };
+    if (deltaDays <= -5)  return { key: 'explainVerdictEarlyMild',    days: Math.abs(deltaDays) };
+    if (deltaDays < 5)    return { key: 'explainVerdictNormal',       days: 0 };
+    if (deltaDays < 10)   return { key: 'explainVerdictLateMild',     days: deltaDays };
+    if (deltaDays < 15)   return { key: 'explainVerdictLateStrong',   days: deltaDays };
+    return { key: 'explainVerdictExtremeLate', days: deltaDays };
+}
+
+function driverFragmentText(d) {
+    if (d.kind === 'varmesum') {
+        const pct = Math.round(Math.abs(d.deltaPct));
+        if (d.deltaPct > 0) {
+            return d.anomaly === 'strong'
+                ? t('explainSentenceVarmesumStrong')(pct)
+                : t('explainSentenceVarmesumMild')(pct);
+        }
+        return d.anomaly === 'strong'
+            ? t('explainSentenceVarmesumUnderStrong')(pct)
+            : t('explainSentenceVarmesumUnderMild')(pct);
+    }
+    if (d.kind === 'isgang') {
+        const days = Math.abs(d.deltaDays);
+        if (d.deltaDays < 0) {
+            return d.anomaly === 'strong'
+                ? t('explainSentenceIsgangEarlyStrong')(days)
+                : t('explainSentenceIsgangEarly')(days);
+        }
+        return d.anomaly === 'strong'
+            ? t('explainSentenceIsgangLateStrong')(days)
+            : t('explainSentenceIsgangLate')(days);
+    }
+    if (d.kind === 'vanntemp') {
+        const deg = fmtNum(Math.abs(d.deltaDeg), 1);
+        return d.deltaDeg > 0
+            ? t('explainSentenceVanntempWarm')(deg)
+            : t('explainSentenceVanntempCold')(deg);
+    }
+    if (d.kind === 'snoe') {
+        if (d.statusKey === 'drvSnowGone') return t('explainSentenceSnowGone')();
+        return d.direction === 'early'
+            ? t('explainSentenceSnowLow')()
+            : t('explainSentenceSnowHigh')();
+    }
+    return '';
+}
+
+function capitalizeFirst(s) {
+    if (!s) return s;
+    return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function composeExplanation(drivers, deltaDays) {
+    const valid = drivers.filter(d => d != null);
+    const anom  = valid.filter(d => d.anomaly !== 'normal');
+
+    if (anom.length === 0) {
+        if (valid.length === 0) return t('seasonExplainEmpty');
+        const verdict = categorizeDelta(deltaDays);
+        const verdictText = t(verdict.key)(verdict.days);
+        return `${t('explainSentenceAllNormal')} ${t('explainBridgeNormal')} ${verdictText}.`;
+    }
+
+    // Sortér: strong først, ellers behold rekkefølge fra computeSeasonDrivers.
+    const sorted = [...anom].sort((a, b) => {
+        if (a.anomaly === b.anomaly) return 0;
+        return a.anomaly === 'strong' ? -1 : 1;
+    });
+
+    // Cap til 3 fragmenter — flere blir for tett.
+    const frags = sorted.slice(0, 3).map(driverFragmentText).filter(Boolean);
+
+    // Sett sammen første setning. Norsk og engelsk har samme struktur men ulik konjunksjon.
+    const andWord = LANG === 'no' ? 'og' : 'and';
+    let firstSentence;
+    if (frags.length === 1) {
+        firstSentence = capitalizeFirst(frags[0]) + '.';
+    } else if (frags.length === 2) {
+        firstSentence = capitalizeFirst(frags[0]) + ', ' + andWord + ' ' + frags[1] + '.';
+    } else {
+        firstSentence = capitalizeFirst(frags[0]) + ', ' + frags[1] + ', ' + andWord + ' ' + frags[2] + '.';
+    }
+
+    // Brosetning: konflikt / normal / tidlig / sen.
+    let earlyVotes = 0, lateVotes = 0;
+    for (const d of sorted) {
+        if (d.direction === 'early') earlyVotes++;
+        else if (d.direction === 'late') lateVotes++;
+    }
+    const conflict = earlyVotes > 0 && lateVotes > 0;
+    let bridgeKey;
+    if (conflict) bridgeKey = 'explainBridgeConflict';
+    else if (deltaDays != null && deltaDays >= -2 && deltaDays <= 2) bridgeKey = 'explainBridgeNormal';
+    else if (earlyVotes >= lateVotes) bridgeKey = 'explainBridgeEarly';
+    else bridgeKey = 'explainBridgeLate';
+
+    const verdict = categorizeDelta(deltaDays);
+    const verdictText = t(verdict.key)(verdict.days);
+
+    return `${firstSentence} ${t(bridgeKey)} ${verdictText}.`;
+}
+
+function renderSeasonExplain(args) {
+    if (!shouldShowSeasonExplain()) return;
+    const sec = document.getElementById('seasonExplainSection');
+    if (!sec) return;
+
+    const drivers = computeSeasonDrivers(args);
+    const valid = drivers.filter(d => d != null);
+    if (valid.length === 0) {
+        sec.style.display = 'none';
+        return;
+    }
+    sec.style.display = '';
+
+    // Header
+    document.getElementById('seasonExplainLabel').textContent = t('seasonExplainLabel');
+    const todayLabel = new Date().toLocaleDateString(LANG === 'no' ? 'nb-NO' : 'en-GB',
+        { day: 'numeric', month: 'short' });
+    document.getElementById('seasonExplainMeta').textContent =
+        t('seasonExplainMeta')(LOC.area || LOC.place, todayLabel);
+
+    // Tempo-labels
+    const tlElems = document.querySelectorAll('#seasonExplainTempoLabels span');
+    if (tlElems.length === 5) {
+        tlElems[0].textContent = t('tempoExtremeEarly');
+        tlElems[1].textContent = t('tempoEarly');
+        tlElems[2].textContent = t('tempoNormal');
+        tlElems[3].textContent = t('tempoLate');
+        tlElems[4].textContent = t('tempoExtremeLate');
+    }
+
+    // Tempo-markør
+    const pos = computeTempoPosition(args.deltaDays);
+    document.getElementById('seasonExplainMarker').style.left = pos + '%';
+
+    // Driver-celler
+    const drvHtml = drivers.map(d => {
+        if (!d) return '';
+        const labelKey = d.kind === 'varmesum' ? 'drvVarmesum'
+                       : d.kind === 'isgang'   ? 'drvIsgang'
+                       : d.kind === 'vanntemp' ? 'drvVanntemp'
+                       : 'drvSnoedybde';
+        return `<div class="drv-cell ${d.cssClass}">
+            <div class="drv-head"><span class="drv-icon">${d.icon}</span><span>${t(labelKey)}</span></div>
+            <div class="drv-value">${d.valueLabel}</div>
+            <div class="drv-status">${t(d.statusKey)}</div>
+        </div>`;
+    }).join('');
+    document.getElementById('seasonExplainDrivers').innerHTML = drvHtml;
+
+    // Forklarings-tekst (innerHTML pga verdict-span)
+    const text = composeExplanation(drivers, args.deltaDays);
+    document.getElementById('seasonExplainText').innerHTML = text;
+}
+
 function renderSpeciesCalendar(isgangResult, vulgataDate) {
     const grid = document.getElementById('speciesCalendar');
     const label = document.querySelector('.best-label');
@@ -4934,6 +5558,22 @@ function rebuildDashboard() {
     const { snowFree } = renderIndicators(snowData, airDataCorrected, currentADG);
     renderSouthSignal();  // kun for Finnmark — sjekker LOC.region internt
     renderConvergence(snowFree, wtDataForPrediction, adgDate, histStats, fromDate, airDataCorrected);
+
+    // Sesongforklaring (?explain=1) — driver-narrativ rett under Sesong klekkekalender.
+    // Krever histStats.median + adgDate for Δdager vs. median.
+    if (shouldShowSeasonExplain()) {
+        const isgangForExplain = resolveIsgang(airDataCorrected || {}, fromDate, snowFree, adgDate);
+        const deltaDays = (histStats && adgDate)
+            ? (doy(adgDate) - histStats.median)
+            : null;
+        renderSeasonExplain({
+            currentADG, histADG,
+            isgangResult: isgangForExplain,
+            wtData,            // rå vanntemp, samme som KPI viser
+            snowData,
+            deltaDays,
+        });
+    }
 }
 
 async function main() {
