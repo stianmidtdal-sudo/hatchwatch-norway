@@ -285,6 +285,10 @@
             line-height: 1.2;
         }
         .sp-anchor .sp-peak { font-size: 1.5rem; }
+        /* Range-format ("17. apr → 24. apr") trenger litt mindre font for å
+           passe ved siden av hverandre på smale skjermer. */
+        .sp-peak.sp-range { font-size: 1.05rem; line-height: 1.25; }
+        .sp-anchor .sp-peak.sp-range { font-size: 1.25rem; }
         .sp-window {
             font-size: 0.72rem;
             opacity: 0.62;
@@ -947,10 +951,10 @@ const T = {
     drvNear: 'Nær normalen',
     drvUnder: 'Under snitt',
     drvStrongUnder: 'Kraftig under snitt',
-    drvEarlyStrong: 'Kraftig tidligere',
+    drvEarlyStrong: 'Mye tidligere',
     drvEarly: 'Tydelig tidligere',
     drvLate: 'Tydelig senere',
-    drvLateStrong: 'Kraftig senere',
+    drvLateStrong: 'Mye senere',
     drvWarmerStrong: 'Tydelig varmere',
     drvWarmer: 'Noe varmere',
     drvColder: 'Noe kaldere',
@@ -1161,10 +1165,10 @@ const T = {
     drvNear: 'Near normal',
     drvUnder: 'Below avg',
     drvStrongUnder: 'Strongly below avg',
-    drvEarlyStrong: 'Strongly earlier',
+    drvEarlyStrong: 'Much earlier',
     drvEarly: 'Clearly earlier',
     drvLate: 'Clearly later',
-    drvLateStrong: 'Strongly later',
+    drvLateStrong: 'Much later',
     drvWarmerStrong: 'Clearly warmer',
     drvWarmer: 'Slightly warmer',
     drvColder: 'Slightly colder',
@@ -4944,22 +4948,21 @@ function renderSpeciesCalendar(isgangResult, vulgataDate) {
     ];
 
     grid.innerHTML = species.map(s => {
-        let primaryHtml, windowHtml;
+        // Endret 2026-05-13 (Stian): tidligere viste vi midt-dato stort + vindu lite.
+        // Forvirrende fordi midt-dato implisitt sammenlignes med start (KPI) og median
+        // (historikk) som er ulike konsepter. Nå: vindu er hovedvisning, ingen midt-dato.
+        let primaryHtml;
         if (!s.onset) {
             primaryHtml = '<div class="sp-peak">–</div>';
-            windowHtml = '';
         } else if (!s.peak) {
             // Mygg: vis kun onset-dato, ingen vindu
             primaryHtml = `<div class="sp-peak">${fmt(s.onset)}</div>`;
-            windowHtml = '';
         } else {
-            primaryHtml = `<div class="sp-peak">${fmt(s.peak)}</div>`;
-            windowHtml = `<div class="sp-window">${fmt(s.onset)} → ${fmt(s.end)}</div>`;
+            primaryHtml = `<div class="sp-peak sp-range">${fmt(s.onset)} → ${fmt(s.end)}</div>`;
         }
         return `<div class="sp-card${s.isAnchor ? ' sp-anchor' : ''}">
             <div class="sp-name">${s.name}</div>
             ${primaryHtml}
-            ${windowHtml}
         </div>`;
     }).join('');
 }
