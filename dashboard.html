@@ -1563,7 +1563,17 @@ const LOCATIONS = {
         airStationName:   'Bjørnholt, Nordmarka',
         waterStationName: 'Sinnerdammen, Nordmarka',
         calibrated: true,
-        gddThreshold: 620,            // Samme som statisk oslo (empirisk kalibrert mot OFA mean 16. juni)
+        gddThreshold: 620,            // Base: Øyungen 283m (laveste vann) treffer her i typisk år
+        // Altitude-kurve (innført 2026-05-13 etter Stians OFA-tabell-analyse):
+        // OFA klekking-fra-data viser at klekkeforsinkelsen er KVADRATISK med altitude,
+        // ikke lineær. Heggerlivann S (488m) ligger 21 d etter Øyungen (283m), men
+        // Måsjøen/Auretjern (~395m) ligger bare ~5 d etter. Lapse rate alene fanger
+        // dette ikke — det er en kombinasjon av snø/is-persistens, mikroklima, og
+        // termisk treghet som progressivt forsinker høyere vann.
+        // Effektiv terskel = gddThreshold + gddCurveCoef × (altitude − gddCurveAnchor)²
+        // Klamp til 0 hvis altitude < anchor (vil ikke senke terskelen under base).
+        gddCurveCoef: 0.0045,         // GDD/m². Kalibrert mot OFA klekking-fra-medianer.
+        gddCurveAnchor: 283,          // Anker: Øyungen, laveste vann i dropdown.
         uncertaintyDays: 5,           // Strammet 10→5 (2026-04-27): reflekterer faktisk modellpresisjon
                                       // for dropdown-vannene. Verifisert mot OFAs 24 vann: de fleste
                                       // innenfor ±3 d, verste tilfelle (Fjellsjøen) ~6-8 d. Heggelivatn
@@ -2133,6 +2143,27 @@ function getCurrentAltitude(loc) {
 function getWtThreshold(loc) {
     return (loc && loc.wtThreshold != null) ? loc.wtThreshold : 12;
 }
+
+// Altitude-kurvert GDD-terskel (innført 2026-05-13).
+// For LOCs med gddCurveCoef satt (kun nordmarka_dyn per nå), tilt terskelen
+// kvadratisk med altitude over anker-vannet. Andre LOCs får uendret terskel.
+// Brukes alle steder vi tidligere leste LOC.gddThreshold direkte.
+// Kill-switch: ?altcurve=0 i URL skrur kurven av (returnerer base-verdi).
+function shouldUseAltitudeCurve() {
+    return new URLSearchParams(location.search).get('altcurve') !== '0';
+}
+function getEffectiveGddThreshold(loc) {
+    const base = (loc && loc.gddThreshold) || 0;
+    if (!loc || !loc.gddCurveCoef || !shouldUseAltitudeCurve()) return base;
+    // VIKTIG: bruk getCurrentAltitude(), ikke loc.altitude direkte.
+    // Når brukeren velger et vann fra dropdown lagres altitude i userSelectedAltitude,
+    // ikke loc.altitude. Wrapper må reflektere det aktive valget for å gi riktig terskel.
+    const alt = getCurrentAltitude(loc);
+    const anchor = loc.gddCurveAnchor;
+    if (alt == null || anchor == null) return base;
+    const dA = Math.max(0, alt - anchor);
+    return Math.round(base + loc.gddCurveCoef * dA * dA);
+}
 // ─────────────────────────────────────────────────────────────────────────────
 
 const URL_LOC = new URLSearchParams(location.search).get('loc') || 'kautokeino';
@@ -2271,11 +2302,14 @@ const snowNoteName = LOC.snowStationName
 const snowNoteEl = document.getElementById('snowNote');
 if (snowNoteEl) snowNoteEl.textContent = `${t('stationLabel')}: ${snowNoteName} (${_snowStnId})`;
 
-// Model heading
-document.getElementById('modelHeading').textContent =
-    LOC.calibrated
-        ? `${t('dualTriggerLabel')} ${LOC.gddThreshold} (bt = 0°C, ${t('fromJan1')}) + ${t('waterTemp')} ≥ ${getWtThreshold(LOC)}°C · ${t('stdShort')} = ±${fmtNum(LOC.uncertaintyDays)} ${t('daysLabel')}`
-        : `${t('gddPriorLabel')} ${LOC.gddThreshold} GDD (bt = 0°C) · ${t('priorUncLabel')} ±${fmtNum(LOC.uncertaintyDays)} ${t('daysLabel')}`;
+// Model heading (initial — overwrites av renderModel etter datafetch)
+{
+    const _initThr = getEffectiveGddThreshold(LOC);
+    document.getElementById('modelHeading').textContent =
+        LOC.calibrated
+            ? `${t('dualTriggerLabel')} ${_initThr} (bt = 0°C, ${t('fromJan1')}) + ${t('waterTemp')} ≥ ${getWtThreshold(LOC)}°C · ${t('stdShort')} = ±${fmtNum(LOC.uncertaintyDays)} ${t('daysLabel')}`
+            : `${t('gddPriorLabel')} ${_initThr} GDD (bt = 0°C) · ${t('priorUncLabel')} ±${fmtNum(LOC.uncertaintyDays)} ${t('daysLabel')}`;
+}
 
 const _snowHdrStnId = LOC.snowStation || LOC.frostStation;
 const snowHdrName = LOC.snowStationName
@@ -2896,7 +2930,7 @@ function projectADGDate(airData, currentADG, forecastData) {
     const todayDoy = doy(new Date());
     for (let d = todayDoy + 1; d <= 300; d++) {
         adg += Math.max(0, avgTemp[d] || 0);
-        if (adg >= LOC.gddThreshold) return dateFromDoy(YEAR, d);
+        if (adg >= getEffectiveGddThreshold(LOC)) return dateFromDoy(YEAR, d);
     }
     return null;
 }
@@ -3309,13 +3343,14 @@ function renderKPIs(airData, snowData, flowData, wtData) {
 }
 
 function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
-    const remaining = Math.max(0, LOC.gddThreshold - currentADG);
-    const pct = Math.min(100, currentADG / LOC.gddThreshold * 100);
+    const effThr = getEffectiveGddThreshold(LOC);
+    const remaining = Math.max(0, effThr - currentADG);
+    const pct = Math.min(100, currentADG / effThr * 100);
 
     document.getElementById('adgNow').textContent  = fmtNum(currentADG);
     document.getElementById('adgLeft').textContent = fmtNum(remaining);
     document.getElementById('adgBar').style.width  = pct + '%';
-    document.getElementById('adgPct').textContent  = `${fmtNum(pct)}${t('pctOfTarget')} ${LOC.gddThreshold} GDD`;
+    document.getElementById('adgPct').textContent  = `${fmtNum(pct)}${t('pctOfTarget')} ${effThr} GDD`;
 
     const diff = currentADG - histADG;
     const sign = diff >= 0 ? '+' : '';
@@ -3333,7 +3368,7 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
     // getDynamicUncertainty multipliserer baseline med (1 + √(remaining_fraction)).
     // Ved sesongstart: ±2× baseline. Ved klekking: ±1× baseline.
     const uncDaysBaseline = LOC.uncertaintyDays;
-    const uncDays = getDynamicUncertainty(uncDaysBaseline, currentADG, LOC.gddThreshold);
+    const uncDays = getDynamicUncertainty(uncDaysBaseline, currentADG, effThr);
     const uncSource = LOC.calibrated
         ? (LANG === 'no'
             ? `standardavvik, ${LOC.calibNoteNo || 'validert mot observerte klekkedatoer'}`
@@ -3357,8 +3392,8 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
     // Kalibrerte: baseline ±2,1 d fra Excel-validering (n=8 år) — modulert dynamisk.
     // Ukalibrerte: baseline 14 d (prior) — modulert dynamisk.
     document.getElementById('modelHeading').textContent = LOC.calibrated
-        ? `${t('dualTriggerLabel')} ${LOC.gddThreshold} (bt = 0°C, ${t('fromJan1')}) + ${t('waterTemp')} ≥ ${getWtThreshold(LOC)}°C · ${t('stdShort')} = ±${fmtNum(uncDays)} ${t('daysLabel')}`
-        : `${t('gddPriorLabel')} ${LOC.gddThreshold} GDD (bt = 0°C) · ${t('indicativeLabel').toLowerCase()}`;
+        ? `${t('dualTriggerLabel')} ${effThr} (bt = 0°C, ${t('fromJan1')}) + ${t('waterTemp')} ≥ ${getWtThreshold(LOC)}°C · ${t('stdShort')} = ±${fmtNum(uncDays)} ${t('daysLabel')}`
+        : `${t('gddPriorLabel')} ${effThr} GDD (bt = 0°C) · ${t('indicativeLabel').toLowerCase()}`;
 
     // Dual-trigger: latest of GDD ≥ LOC.gddThreshold og vanntemp ≥ getWtThreshold(LOC).
     // Gjelder ALLE lokasjoner med vanntemp-data, ikke bare kalibrerte.
@@ -3369,7 +3404,7 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
     let hatchNote = '';
     if (adgDate && wtDate) {
         hatchDate = adgDate > wtDate ? adgDate : wtDate;
-        hatchNote = t('latestOf')(LOC.gddThreshold, getWtThreshold(LOC));
+        hatchNote = t('latestOf')(effThr, getWtThreshold(LOC));
     } else if (adgDate) {
         hatchNote = t('gddTriggerOnly');
     }
@@ -5159,7 +5194,7 @@ function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate, airDa
         const _v = airData?.[_key];
         if (_v != null) _currObservedGDD += Math.max(0, _v);
     }
-    const uncDays = getDynamicUncertainty(uncDaysBaseline, _currObservedGDD, LOC.gddThreshold);
+    const uncDays = getDynamicUncertainty(uncDaysBaseline, _currObservedGDD, getEffectiveGddThreshold(LOC));
     const uncSource = LOC.calibrated
         ? (LANG === 'no'
             ? `standardavvik, ${LOC.calibShortNo || 'kalibrert'}`
@@ -5230,7 +5265,7 @@ function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate, airDa
         ? buildDoyAvgTempWithForecast(airData, _forecastForConv)
         : buildDoyAvgTemp(airData);
     const todayDoy = doy(new Date());
-    const threshold = LOC.gddThreshold;
+    const threshold = getEffectiveGddThreshold(LOC);
 
     // Tidligste dag med noe observert GDD (ikke start fra 1. jan hvor alt er 0)
     let firstDoy = null;
@@ -5560,7 +5595,7 @@ function rebuildDashboard() {
 
     // Historical statistics: run dual-trigger model (GDD + vanntemp ≥ wtThreshold)
     // på 2019–2025 → data-driven uncertainty. Konsistent med "Estimert klekkedato"-kortet.
-    const histStats  = computeHistoricalStats(airDataCorrected, LOC.gddThreshold, wtDataForPrediction);
+    const histStats  = computeHistoricalStats(airDataCorrected, getEffectiveGddThreshold(LOC), wtDataForPrediction);
 
     // Render
     renderKPIs(airData, snowData, flowData, wtData);   // Vann: rå (uten høydekorreksjon)
@@ -5989,7 +6024,7 @@ function runCalibration(airData, wtData) {
         return `<tr><td style="padding:4px 10px">${y}</td><td style="padding:4px 10px">${wt || '<span style="color:#999">ikke nådd / ingen data</span>'}</td></tr>`;
     }).join('');
 
-    const currentThreshold = LOC.gddThreshold;
+    const currentThreshold = getEffectiveGddThreshold(LOC);
     const currentEvalGdd = evaluate(currentThreshold, null);
     const currentEvalDual = evaluate(currentThreshold, wtThresholdCurrent);
 
@@ -6145,7 +6180,7 @@ function runWTFloorCalibration(airData, wtData) {
     }
 
     const wtThresholdCurrent = getWtThreshold(LOC);
-    const gddThresholdCurrent = LOC.gddThreshold;
+    const gddThresholdCurrent = getEffectiveGddThreshold(LOC);
     const wtFloors = [3, 4, 5, 6, 7];
     const weeksBefore = [6, 5, 4, 3, 2, 1];
     const obsEntries = Object.entries(calibData.obs).map(([y, d]) => [parseInt(y), parseDate(d)]);
