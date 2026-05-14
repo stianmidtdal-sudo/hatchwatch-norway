@@ -1455,7 +1455,7 @@ const LOCATIONS = {
     // Klone av oslo med altitudeAdjustable:true. Bruker velger sitt vann fra
     // OFA-listen via dropdown — modellen justerer alle prediksjoner basert
     // på valgt høyde (lapse rate 0.6°C/100m for luft, 0.35°C/100m for vann).
-    // Default = 370m (Nordmarka snitt) hvis bruker ikke gjør valg.
+    // Default = 381m (matematisk snitt av 16 OFA-vann) hvis bruker ikke gjør valg.
     // Hidden i index.html initialt — bruker statisk 'oslo' som offentlig versjon.
     // Etter testing kan vi bytte: oslo.hidden=true, nordmarka_dyn.hidden=false.
     // ────────────────────────────────────────────────────────────────────────
@@ -1465,119 +1465,97 @@ const LOCATIONS = {
         name: 'Bjørnholt',
         place: 'Nordmarka',
         region: 'Østlandet',
-        lat: 59.94, lon: 10.72, altitude: 370, stationAltitude: 380, waterStationAltitude: 370,  // Bjørnholt 380m luft, Sinnerdammen 370m vann
+        lat: 59.94, lon: 10.72, altitude: 381, stationAltitude: 380, waterStationAltitude: 370,  // 381m = matematisk snitt av 16 OFA-vann (oppdatert 2026-05-13)
         altitudeAdjustable: true,    // ⚡ Aktiverer dropdown for vann-valg
         // Per-vann isgang-historikk innført 2026-05-04 (Sentinel Hub-data fra Stian).
         // Når bruker velger et vann fra dropdown, brukes vannets egen isgang-historikk
-        // for Mygg/Marginata/Vespertina-prediksjoner i stedet for default Katnosa-data.
-        // Vann uten isgangHistory bruker LOC.isgangHistory som fallback (Katnosa).
+        // for Mygg/Marginata/Vespertina-prediksjoner i stedet for default median-data.
         // Hybrid-ismodellen håndterer ekstrapolering for år uten observasjon.
-        ofaLakes: [                  // Kilde: OFAs liste (Oslomarka Fiskeadministrasjon)
-            { name: 'Skillingen Store', altitude: 248, isgangHistory: {
-                2026: '2026-04-18', 2025: '2025-04-17', 2024: '2024-05-02', 2023: '2023-05-17',
-                2022: '2022-04-28', 2021: '2021-05-07', 2020: '2020-05-04', 2019: '2019-05-01',
-                2018: '2018-05-09', 2017: '2017-05-07',
-            }},
-            { name: 'Øyungen',          altitude: 283, isgangHistory: {
+        // Innsnevret 2026-05-13: Stian fjernet 6 vann fra dropdown etter tilbake-
+        // melding om at flere vann (særlig Skillingen, Bjørnsjøen, Helgeren,
+        // Kalvsjøen, Daltjuven Lille, Manntjern, Spålen) hadde svak vulgata-
+        // bestand. Nå kun de 16 vannene OFA selv vurderer som beste vulgata-vann.
+        ofaLakes: [                  // 16 beste vulgata-vann i Nordmarka (OFA, oppdatert 2026-05-13)
+            { name: 'Øyungen',           altitude: 283, isgangHistory: {
                 2026: '2026-04-17', 2025: '2025-04-16', 2024: '2024-05-02', 2023: '2023-05-15',
                 2022: '2022-04-27', 2021: '2021-05-06', 2020: '2020-04-23', 2019: '2019-05-02',
                 2018: '2018-05-10', 2017: '2017-05-08',
             }},
-            { name: 'Gåslungen',        altitude: 283, isgangHistory: {
+            { name: 'Gåslungen',         altitude: 283, isgangHistory: {
                 2026: '2026-04-17', 2025: '2025-04-16', 2024: '2024-05-02', 2023: '2023-05-15',
                 2022: '2022-04-27', 2021: '2021-05-06', 2020: '2020-04-23', 2019: '2019-05-02',
                 2018: '2018-05-10', 2017: '2017-05-08',
             }},
-            { name: 'Åklungen Lille',   altitude: 293, isgangHistory: {
+            { name: 'Åklungen Lille',    altitude: 293, isgangHistory: {
                 2026: '2026-04-16', 2025: '2025-04-14', 2024: '2024-04-30', 2023: '2023-05-11',
                 2022: '2022-04-26', 2021: '2021-05-02', 2020: '2020-04-18', 2019: '2019-04-27',
                 2018: '2018-05-07', 2017: '2017-05-04',
             }},
-            { name: 'Åklungen Store',   altitude: 293, isgangHistory: {
+            { name: 'Åklungen Store',    altitude: 293, isgangHistory: {
                 2026: '2026-04-17', 2025: '2025-04-15', 2024: '2024-05-01', 2023: '2023-05-12',
                 2022: '2022-04-27', 2021: '2021-05-03', 2020: '2020-04-18', 2019: '2019-04-28',
                 2018: '2018-05-08', 2017: '2017-05-05',
             }},
-            { name: 'Bjørnsjøen',       altitude: 337, isgangHistory: {
-                2026: '2026-04-22', 2025: '2025-04-20', 2024: '2024-05-04', 2023: '2023-05-17',
-                2022: '2022-05-03', 2021: '2021-05-17', 2020: '2020-05-03', 2019: '2019-05-05',
-                2018: '2018-05-10', 2017: '2017-05-10',
-            }},
-            // Fjernet 2026-05-09 etter tilbakemelding fra Knut (NFF):
-            //   Elvann (341 m) — sjeldne vulgata-funn, "ubetydelig" bestand
-            //   Langvann (342 m) — samme
-            //   Trehørningen (360 m) — samme
-            { name: 'Blankvann',        altitude: 351, isgangHistory: {
+            { name: 'Blankvann',         altitude: 351, isgangHistory: {
                 2026: '2026-04-20', 2025: '2025-04-18', 2024: '2024-05-03', 2023: '2023-05-14',
                 2022: '2022-04-30', 2021: '2021-05-06', 2020: '2020-04-25', 2019: '2019-05-01',
                 2018: '2018-05-11', 2017: '2017-05-08',
             }},
-            { name: 'Helgeren',         altitude: 358, isgangHistory: {
-                2026: '2026-04-21', 2025: '2025-04-20', 2024: '2024-05-04', 2023: '2023-05-18',
-                2022: '2022-05-03', 2021: '2021-05-17', 2020: '2020-05-03', 2019: '2019-05-05',
-                2018: '2018-05-09', 2017: '2017-05-08',
-            }},
-            { name: 'Gørja Lille',      altitude: 371, isgangHistory: {
+            { name: 'Gørja Lille',       altitude: 371, isgangHistory: {
                 2026: '2026-04-22', 2025: '2025-04-21', 2024: '2024-05-04', 2023: '2023-05-19',
                 2022: '2022-05-04', 2021: '2021-05-18', 2020: '2020-05-05', 2019: '2019-05-06',
                 2018: '2018-05-11', 2017: '2017-05-10',
             }},
-            { name: 'Gørja Store',      altitude: 376, isgangHistory: {
+            { name: 'Gørja Store',       altitude: 376, isgangHistory: {
                 2026: '2026-04-24', 2025: '2025-04-22', 2024: '2024-05-06', 2023: '2023-05-20',
                 2022: '2022-05-06', 2021: '2021-05-20', 2020: '2020-05-07', 2019: '2019-05-08',
                 2018: '2018-05-13', 2017: '2017-05-12',
             }},
-            { name: 'Kalvsjøen',        altitude: 387, isgangHistory: {
-                2026: '2026-04-24', 2025: '2025-04-22', 2024: '2024-05-07', 2023: '2023-05-21',
-                2022: '2022-05-06', 2021: '2021-05-20', 2020: '2020-05-07', 2019: '2019-05-08',
-                2018: '2018-05-13', 2017: '2017-05-12',
-            }},
-            { name: 'Måsjøen Sør',      altitude: 391, isgangHistory: {
+            { name: 'Måsjøen Sør',       altitude: 391, isgangHistory: {
                 2026: '2026-04-21', 2025: '2025-04-20', 2024: '2024-05-04', 2023: '2023-05-18',
                 2022: '2022-05-02', 2021: '2021-05-14', 2020: '2020-05-02', 2019: '2019-05-03',
                 2018: '2018-05-11', 2017: '2017-05-10',
             }},
-            { name: 'Måsjøen Nord',     altitude: 392, isgangHistory: {
+            { name: 'Måsjøen Nord',      altitude: 392, isgangHistory: {
                 2026: '2026-04-21', 2025: '2025-04-20', 2024: '2024-05-04', 2023: '2023-05-18',
                 2022: '2022-05-02', 2021: '2021-05-14', 2020: '2020-05-02', 2019: '2019-05-03',
                 2018: '2018-05-11', 2017: '2017-05-10',
             }},
-            { name: 'Auretjern Nord',   altitude: 395, isgangHistory: {
+            { name: 'Auretjern Nord',    altitude: 395, isgangHistory: {
                 2026: '2026-04-25', 2025: '2025-04-24', 2024: '2024-05-08', 2023: '2023-05-19',
                 2022: '2022-05-06', 2021: '2021-05-14', 2020: '2020-05-06', 2019: '2019-05-06',
                 2018: '2018-05-11', 2017: '2017-05-11',
             }},
-            { name: 'Auretjern Sør',    altitude: 395, isgangHistory: {
+            { name: 'Auretjern Sør',     altitude: 395, isgangHistory: {
                 2026: '2026-04-25', 2025: '2025-04-24', 2024: '2024-05-08', 2023: '2023-05-19',
                 2022: '2022-05-06', 2021: '2021-05-14', 2020: '2020-05-06', 2019: '2019-05-06',
                 2018: '2018-05-11', 2017: '2017-05-11',
             }},
-            { name: 'Daltjuven Lille',  altitude: 408, isgangHistory: {
-                2026: '2026-04-27', 2025: '2025-04-19', 2024: '2024-05-04', 2023: '2023-05-20',
-                2022: '2022-05-01', 2021: '2021-05-10', 2020: '2020-05-07', 2019: '2019-05-05',
-                2018: '2018-05-12', 2017: '2017-05-11',
-            }},
-            { name: 'Fjellsjøen',       altitude: 425, isgangHistory: {
+            { name: 'Fjellsjøen',        altitude: 425, isgangHistory: {
                 2026: '2026-04-23', 2025: '2025-04-22', 2024: '2024-05-06', 2023: '2023-05-20',
                 2022: '2022-05-03', 2021: '2021-05-21', 2020: '2020-05-06', 2019: '2019-05-08',
                 2018: '2018-05-12', 2017: '2017-05-15',
             }},
-            { name: 'Daltjuven Store',  altitude: 442, isgangHistory: {
+            { name: 'Daltjuven Store',   altitude: 442, isgangHistory: {
                 2026: '2026-04-27', 2025: '2025-04-19', 2024: '2024-05-04', 2023: '2023-05-22',
                 2022: '2022-05-02', 2021: '2021-05-11', 2020: '2020-05-09', 2019: '2019-05-06',
                 2018: '2018-05-12', 2017: '2017-05-12',
             }},
-            { name: 'Manntjern',        altitude: 444, isgangHistory: {
-                2026: '2026-04-25', 2025: '2025-04-24', 2024: '2024-05-08', 2023: '2023-05-19',
-                2022: '2022-05-06', 2021: '2021-05-14', 2020: '2020-05-06', 2019: '2019-05-06',
-                2018: '2018-05-11', 2017: '2017-05-11',
+            { name: 'Storflåtan',        altitude: 454, isgangHistory: {
+                2026: '2026-04-24', 2025: '2025-04-25', 2024: '2024-05-07', 2023: '2023-05-20',
+                2022: '2022-05-04', 2021: '2021-05-19', 2020: '2020-05-15', 2019: '2019-05-10',
+                2018: '2018-05-10', 2017: '2017-05-18',
             }},
-            { name: 'Katnosa',          altitude: 464, isgangHistory: {
+            { name: 'Katnosa',           altitude: 464, isgangHistory: {
                 2026: '2026-04-27', 2025: '2025-04-25', 2024: '2024-05-09', 2023: '2023-05-23',
-                2022: '2022-05-04', 2021: '2021-05-22', 2020: '2020-05-17',
-                2019: '2019-05-10', 2018: '2018-05-13', 2017: '2017-05-16',
+                2022: '2022-05-04', 2021: '2021-05-22', 2020: '2020-05-17', 2019: '2019-05-10',
+                2018: '2018-05-13', 2017: '2017-05-16',
             }},
-            { name: 'Spålen',           altitude: 478 },
+            { name: 'Heggerlivann Søndre', altitude: 488, isgangHistory: {
+                2026: '2026-04-28', 2025: '2025-04-24', 2024: '2024-05-10', 2023: '2023-05-25',
+                2022: '2022-05-06', 2021: '2021-05-24', 2020: '2020-05-18', 2019: '2019-05-08',
+                2018: '2018-05-14', 2017: '2017-05-18',
+            }},
         ],
         frostStation: 'SN18500',
         snowStation:  'SN18500',
@@ -1610,13 +1588,17 @@ const LOCATIONS = {
                                       // Analyse 2026-04-26: 620 + WT 14 vinner samlet vs 580 + WT 14.
         calibNoteNo:  'Dynamisk høyde-justering med vanntemp-terskel 14°C (kompenserer for Sinnerdammen-stasjons varme bias) + GDD 620 (kompenserer for Bjørnholt-stasjons varme bias). Velg ditt vann fra OFAs liste — modellen justerer for høyde via temperaturgradient.',
         calibNoteEn:  'Dynamic altitude adjustment with water temp trigger 14°C (compensates for warm bias of Sinnerdammen reservoir station) + GDD 620 (compensates for warm bias of Bjørnholt ridge station). Pick your lake from the OFA list — model adjusts for altitude via lapse rate.',
-        calibShortNo: 'n=24+5, OFA · GDD 620 + WT 14°C',
-        calibShortEn: 'n=24+5, OFA · GDD 620 + WT 14°C',
-        isgangWater: 'Katnosa, Nordmarka',
+        calibShortNo: 'n=16+5, OFA · GDD 620 + WT 14°C',
+        calibShortEn: 'n=16+5, OFA · GDD 620 + WT 14°C',
+        isgangWater: 'Median av 16 OFA-vann (Nordmarka)',
+        // Median isgang-DOY på tvers av alle 16 OFA-vann per år (oppdatert 2026-05-13).
+        // Erstatter tidligere Katnosa-fallback. Gir "snitt-Nordmarka"-prediksjon når
+        // brukeren ikke har valgt et spesifikt vann fra dropdown. DOY-medianer normalisert
+        // til 2026-kalender for konsistens, så gjort om til ekte dato per år.
         isgangHistory: {
-            2026: '2026-04-27', 2025: '2025-04-25', 2024: '2024-05-09', 2023: '2023-05-23',
-            2022: '2022-05-04', 2021: '2021-05-22', 2020: '2020-05-17',
-            2019: '2019-05-10', 2018: '2018-05-13', 2017: '2017-05-16',
+            2026: '2026-04-23', 2025: '2025-04-21', 2024: '2024-05-04', 2023: '2023-05-19',
+            2022: '2022-05-03', 2021: '2021-05-14', 2020: '2020-05-06', 2019: '2019-05-06',
+            2018: '2018-05-11', 2017: '2017-05-11',
         },
     },
     // ── nordmarka_test_a (TEST B — luft-bytte, vann beholdt) ─────────────────
