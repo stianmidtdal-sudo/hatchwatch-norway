@@ -1,0 +1,54 @@
+{
+  "name": "HatchWatch",
+  "short_name": "HatchWatch",
+  "description": "Klekkeprognose for fluefiskere — døgnflueklekking, spinnerfall, og sesongbarometer for norske vassdrag.",
+  "lang": "no",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#1B4332",
+  "background_color": "#1B4332",
+  "icons": [
+    {
+      "src": "/logos/logo-inverted-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logos/logo-inverted-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logos/logo-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["sports", "weather", "utilities"],
+  "shortcuts": [
+    {
+      "name": "Kautokeino",
+      "short_name": "Kauto",
+      "url": "/dashboard.html?loc=kautokeino",
+      "icons": [{ "src": "/logos/logo-inverted-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Østmarka",
+      "short_name": "Østmarka",
+      "url": "/dashboard.html?loc=ostmarka",
+      "icons": [{ "src": "/logos/logo-inverted-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Nordmarka",
+      "short_name": "Nordmarka",
+      "url": "/dashboard.html?loc=nordmarka_dyn",
+      "icons": [{ "src": "/logos/logo-inverted-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
