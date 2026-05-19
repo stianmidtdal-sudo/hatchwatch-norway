@@ -15,7 +15,7 @@
 //
 // Innført 2026-05-19.
 
-import { redis, k } from './_lib/redis.js';
+import { redis, k } from '../lib/redis.js';
 
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
