@@ -3073,6 +3073,45 @@ function shouldUseClimaWTPrior() {
     return new URLSearchParams(location.search).get('wtprior') === '1';
 }
 
+// URL-flag for klima-WT-fallback (innført 2026-05-14).
+// Når live WT-ekstrapolering ikke er mulig (for lite data, current WT under floor,
+// flat slope osv), faller modellen normalt tilbake til GDD-only-prediksjon. Det skaper
+// en kunstig diskontinuitet i konvergensgrafen når live-WT senere blir mulig og
+// dual-trigger plutselig "slår inn". Klima-fallback erstatter dette med en stabil
+// historisk-median-WT-kryssings-DOY, så prediksjonen alltid har en WT-komponent.
+function shouldUseClimateWTFallback() {
+    return new URLSearchParams(location.search).get('climawt') === '1';
+}
+
+// Beregn median DOY for første WT-kryssing av terskel over historiske år.
+// Brukes som fallback når live ekstrapolering ikke gir gyldig dato.
+// Returnerer null hvis < 3 historiske år nådde terskelen.
+function computeClimateWTCrossDoy(waterTempData, targetYear) {
+    if (!waterTempData) return null;
+    const wtTrigger = getWtThreshold(LOC);
+    const crossings = [];
+    for (let yr = targetYear - 1; yr >= targetYear - 7; yr--) {
+        const yearPrefix = String(yr);
+        const dates = Object.keys(waterTempData)
+            .filter(d => d.startsWith(yearPrefix) && d >= `${yr}-03-01` && d <= `${yr}-08-31`)
+            .sort();
+        for (const d of dates) {
+            if (waterTempData[d] != null && waterTempData[d] >= wtTrigger) {
+                const dt = parseDate(d);
+                const inYear = new Date(targetYear, dt.getMonth(), dt.getDate());
+                crossings.push(doy(inYear));
+                break;
+            }
+        }
+    }
+    if (crossings.length < 3) return null;
+    crossings.sort((a, b) => a - b);
+    const n = crossings.length;
+    return n % 2 === 0
+        ? Math.round((crossings[n / 2 - 1] + crossings[n / 2]) / 2)
+        : crossings[Math.floor(n / 2)];
+}
+
 // Forward-projeksjon for vanntemp (default 2026-05-11)
 // Speilvendt GDD-struktur: klima-vannstigning per DOY + MET-luft-modulasjon dag 1-9.
 // Aktiv som default. Kan skrus av med ?wtmodel=linear (tilbakerull-flag).
@@ -3240,7 +3279,20 @@ function computeClimateWTSlope(waterTempData, asOfDate) {
 // live-slope 50/50 med snittet av historiske års slope for samme DOY-vindu.
 // Drar prediksjonen mot historisk normal når live-slope avviker mye, uten å
 // blokkere ekte signaler. Forblir av som default inntil verifisert.
+// Wrapper: prøv live ekstrapolering først; hvis null og ?climawt=1 er aktivt,
+// fall tilbake til historisk klima-median-DOY for WT-kryssing. Innført 2026-05-14
+// for å unngå mode-switch-hopp i konvergensgrafen (live ↔ GDD-only).
 function extrapolateWTFromDate(waterTempData, asOfDate, opts) {
+    const liveResult = _extrapolateWTLive(waterTempData, asOfDate, opts);
+    if (liveResult) return liveResult;
+    if (!shouldUseClimateWTFallback()) return null;
+    const targetYear = (opts && opts.year != null) ? opts.year : YEAR;
+    const climateDoy = computeClimateWTCrossDoy(waterTempData, targetYear);
+    if (climateDoy == null) return null;
+    return dateFromDoy(targetYear, climateDoy);
+}
+
+function _extrapolateWTLive(waterTempData, asOfDate, opts) {
     // opts kan inneholde:
     //   wtFloor: nedre grense for current WT før vi prøver å ekstrapolere (default 5)
     //   year: målår, for retrospektiv kalibrering (default YEAR)
@@ -4023,7 +4075,7 @@ function renderSnowChart(snowData) {
         .map(([yr, d]) => {
             const s = SNOW_STYLE[parseInt(yr)] || { color:'#aaa', w:1 };
             return {
-                label: `Winter ${yr}`,
+                label: String(yr),
                 data: winterDoys.map(i => d[i] ?? null),
                 borderColor: s.color,
                 borderWidth: isSparseSnow ? s.w + 0.5 : s.w,
