@@ -28,8 +28,8 @@
 //
 // Innført 2026-05-19.
 
-import { redis, k, hashEndpoint } from './_lib/redis.js';
-import { sendPush, buildPayload } from './_lib/push.js';
+import { redis, k, hashEndpoint } from '../lib/redis.js';
+import { sendPush, buildPayload } from '../lib/push.js';
 
 // Maks antall subs vi prosesserer i én kjøring — beskytt mot timeout.
 const MAX_SUBS_PER_RUN = 200;
