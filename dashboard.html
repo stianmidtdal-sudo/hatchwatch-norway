@@ -6540,14 +6540,16 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 
-<!-- Push-pipeline-test (Etappe 3a, ?push=1 for å vise) ─────────────────
-     Subscribe-knapp + send-test-push-knapp. Aktiveres kun med ?push=1
-     i URL slik at vanlige brukere ikke ser test-UI under utvikling.
+<!-- Push-pipeline-test (Etappe 3a) ─────────────────────────────────────
+     Subscribe-knapp + send-test-push-knapp. Vises alltid i dashboardet
+     under utvikling så det fungerer i installert PWA (der URL-parametere
+     ikke kan settes manuelt). Erstattes av ordentlig "Varsler"-innstilling
+     i Etappe 3b. Skjules med ?push=0 hvis ønskelig.
      Subscription lagres i localStorage. Test-push sendes via
      /api/push-send-test som tar subscription i request body. -->
 <script>
 (function setupPushTest() {
-    if (new URLSearchParams(location.search).get('push') !== '1') return;
+    if (new URLSearchParams(location.search).get('push') === '0') return;
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
         console.warn('Push ikke støttet i denne nettleseren');
         return;
