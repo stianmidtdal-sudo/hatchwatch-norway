@@ -3440,8 +3440,10 @@ function renderKPIs(airData, snowData, flowData, wtData) {
     const wtStnId = LOC.nveWaterTempStation || LOC.nveStation;
     const nveIds  = LOC.nveWaterTempStation && LOC.nveWaterTempStation !== LOC.nveStation
         ? `${LOC.nveStation} / ${LOC.nveWaterTempStation}` : (LOC.nveStation || '');
+    // Bruk språk-spesifikk dato-formatering (nb-NO på norsk, en-GB på engelsk).
+    const _updLocale = LANG === 'no' ? 'nb-NO' : 'en-GB';
     document.getElementById('lastUpdated').innerHTML =
-        `${t('updatedLabel')} ${parseDate(dateStr).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}<br>
+        `${t('updatedLabel')} ${parseDate(dateStr).toLocaleDateString(_updLocale,{day:'numeric',month:'short',year:'numeric'})}<br>
          ${LOC.frostStation}${nveIds ? ' · ' + nveIds : ''}`;
 }
 
