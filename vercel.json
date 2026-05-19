@@ -5,6 +5,12 @@
     { "source": "/norway/dashboard.html",     "destination": "/dashboard.html" },
     { "source": "/norway/verify-stations.html","destination": "/verify-stations.html" }
   ],
+  "crons": [
+    {
+      "path": "/api/cron-daily",
+      "schedule": "0 6 * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/api/(.*)",
