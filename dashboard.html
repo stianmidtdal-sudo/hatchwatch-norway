@@ -58,9 +58,13 @@
         header {
             background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%);
             color: white;
-            /* padding-top respekterer iOS safe-area så header ikke gjemmer seg
-               bak status-bar (klokke, batteri, wifi) i installert PWA. */
-            padding: max(16px, calc(env(safe-area-inset-top, 0px) + 12px)) 28px 16px;
+            /* iOS PWA safe-area: legg statusbar-høyden ON TOP av standard 16px padding.
+               På desktop og Android (ingen notch): env() = 0, så blir 16px som før.
+               På iPhone: env() returnerer 44-59px → header får 60-75px topp-padding. */
+            padding-top: calc(env(safe-area-inset-top, 0px) + 16px);
+            padding-right: calc(env(safe-area-inset-right, 0px) + 28px);
+            padding-bottom: 16px;
+            padding-left: calc(env(safe-area-inset-left, 0px) + 28px);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -86,6 +90,14 @@
         header .updated { font-size: 0.78rem; opacity: 0.65; text-align: right; line-height: 1.6; }
         #hwMenuBtn:hover, #hwMenuBtn:active { background: rgba(255,255,255,0.22) !important; }
         .hw-menu-item:hover, .hw-menu-item:active { background: #f0f5f0 !important; }
+        /* Skjul varsler-menyvalget når appen ikke er installert som PWA.
+           Push-varsler gir mest mening i installert app — på nettside-besøk via
+           browser-tab er det forvirrende. Brukere som ikke har installert appen
+           får fortsatt "Om HatchWatch" og "Tilbakemelding" i menyen.
+           display-mode: browser = vanlig nettleser-tab (ikke standalone PWA). */
+        @media (display-mode: browser) {
+            .hw-menu-item[data-action="notif"] { display: none !important; }
+        }
 
         .container { max-width: 1180px; margin: 0 auto; padding: 20px 14px; }
 
@@ -952,7 +964,7 @@ const T = {
     spinnerfallSub: 'Sannsynlighet for vulgataspinnerfall · kveld 19–22',
     spinnerfallFooter: 'Modell vurderer vind, lufttemperatur, skydekke og nedbør for kveldstimene 19–22 (lokal tid) basert på MET-prognose. Vindstille, varme og lite skyer gir best sjanse. Modellen er ikke validert mot observasjoner.',
     spinnerfallIntroTitle: 'Ny funksjon: Spinnerfall-vakt',
-    spinnerfallIntroBody: 'Vulgata-spinnerfallet er det mest spektakulære, men også mest uforutsigbare i fluefiskerens kalender. Hatch Watch vurderer nå sannsynligheten for spinnerfall i kveldstimene basert på vind, temperatur, skydekke og nedbør — og hvor mange dårlige kvelder det har vært i forkant.\n\nModellen er ikke validert mot observasjoner ennå. Bidra gjerne med en spinnerfall-rapport via observasjonsknappen når du opplever det i felt — det styrker modellen for alle.',
+    spinnerfallIntroBody: 'Vulgata-spinnerfall kan være spektakulært, men også vanskelig å forutse. Hatch Watch vurderer nå sannsynligheten for spinnerfall i kveldstimene basert på vind, temperatur, skydekke og nedbør — og hvor lenge det har vært ugunstige forhold, som akkumulerer spinnere.\n\nModellen er ikke validert mot observasjoner ennå. Bidra gjerne med en spinnerfall-rapport via observasjonsknappen når du opplever det i felt — det styrker modellen for alle.',
     spinnerfallIntroBtn: 'Skjønner!',
     lakePickerLabel: 'Velg vann i Nordmarka',
     lakePickerNote: 'Alle vannene i listen har dokumentert vulgata-klekking. Kilde: OFA (Oslomarka Fiskeadministrasjon). Modellen justerer prediksjonen basert på valgt høyde.',
@@ -1166,7 +1178,7 @@ const T = {
     spinnerfallSub: 'Probability of vulgata spinner fall · evening 19–22',
     spinnerfallFooter: 'Model assesses wind, air temperature, cloud cover, and precipitation for evening hours 19–22 (local time) based on MET forecast. Calm, warm, and clear evenings give the highest chance. The model has not been validated against observations.',
     spinnerfallIntroTitle: 'New feature: Spinner Fall Watch',
-    spinnerfallIntroBody: 'The vulgata spinner fall is the most spectacular, yet most unpredictable event in the fly fisher\'s calendar. Hatch Watch now assesses the probability of a spinner fall in the evening hours based on wind, temperature, cloud cover, and precipitation — plus how many bad evenings preceded it.\n\nThe model has not yet been validated against observations. Please contribute a spinner fall report via the observation button when you witness one in the field — it strengthens the model for everyone.',
+    spinnerfallIntroBody: 'Vulgata spinner falls can be spectacular, but also hard to predict. Hatch Watch now assesses the probability of a spinner fall in the evening hours based on wind, temperature, cloud cover, and precipitation — and how long conditions have been unfavorable, building up a backlog of spinners.\n\nThe model has not yet been validated against observations. Please contribute a spinner fall report via the observation button when you witness one in the field — it strengthens the model for everyone.',
     spinnerfallIntroBtn: 'Got it!',
     lakePickerLabel: 'Choose lake in Nordmarka',
     lakePickerNote: 'All lakes in the list have documented vulgata hatches. Source: OFA (Oslomarka Fish Authority). The model adjusts the prediction based on the selected altitude.',
