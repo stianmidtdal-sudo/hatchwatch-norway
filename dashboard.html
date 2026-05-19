@@ -5969,6 +5969,40 @@ function runCalibration(airData, wtData) {
         return null;
     }
 
+    // Finn første dag GDD krysser terskel (uten å vente på WT). Brukes i gap-analysen
+    // for å måle hvor langt fra hverandre GDD- og WT-triggers fyrer.
+    function findGddOnlyCrossingDoy(year, gddT) {
+        const dates = Object.keys(airData).filter(d => d.startsWith(String(year))).sort();
+        let gdd = 0;
+        for (const d of dates) {
+            const v = airData[d];
+            if (v != null) gdd += Math.max(0, v - _gddBaseTemp);
+            if (gdd >= gddT) return doy(parseDate(d));
+        }
+        return null;
+    }
+
+    // Gap-analyse (innført 2026-05-14, etter Stians observasjon om "kunstig hopp" i
+    // konvergensgrafen på Østmarka). Gjennomsnittlig signert avstand mellom WT- og
+    // GDD-kryssing over historiske år. gap > 0 betyr WT typisk fyrer senere enn GDD;
+    // gap < 0 betyr motsatt. |gap| ~ 0 = balansert kalibrering (Kauto-aktig oppførsel).
+    function computeGap(gddT, wtT) {
+        if (wtT === null) return null;
+        const startYear = LOC.histYearsStart ?? 2019;
+        const gaps = [];
+        for (let yr = startYear; yr <= 2025; yr++) {
+            const gddDoy = findGddOnlyCrossingDoy(yr, gddT);
+            if (gddDoy == null) continue;
+            const wtDateStr = findWTCrossing(yr, wtT);
+            if (!wtDateStr) continue;
+            const wtDoy = doy(parseDate(wtDateStr));
+            gaps.push(wtDoy - gddDoy);
+        }
+        if (gaps.length === 0) return null;
+        const avg = gaps.reduce((s, g) => s + g, 0) / gaps.length;
+        return { avg, n: gaps.length };
+    }
+
     function evaluate(gddT, wtT) {
         // wtT === null betyr kun GDD (ingen dual-trigger).
         // Bruker findDualTriggerCrossing (Excel-versjon): første dag BEGGE er oppfylt
@@ -5990,11 +6024,17 @@ function runCalibration(airData, wtData) {
             errors.push({ year: yr, predicted: predDateStr, observed: obsStr, error: diffDays });
         }
         const valid = errors.filter(e => e.error !== null).map(e => e.error);
-        if (valid.length === 0) return { mae: null, bias: null, rmse: null, errors };
+        if (valid.length === 0) return { mae: null, bias: null, rmse: null, errors, gap: null, gapN: 0 };
         const mae = valid.reduce((s, e) => s + Math.abs(e), 0) / valid.length;
         const bias = valid.reduce((s, e) => s + e, 0) / valid.length;
         const rmse = Math.sqrt(valid.reduce((s, e) => s + e*e, 0) / valid.length);
-        return { mae, bias, rmse, errors };
+        // Gap-metrikk: gjennomsnittlig avstand mellom WT- og GDD-kryssing over
+        // historiske år. |gap| ~ 0 = balansert kalibrering (mindre kunstig hopp i
+        // konvergensgrafen). Kun meningsfull når wtT er satt.
+        const gapResult = computeGap(gddT, wtT);
+        const gap = gapResult ? gapResult.avg : null;
+        const gapN = gapResult ? gapResult.n : 0;
+        return { mae, bias, rmse, errors, gap, gapN };
     }
 
     const resultsGddOnly = thresholds.map(t => ({ threshold: t, ...evaluate(t, null) }));
@@ -6019,8 +6059,17 @@ function runCalibration(airData, wtData) {
     }
     const valid2D = grid.filter(r => r.mae !== null);
     const best2D = valid2D.reduce((a, b) => a.mae < b.mae ? a : b);
-    // Sortert topp-liste
-    const top2D = [...valid2D].sort((a, b) => a.mae - b.mae).slice(0, 15);
+    // Kombinert score: MAE + 0,5 × |gap|. Balanserer treffsikkerhet og konsistens.
+    // Hvis gap mangler (ingen historiske år med begge kryssinger), bruk MAE alene.
+    const withCombined = valid2D.map(r => ({
+        ...r,
+        absGap: r.gap != null ? Math.abs(r.gap) : null,
+        combined: r.gap != null ? r.mae + 0.5 * Math.abs(r.gap) : r.mae,
+    }));
+    // Best på kombinert score (treffsikkerhet + balanserte triggers)
+    const bestCombined = withCombined.reduce((a, b) => a.combined < b.combined ? a : b);
+    // Sortert topp-liste etter kombinert score (var: ren MAE)
+    const top2D = [...withCombined].sort((a, b) => a.combined - b.combined).slice(0, 15);
 
     function fmtErr(e) {
         if (e.error === null) return '<span style="color:#999">—</span>';
@@ -6137,19 +6186,24 @@ function runCalibration(airData, wtData) {
                 const e = r.errors.find(x => x.year === yr) || {};
                 return `<td style="padding:6px 10px;text-align:right">${fmtErr(e)}</td>`;
             }).join('');
+            const gapText = r.gap == null ? '<span style="color:#999">—</span>'
+                : `<span style="color:${Math.abs(r.gap) <= 3 ? '#1B7A3E' : Math.abs(r.gap) <= 7 ? '#cc8800' : '#80201a'};font-weight:600">${r.gap > 0 ? '+' : ''}${r.gap.toFixed(1)}d</span>`;
             return `<tr style="${rowStyle}">
                 <td style="padding:6px 10px">${r.gdd}${isBest ? ' ★' : ''}</td>
                 <td style="padding:6px 10px">${r.wt.toFixed(1)}°C</td>
                 <td style="padding:6px 10px;text-align:right">${r.mae.toFixed(2)}</td>
                 <td style="padding:6px 10px;text-align:right">${r.bias > 0 ? '+' : ''}${r.bias.toFixed(2)}</td>
                 <td style="padding:6px 10px;text-align:right">${r.rmse.toFixed(2)}</td>
+                <td style="padding:6px 10px;text-align:right">${gapText}</td>
+                <td style="padding:6px 10px;text-align:right;font-weight:600">${r.combined.toFixed(2)}</td>
                 ${errCells}
             </tr>`;
         }).join('');
         return `
-            <h4 style="margin:14px 0 6px">Topp 15 kombinasjoner (sortert på MAE)</h4>
+            <h4 style="margin:14px 0 6px">Topp 15 kombinasjoner (sortert på kombinert score)</h4>
+            <p style="font-size:0.82rem;color:#666;margin:0 0 8px">Kombinert score = MAE + 0,5 × |gap|. Gap = WT-DOY − GDD-DOY (snitt over historiske år). |gap| ~ 0 betyr at WT og GDD typisk fyrer samtidig → balansert kalibrering, ingen kunstige hopp i prediksjonshistorikk.</p>
             <div style="overflow-x:auto">
-                <table style="border-collapse:collapse;font-size:0.85rem;width:100%;min-width:600px">
+                <table style="border-collapse:collapse;font-size:0.85rem;width:100%;min-width:700px">
                     <thead>
                         <tr style="background:#1B4332;color:white">
                             <th style="padding:6px 10px;text-align:left">GDD</th>
@@ -6157,6 +6211,8 @@ function runCalibration(airData, wtData) {
                             <th style="padding:6px 10px;text-align:right">MAE</th>
                             <th style="padding:6px 10px;text-align:right">Bias</th>
                             <th style="padding:6px 10px;text-align:right">RMSE</th>
+                            <th style="padding:6px 10px;text-align:right">Gap</th>
+                            <th style="padding:6px 10px;text-align:right">Score</th>
                             ${yearHeaders}
                         </tr>
                     </thead>
@@ -6194,13 +6250,17 @@ function runCalibration(airData, wtData) {
             <h3 style="margin:0 0 10px">Anbefaling</h3>
             <p style="margin:0 0 8px"><strong>Best kun-GDD:</strong> terskel ${bestGdd.threshold} · MAE ${bestGdd.mae.toFixed(2)} d</p>
             <p style="margin:0 0 8px"><strong>Best dual-trigger (fast WT ${wtThresholdCurrent}°C):</strong> terskel ${bestDual.threshold} · MAE ${bestDual.mae.toFixed(2)} d</p>
-            <p style="margin:0 0 8px"><strong>Best 2D (GDD × WT):</strong> GDD ${best2D.gdd} + WT ≥ ${best2D.wt.toFixed(1)}°C · MAE ${best2D.mae.toFixed(2)} d · Bias ${best2D.bias > 0 ? '+' : ''}${best2D.bias.toFixed(2)} d</p>
+            <p style="margin:0 0 8px"><strong>Best 2D, ren MAE:</strong> GDD ${best2D.gdd} + WT ≥ ${best2D.wt.toFixed(1)}°C · MAE ${best2D.mae.toFixed(2)} d · Gap ${best2D.gap != null ? (best2D.gap > 0 ? '+' : '') + best2D.gap.toFixed(1) + ' d' : '—'}</p>
+            <p style="margin:0 0 8px"><strong>Best 2D, kombinert score (MAE + 0,5×|gap|):</strong> GDD ${bestCombined.gdd} + WT ≥ ${bestCombined.wt.toFixed(1)}°C · MAE ${bestCombined.mae.toFixed(2)} d · Gap ${bestCombined.gap != null ? (bestCombined.gap > 0 ? '+' : '') + bestCombined.gap.toFixed(1) + ' d' : '—'} · Score ${bestCombined.combined.toFixed(2)}</p>
             <p style="margin:8px 0 0;font-size:0.9rem;color:#444">
-                Hvis 2D-optimum gir markant lavere MAE enn både A og B, er det biologisk relevant
-                å heve vanntemp-terskelen for denne lokasjonen. Sett da
-                <code>wtThreshold: ${best2D.wt.toFixed(1)}</code> i LOC-blokken.
-                Hvis 2D-optimum bare ligger marginalt bedre, behold default-terskelen og rapporter
-                at vanntemp ikke er bindende her.
+                <strong>Tolkning av gap:</strong> gap er gjennomsnittlig avstand mellom WT-kryssing og GDD-kryssing over historiske år.
+                gap = 0 ⇒ triggers fyrer samtidig (balansert, ingen kunstig hopp i prediksjonshistorikk).
+                gap &gt; 0 ⇒ WT senere enn GDD (kollapser tidlig sesong til GDD-only-prediksjon, så hopper modellen når WT slår inn — dagens Østmarka-problem).
+                gap &lt; 0 ⇒ GDD senere enn WT.
+            </p>
+            <p style="margin:8px 0 0;font-size:0.9rem;color:#444">
+                <strong>Anbefalt:</strong> velg kombinert-optimum hvis MAE-kostnaden er liten (≤1-2 d ekstra) — det gir både god treffsikkerhet OG jevn konvergensgraf.
+                Sett da <code>gddThreshold: ${bestCombined.gdd}</code> og <code>wtThreshold: ${bestCombined.wt.toFixed(1)}</code> i LOC-blokken.
             </p>
         </div>
     `;
