@@ -520,6 +520,7 @@
     </div>
     <div style="display:flex;align-items:center;gap:14px">
         <div class="updated" id="lastUpdated">Loading…</div>
+        <button id="notifBellBtn" type="button" aria-label="Varsler" title="Varsler" style="background:rgba(255,255,255,0.12);color:white;border:none;width:38px;height:38px;border-radius:50%;cursor:pointer;font-size:1.05rem;display:flex;align-items:center;justify-content:center;transition:background 0.15s">🔔</button>
         <button id="langBtn" class="lang-btn" onclick="toggleLang()">EN</button>
     </div>
 </header>
@@ -5686,6 +5687,34 @@ function rebuildDashboard() {
     renderSouthSignal();  // kun for Finnmark — sjekker LOC.region internt
     renderConvergence(snowFree, wtDataForPrediction, adgDate, histStats, fromDate, airDataCorrected);
 
+    // Lagre dagens prediksjon i Redis (push-cron sammenligner gårsdagens vs dagens).
+    // Innført 2026-05-19 for Etappe 3b. Stille feiler ved nettverksproblem — ikke kritisk.
+    try {
+        const thisYearHatchForStore = (adgDate && wtDate)
+            ? (adgDate > wtDate ? adgDate : wtDate)
+            : adgDate;
+        if (thisYearHatchForStore) {
+            const isoDateStore = thisYearHatchForStore.toISOString().slice(0, 10);
+            const doyStore = doy(thisYearHatchForStore);
+            const infoStr = LOC.calibrated
+                ? `GDD ${getEffectiveGddThreshold(LOC)} + WT ${getWtThreshold(LOC)}°C`
+                : 'indikativ';
+            fetch('/api/store-prediction', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    loc: LOC.id,
+                    species: 'vulgata',  // primær — vi varsler på vulgata-prediksjon
+                    predDate: isoDateStore,
+                    predDoy: doyStore,
+                    info: infoStr,
+                }),
+            }).catch(function() { /* stille ved offline */ });
+        }
+    } catch (err) {
+        console.warn('store-prediction skipped:', err);
+    }
+
     // Sesongforklaring (?explain=1) — driver-narrativ rett under Sesong klekkekalender.
     // Krever histStats.median + dual-trigger-dato for Δdager vs. median.
     // VIKTIG: histStats.median er dual-trigger-basert (latest of GDD og WT) når lokasjonen
@@ -6540,24 +6569,24 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 
-<!-- Push-pipeline-test (Etappe 3a) ─────────────────────────────────────
-     Subscribe-knapp + send-test-push-knapp. Vises alltid i dashboardet
-     under utvikling så det fungerer i installert PWA (der URL-parametere
-     ikke kan settes manuelt). Erstattes av ordentlig "Varsler"-innstilling
-     i Etappe 3b. Skjules med ?push=0 hvis ønskelig.
-     Subscription lagres i localStorage. Test-push sendes via
-     /api/push-send-test som tar subscription i request body. -->
+<!-- Varsler-modal (Etappe 3b, innført 2026-05-19) ──────────────────────
+     Bjelle-knapp i header åpner en modal med per-lokasjon trigger-toggles.
+     Spør om Notification-permission ved første aktivering. Lagrer subscription
+     + preferanser via /api/push-subscribe i Upstash Redis.
+     "Test alle"-knapp sender én test-push per trigger-type via
+     /api/push-test-trigger så bruker ser hvordan hver type ser ut. -->
 <script>
-(function setupPushTest() {
-    if (new URLSearchParams(location.search).get('push') === '0') return;
+(function setupNotifSettings() {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-        console.warn('Push ikke støttet i denne nettleseren');
+        // Skjul bjelle-knappen helt på nettlesere uten støtte (gammel iOS, desktop Safari)
+        var btn = document.getElementById('notifBellBtn');
+        if (btn) btn.style.display = 'none';
         return;
     }
 
-    // VAPID public key (trygt å eksponere — kun private må holdes hemmelig)
     var VAPID_PUBLIC = 'BDuIQlsFE48rDc_wEer_M6X4HyQd3CD2-4YWcLhKC0cqM9sAYU6fx70nR4PVaueA3T3sfG_c2AEFxn7ETpoLhus';
-    var STORAGE_KEY = 'hw_push_subscription';
+    var STORAGE_KEY = 'hw_notif_prefs';  // { triggers: {ostmarka: [...], ...}, subscribed: true }
+    var TRIGGERS = ['klekkeChange', 'klekkeImminent', 'spinnerfall', 'stokkmaur', 'seasonstart'];
 
     function urlBase64ToUint8Array(base64String) {
         var padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -6568,94 +6597,227 @@ if ('serviceWorker' in navigator) {
         return arr;
     }
 
-    function buildPanel() {
-        var existing = localStorage.getItem(STORAGE_KEY);
-        var hasSub = existing != null;
-        var panel = document.createElement('div');
-        panel.id = 'hwPushTestPanel';
-        panel.style.cssText = 'position:fixed;bottom:90px;right:16px;width:300px;padding:16px;background:#1B4332;color:white;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.3);font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:0.88rem;z-index:9999;line-height:1.4';
-        panel.innerHTML =
-            '<div style="font-weight:700;margin-bottom:10px;font-size:0.95rem">🔔 Push-test (Etappe 3a)</div>' +
-            '<div id="hwPushStatus" style="font-size:0.82rem;opacity:0.85;margin-bottom:12px">' +
-                (hasSub ? '✓ Abonnert' : '✗ Ikke abonnert') + '</div>' +
-            '<button id="hwSubscribeBtn" style="display:block;width:100%;background:white;color:#1B4332;border:none;padding:10px;border-radius:8px;font-weight:600;cursor:pointer;margin-bottom:8px;font-size:0.88rem">' +
-                (hasSub ? 'Avabonnér' : 'Skru på varsler') + '</button>' +
-            (hasSub ? '<button id="hwTestPushBtn" style="display:block;width:100%;background:#ffd789;color:#1B4332;border:none;padding:10px;border-radius:8px;font-weight:600;cursor:pointer;font-size:0.88rem">Send test-push</button>' : '') +
-            '<div id="hwPushLog" style="font-size:0.74rem;opacity:0.7;margin-top:10px;max-height:80px;overflow-y:auto"></div>';
-        document.body.appendChild(panel);
-
-        document.getElementById('hwSubscribeBtn').onclick = hasSub ? unsubscribe : subscribe;
-        var testBtn = document.getElementById('hwTestPushBtn');
-        if (testBtn) testBtn.onclick = sendTestPush;
+    function getPrefs() {
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { triggers: {} }; }
+        catch (e) { return { triggers: {} }; }
+    }
+    function savePrefs(prefs) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
     }
 
-    function log(msg) {
-        var el = document.getElementById('hwPushLog');
-        if (el) el.innerHTML = msg + '<br>' + el.innerHTML;
-        console.log('[push]', msg);
-    }
-
-    async function subscribe() {
-        try {
-            log('Ber om notification-permission…');
+    async function getOrCreateSubscription() {
+        var reg = await navigator.serviceWorker.ready;
+        var sub = await reg.pushManager.getSubscription();
+        if (sub) return sub;
+        // Ber om permission og oppretter ny subscription
+        if (Notification.permission !== 'granted') {
             var perm = await Notification.requestPermission();
-            if (perm !== 'granted') { log('Permission avvist'); return; }
-            log('Permission ok, registrerer subscription…');
-            var reg = await navigator.serviceWorker.ready;
-            var sub = await reg.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC),
-            });
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(sub));
-            log('Abonnert ✓');
-            // Re-bygg panel for å vise test-knapp
-            document.getElementById('hwPushTestPanel').remove();
-            buildPanel();
-        } catch (err) {
-            log('Feil: ' + err.message);
+            if (perm !== 'granted') throw new Error('PERMISSION_DENIED');
         }
+        sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC),
+        });
+        return sub;
     }
 
-    async function unsubscribe() {
-        try {
-            var reg = await navigator.serviceWorker.ready;
-            var sub = await reg.pushManager.getSubscription();
-            if (sub) await sub.unsubscribe();
-            localStorage.removeItem(STORAGE_KEY);
-            log('Avabonnert ✓');
-            document.getElementById('hwPushTestPanel').remove();
-            buildPanel();
-        } catch (err) {
-            log('Feil: ' + err.message);
+    function buildModal() {
+        var prefs = getPrefs();
+        var currentLoc = (typeof LOC !== 'undefined' && LOC) ? LOC : null;
+        if (!currentLoc) {
+            alert('Lokasjon ikke lastet ennå');
+            return;
         }
+        var locId = currentLoc.id;
+        var locArea = currentLoc.area || currentLoc.place || locId;
+        var locTriggers = prefs.triggers[locId] || [];
+        var lang = (typeof LANG !== 'undefined') ? LANG : (localStorage.getItem('lang') || 'no');
+        var isNo = lang !== 'en';
+        var T = isNo ? {
+            title: '🔔 Varsler', sub: 'for ' + locArea,
+            klekkeChange: 'Klekkedato har endret seg',
+            klekkeChangeDesc: 'Få varsel når prediksjonen flytter seg ≥ 2 dager',
+            klekkeImminent: 'Klekking starter snart',
+            klekkeImminentDesc: '1-2 dager før dual-trigger fyrer',
+            spinnerfall: 'Spinnerfall i kveld',
+            spinnerfallDesc: 'Når kveldsforholdene treffer vulgata-vinduet',
+            stokkmaur: 'Stokkmaur-vindu åpent',
+            stokkmaurDesc: 'Vær- og kalender-vinduet for stokkmaur-sverming',
+            seasonstart: 'Sesongstart',
+            seasonstartDesc: 'Når Vulgata-vinduet snart åpner',
+            save: 'Lagre', cancel: 'Avbryt', testAll: 'Test alle varsler',
+            saving: 'Lagrer…', saved: 'Lagret ✓', testing: 'Sender test-push…',
+            error: 'Feil — prøv igjen',
+            permDenied: 'Du må tillate varsler i innstillinger.',
+            footer: 'Varsler sendes daglig kl. 07-08 norsk tid når noe interessant skjer for ' + locArea + '.',
+        } : {
+            title: '🔔 Notifications', sub: 'for ' + locArea,
+            klekkeChange: 'Hatch date changed',
+            klekkeChangeDesc: 'Notify when prediction shifts ≥ 2 days',
+            klekkeImminent: 'Hatch starting soon',
+            klekkeImminentDesc: '1-2 days before dual-trigger fires',
+            spinnerfall: 'Spinner fall tonight',
+            spinnerfallDesc: 'When evening conditions match vulgata window',
+            stokkmaur: 'Carpenter ant window open',
+            stokkmaurDesc: 'Weather + calendar window for ant swarming',
+            seasonstart: 'Season start',
+            seasonstartDesc: 'When the Vulgata window is about to open',
+            save: 'Save', cancel: 'Cancel', testAll: 'Test all notifications',
+            saving: 'Saving…', saved: 'Saved ✓', testing: 'Sending test push…',
+            error: 'Error — try again',
+            permDenied: 'You need to allow notifications in settings.',
+            footer: 'Notifications sent daily 07-08 Norwegian time when something interesting happens for ' + locArea + '.',
+        };
+
+        var overlay = document.createElement('div');
+        overlay.id = 'notifModalOverlay';
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;animation:notifFadeIn 0.18s ease';
+        var modal = document.createElement('div');
+        modal.style.cssText = 'background:white;border-radius:16px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:notifSlideUp 0.22s ease';
+
+        function row(trig, label, desc) {
+            var checked = locTriggers.indexOf(trig) !== -1 ? 'checked' : '';
+            return ''
+              + '<label style="display:flex;gap:14px;padding:14px 20px;border-bottom:1px solid #eee;cursor:pointer;align-items:flex-start">'
+              + '  <input type="checkbox" data-trigger="' + trig + '" ' + checked + ' style="width:22px;height:22px;margin-top:2px;accent-color:#1B4332;cursor:pointer">'
+              + '  <div style="flex:1">'
+              + '    <div style="font-weight:600;color:#1B4332;font-size:0.96rem">' + label + '</div>'
+              + '    <div style="font-size:0.82rem;color:#666;margin-top:2px;line-height:1.4">' + desc + '</div>'
+              + '  </div>'
+              + '</label>';
+        }
+
+        modal.innerHTML =
+            '<div style="background:#1B4332;color:white;padding:18px 22px;border-radius:16px 16px 0 0">' +
+              '<div style="font-size:1.15rem;font-weight:700">' + T.title + '</div>' +
+              '<div style="font-size:0.86rem;opacity:0.78;margin-top:2px">' + T.sub + '</div>' +
+            '</div>' +
+            '<div style="padding:6px 0">' +
+              row('klekkeChange',  T.klekkeChange, T.klekkeChangeDesc) +
+              row('klekkeImminent', T.klekkeImminent, T.klekkeImminentDesc) +
+              row('spinnerfall',  T.spinnerfall,  T.spinnerfallDesc) +
+              row('stokkmaur',    T.stokkmaur,    T.stokkmaurDesc) +
+              row('seasonstart',  T.seasonstart,  T.seasonstartDesc) +
+            '</div>' +
+            '<div id="notifModalStatus" style="font-size:0.82rem;color:#666;padding:8px 22px;min-height:1.4em"></div>' +
+            '<div style="padding:14px 20px;border-top:1px solid #eee;display:flex;gap:10px;flex-wrap:wrap;align-items:center">' +
+              '<button id="notifTestAll" style="background:transparent;color:#1B4332;border:1px solid #1B4332;padding:9px 14px;border-radius:8px;cursor:pointer;font-size:0.88rem;font-weight:500">' + T.testAll + '</button>' +
+              '<div style="flex:1"></div>' +
+              '<button id="notifCancel" style="background:transparent;color:#666;border:none;padding:9px 14px;cursor:pointer;font-size:0.92rem">' + T.cancel + '</button>' +
+              '<button id="notifSave" style="background:#1B4332;color:white;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.92rem">' + T.save + '</button>' +
+            '</div>' +
+            '<div style="padding:0 20px 18px;font-size:0.76rem;color:#888;line-height:1.5">' + T.footer + '</div>';
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+
+        var style = document.createElement('style');
+        style.textContent = '@keyframes notifFadeIn { from { opacity: 0; } to { opacity: 1; } }'
+            + '@keyframes notifSlideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }';
+        document.head.appendChild(style);
+
+        function status(msg, isError) {
+            var el = document.getElementById('notifModalStatus');
+            if (el) { el.textContent = msg || ''; el.style.color = isError ? '#a02030' : '#1B7A3E'; }
+        }
+        function selectedTriggers() {
+            return Array.prototype.slice.call(modal.querySelectorAll('input[type=checkbox]:checked'))
+                .map(function(c) { return c.getAttribute('data-trigger'); });
+        }
+        function close() {
+            overlay.style.animation = 'notifFadeIn 0.15s ease reverse';
+            setTimeout(function() { overlay.remove(); }, 140);
+        }
+        overlay.addEventListener('click', function(e) { if (e.target === overlay) close(); });
+        document.getElementById('notifCancel').onclick = close;
+
+        document.getElementById('notifSave').onclick = async function() {
+            try {
+                status(T.saving);
+                var triggers = selectedTriggers();
+                if (triggers.length === 0) {
+                    // Brukeren har skrudd av alt — kall unsubscribe og lagre tomt
+                    prefs.triggers[locId] = [];
+                    savePrefs(prefs);
+                    // Hvis ingen lokasjoner har triggers, kall unsubscribe på backend
+                    var anyActive = Object.keys(prefs.triggers).some(function(k) { return prefs.triggers[k].length > 0; });
+                    if (!anyActive) {
+                        var reg = await navigator.serviceWorker.ready;
+                        var sub = await reg.pushManager.getSubscription();
+                        if (sub) {
+                            await fetch('/api/push-unsubscribe', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ endpoint: sub.endpoint }),
+                            });
+                        }
+                    } else {
+                        // Oppdater backend med oppdatert lokasjonsliste
+                        var sub2 = await getOrCreateSubscription();
+                        await fetch('/api/push-subscribe', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ subscription: sub2.toJSON(), locations: prefs.triggers, lang: lang }),
+                        });
+                    }
+                    status(T.saved);
+                    setTimeout(close, 800);
+                    return;
+                }
+                // Få (eller opprett) subscription
+                var sub = await getOrCreateSubscription();
+                prefs.triggers[locId] = triggers;
+                savePrefs(prefs);
+                var resp = await fetch('/api/push-subscribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ subscription: sub.toJSON(), locations: prefs.triggers, lang: lang }),
+                });
+                if (!resp.ok) throw new Error('Server-feil: ' + resp.status);
+                status(T.saved);
+                setTimeout(close, 800);
+            } catch (err) {
+                if (err.message === 'PERMISSION_DENIED') status(T.permDenied, true);
+                else status(T.error + ': ' + err.message, true);
+            }
+        };
+
+        document.getElementById('notifTestAll').onclick = async function() {
+            try {
+                status(T.testing);
+                var sub = await getOrCreateSubscription();
+                var triggers = selectedTriggers();
+                if (triggers.length === 0) triggers = TRIGGERS;  // hvis ingen valgt, test alle
+                for (var i = 0; i < triggers.length; i++) {
+                    await fetch('/api/push-test-trigger', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            subscription: sub.toJSON(),
+                            triggerType: triggers[i],
+                            locArea: locArea, locId: locId, lang: lang,
+                        }),
+                    });
+                    await new Promise(function(r) { setTimeout(r, 800); });  // spre ut
+                }
+                status(isNo ? 'Sendt ' + triggers.length + ' test-varsler ✓' : 'Sent ' + triggers.length + ' test notifications ✓');
+            } catch (err) {
+                if (err.message === 'PERMISSION_DENIED') status(T.permDenied, true);
+                else status(T.error + ': ' + err.message, true);
+            }
+        };
     }
 
-    async function sendTestPush() {
-        try {
-            var sub = JSON.parse(localStorage.getItem(STORAGE_KEY));
-            log('Sender test-push…');
-            var resp = await fetch('/api/push-send-test', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    subscription: sub,
-                    payload: {
-                        title: 'HatchWatch — pipeline OK 🎣',
-                        body: 'Push fungerer! Tid: ' + new Date().toLocaleTimeString('nb-NO'),
-                        url: '/dashboard.html?loc=ostmarka',
-                    },
-                }),
-            });
-            var data = await resp.json();
-            if (resp.ok) log('Sendt ✓ (' + data.statusCode + ')');
-            else log('Server-feil: ' + (data.error || resp.status));
-        } catch (err) {
-            log('Feil: ' + err.message);
+    // Knytt bjelle-knappen til modalen
+    var bell = document.getElementById('notifBellBtn');
+    if (bell) {
+        bell.addEventListener('click', buildModal);
+        // Indiker om brukeren har aktive abonnementer (gul prikk på bjelle)
+        var prefs = getPrefs();
+        var any = Object.keys(prefs.triggers).some(function(k) { return (prefs.triggers[k] || []).length > 0; });
+        if (any) {
+            bell.style.boxShadow = '0 0 0 2px #ffd789';
         }
     }
-
-    // Vent til SW er klar før vi viser panel
-    navigator.serviceWorker.ready.then(buildPanel);
 })();
 </script>
 
