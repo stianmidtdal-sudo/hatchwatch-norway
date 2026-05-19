@@ -5707,7 +5707,13 @@ function rebuildDashboard() {
     renderForecastEffectBanner(adgDate, adgDateNoForecast);
     renderThermalWTBanner(wtDate);                       // Termisk WT-modell test-banner
     renderWaterProxyBanner();                            // Waterproxy test-banner
-    renderSpinnerfallSection(eveningData, adgDate, eveningHistory);  // Spinnerfall-vakt (skjult utenfor vulgata-sesongen)
+    // Spinnerfall-vakt: bruk DUAL-TRIGGER-datoen som onset, ikke adgDate alene.
+    // Bug 2026-05-20 (Stian, Vestfjella): adgDate var 18. mai (GDD 400 nådd) mens
+    // faktisk klekking starter 25. mai (WT 13°C). Spinnerfall viste 9% den 20. mai
+    // selv om vulgata ikke har klekket ennå. Fiks: speil dual-trigger-logikken fra
+    // renderModel ved å bruke max(adgDate, wtDate) som onset.
+    const _hatchOnset = (adgDate && wtDate) ? (adgDate > wtDate ? adgDate : wtDate) : adgDate;
+    renderSpinnerfallSection(eveningData, _hatchOnset, eveningHistory);  // Spinnerfall-vakt (skjult utenfor vulgata-sesongen)
     renderWaterTempChart(wtData);                       // Graf: rå verdier fra stasjon
     renderSnowChart(snowData);
     renderIceChart(airDataCorrected, snowData);
@@ -6600,9 +6606,9 @@ if ('serviceWorker' in navigator) {
 <!-- Varsler-modal (Etappe 3b, innført 2026-05-19) ──────────────────────
      Bjelle-knapp i header åpner en modal med per-lokasjon trigger-toggles.
      Spør om Notification-permission ved første aktivering. Lagrer subscription
-     + preferanser via /api/push-subscribe i Upstash Redis.
+     + preferanser via /api/push?action=subscribe i Upstash Redis.
      "Test alle"-knapp sender én test-push per trigger-type via
-     /api/push-test-trigger så bruker ser hvordan hver type ser ut. -->
+     /api/push?action=test-trigger så bruker ser hvordan hver type ser ut. -->
 <script>
 (function setupNotifSettings() {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -6772,7 +6778,7 @@ if ('serviceWorker' in navigator) {
                         var reg = await navigator.serviceWorker.ready;
                         var sub = await reg.pushManager.getSubscription();
                         if (sub) {
-                            await fetch('/api/push-unsubscribe', {
+                            await fetch('/api/push?action=unsubscribe', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ endpoint: sub.endpoint }),
@@ -6781,7 +6787,7 @@ if ('serviceWorker' in navigator) {
                     } else {
                         // Oppdater backend med oppdatert lokasjonsliste
                         var sub2 = await getOrCreateSubscription();
-                        await fetch('/api/push-subscribe', {
+                        await fetch('/api/push?action=subscribe', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ subscription: sub2.toJSON(), locations: prefs.triggers, lang: lang }),
@@ -6795,7 +6801,7 @@ if ('serviceWorker' in navigator) {
                 var sub = await getOrCreateSubscription();
                 prefs.triggers[locId] = triggers;
                 savePrefs(prefs);
-                var resp = await fetch('/api/push-subscribe', {
+                var resp = await fetch('/api/push?action=subscribe', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ subscription: sub.toJSON(), locations: prefs.triggers, lang: lang }),
@@ -6816,7 +6822,7 @@ if ('serviceWorker' in navigator) {
                 var triggers = selectedTriggers();
                 if (triggers.length === 0) triggers = TRIGGERS;  // hvis ingen valgt, test alle
                 for (var i = 0; i < triggers.length; i++) {
-                    await fetch('/api/push-test-trigger', {
+                    await fetch('/api/push?action=test-trigger', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
