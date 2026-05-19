@@ -58,7 +58,9 @@
         header {
             background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%);
             color: white;
-            padding: 16px 28px;
+            /* padding-top respekterer iOS safe-area så header ikke gjemmer seg
+               bak status-bar (klokke, batteri, wifi) i installert PWA. */
+            padding: max(16px, calc(env(safe-area-inset-top, 0px) + 12px)) 28px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -82,6 +84,8 @@
         }
         header .back-link:hover { color: white; }
         header .updated { font-size: 0.78rem; opacity: 0.65; text-align: right; line-height: 1.6; }
+        #hwMenuBtn:hover, #hwMenuBtn:active { background: rgba(255,255,255,0.22) !important; }
+        .hw-menu-item:hover, .hw-menu-item:active { background: #f0f5f0 !important; }
 
         .container { max-width: 1180px; margin: 0 auto; padding: 20px 14px; }
 
@@ -518,10 +522,22 @@
             <div class="sub" id="headerSub">Loading…</div>
         </div>
     </div>
-    <div style="display:flex;align-items:center;gap:14px">
+    <div style="display:flex;align-items:center;gap:14px;position:relative">
         <div class="updated" id="lastUpdated">Loading…</div>
-        <button id="notifBellBtn" type="button" aria-label="Varsler" title="Varsler" style="background:rgba(255,255,255,0.12);color:white;border:none;width:38px;height:38px;border-radius:50%;cursor:pointer;font-size:1.05rem;display:flex;align-items:center;justify-content:center;transition:background 0.15s">🔔</button>
+        <button id="hwMenuBtn" type="button" aria-label="Meny" title="Meny" style="background:rgba(255,255,255,0.12);color:white;border:none;width:40px;height:40px;border-radius:8px;cursor:pointer;font-size:1.2rem;display:flex;align-items:center;justify-content:center;transition:background 0.15s;line-height:1">☰</button>
         <button id="langBtn" class="lang-btn" onclick="toggleLang()">EN</button>
+        <!-- Dropdown-meny, vises ved klikk på hamburger -->
+        <div id="hwMenuDropdown" style="display:none;position:absolute;top:100%;right:0;margin-top:8px;background:white;color:#1B4332;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,0.25);min-width:220px;z-index:9998;overflow:hidden">
+            <button class="hw-menu-item" data-action="notif" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#1B4332;border-bottom:1px solid #eee">
+                <span style="font-size:1.15rem">🔔</span><span id="hwMenuNotif">Varsler</span>
+            </button>
+            <button class="hw-menu-item" data-action="about" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#1B4332;border-bottom:1px solid #eee">
+                <span style="font-size:1.15rem">ℹ️</span><span id="hwMenuAbout">Om HatchWatch</span>
+            </button>
+            <button class="hw-menu-item" data-action="feedback" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#1B4332">
+                <span style="font-size:1.15rem">📝</span><span id="hwMenuFeedback">Send tilbakemelding</span>
+            </button>
+        </div>
     </div>
 </header>
 
@@ -6807,16 +6823,143 @@ if ('serviceWorker' in navigator) {
         };
     }
 
-    // Knytt bjelle-knappen til modalen
-    var bell = document.getElementById('notifBellBtn');
-    if (bell) {
-        bell.addEventListener('click', buildModal);
-        // Indiker om brukeren har aktive abonnementer (gul prikk på bjelle)
+    // Eksporter buildModal slik at hamburger-menyen kan kalle den
+    window.hwOpenNotifModal = buildModal;
+
+    // Indiker om brukeren har aktive abonnementer (gul prikk på hamburger-knappen)
+    var menuBtn = document.getElementById('hwMenuBtn');
+    if (menuBtn) {
         var prefs = getPrefs();
         var any = Object.keys(prefs.triggers).some(function(k) { return (prefs.triggers[k] || []).length > 0; });
         if (any) {
-            bell.style.boxShadow = '0 0 0 2px #ffd789';
+            menuBtn.style.boxShadow = '0 0 0 2px #ffd789';
         }
+    }
+})();
+
+// ── Hamburger-meny + Om HatchWatch-modal (innført 2026-05-20) ──────────
+(function setupMenu() {
+    var btn = document.getElementById('hwMenuBtn');
+    var dropdown = document.getElementById('hwMenuDropdown');
+    if (!btn || !dropdown) return;
+
+    function openMenu() {
+        dropdown.style.display = 'block';
+        setTimeout(function() {
+            document.addEventListener('click', closeOnOutside, { capture: true });
+        }, 0);
+    }
+    function closeMenu() {
+        dropdown.style.display = 'none';
+        document.removeEventListener('click', closeOnOutside, { capture: true });
+    }
+    function closeOnOutside(e) {
+        if (!dropdown.contains(e.target) && e.target !== btn) closeMenu();
+    }
+    btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (dropdown.style.display === 'block') closeMenu();
+        else openMenu();
+    });
+
+    // i18n for meny-tekster
+    function applyMenuLang() {
+        var lang = (typeof LANG !== 'undefined') ? LANG : (localStorage.getItem('lang') || 'no');
+        var isNo = lang !== 'en';
+        var notifEl = document.getElementById('hwMenuNotif');
+        var aboutEl = document.getElementById('hwMenuAbout');
+        var fbEl = document.getElementById('hwMenuFeedback');
+        if (notifEl) notifEl.textContent = isNo ? 'Varsler' : 'Notifications';
+        if (aboutEl) aboutEl.textContent = isNo ? 'Om HatchWatch' : 'About HatchWatch';
+        if (fbEl) fbEl.textContent = isNo ? 'Send tilbakemelding' : 'Submit feedback';
+        btn.setAttribute('aria-label', isNo ? 'Meny' : 'Menu');
+        btn.setAttribute('title', isNo ? 'Meny' : 'Menu');
+    }
+    applyMenuLang();
+
+    // Klikk-handlere på meny-items
+    dropdown.querySelectorAll('.hw-menu-item').forEach(function(item) {
+        item.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var action = item.getAttribute('data-action');
+            closeMenu();
+            if (action === 'notif' && typeof window.hwOpenNotifModal === 'function') {
+                window.hwOpenNotifModal();
+            } else if (action === 'about') {
+                openAboutModal();
+            } else if (action === 'feedback') {
+                // Bruk den eksisterende Tally-popupen
+                if (typeof openHatchForm === 'function') openHatchForm('EkBErN');
+                else if (window.Tally) Tally.openPopup('EkBErN');
+            }
+        });
+    });
+
+    function openAboutModal() {
+        var lang = (typeof LANG !== 'undefined') ? LANG : (localStorage.getItem('lang') || 'no');
+        var isNo = lang !== 'en';
+        var T = isNo ? {
+            title: 'Om HatchWatch',
+            tagline: 'Klekkeprognose for fluefiskere',
+            body: 'HatchWatch er en åpen prediksjonsmodell for klekking av døgnfluer i norske vassdrag. Modellen kombinerer luft- og vanntemperatur-historikk, isgang-observasjoner og kalibrerte terskler per lokasjon for å estimere når klekkingen starter.',
+            sources: 'Datakilder',
+            sourceMet: 'MET Norge (Frost API) — luft- og snødata',
+            sourceNve: 'NVE (HydAPI) — vanntemperatur og vannføring',
+            sourceSentinel: 'Sentinel Hub — isgang-observasjoner',
+            sourceOfa: 'OFA (Oslomarka Fiskeadministrasjon) — kalibreringsdata for Nordmarka',
+            credits: 'Bygget av',
+            creditsBy: 'Stian Midtdal',
+            disclaimer: 'Modellen er en hjelpemiddel, ikke en fasit. Klekking varierer fra lokasjon til lokasjon og fra år til år. Bidra med observasjoner via tilbakemeldingsskjemaet — hver observasjon gjør modellen bedre.',
+            close: 'Lukk',
+        } : {
+            title: 'About HatchWatch',
+            tagline: 'Mayfly hatch forecast for fly fishers',
+            body: 'HatchWatch is an open prediction model for mayfly hatches in Norwegian waters. The model combines air and water temperature history, ice-out observations, and per-location calibrated thresholds to estimate when hatching starts.',
+            sources: 'Data sources',
+            sourceMet: 'MET Norway (Frost API) — air and snow data',
+            sourceNve: 'NVE (HydAPI) — water temperature and flow',
+            sourceSentinel: 'Sentinel Hub — ice-out observations',
+            sourceOfa: 'OFA (Oslomarka Fish Authority) — calibration data for Nordmarka',
+            credits: 'Built by',
+            creditsBy: 'Stian Midtdal',
+            disclaimer: 'The model is a guide, not a guarantee. Hatching varies by location and year. Contribute observations via the feedback form — every observation makes the model better.',
+            close: 'Close',
+        };
+
+        var overlay = document.createElement('div');
+        overlay.id = 'hwAboutOverlay';
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;animation:notifFadeIn 0.18s ease';
+        var modal = document.createElement('div');
+        modal.style.cssText = 'background:white;border-radius:16px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:notifSlideUp 0.22s ease';
+        modal.innerHTML =
+            '<div style="background:#1B4332;color:white;padding:20px 22px;border-radius:16px 16px 0 0">' +
+              '<div style="font-size:1.18rem;font-weight:700">' + T.title + '</div>' +
+              '<div style="font-size:0.88rem;opacity:0.78;margin-top:3px">' + T.tagline + '</div>' +
+            '</div>' +
+            '<div style="padding:18px 22px;font-size:0.92rem;line-height:1.55;color:#222">' +
+              '<p style="margin:0 0 16px">' + T.body + '</p>' +
+              '<div style="font-weight:700;color:#1B4332;font-size:0.84rem;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:8px">' + T.sources + '</div>' +
+              '<ul style="margin:0 0 16px;padding-left:20px;color:#444">' +
+                '<li style="margin-bottom:4px">' + T.sourceMet + '</li>' +
+                '<li style="margin-bottom:4px">' + T.sourceNve + '</li>' +
+                '<li style="margin-bottom:4px">' + T.sourceSentinel + '</li>' +
+                '<li style="margin-bottom:4px">' + T.sourceOfa + '</li>' +
+              '</ul>' +
+              '<div style="font-weight:700;color:#1B4332;font-size:0.84rem;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:6px">' + T.credits + '</div>' +
+              '<p style="margin:0 0 16px;color:#444">' + T.creditsBy + '</p>' +
+              '<p style="margin:0;font-size:0.85rem;color:#666;padding:12px 14px;background:#f5f3ec;border-radius:8px;line-height:1.55">' + T.disclaimer + '</p>' +
+            '</div>' +
+            '<div style="padding:14px 20px;border-top:1px solid #eee;display:flex;justify-content:flex-end">' +
+              '<button id="hwAboutClose" style="background:#1B4332;color:white;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.92rem">' + T.close + '</button>' +
+            '</div>';
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+        function close() {
+            overlay.style.animation = 'notifFadeIn 0.15s ease reverse';
+            setTimeout(function() { overlay.remove(); }, 140);
+        }
+        overlay.addEventListener('click', function(e) { if (e.target === overlay) close(); });
+        document.getElementById('hwAboutClose').onclick = close;
     }
 })();
 </script>
