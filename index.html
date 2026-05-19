@@ -80,7 +80,9 @@
 
         /* ── Hero ────────────────────────────────────── */
         .hero {
-            padding: 56px 48px 36px;
+            /* padding-top respekterer iOS safe-area så headeren ikke gjemmer seg
+               bak status-bar (klokke, batteri, wifi) i installert PWA. */
+            padding: max(56px, calc(env(safe-area-inset-top, 0px) + 40px)) 48px 36px;
             max-width: 860px;
         }
         .hero .tag {
@@ -267,8 +269,8 @@
 
         /* ── Responsive ──────────────────────────────── */
         @media (max-width: 600px) {
-            nav { padding: 14px 20px; }
-            .hero { padding: 36px 20px 24px; }
+            nav { padding: max(14px, calc(env(safe-area-inset-top, 0px) + 10px)) 20px 14px; }
+            .hero { padding: max(36px, calc(env(safe-area-inset-top, 0px) + 20px)) 20px 24px; }
             .hero h1 { font-size: 32px; }
             .cards { padding: 0 20px 40px; }
             .how { padding: 36px 20px; }
