@@ -1788,9 +1788,17 @@ const LOCATIONS = {
         // varmere enn Enebakk-området. Default-parametere (GDD 520 + WT 12) ga senere
         // klekking enn Østmarka — biologisk feil retning. Stians lokal-erfaring tilsier
         // at Vestfjella er minst like tidlig som Østmarka. Holder usikkerhet litt høyere
-        // (6 d vs Østmarka 3,8 d) fordi vi ikke har egne obs til å validere mot.
+        // (6 d vs Østmarka 4,3 d) fordi vi ikke har egne obs til å validere mot.
+        //
+        // 2026-05-14 (arvet fra Østmarka-rekalibrering): WT 14 → 13. Bakgrunn:
+        // gap-analyse på Østmarka viste at WT 14 °C fyrer ~5-6 d etter GDD 400 i
+        // typiske år, som skapte kunstig hopp i konvergensgrafen og inkonsistente
+        // Sesongbarometer-narrativer. WT 13 °C gir gap ≈ 0 (balansert kalibrering).
+        // Vestfjella bruker SAMME underlying WT-data (waterProxy fra Mønevann + airDelta),
+        // så samme balansering gjelder strukturelt her også. Ingen obs å validere mot,
+        // men endringen er logisk konsistent med Østmarka-arven.
         gddThreshold: 400,
-        wtThreshold: 14,
+        wtThreshold: 13,
         uncertaintyDays: 6.0,
         // Merk: bruker internt id 'vestfjella' (samme nøkkel som gammel Østfold-entry).
         // Tidligere bookmarks til ?loc=vestfjella vil nå lande her, på Halden/Ørje-området,
