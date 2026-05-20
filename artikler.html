@@ -14,176 +14,236 @@
         * { box-sizing: border-box; }
         html, body {
             margin: 0; padding: 0;
-            background: #f5f3ec;
+            background: #ffffff;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             color: #1d1d1f;
             -webkit-font-smoothing: antialiased;
             text-size-adjust: 100%;
             -webkit-text-size-adjust: 100%;
         }
-        body {
-            min-height: 100vh;
-            min-height: 100dvh;
-        }
+        body { min-height: 100vh; min-height: 100dvh; }
+
         nav {
-            background: #1B4332;
-            color: white;
+            background: #1B4332; color: white;
             padding-top: calc(env(safe-area-inset-top, 0px) + 16px);
             padding-bottom: 14px;
             padding-left: calc(env(safe-area-inset-left, 0px) + 18px);
             padding-right: calc(env(safe-area-inset-right, 0px) + 112px);
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            position: relative; display: flex; align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
         }
         .nav-left { display: flex; align-items: center; }
         .logo-img { height: 36px; width: 36px; margin-right: 10px; }
         .logo-text { font-weight: 700; letter-spacing: 1.5px; font-size: 0.92rem; }
         .logo-sub { font-size: 0.7rem; opacity: 0.7; letter-spacing: 0.5px; }
         .header-controls {
-            position: absolute;
-            top: calc(env(safe-area-inset-top, 0px) + 14px);
+            position: absolute; top: calc(env(safe-area-inset-top, 0px) + 14px);
             right: calc(env(safe-area-inset-right, 0px) + 16px);
             display: flex; align-items: center; gap: 8px; z-index: 20;
         }
         #hwMenuBtn {
             background: rgba(255,255,255,0.12); color: white; border: none;
-            width: 40px; height: 40px; border-radius: 8px; cursor: pointer;
+            width: 40px; height: 40px; border-radius: 0; cursor: pointer;
             font-size: 1.2rem; display: flex; align-items: center; justify-content: center;
             transition: background 0.15s; line-height: 1;
         }
-        #hwMenuBtn:hover, #hwMenuBtn:active { background: rgba(255,255,255,0.22) !important; }
+        #hwMenuBtn:hover { background: rgba(255,255,255,0.22); }
         #hwMenuDropdown {
             display: none; position: absolute; top: 100%; right: 0; margin-top: 8px;
-            background: white; color: #1B4332; border-radius: 10px;
+            background: white; color: #1B4332;
             box-shadow: 0 8px 32px rgba(0,0,0,0.18); min-width: 220px; z-index: 9998;
             overflow: hidden; border: 1px solid rgba(0,0,0,0.06);
         }
         .hw-menu-item {
             display: block; width: 100%; text-align: left; background: none; border: none;
             padding: 14px 18px; cursor: pointer; font-size: 0.94rem; color: #1B4332;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid #eee; text-decoration: none;
         }
         .hw-menu-item:last-child { border-bottom: none; }
-        .hw-menu-item:hover, .hw-menu-item:active { background: #f0f5f0 !important; }
-        a.back-link {
-            color: rgba(255,255,255,0.85); text-decoration: none; font-size: 0.82rem;
-            display: inline-flex; align-items: center; gap: 6px;
-        }
-        a.back-link:hover { color: white; }
+        .hw-menu-item:hover { background: #f0f5f0; }
 
-        /* Article catalog */
         main {
-            max-width: 800px; margin: 0 auto;
-            padding: 28px 18px 80px;
+            max-width: 1180px; margin: 0 auto;
+            padding: 36px 32px 80px;
             padding-bottom: max(80px, env(safe-area-inset-bottom, 0px) + 60px);
         }
-        .intro {
-            background: white; border-radius: 14px; padding: 22px 24px;
-            margin-bottom: 24px; box-shadow: 0 2px 14px rgba(0,0,0,0.04);
+
+        /* INTRO */
+        .intro-title {
+            font-size: 2.2rem; font-weight: 700; color: #1B4332; margin: 0 0 6px;
+            letter-spacing: -0.5px;
         }
-        .intro h1 {
-            margin: 0 0 8px; font-size: 1.45rem; color: #1B4332; font-weight: 700;
-        }
-        .intro p {
-            margin: 0; color: #444; line-height: 1.65; font-size: 0.96rem;
+        .intro-tagline {
+            color: #555; font-size: 1.02rem; margin: 0 0 36px; max-width: 640px;
+            line-height: 1.55;
         }
 
-        .article-grid {
-            display: grid; grid-template-columns: 1fr; gap: 14px;
+        /* HERO ROW — 3 kolonner: small | LARGE | small */
+        .hero-row {
+            display: grid; grid-template-columns: 1fr 2.2fr 1fr; gap: 32px;
+            margin-bottom: 48px;
         }
-        @media (min-width: 640px) {
-            .article-grid { grid-template-columns: 1fr 1fr; }
+        @media (max-width: 900px) {
+            .hero-row { grid-template-columns: 1fr; gap: 36px; }
         }
+
         .article-card {
-            background: white; border-radius: 14px; padding: 20px 22px;
-            cursor: pointer; transition: transform 0.15s, box-shadow 0.2s;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            border: 1px solid rgba(0,0,0,0.04);
+            cursor: pointer; transition: opacity 0.15s;
         }
-        .article-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+        .article-card:hover { opacity: 0.85; }
+        .article-card .img-wrap {
+            width: 100%; aspect-ratio: 16/10; overflow: hidden; background: #f0f0f0;
+            margin-bottom: 14px;
+        }
+        .article-card.feature .img-wrap {
+            aspect-ratio: 16/10;
+        }
+        .article-card .img-wrap img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+        }
         .article-card .topic {
-            font-size: 0.7rem; color: #1B4332; text-transform: uppercase; letter-spacing: 1.2px;
+            font-size: 0.7rem; color: #1B4332; text-transform: uppercase; letter-spacing: 1.5px;
             font-weight: 700; margin-bottom: 8px;
         }
         .article-card h3 {
-            margin: 0 0 8px; font-size: 1.08rem; color: #1d1d1f; font-weight: 700;
-            line-height: 1.35;
-        }
-        .article-card p {
-            margin: 0; color: #555; font-size: 0.88rem; line-height: 1.55;
-        }
-        .article-card .meta {
-            margin-top: 12px; font-size: 0.78rem; color: #888;
-        }
-
-        /* Article reading view */
-        article.reading {
-            background: white; border-radius: 14px; padding: 28px 28px 36px;
-            box-shadow: 0 2px 14px rgba(0,0,0,0.05);
-            line-height: 1.7;
-        }
-        article.reading .topic {
-            font-size: 0.72rem; color: #1B4332; text-transform: uppercase; letter-spacing: 1.5px;
-            font-weight: 700; margin-bottom: 10px;
-        }
-        article.reading h1 {
-            margin: 0 0 6px; font-size: 1.55rem; color: #1B4332; font-weight: 700;
+            margin: 0 0 10px; font-size: 1.04rem; color: #1d1d1f; font-weight: 700;
             line-height: 1.3;
         }
-        article.reading .lead {
-            color: #555; font-style: italic; font-size: 1rem; margin: 0 0 20px;
-            padding-bottom: 18px; border-bottom: 1px solid #eee;
+        .article-card.feature h3 {
+            font-size: 1.85rem; line-height: 1.2; letter-spacing: -0.3px; margin-bottom: 14px;
         }
-        article.reading h2 {
-            margin: 26px 0 10px; font-size: 1.15rem; color: #1B4332; font-weight: 700;
+        @media (max-width: 700px) {
+            .article-card.feature h3 { font-size: 1.5rem; }
         }
-        article.reading h3 {
-            margin: 20px 0 8px; font-size: 1rem; color: #1B4332; font-weight: 600;
+        .article-card p {
+            margin: 0 0 10px; color: #555; font-size: 0.88rem; line-height: 1.55;
         }
-        article.reading p { margin: 0 0 14px; color: #2a2a2a; font-size: 0.98rem; }
-        article.reading b, article.reading strong { color: #1B4332; }
-        article.reading em { font-style: italic; }
-        article.reading ul, article.reading ol { margin: 0 0 14px; padding-left: 22px; color: #2a2a2a; }
-        article.reading li { margin-bottom: 6px; line-height: 1.6; }
-        article.reading .factbox {
-            background: #f5f3ec; border-left: 4px solid #1B4332;
-            padding: 14px 16px; margin: 18px 0; border-radius: 0 8px 8px 0;
-            font-size: 0.92rem; line-height: 1.6;
+        .article-card.feature p {
+            font-size: 0.98rem; line-height: 1.6; color: #444;
         }
-        article.reading .factbox b { display: block; margin-bottom: 6px; color: #1B4332; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1px; }
-        article.reading .pullquote {
-            font-family: Georgia, serif; font-style: italic; font-size: 1.15rem;
-            color: #1B4332; margin: 22px 8px; padding: 0 16px;
-            border-left: 3px solid #1B4332; line-height: 1.5;
+        .article-card .read-link {
+            font-size: 0.78rem; color: #1B4332; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 1px;
+            border-top: 1px solid #ddd; padding-top: 10px; margin-top: 4px;
         }
-        article.reading .source-note {
-            font-size: 0.82rem; color: #777; margin-top: 24px; padding-top: 16px;
-            border-top: 1px solid #eee; line-height: 1.55;
-        }
-        article.reading .source-note b { color: #555; }
 
-        .back-to-list {
-            background: transparent; color: #1B4332; border: 1px solid #1B4332;
-            padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 0.9rem;
-            font-weight: 500; margin-bottom: 16px; display: inline-flex; align-items: center; gap: 6px;
+        /* GRID ROWS — 3 kolonner */
+        .article-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px;
+            margin-bottom: 48px;
         }
-        .back-to-list:hover { background: #f0f5f0; }
+        @media (max-width: 900px) {
+            .article-grid { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 600px) {
+            .article-grid { grid-template-columns: 1fr; }
+        }
 
-        /* Hidden by default — JS toggles visibility */
+        /* PULL QUOTE */
+        .pullquote-block {
+            margin: 24px 0 48px; padding: 32px 8px;
+            border-top: 1px solid #1B4332; border-bottom: 1px solid #1B4332;
+            text-align: center;
+        }
+        .pullquote-block .quote {
+            font-family: Georgia, 'Times New Roman', serif;
+            font-style: italic; font-size: 1.65rem; color: #1B4332;
+            line-height: 1.4; max-width: 760px; margin: 0 auto 10px;
+            letter-spacing: -0.2px;
+        }
+        @media (max-width: 700px) {
+            .pullquote-block .quote { font-size: 1.3rem; }
+        }
+        .pullquote-block .attribution {
+            font-size: 0.78rem; color: #1B4332; text-transform: uppercase;
+            letter-spacing: 1.5px; font-weight: 600;
+        }
+
+        /* ARTIKKEL-LESEMODUS */
         article.reading { display: none; }
         article.reading.active { display: block; }
         .article-list-wrap { display: block; }
         .article-list-wrap.hidden { display: none; }
 
-        @media (max-width: 480px) {
-            .nav-left .logo-text { font-size: 0.84rem; }
-            main { padding: 20px 14px 60px; }
-            article.reading { padding: 22px 20px 28px; }
-            article.reading h1 { font-size: 1.35rem; }
-            .intro { padding: 18px 20px; }
+        .back-to-list {
+            background: transparent; color: #1B4332; border: 1px solid #1B4332;
+            padding: 10px 18px; cursor: pointer; font-size: 0.84rem;
+            font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
+            margin-bottom: 24px; display: inline-flex; align-items: center; gap: 8px;
+        }
+        .back-to-list:hover { background: #f0f5f0; }
+
+        article.reading {
+            max-width: 720px; margin: 0 auto;
+            line-height: 1.75;
+        }
+        article.reading .hero-img {
+            width: 100vw; max-width: 1180px; margin-left: 50%; transform: translateX(-50%);
+            aspect-ratio: 16/9; overflow: hidden; margin-bottom: 28px;
+        }
+        article.reading .hero-img img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+        }
+        article.reading .topic {
+            font-size: 0.72rem; color: #1B4332; text-transform: uppercase; letter-spacing: 1.5px;
+            font-weight: 700; margin-bottom: 12px;
+        }
+        article.reading h1 {
+            margin: 0 0 12px; font-size: 2rem; color: #1B4332; font-weight: 700;
+            line-height: 1.2; letter-spacing: -0.3px;
+        }
+        @media (max-width: 600px) {
+            article.reading h1 { font-size: 1.55rem; }
+        }
+        article.reading .lead {
+            color: #444; font-style: italic; font-size: 1.1rem; margin: 0 0 28px;
+            padding-bottom: 24px; border-bottom: 1px solid #ddd; line-height: 1.55;
+        }
+        article.reading h2 {
+            margin: 32px 0 12px; font-size: 1.25rem; color: #1B4332; font-weight: 700;
+            letter-spacing: -0.2px;
+        }
+        article.reading h3 {
+            margin: 22px 0 8px; font-size: 1rem; color: #1B4332; font-weight: 600;
+        }
+        article.reading p { margin: 0 0 16px; color: #2a2a2a; font-size: 1rem; }
+        article.reading b, article.reading strong { color: #1B4332; }
+        article.reading em { font-style: italic; }
+        article.reading ul, article.reading ol { margin: 0 0 16px; padding-left: 24px; color: #2a2a2a; line-height: 1.65; }
+        article.reading li { margin-bottom: 8px; }
+        article.reading .factbox {
+            background: #f5f3ec; border-left: 4px solid #1B4332;
+            padding: 16px 18px; margin: 22px 0;
+            font-size: 0.96rem; line-height: 1.65;
+        }
+        article.reading .factbox b {
+            display: block; margin-bottom: 6px; color: #1B4332;
+            font-size: 0.74rem; text-transform: uppercase; letter-spacing: 1px;
+        }
+        article.reading .pullquote {
+            font-family: Georgia, serif; font-style: italic; font-size: 1.25rem;
+            color: #1B4332; margin: 28px 0; padding: 0 24px;
+            border-left: 3px solid #1B4332; line-height: 1.5;
+        }
+        article.reading .mid-img {
+            margin: 28px 0; width: 100%;
+        }
+        article.reading .mid-img img {
+            width: 100%; display: block;
+        }
+        article.reading .mid-img figcaption {
+            font-size: 0.84rem; color: #777; font-style: italic;
+            margin-top: 8px; line-height: 1.5;
+        }
+        article.reading .source-note {
+            font-size: 0.86rem; color: #777; margin-top: 32px; padding-top: 18px;
+            border-top: 1px solid #ddd; line-height: 1.6;
+        }
+        article.reading .source-note b { color: #555; }
+
+        @media (max-width: 900px) {
+            main { padding: 28px 20px 60px; }
+            article.reading .hero-img { aspect-ratio: 4/3; }
         }
     </style>
 </head>
@@ -202,24 +262,98 @@
     <div class="header-controls">
         <button id="hwMenuBtn" type="button" aria-label="Meny" title="Meny">☰</button>
         <div id="hwMenuDropdown">
-            <a href="/" class="hw-menu-item" style="text-decoration:none;display:block;">Forside</a>
-            <button class="hw-menu-item" data-action="notif">Varsler</button>
-            <button class="hw-menu-item" data-action="about">Om HatchWatch</button>
-            <button class="hw-menu-item" data-action="feedback">Send tilbakemelding</button>
+            <a href="/" class="hw-menu-item">Forside</a>
+            <a href="/varsler.html" class="hw-menu-item">Varsler</a>
+            <a href="/om.html" class="hw-menu-item">Om HatchWatch</a>
+            <a href="https://tally.so/r/VLvGQE" class="hw-menu-item" target="_blank" rel="noopener">Send tilbakemelding</a>
         </div>
     </div>
 </nav>
 
 <main>
 
-<!-- ═══ ARTIKKEL-OVERSIKT ═══ -->
+<!-- ═══ ARTIKKEL-OVERSIKT (magasin-layout) ═══ -->
 <div class="article-list-wrap" id="articleListWrap">
-    <div class="intro">
-        <h1>Artikler</h1>
-        <p>Faglig påfyll for fluefiskere som vil grave dypere. Skrevet med tanke på dem som allerede kjenner forskjellen mellom dun og spinner, og som vil forstå hva som faktisk driver klekkingene de jakter.</p>
+    <h1 class="intro-title">Artikler</h1>
+    <p class="intro-tagline">Faglig påfyll for fluefiskere som vil grave dypere. Skrevet med tanke på dem som allerede kjenner forskjellen mellom dun og spinner, og som vil forstå hva som faktisk driver klekkingene de jakter.</p>
+
+    <!-- HERO ROW -->
+    <div class="hero-row">
+        <div class="article-card" data-id="klekkinger">
+            <div class="img-wrap"><img src="/article-images/klekkinger.jpg" alt="Bredelv med skyer"></div>
+            <div class="topic">Generelt · Biologi</div>
+            <h3>Døgnflueklekkinger — varmesum og biologi</h3>
+            <p>Hvorfor klekker det noen ganger ikke før i juli i Nordmarka, mens Østmarka allerede er ferdig?</p>
+            <div class="read-link">Les artikkelen →</div>
+        </div>
+
+        <div class="article-card feature" data-id="vulgata">
+            <div class="img-wrap"><img src="/article-images/vulgata.jpg" alt="Vulgata på finger"></div>
+            <div class="topic">Døgnflue · Stillevann</div>
+            <h3>Ephemera vulgata — norges største stillevannsdøgnflue</h3>
+            <p>Den er så stor at du ikke kan ta feil av den. Når vulgataspinnerne dropper på en stille junikveld, slår selv de feigeste storfiskene over i overflaten. Her er biologien bak en av norsk fluefiskes mest etterlengtede hendelser.</p>
+            <div class="read-link">Les artikkelen →</div>
+        </div>
+
+        <div class="article-card" data-id="spinnerfall">
+            <div class="img-wrap"><img src="/article-images/spinnerfall.jpg" alt="Kajakk i solnedgang"></div>
+            <div class="topic">Generelt · Spinnerfall</div>
+            <h3>Spinnerfall — paringens siste akt</h3>
+            <p>Det biologiske øyeblikket hvor en hel generasjon døgnfluer dør på samme overflate — og fisken vet det.</p>
+            <div class="read-link">Les artikkelen →</div>
+        </div>
     </div>
-    <div class="article-grid" id="articleGrid">
-        <!-- Cards rendered by JS -->
+
+    <!-- ROW 2 -->
+    <div class="article-grid">
+        <div class="article-card" data-id="marginata">
+            <div class="img-wrap"><img src="/article-images/marginata.jpg" alt="Skogstjern"></div>
+            <div class="topic">Døgnflue · Stillevann</div>
+            <h3>Leptophlebia marginata — den brune skogsdøgnflua</h3>
+            <p>Hun er ikke spektakulær som vulgata, men ofte førstemann ut. Klekker tidlig, og lenge.</p>
+            <div class="read-link">Les artikkelen →</div>
+        </div>
+
+        <div class="article-card" data-id="vespertina">
+            <div class="img-wrap"><img src="/article-images/vespertina.jpg" alt="Elv i kveldslys"></div>
+            <div class="topic">Døgnflue · Stillevann</div>
+            <h3>Leptophlebia vespertina — søsteren som klekker sent</h3>
+            <p>Marginata sin ettermiddagsversjon. Nøkkelen til mai- og junikvelder mange overser.</p>
+            <div class="read-link">Les artikkelen →</div>
+        </div>
+
+        <div class="article-card" data-id="stokkmaur">
+            <div class="img-wrap"><img src="/article-images/stokkmaur.jpg" alt="Reinsdyrgevir i bjørketre"></div>
+            <div class="topic">Maur · Bonanza</div>
+            <h3>Stokkmaur — fluefiskerens sjeldenheter</h3>
+            <p>Når stokkmaurkolonien svermes, går selv de mest forsiktige storfiskene av hengslene.</p>
+            <div class="read-link">Les artikkelen →</div>
+        </div>
+    </div>
+
+    <!-- PULL QUOTE -->
+    <div class="pullquote-block">
+        <div class="quote">«I overgangstimene til sommernatten vet alle innsjøens fiskearter hva som skjer.»</div>
+        <div class="attribution">Lars Nilssen — om vulgata-spinnerfallet</div>
+    </div>
+
+    <!-- ROW 3 -->
+    <div class="article-grid">
+        <div class="article-card" data-id="maursverming">
+            <div class="img-wrap"><img src="/article-images/maursverming.jpg" alt="Bål ved skogstjern"></div>
+            <div class="topic">Maur · Bonus</div>
+            <h3>Maursverming generelt — flygende maur i fluefiske</h3>
+            <p>Stokkmaur er den dramatiske, men ikke den eneste. Lasius, Formica, Myrmica — og når de fyrer.</p>
+            <div class="read-link">Les artikkelen →</div>
+        </div>
+
+        <div class="article-card" data-id="kronologi">
+            <div class="img-wrap"><img src="/article-images/kronologi.jpg" alt="Myrvei sen kveld"></div>
+            <div class="topic">Generelt · Bonus</div>
+            <h3>Klekkerekken gjennom året — en kronologi</h3>
+            <p>Den norske stillevannsesongen som en sammenhengende kalender, fra første vårklekking til siste maursverming.</p>
+            <div class="read-link">Les artikkelen →</div>
+        </div>
     </div>
 </div>
 
@@ -228,6 +362,7 @@
 <button class="back-to-list" id="backToList" style="display:none">← Tilbake til oversikt</button>
 
 <article class="reading" id="art-vulgata">
+    <div class="hero-img"><img src="/article-images/vulgata.jpg" alt="Vulgata på finger"></div>
     <div class="topic">Døgnflue · Stillevann</div>
     <h1>Ephemera vulgata — norges største stillevannsdøgnflue</h1>
     <p class="lead">Den er så stor at du ikke kan ta feil av den. Når vulgataspinnerne dropper på en stille junikveld, slår selv de feigeste storfiskene over i overflaten. Her er biologien bak en av norsk fluefiskes mest etterlengtede hendelser.</p>
@@ -249,6 +384,11 @@
     <p>Vulgata-klekkingene har en kjernetid mellom klokken 10:00 og 16:00, og den varer lenge sammenlignet med andre døgnfluer. Dette er det som gjør vulgatafisket berømt frustrerende: de store dunene blir ofte stående i timevis på overflaten uten at fisken viser interesse. Når 50 dun ligger og driver, men ingen vaker, er det fordi konsentrasjonen er for lav til å trigge målrettet beiteatferd hos ørreten.</p>
     <p>Men når massive klekkinger skjer — det er der eventyret ligger. Lars Nilssen har skrevet flere ganger om hvordan kraftige regnbyger midt på dagen kan trigge ekstreme tetthter av vulgata-dun på vannet, og at fisken da går amok. Den våte luften forhindrer dunene i å lette, og de blir stående i tette flokker langs ly-sider av øyer og holmer. Dette er øyeblikkene hvor toterørreten dukker opp.</p>
 
+    <figure class="mid-img">
+        <img src="/article-images/vulgata_fish.jpg" alt="Stor ørret i hov">
+        <figcaption>En velvoksen ørret slippes løs etter en god vulgatadag. Det er disse fiskene som kommer fram i de massive klekkingene.</figcaption>
+    </figure>
+
     <div class="pullquote">«Den eneste regelen for massive klekkinger, er at det ikke finnes noe regel.»</div>
 
     <h2>Spinnerfallet — vakbryteren</h2>
@@ -267,6 +407,7 @@
 </article>
 
 <article class="reading" id="art-marginata">
+    <div class="hero-img"><img src="/article-images/marginata.jpg" alt="Skogstjern"></div>
     <div class="topic">Døgnflue · Stillevann</div>
     <h1>Leptophlebia marginata — den brune skogsdøgnflua</h1>
     <p class="lead">Hun er ikke spektakulær som vulgata, men hun er ofte førstemann ut. På en god skogstjern starter marginata-klekkingen før noen andre, og kan gi en uke eller to med jevn fisk før de store fluene tar over.</p>
@@ -300,6 +441,7 @@
 </article>
 
 <article class="reading" id="art-vespertina">
+    <div class="hero-img"><img src="/article-images/vespertina.jpg" alt="Elv i kveldslys"></div>
     <div class="topic">Døgnflue · Stillevann</div>
     <h1>Leptophlebia vespertina — søsteren som klekker sent</h1>
     <p class="lead">Hun overlapper med marginata, men kommer som regel litt senere på dagen og litt senere på sesongen. For den oppmerksomme fluefisker er hun nøkkelen til mai- og junikvelder mange overser.</p>
@@ -332,6 +474,7 @@
 </article>
 
 <article class="reading" id="art-spinnerfall">
+    <div class="hero-img"><img src="/article-images/spinnerfall.jpg" alt="Kajakk i solnedgang"></div>
     <div class="topic">Generelt · Spinnerfall</div>
     <h1>Spinnerfall — paringens siste akt</h1>
     <p class="lead">Det er ingen tilfeldighet at de beste fluefiske-historiene utspilles i skumringen. Spinnerfallet er det biologiske øyeblikket hvor en hel generasjon døgnfluer dør på samme overflate — og fisken vet det.</p>
@@ -339,6 +482,11 @@
     <h2>Hva skjer egentlig</h2>
     <p>En spinnerfall er kulminasjonen av døgnfluens voksne liv. Etter klekking har dun-stadiet tilbragt ett til to døgn i strandvegetasjonen, der den molter til den slankere, flyvedyktige <em>imago</em> (også kalt <em>spinner</em>). Imagoen lever fra noen timer til et par dager — den har ingen funksjonelle munndeler og kan ikke spise — og har som eneste oppgave å pare seg og legge egg.</p>
     <p>Hannene danner svermesøyler over vann eller åpen mark, der de stiger og faller i en koreografert dans. Hunnene oppdager svermen, flyr inn, blir grepet i lufta, og paringen skjer mens de svever. Etter paring sprer hunnene seg utover vannflaten, slipper de befruktede eggene i en serie av små dypp eller en samlet utstøting, og kollapser så på overflaten i en kræsjlanding. Vingene legger seg flatt utover, kroppen synker delvis ned i overflatehinnen, og fluen dør.</p>
+
+    <figure class="mid-img">
+        <img src="/article-images/spinnerfall_sunset.jpg" alt="Solnedgang over vann i Finnmark">
+        <figcaption>Spinnerfallet skjer i overgangstimene mellom dag og natt. Det er ikke tilfeldig at fluefiskere planlegger ettermiddagene rundt akkurat dette vinduet.</figcaption>
+    </figure>
 
     <h2>Hvorfor det skjer akkurat da det skjer</h2>
     <p>Fire faktorer styrer når et spinnerfall faktisk inntreffer:</p>
@@ -374,6 +522,7 @@
 </article>
 
 <article class="reading" id="art-klekkinger">
+    <div class="hero-img"><img src="/article-images/klekkinger.jpg" alt="Bredelv med skyer"></div>
     <div class="topic">Generelt · Biologi</div>
     <h1>Døgnflueklekkinger — varmesum og biologi</h1>
     <p class="lead">Hvorfor klekker det noen ganger ikke før i juli i Nordmarka, mens Østmarka allerede er ferdig i begynnelsen av juni? Svaret ligger i en enkel matematisk modell biologene har brukt i over hundre år.</p>
@@ -390,6 +539,11 @@
     <h2>Vann vs. luft</h2>
     <p>Klassisk varmesum-modellering for landinsekter bruker lufttemperatur. For akvatiske døgnfluer er <em>vanntemperaturen</em> det biologisk relevante — nymfen lever i bunnsedimentet, ikke i lufta. I praksis er det imidlertid sterk korrelasjon mellom luft og vann over en sesong, så luftbaserte GDD-modeller gir akseptable resultater for de fleste norske stillevann.</p>
     <p>For å forbedre presisjonen kan en kombinert tilnærming brukes: GDD basert på luft som primær indikator, supplert med en <em>vanntemperatur-terskel</em> (typisk 12°C) som ekstra krav. Dette fanger opp året hvor lufta er varm, men vannet henger etter — typisk etter en kald, sen vinter. Denne tilnærmingen, kjent som <em>dual-trigger</em>, gir merkbart bedre prediksjoner enn ren GDD i krevende år.</p>
+
+    <figure class="mid-img">
+        <img src="/article-images/klekkinger_morning.jpg" alt="Tåkete elv om morgenen">
+        <figcaption>Morgentåke over et elveparti. Vannets termiske treghet — det at det varmes opp og kjøles ned saktere enn lufta — er en av nøkkelfaktorene som styrer klekketidspunktet.</figcaption>
+    </figure>
 
     <h2>Hvorfor høyere = senere</h2>
     <p>Hva forklarer at Nordmarka klekker fem dager til to uker senere enn Østmarka, til tross for relativt liten geografisk avstand? Tre faktorer i kombinasjon:</p>
@@ -416,6 +570,7 @@
 </article>
 
 <article class="reading" id="art-stokkmaur">
+    <div class="hero-img"><img src="/article-images/stokkmaur.jpg" alt="Reinsdyrgevir i bjørketre"></div>
     <div class="topic">Maur · Bonanza</div>
     <h1>Stokkmaur — fluefiskerens sjeldenheter</h1>
     <p class="lead">Det er et fenomen mange erfarne fluefiskere har hørt om, men færre faktisk har opplevd. Når stokkmaurkolonien svermer, og vinden bærer hannmaurene ut på vannet, går selv de mest forsiktige storfiskene av hengslene.</p>
@@ -463,6 +618,7 @@
 </article>
 
 <article class="reading" id="art-maursverming">
+    <div class="hero-img"><img src="/article-images/maursverming.jpg" alt="Bål ved skogstjern"></div>
     <div class="topic">Maur · Bonus</div>
     <h1>Maursverming generelt — flygende maur i fluefiske</h1>
     <p class="lead">Stokkmaur er den dramatiske, men ikke den eneste. Flere maurarter sverger gjennom sommeren, og når du ser små svarte vingede mauren falle på vannet en juli-ettermiddag, er det også fluefiske-mat — bare i mindre format.</p>
@@ -509,6 +665,7 @@
 </article>
 
 <article class="reading" id="art-kronologi">
+    <div class="hero-img"><img src="/article-images/kronologi.jpg" alt="Myrvei sen kveld"></div>
     <div class="topic">Generelt · Bonus</div>
     <h1>Klekkerekken gjennom året — en kronologi</h1>
     <p class="lead">Hvis du vet hvilken uke det er, vet du ofte hvilket insekt du jakter. Her er den norske stillevannsesongen som en sammenhengende kalender — fra første vårklekking til siste maursverming.</p>
@@ -559,49 +716,21 @@
 </main>
 
 <script>
-// ─── Artikkel-katalog og routing ─────────────────────────────────────
+// ─── Artikkel-routing ─────────────────────────────────────
 (function() {
-    const ARTICLES = [
-        { id: 'vulgata',    topic: 'Døgnflue · Stillevann',    title: 'Ephemera vulgata — norges største stillevannsdøgnflue', excerpt: 'Den er så stor at du ikke kan ta feil av den. Biologien bak en av norsk fluefiskes mest etterlengtede hendelser.', meta: '~9 min lesetid' },
-        { id: 'marginata',  topic: 'Døgnflue · Stillevann',    title: 'Leptophlebia marginata — den brune skogsdøgnflua', excerpt: 'Hun er ikke spektakulær som vulgata, men ofte førstemann ut. Klekker tidlig, og lenge.', meta: '~7 min' },
-        { id: 'vespertina', topic: 'Døgnflue · Stillevann',    title: 'Leptophlebia vespertina — søsteren som klekker sent', excerpt: 'Marginata sin ettermiddagsversjon. Nøkkelen til mai- og junikvelder mange overser.', meta: '~6 min' },
-        { id: 'spinnerfall', topic: 'Generelt · Spinnerfall',  title: 'Spinnerfall — paringens siste akt', excerpt: 'Det biologiske øyeblikket hvor en hel generasjon døgnfluer dør på samme overflate — og fisken vet det.', meta: '~9 min' },
-        { id: 'klekkinger', topic: 'Generelt · Biologi',        title: 'Døgnflueklekkinger — varmesum og biologi', excerpt: 'Hvorfor klekker det noen ganger ikke før i juli i Nordmarka, mens Østmarka allerede er ferdig?', meta: '~8 min' },
-        { id: 'stokkmaur',  topic: 'Maur · Bonanza',            title: 'Stokkmaur — fluefiskerens sjeldenheter', excerpt: 'Når stokkmaurkolonien svermes, går selv de mest forsiktige storfiskene av hengslene.', meta: '~8 min' },
-        { id: 'maursverming', topic: 'Maur · Bonus',            title: 'Maursverming generelt — flygende maur i fluefiske', excerpt: 'Stokkmaur er den dramatiske, men ikke den eneste. Lasius, Formica, Myrmica — og når de fyrer.', meta: '~6 min' },
-        { id: 'kronologi',  topic: 'Generelt · Bonus',          title: 'Klekkerekken gjennom året — en kronologi', excerpt: 'Den norske stillevannsesongen som en sammenhengende kalender, fra første vårklekking til siste maursverming.', meta: '~10 min' },
-    ];
-
-    function renderCatalog() {
-        const grid = document.getElementById('articleGrid');
-        if (!grid) return;
-        grid.innerHTML = ARTICLES.map(a => `
-            <div class="article-card" data-id="${a.id}">
-                <div class="topic">${a.topic}</div>
-                <h3>${a.title}</h3>
-                <p>${a.excerpt}</p>
-                <div class="meta">${a.meta}</div>
-            </div>
-        `).join('');
-        grid.querySelectorAll('.article-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const id = card.getAttribute('data-id');
-                location.hash = id;
-            });
+    document.querySelectorAll('.article-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const id = card.getAttribute('data-id');
+            if (id) location.hash = id;
         });
-    }
+    });
 
     function showArticle(id) {
         const wrap = document.getElementById('articleListWrap');
         const back = document.getElementById('backToList');
         document.querySelectorAll('article.reading').forEach(a => a.classList.remove('active'));
         const target = document.getElementById('art-' + id);
-        if (!target) {
-            // Ukjent hash → vis listen
-            wrap.classList.remove('hidden');
-            back.style.display = 'none';
-            return;
-        }
+        if (!target) { wrap.classList.remove('hidden'); back.style.display = 'none'; return; }
         wrap.classList.add('hidden');
         back.style.display = 'inline-flex';
         target.classList.add('active');
@@ -629,45 +758,27 @@
     });
 
     window.addEventListener('hashchange', applyRoute);
-
-    renderCatalog();
     applyRoute();
 })();
 
-// ─── Hamburger menu + actions ─────────────────────────────────────
+// ─── Hamburger ─────────────────────────────────────
 (function() {
     const btn = document.getElementById('hwMenuBtn');
     const dropdown = document.getElementById('hwMenuDropdown');
     if (!btn || !dropdown) return;
     btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        const isOpen = dropdown.style.display === 'block';
-        dropdown.style.display = isOpen ? 'none' : 'block';
+        dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
     });
     document.addEventListener('click', (e) => {
-        if (!dropdown.contains(e.target) && !btn.contains(e.target)) {
-            dropdown.style.display = 'none';
-        }
+        if (!dropdown.contains(e.target) && !btn.contains(e.target)) dropdown.style.display = 'none';
     });
     dropdown.addEventListener('click', (e) => {
-        const item = e.target.closest('.hw-menu-item');
-        if (!item) return;
-        const action = item.getAttribute('data-action');
-        dropdown.style.display = 'none';
-        if (action === 'feedback') {
-            window.open('https://tally.so/r/VLvGQE', '_blank');
-        } else if (action === 'about') {
-            alert('HatchWatch er en åpen prediksjonsmodell for klekking av døgnfluer i norske vassdrag. Se forsiden for mer info.');
-        } else if (action === 'notif') {
-            alert('Varsler stilles inn fra inne på en lokasjon. Velg en lokasjon på forsiden først.');
-        }
+        if (e.target.closest('.hw-menu-item')) dropdown.style.display = 'none';
     });
 })();
 
-// ─── Service worker registration ─────────────────────────────────
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
-}
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 </script>
 
 </body>
