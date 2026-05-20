@@ -6633,9 +6633,9 @@ if ('serviceWorker' in navigator) {
     var STORAGE_KEY = 'hw_notif_prefs';  // { triggers: {ostmarka: [...], ...}, subscribed: true }
     var TRIGGERS = ['klekkeChange', 'klekkeImminent', 'spinnerfall', 'stokkmaur', 'seasonstart'];
     // Lokasjoner der stokkmaur er aktuelt (synk med STOKKMAUR_LOCATIONS i cron-daily.js).
-    // Camponotus svermer ikke pålitelig nord for Trøndelag.
+    // Camponotus svermer ikke pålitelig nord for Trøndelag og ikke på høyfjellstundra (Hardangervidda).
     var STOKKMAUR_LOCS = ['oslo', 'nordmarka_dyn', 'ostmarka', 'vestfjella', 'fjella',
-        'bergen', 'rena', 'finnemarka', 'hardangervidda', 'rondane', 'roros', 'trondheim'];
+        'bergen', 'rena', 'finnemarka', 'rondane', 'roros', 'trondheim'];
 
     function urlBase64ToUint8Array(base64String) {
         var padding = '='.repeat((4 - base64String.length % 4) % 4);
