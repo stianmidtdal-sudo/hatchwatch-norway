@@ -703,32 +703,51 @@ buildCards();
     }
 
     const cards = document.querySelectorAll('.card');
-    let cardIdx = 0;
     const visible = RIVERS.filter(r => !r.hidden);
 
-    visible.forEach((r, i) => {
-        if (!isInVulgataSeason(r.region)) return;
-        if (r.lat == null) return;
-        // Vi har ikke lon i RIVERS-arrayen, må derfor bruke en proxy. Hopper
-        // over hvis lon mangler. (Lon er ikke nødvendig for endepunktet — det
-        // godtar uansett, men API krever koordinatpar.)
-        if (r.lon == null) return;
+    // ── KRITISK GATE (2026-05-20) ──────────────────────────────────────
+    // Forsiden viste tidligere "Spinnerfall mulig" på lokasjoner der
+    // vulgata-onset ikke hadde inntruffet enda (Vestfjella 20. mai → 5. juni-
+    // prediksjon → badge urettmessig synlig). Fikset her ved å hente lagrede
+    // prediksjoner fra /api/predictions (lagret i Redis av dashboard.html via
+    // store-prediction.js), og kun vise badge når today >= predDate.
+    //
+    // Hvis ingen lagret prediksjon finnes (lokasjon aldri besøkt etter at
+    // store-prediction kom på plass), er vi konservative: ingen badge.
+    fetch('/api/predictions')
+        .then(res => res.ok ? res.json() : {})
+        .then(predictions => {
+            const todayISO = today.toISOString().slice(0, 10);
 
-        const card = cards[i];
-        if (!card) return;
+            visible.forEach((r, i) => {
+                if (!isInVulgataSeason(r.region)) return;
+                if (r.lat == null || r.lon == null) return;
 
-        fetch(`/api/spinnerfall?lat=${r.lat}&lon=${r.lon}`)
-            .then(res => res.ok ? res.json() : null)
-            .then(data => {
-                const score = todaysWeatherScore(data);
-                if (score == null || score < 0.5) return;
-                const tag = document.createElement('div');
-                tag.className = 'spinnerfall-tag' + (score >= 0.75 ? ' high' : '');
-                tag.innerHTML = score >= 0.75 ? _badgeText.high : _badgeText.good;
-                card.appendChild(tag);
-            })
-            .catch(() => {});
-    });
+                // Sjekk lagret vulgata-prediksjon for denne lokasjonen
+                const pred = predictions[r.id];
+                if (!pred || !pred.predDate) return;        // Ingen prediksjon → ingen badge
+                if (todayISO < pred.predDate) return;       // Vulgata har ikke startet → ingen badge
+
+                const card = cards[i];
+                if (!card) return;
+
+                fetch(`/api/spinnerfall?lat=${r.lat}&lon=${r.lon}`)
+                    .then(res => res.ok ? res.json() : null)
+                    .then(data => {
+                        const score = todaysWeatherScore(data);
+                        if (score == null || score < 0.5) return;
+                        const tag = document.createElement('div');
+                        tag.className = 'spinnerfall-tag' + (score >= 0.75 ? ' high' : '');
+                        tag.innerHTML = score >= 0.75 ? _badgeText.high : _badgeText.good;
+                        card.appendChild(tag);
+                    })
+                    .catch(() => {});
+            });
+        })
+        .catch(() => {
+            // /api/predictions feilet — vi er konservative og viser ingen badges.
+            // Bedre å vise ingenting enn å vise misvisende info.
+        });
 })();
 </script>
 
