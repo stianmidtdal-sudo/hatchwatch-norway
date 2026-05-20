@@ -7,7 +7,7 @@
 //
 // Innført 2026-05-19.
 
-const CACHE_VERSION = 'hw-v4';
+const CACHE_VERSION = 'hw-v5';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const API_CACHE = `${CACHE_VERSION}-api`;
 const VENDOR_CACHE = `${CACHE_VERSION}-vendor`;
@@ -17,6 +17,8 @@ const SHELL_URLS = [
     '/index.html',
     '/dashboard.html',
     '/artikler.html',
+    '/om.html',
+    '/varsler.html',
     '/manifest.json',
     '/logos/logo-inverted-192.png',
     '/logos/logo-inverted-256.png',
