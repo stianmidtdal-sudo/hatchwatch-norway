@@ -59,18 +59,30 @@
             background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%);
             color: white;
             /* iOS PWA safe-area: legg statusbar-høyden ON TOP av standard 16px padding.
-               På desktop og Android (ingen notch): env() = 0, så blir 16px som før.
-               På iPhone: env() returnerer 44-59px → header får 60-75px topp-padding. */
+               Pluss ekstra right-padding for å lage plass til absolutt-plasserte kontroller. */
             padding-top: calc(env(safe-area-inset-top, 0px) + 16px);
-            padding-right: calc(env(safe-area-inset-right, 0px) + 28px);
+            padding-right: calc(env(safe-area-inset-right, 0px) + 112px); /* plass til EN + ☰ */
             padding-bottom: 16px;
             padding-left: calc(env(safe-area-inset-left, 0px) + 28px);
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-start;
             align-items: center;
             box-shadow: 0 3px 16px rgba(0,0,0,0.25);
             flex-wrap: wrap;
             gap: 8px;
+            position: relative;
+        }
+        /* Hamburger + språk-knapp pinnes til toppen høyre uansett hvordan resten av
+           header-en wrapper. Hamburger ER alltid det ytterste valget (rightmost).
+           Posisjon respekterer iOS safe-area. */
+        .header-controls {
+            position: absolute;
+            top: calc(env(safe-area-inset-top, 0px) + 14px);
+            right: calc(env(safe-area-inset-right, 0px) + 16px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 20;
         }
         .header-left { display: flex; flex-direction: row; align-items: center; gap: 12px; }
         .header-logo { width: 44px; height: 44px; flex-shrink: 0; display: block; }
@@ -90,14 +102,9 @@
         header .updated { font-size: 0.78rem; opacity: 0.65; text-align: right; line-height: 1.6; }
         #hwMenuBtn:hover, #hwMenuBtn:active { background: rgba(255,255,255,0.22) !important; }
         .hw-menu-item:hover, .hw-menu-item:active { background: #f0f5f0 !important; }
-        /* Skjul varsler-menyvalget når appen ikke er installert som PWA.
-           Push-varsler gir mest mening i installert app — på nettside-besøk via
-           browser-tab er det forvirrende. Brukere som ikke har installert appen
-           får fortsatt "Om HatchWatch" og "Tilbakemelding" i menyen.
-           display-mode: browser = vanlig nettleser-tab (ikke standalone PWA). */
-        @media (display-mode: browser) {
-            .hw-menu-item[data-action="notif"] { display: none !important; }
-        }
+        /* Varsler-menyvalget vises ALLTID. I nettleser-modus åpner det en
+           install-veileder ("Last ned appen for varsler"); i installert PWA
+           åpner det varsler-modalen for å abonnere på triggers. */
 
         .container { max-width: 1180px; margin: 0 auto; padding: 20px 14px; }
 
@@ -532,13 +539,15 @@
             <a href="index.html" class="back-link" id="backLink">← All locations</a>
             <h1 id="headerTitle">Hatch Watch</h1>
             <div class="sub" id="headerSub">Loading…</div>
+            <div class="updated" id="lastUpdated">Loading…</div>
         </div>
     </div>
-    <div style="display:flex;align-items:center;gap:14px;position:relative">
-        <div class="updated" id="lastUpdated">Loading…</div>
-        <button id="hwMenuBtn" type="button" aria-label="Meny" title="Meny" style="background:rgba(255,255,255,0.12);color:white;border:none;width:40px;height:40px;border-radius:8px;cursor:pointer;font-size:1.2rem;display:flex;align-items:center;justify-content:center;transition:background 0.15s;line-height:1">☰</button>
+    <!-- Kontroller pinnes alltid øverst til høyre (absolutt). Hamburger er
+         ytterst, EN-knappen rett til venstre for den. -->
+    <div class="header-controls">
         <button id="langBtn" class="lang-btn" onclick="toggleLang()">EN</button>
-        <!-- Dropdown-meny, vises ved klikk på hamburger -->
+        <button id="hwMenuBtn" type="button" aria-label="Meny" title="Meny" style="background:rgba(255,255,255,0.12);color:white;border:none;width:40px;height:40px;border-radius:8px;cursor:pointer;font-size:1.2rem;display:flex;align-items:center;justify-content:center;transition:background 0.15s;line-height:1">☰</button>
+        <!-- Dropdown vises ved klikk på hamburger -->
         <div id="hwMenuDropdown" style="display:none;position:absolute;top:100%;right:0;margin-top:8px;background:white;color:#1B4332;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,0.25);min-width:220px;z-index:9998;overflow:hidden">
             <button class="hw-menu-item" data-action="notif" style="display:block;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#1B4332;border-bottom:1px solid #eee">
                 <span id="hwMenuNotif">Varsler</span>
@@ -6903,8 +6912,16 @@ if ('serviceWorker' in navigator) {
             e.stopPropagation();
             var action = item.getAttribute('data-action');
             closeMenu();
-            if (action === 'notif' && typeof window.hwOpenNotifModal === 'function') {
-                window.hwOpenNotifModal();
+            if (action === 'notif') {
+                // I installert PWA: åpne varsler-modal for current location.
+                // I nettleser-modus: åpne install-veileder ("Last ned appen for varsler").
+                var isStandalone = window.matchMedia('(display-mode: standalone)').matches
+                    || window.navigator.standalone === true;
+                if (isStandalone && typeof window.hwOpenNotifModal === 'function') {
+                    window.hwOpenNotifModal();
+                } else {
+                    openInstallGuideModal();
+                }
             } else if (action === 'about') {
                 openAboutModal();
             } else if (action === 'feedback') {
@@ -6914,6 +6931,97 @@ if ('serviceWorker' in navigator) {
             }
         });
     });
+
+    // Install-veileder for nettleser-brukere som vil ha varsler.
+    // OS-spesifikke instruksjoner: iOS Safari, Android Chrome, desktop.
+    function openInstallGuideModal() {
+        var lang = (typeof LANG !== 'undefined') ? LANG : (localStorage.getItem('lang') || 'no');
+        var isNo = lang !== 'en';
+        var ua = navigator.userAgent;
+        var isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+        var isAndroid = /Android/.test(ua);
+        var T = isNo ? {
+            title: '🔔 Varsler krever appen',
+            intro: 'For å få push-varsler om klekkinger, spinnerfall og stokkmaur må HatchWatch være installert som app på telefonen din.',
+            iosTitle: 'På iPhone (Safari):',
+            iosStep1: 'Trykk Del-knappen nederst i skjermen (firkant med pil opp)',
+            iosStep2: 'Bla ned og velg «Legg til på Hjem-skjerm»',
+            iosStep3: 'Trykk «Legg til» øverst til høyre',
+            iosStep4: 'Åpne HatchWatch fra hjemskjermen — varsler er klare å skru på',
+            androidTitle: 'På Android (Chrome):',
+            androidStep1: 'Trykk meny-knappen (⋮) øverst til høyre i Chrome',
+            androidStep2: 'Velg «Installer app» eller «Legg til på Hjem-skjerm»',
+            androidStep3: 'Bekreft installasjonen',
+            androidStep4: 'Åpne HatchWatch fra hjemskjermen — varsler er klare å skru på',
+            desktopTitle: 'På datamaskin (Chrome/Edge):',
+            desktopStep1: 'Trykk install-ikonet i adressefeltet (vanligvis en liten dataskjerm med pil)',
+            desktopStep2: 'Klikk «Installer» når du blir spurt',
+            desktopStep3: 'HatchWatch åpnes som egen app — varsler er klare å skru på',
+            note: 'Apple og Google støtter web-push i installerte PWA-er fra og med iOS 16.4 og Android 6+. Vanlig nettleser-tab støtter ikke push på iOS.',
+            close: 'Lukk',
+        } : {
+            title: '🔔 Notifications require the app',
+            intro: 'To receive push notifications about hatches, spinner falls, and carpenter ant swarms, HatchWatch must be installed as an app on your phone.',
+            iosTitle: 'On iPhone (Safari):',
+            iosStep1: 'Tap the Share button at the bottom (square with up arrow)',
+            iosStep2: 'Scroll down and select "Add to Home Screen"',
+            iosStep3: 'Tap "Add" in the top right',
+            iosStep4: 'Open HatchWatch from your home screen — notifications are ready to enable',
+            androidTitle: 'On Android (Chrome):',
+            androidStep1: 'Tap the menu button (⋮) in the top right of Chrome',
+            androidStep2: 'Select "Install app" or "Add to Home screen"',
+            androidStep3: 'Confirm the installation',
+            androidStep4: 'Open HatchWatch from your home screen — notifications are ready to enable',
+            desktopTitle: 'On desktop (Chrome/Edge):',
+            desktopStep1: 'Click the install icon in the address bar (usually a small monitor with arrow)',
+            desktopStep2: 'Click "Install" when prompted',
+            desktopStep3: 'HatchWatch opens as its own app — notifications are ready to enable',
+            note: 'Apple and Google support web push in installed PWAs starting from iOS 16.4 and Android 6+. Regular browser tabs do not support push on iOS.',
+            close: 'Close',
+        };
+
+        // Velg primær-instruksjons-blokk basert på enheten
+        var primaryBlock;
+        if (isIOS) {
+            primaryBlock = renderStepBlock(T.iosTitle, [T.iosStep1, T.iosStep2, T.iosStep3, T.iosStep4]);
+        } else if (isAndroid) {
+            primaryBlock = renderStepBlock(T.androidTitle, [T.androidStep1, T.androidStep2, T.androidStep3, T.androidStep4]);
+        } else {
+            primaryBlock = renderStepBlock(T.desktopTitle, [T.desktopStep1, T.desktopStep2, T.desktopStep3]);
+        }
+        function renderStepBlock(title, steps) {
+            return '<div style="font-weight:700;color:#1B4332;font-size:0.9rem;margin-bottom:8px">' + title + '</div>'
+                + '<ol style="margin:0 0 16px;padding-left:22px;color:#333;line-height:1.65">'
+                + steps.map(function(s) { return '<li style="margin-bottom:6px">' + s + '</li>'; }).join('')
+                + '</ol>';
+        }
+
+        var overlay = document.createElement('div');
+        overlay.id = 'hwInstallOverlay';
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;animation:notifFadeIn 0.18s ease';
+        var modal = document.createElement('div');
+        modal.style.cssText = 'background:white;border-radius:16px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:notifSlideUp 0.22s ease';
+        modal.innerHTML =
+            '<div style="background:#1B4332;color:white;padding:20px 22px;border-radius:16px 16px 0 0">' +
+              '<div style="font-size:1.15rem;font-weight:700">' + T.title + '</div>' +
+            '</div>' +
+            '<div style="padding:18px 22px;font-size:0.92rem;line-height:1.55;color:#222">' +
+              '<p style="margin:0 0 18px">' + T.intro + '</p>' +
+              primaryBlock +
+              '<p style="margin:8px 0 0;font-size:0.82rem;color:#666;padding:12px 14px;background:#f5f3ec;border-radius:8px;line-height:1.55">' + T.note + '</p>' +
+            '</div>' +
+            '<div style="padding:14px 20px;border-top:1px solid #eee;display:flex;justify-content:flex-end">' +
+              '<button id="hwInstallClose" style="background:#1B4332;color:white;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.92rem">' + T.close + '</button>' +
+            '</div>';
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+        function close() {
+            overlay.style.animation = 'notifFadeIn 0.15s ease reverse';
+            setTimeout(function() { overlay.remove(); }, 140);
+        }
+        overlay.addEventListener('click', function(e) { if (e.target === overlay) close(); });
+        document.getElementById('hwInstallClose').onclick = close;
+    }
 
     function openAboutModal() {
         var lang = (typeof LANG !== 'undefined') ? LANG : (localStorage.getItem('lang') || 'no');
