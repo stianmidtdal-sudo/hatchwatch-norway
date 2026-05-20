@@ -379,8 +379,8 @@
         </div>
     </div>
     <div style="display:flex;align-items:center;gap:14px;position:relative">
-        <button id="hwMenuBtn" type="button" aria-label="Meny" title="Meny" style="background:rgba(27,67,50,0.08);color:#1B4332;border:none;width:40px;height:40px;border-radius:8px;cursor:pointer;font-size:1.2rem;display:flex;align-items:center;justify-content:center;line-height:1">☰</button>
         <button id="langBtn" class="lang-btn" onclick="toggleLang()">EN</button>
+        <button id="hwMenuBtn" type="button" aria-label="Meny" title="Meny" style="background:rgba(27,67,50,0.08);color:#1B4332;border:none;width:40px;height:40px;border-radius:8px;cursor:pointer;font-size:1.2rem;display:flex;align-items:center;justify-content:center;line-height:1">☰</button>
         <div id="hwMenuDropdown" style="display:none;position:absolute;top:100%;right:0;margin-top:8px;background:white;color:#1B4332;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,0.18);min-width:220px;z-index:9998;overflow:hidden;border:1px solid rgba(0,0,0,0.06)">
             <button class="hw-menu-item" data-action="notif" style="display:block;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#1B4332;border-bottom:1px solid #eee">
                 <span id="hwMenuNotif">Varsler</span>
@@ -892,59 +892,102 @@ if ('serviceWorker' in navigator) {
     }
 
     // Install-veileder for nettleser-brukere som vil ha varsler.
-    // OS-spesifikke instruksjoner: iOS Safari, Android Chrome, desktop.
+    // Viser BÅDE mobil (iPhone + Android) og PC samtidig — mange har aldri
+    // installert en PWA før, så vi gir hele bildet uten å gjette riktig plattform.
     function openInstallGuideModal() {
         var lang = localStorage.getItem('lang') || 'no';
         var isNo = lang !== 'en';
-        var ua = navigator.userAgent;
-        var isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
-        var isAndroid = /Android/.test(ua);
         var T = isNo ? {
-            title: '🔔 Varsler krever appen',
-            intro: 'For å få push-varsler om klekkinger, spinnerfall og stokkmaur må HatchWatch være installert som app på telefonen din.',
-            iosTitle: 'På iPhone (Safari):',
-            iosSteps: ['Trykk Del-knappen nederst i skjermen (firkant med pil opp)', 'Bla ned og velg «Legg til på Hjem-skjerm»', 'Trykk «Legg til» øverst til høyre', 'Åpne HatchWatch fra hjemskjermen — varsler er klare å skru på'],
-            androidTitle: 'På Android (Chrome):',
-            androidSteps: ['Trykk meny-knappen (⋮) øverst til høyre i Chrome', 'Velg «Installer app» eller «Legg til på Hjem-skjerm»', 'Bekreft installasjonen', 'Åpne HatchWatch fra hjemskjermen — varsler er klare å skru på'],
-            desktopTitle: 'På datamaskin (Chrome/Edge):',
-            desktopSteps: ['Trykk install-ikonet i adressefeltet (vanligvis en liten dataskjerm med pil)', 'Klikk «Installer» når du blir spurt', 'HatchWatch åpnes som egen app — varsler er klare å skru på'],
-            note: 'Apple og Google støtter web-push i installerte PWA-er fra og med iOS 16.4 og Android 6+. Vanlig nettleser-tab støtter ikke push på iOS.',
+            title: '🔔 Slik installerer du HatchWatch',
+            intro: 'For å få push-varsler om klekkinger, spinnerfall og stokkmaur må HatchWatch installeres som app. Det er gratis, tar 20 sekunder, og bruker ingen plass å snakke om — det er fortsatt nettsiden, bare pakket inn som en app-ikon på enheten din.',
+            mobileTitle: '📱 For mobil',
+            iosTitle: 'iPhone / iPad (Safari)',
+            iosSteps: [
+                'Sørg for at du er i <b>Safari</b> (ikke Chrome — Apple tillater bare installering fra Safari)',
+                'Trykk på <b>Del-knappen</b> nederst på skjermen — det er firkanten med en pil som peker oppover',
+                'Bla nedover i menyen til du ser <b>«Legg til på Hjem-skjerm»</b> og trykk på den',
+                'Trykk <b>«Legg til»</b> øverst til høyre',
+                'Du har nå et HatchWatch-ikon på hjemskjermen. <b>Åpne appen derfra</b> (ikke fra Safari) — så er Varsler-menyen aktiv',
+            ],
+            androidTitle: 'Android (Chrome)',
+            androidSteps: [
+                'Åpne hatchwatch.no i <b>Chrome</b>',
+                'Trykk på <b>meny-knappen (⋮)</b> øverst til høyre i Chrome',
+                'Velg <b>«Installer app»</b> eller <b>«Legg til på Hjem-skjerm»</b>',
+                'Bekreft installasjonen — ikonet legger seg på hjemskjermen',
+                '<b>Åpne HatchWatch fra hjemskjermen</b> — så er Varsler-menyen aktiv',
+            ],
+            desktopTitle: '💻 For PC / Mac',
+            desktopSteps: [
+                'Åpne hatchwatch.no i <b>Chrome</b> eller <b>Edge</b> (Safari på Mac støtter også PWA fra macOS 14)',
+                'Se etter et lite <b>install-ikon i adressefeltet</b> — vanligvis en dataskjerm med en pil ned. Alternativt: åpne meny-knappen (⋮) og finn <b>«Installer HatchWatch»</b>',
+                'Klikk <b>«Installer»</b> i dialogen som dukker opp',
+                'HatchWatch åpnes i sitt eget vindu og legger seg blant programmene dine. <b>Åpne appen derfra</b> for å aktivere Varsler-menyen',
+            ],
+            note: 'Push-varsler i nettleser krever en installert PWA — vanlig nettleser-tab støtter ikke dette på iPhone, og er ustabilt på andre plattformer. Når appen er installert kan du skru av varsler når som helst via Varsler-menyen.',
             close: 'Lukk',
         } : {
-            title: '🔔 Notifications require the app',
-            intro: 'To receive push notifications about hatches, spinner falls, and carpenter ant swarms, HatchWatch must be installed as an app on your phone.',
-            iosTitle: 'On iPhone (Safari):',
-            iosSteps: ['Tap the Share button at the bottom (square with up arrow)', 'Scroll down and select "Add to Home Screen"', 'Tap "Add" in the top right', 'Open HatchWatch from your home screen — notifications are ready to enable'],
-            androidTitle: 'On Android (Chrome):',
-            androidSteps: ['Tap the menu button (⋮) in the top right of Chrome', 'Select "Install app" or "Add to Home screen"', 'Confirm the installation', 'Open HatchWatch from your home screen — notifications are ready to enable'],
-            desktopTitle: 'On desktop (Chrome/Edge):',
-            desktopSteps: ['Click the install icon in the address bar (usually a small monitor with arrow)', 'Click "Install" when prompted', 'HatchWatch opens as its own app — notifications are ready to enable'],
-            note: 'Apple and Google support web push in installed PWAs starting from iOS 16.4 and Android 6+. Regular browser tabs do not support push on iOS.',
+            title: '🔔 How to install HatchWatch',
+            intro: 'To receive push notifications about hatches, spinner falls, and carpenter ant swarms, HatchWatch needs to be installed as an app. It is free, takes 20 seconds, and uses negligible space — it is still the website, just wrapped as an app icon on your device.',
+            mobileTitle: '📱 On mobile',
+            iosTitle: 'iPhone / iPad (Safari)',
+            iosSteps: [
+                'Make sure you are in <b>Safari</b> (not Chrome — Apple only allows installation from Safari)',
+                'Tap the <b>Share button</b> at the bottom of the screen — the square icon with an arrow pointing up',
+                'Scroll down in the menu until you see <b>"Add to Home Screen"</b> and tap it',
+                'Tap <b>"Add"</b> in the top right corner',
+                'You now have a HatchWatch icon on your home screen. <b>Open the app from there</b> (not from Safari) — and the Notifications menu will be active',
+            ],
+            androidTitle: 'Android (Chrome)',
+            androidSteps: [
+                'Open hatchwatch.no in <b>Chrome</b>',
+                'Tap the <b>menu button (⋮)</b> in the top right of Chrome',
+                'Select <b>"Install app"</b> or <b>"Add to Home screen"</b>',
+                'Confirm — the icon lands on your home screen',
+                '<b>Open HatchWatch from your home screen</b> — the Notifications menu will then be active',
+            ],
+            desktopTitle: '💻 On PC / Mac',
+            desktopSteps: [
+                'Open hatchwatch.no in <b>Chrome</b> or <b>Edge</b> (Safari on Mac also supports PWAs from macOS 14)',
+                'Look for a small <b>install icon in the address bar</b> — usually a monitor with a downward arrow. Alternatively: open the menu (⋮) and find <b>"Install HatchWatch"</b>',
+                'Click <b>"Install"</b> in the dialog that appears',
+                'HatchWatch opens in its own window and joins your installed apps. <b>Open the app from there</b> to enable the Notifications menu',
+            ],
+            note: 'Web push notifications require an installed PWA — a regular browser tab does not support this on iPhone, and is unreliable on other platforms. Once installed you can toggle notifications off at any time via the Notifications menu.',
             close: 'Close',
         };
         function renderStepBlock(title, steps) {
-            return '<div style="font-weight:700;color:#1B4332;font-size:0.9rem;margin-bottom:8px">' + title + '</div>'
-                + '<ol style="margin:0 0 16px;padding-left:22px;color:#333;line-height:1.65">'
+            return '<div style="font-weight:700;color:#1B4332;font-size:0.92rem;margin:14px 0 8px">' + title + '</div>'
+                + '<ol style="margin:0 0 4px;padding-left:22px;color:#333;line-height:1.6;font-size:0.9rem">'
                 + steps.map(function(s) { return '<li style="margin-bottom:6px">' + s + '</li>'; }).join('')
                 + '</ol>';
         }
-        var primaryBlock;
-        if (isIOS) primaryBlock = renderStepBlock(T.iosTitle, T.iosSteps);
-        else if (isAndroid) primaryBlock = renderStepBlock(T.androidTitle, T.androidSteps);
-        else primaryBlock = renderStepBlock(T.desktopTitle, T.desktopSteps);
+        function renderSection(sectionTitle, blocks) {
+            return '<div style="margin-top:18px;padding:14px 16px;background:#f5f3ec;border-radius:10px">'
+                + '<div style="font-weight:700;color:#1B4332;font-size:1rem;margin-bottom:4px">' + sectionTitle + '</div>'
+                + blocks
+                + '</div>';
+        }
+        function renderStepsOnly(steps) {
+            return '<ol style="margin:8px 0 0;padding-left:22px;color:#333;line-height:1.6;font-size:0.9rem">'
+                + steps.map(function(s) { return '<li style="margin-bottom:6px">' + s + '</li>'; }).join('')
+                + '</ol>';
+        }
+        var mobileBlocks = renderStepBlock(T.iosTitle, T.iosSteps) + renderStepBlock(T.androidTitle, T.androidSteps);
+        var body = renderSection(T.mobileTitle, mobileBlocks) + renderSection(T.desktopTitle, renderStepsOnly(T.desktopSteps));
 
         var overlay = document.createElement('div');
         overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;animation:hwAboutFadeIn 0.18s ease';
         var modal = document.createElement('div');
-        modal.style.cssText = 'background:white;border-radius:16px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:hwAboutSlideUp 0.22s ease';
+        modal.style.cssText = 'background:white;border-radius:16px;max-width:560px;width:100%;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:hwAboutSlideUp 0.22s ease';
         modal.innerHTML =
-            '<div style="background:#1B4332;color:white;padding:20px 22px;border-radius:16px 16px 0 0;font-size:1.15rem;font-weight:700">' + T.title + '</div>' +
+            '<div style="background:#1B4332;color:white;padding:20px 22px;border-radius:16px 16px 0 0;font-size:1.13rem;font-weight:700;position:sticky;top:0;z-index:1">' + T.title + '</div>' +
             '<div style="padding:18px 22px;font-size:0.92rem;line-height:1.55;color:#222">' +
-              '<p style="margin:0 0 18px">' + T.intro + '</p>' +
-              primaryBlock +
-              '<p style="margin:8px 0 0;font-size:0.82rem;color:#666;padding:12px 14px;background:#f5f3ec;border-radius:8px;line-height:1.55">' + T.note + '</p>' +
+              '<p style="margin:0 0 4px">' + T.intro + '</p>' +
+              body +
+              '<p style="margin:18px 0 0;font-size:0.82rem;color:#666;padding:12px 14px;background:#fff8e1;border-left:3px solid #d4a52a;border-radius:6px;line-height:1.55">' + T.note + '</p>' +
             '</div>' +
-            '<div style="padding:14px 20px;border-top:1px solid #eee;display:flex;justify-content:flex-end">' +
+            '<div style="padding:14px 20px;border-top:1px solid #eee;display:flex;justify-content:flex-end;position:sticky;bottom:0;background:white;border-radius:0 0 16px 16px">' +
               '<button id="hwInstallClose" style="background:#1B4332;color:white;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.92rem">' + T.close + '</button>' +
             '</div>';
         overlay.appendChild(modal);
