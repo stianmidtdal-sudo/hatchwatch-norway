@@ -684,7 +684,7 @@
                 <div id="spinnerfallSub" style="font-size:0.8rem; color:rgba(244,228,193,0.72);" data-i18n="spinnerfallSub">Sannsynlighet for vulgataspinnerfall · kveld 19–22</div>
             </div>
             <div id="spinnerfallGrid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px; margin-top:14px;"></div>
-            <div id="spinnerfallFooter" style="font-size:0.72rem; color:rgba(244,228,193,0.6); margin-top:12px; line-height:1.55;" data-i18n-html="spinnerfallFooter">Modell vurderer vind, lufttemperatur, skydekke og nedbør for kveldstimene 19–22 (lokal tid) basert på MET-prognose. Vindstille, varme og lite skyer gir best sjanse. Modellen er ikke validert mot observasjoner.</div>
+            <div id="spinnerfallFooter" style="font-size:0.72rem; color:rgba(244,228,193,0.6); margin-top:12px; line-height:1.55;" data-i18n-html="spinnerfallFooter">Modellen vurderer kveldstimene 19–22 (lokal tid) basert på MET-prognose og vekter seks variabler ulikt: <b>vind</b>, <b>lufttemperatur</b>, <b>skydekke</b>, <b>nedbør</b>, <b>luftfuktighet</b> og <b>trykk-trend</b>. Vindstille er det viktigste enkeltkravet — raskt fallende lufttrykk (front på vei) dempes også. Modellen er ikke validert mot observasjoner.</div>
         </section>
 
         <!-- ═══ PREDICTION CONVERGENCE ═══ -->
@@ -971,7 +971,7 @@ const T = {
     forecastEffectLater: (days) => `<strong>❄ Langtidsvarselet påvirker prognosen.</strong> 9-dagers værvarsel fra MET tilsier kaldere vær enn klimasnittet. Estimert klekketidspunkt er forsinket ~${days} dager.`,
     spinnerfallTitle: '▶ Spinnerfall-vakt',
     spinnerfallSub: 'Sannsynlighet for vulgataspinnerfall · kveld 19–22',
-    spinnerfallFooter: 'Modell vurderer vind, lufttemperatur, skydekke og nedbør for kveldstimene 19–22 (lokal tid) basert på MET-prognose. Vindstille, varme og lite skyer gir best sjanse. Modellen er ikke validert mot observasjoner.',
+    spinnerfallFooter: 'Modellen vurderer kveldstimene 19–22 (lokal tid) basert på MET-prognose og vekter seks variabler ulikt: <b>vind</b>, <b>lufttemperatur</b>, <b>skydekke</b>, <b>nedbør</b>, <b>luftfuktighet</b> og <b>trykk-trend</b>. Vindstille er det viktigste enkeltkravet — raskt fallende lufttrykk (front på vei) dempes også. Modellen er ikke validert mot observasjoner.',
     spinnerfallIntroTitle: 'Ny funksjon: Spinnerfall-vakt',
     spinnerfallIntroBody: 'Vulgata-spinnerfall kan være spektakulært, men også vanskelig å forutse. Hatch Watch vurderer nå sannsynligheten for spinnerfall i kveldstimene basert på vind, temperatur, skydekke og nedbør — og hvor lenge det har vært ugunstige forhold, som akkumulerer spinnere.\n\nModellen er ikke validert mot observasjoner ennå. Bidra gjerne med en spinnerfall-rapport via observasjonsknappen når du opplever det i felt — det styrker modellen for alle.',
     spinnerfallIntroBtn: 'Skjønner!',
@@ -1185,7 +1185,7 @@ const T = {
     forecastEffectLater: (days) => `<strong>❄ Long-term forecast affects the prediction.</strong> MET's 9-day forecast suggests colder weather than climate average. Estimated hatch is delayed ~${days} days.`,
     spinnerfallTitle: '▶ Spinner Fall Watch',
     spinnerfallSub: 'Probability of vulgata spinner fall · evening 19–22',
-    spinnerfallFooter: 'Model assesses wind, air temperature, cloud cover, and precipitation for evening hours 19–22 (local time) based on MET forecast. Calm, warm, and clear evenings give the highest chance. The model has not been validated against observations.',
+    spinnerfallFooter: 'Model assesses evening hours 19–22 (local time) based on MET forecast and weights six variables differently: <b>wind</b>, <b>air temperature</b>, <b>cloud cover</b>, <b>precipitation</b>, <b>humidity</b>, and <b>pressure trend</b>. Calm wind is the single most important requirement — rapidly falling pressure (incoming front) is also penalised. The model has not been validated against observations.',
     spinnerfallIntroTitle: 'New feature: Spinner Fall Watch',
     spinnerfallIntroBody: 'Vulgata spinner falls can be spectacular, but also hard to predict. Hatch Watch now assesses the probability of a spinner fall in the evening hours based on wind, temperature, cloud cover, and precipitation — and how long conditions have been unfavorable, building up a backlog of spinners.\n\nThe model has not yet been validated against observations. Please contribute a spinner fall report via the observation button when you witness one in the field — it strengthens the model for everyone.',
     spinnerfallIntroBtn: 'Got it!',
@@ -3605,21 +3605,37 @@ function computeSpinnerfallForecast(eveningData, vulgataDate, historyData) {
         return 0.2;                                 // Sjelden
     }
 
-    // Værscore — multiplikativ (AND-betingelse)
+    // Værscore — multiplikativ (AND-betingelse). Kurver kalibrert mot
+    // fluefiske-litteratur 2026-05-20:
+    //   Wind: vindstille er hardt krav, men "vindstille" i norsk
+    //         fiskespråk = <2 m/s, ikke <1. Mykere ideelt-grense.
+    //   Temp: 18°C optimum (Lars Nilssen, Arbona). Mykere bunngrense
+    //         siden 12-14°C ikke er deal-breaker, bare suboptimalt.
+    //   Cloud: vekter lett — spinnerfall liker sol men kan skje overskyet.
+    //   Precip: regn under spinnerfall dreper det; mykere overgang for
+    //           lett duggregn (0.1-0.3 mm).
+    //   Humid (NY 2026-05-20): RH ≥ 75 % gir lengre, mer intensive fall
+    //          (mayflies trenger fuktig luft for å holde exoskjelett
+    //          fleksibelt — Arbona). Maks 15 % straff for tørr luft.
+    //   PressureTrend (NY 2026-05-20): stabilt/stigende trykk = god
+    //          aktivitet, raskt fall (front på vei) = aktivitet dør.
+    //          Konsensus i fluefiskelitteratur (Borger, Arbona).
     function weatherScore(w) {
         // Vind dominerer — vindstille er hardt krav
         let windFactor;
-        if (w.wind <= 1.0)      windFactor = 1.0;
-        else if (w.wind <= 2.0) windFactor = 0.7;
-        else if (w.wind <= 3.0) windFactor = 0.3;
-        else                    windFactor = 0.05;
+        if (w.wind <= 1.5)      windFactor = 1.0;
+        else if (w.wind <= 2.5) windFactor = 0.85;
+        else if (w.wind <= 3.5) windFactor = 0.4;
+        else if (w.wind <= 5.0) windFactor = 0.15;
+        else                    windFactor = 0.03;
 
-        // Temp — lavt nivå dreper, høyt er ideelt
+        // Temp — myk bunngrense, ingen klippe på 14°C
         let tempFactor;
         if (w.temp >= 18)      tempFactor = 1.0;
         else if (w.temp >= 16) tempFactor = 0.85;
-        else if (w.temp >= 14) tempFactor = 0.5;
-        else                   tempFactor = 0.15;
+        else if (w.temp >= 14) tempFactor = 0.55;
+        else if (w.temp >= 12) tempFactor = 0.3;
+        else                   tempFactor = 0.05;
 
         // Skydekke (0-100%) — solrike kvelder bedre
         let cloudFactor;
@@ -3627,13 +3643,30 @@ function computeSpinnerfallForecast(eveningData, vulgataDate, historyData) {
         else if (w.cloud < 70) cloudFactor = 0.9;
         else                   cloudFactor = 0.75;
 
-        // Nedbør — mm sum over 4 timer
+        // Nedbør — mm sum over 4 timer; lett duggregn skal ikke drepe
         let precipFactor;
         if (w.precip < 0.1)      precipFactor = 1.0;
-        else if (w.precip < 0.5) precipFactor = 0.6;
+        else if (w.precip < 0.3) precipFactor = 0.85;
+        else if (w.precip < 0.7) precipFactor = 0.55;
         else                     precipFactor = 0.2;
 
-        return windFactor * tempFactor * cloudFactor * precipFactor;
+        // Luftfuktighet (% RH) — multiplikativ bonus, maks 15 % straff
+        let humidFactor = 1.0;
+        if (w.humid != null) {
+            if (w.humid >= 75)      humidFactor = 1.0;
+            else if (w.humid >= 60) humidFactor = 0.95;
+            else                    humidFactor = 0.85;
+        }
+
+        // Trykk-trend (kveld - ettermiddag, hPa) — straff for raskt fall
+        let pressureFactor = 1.0;
+        if (w.pressureTrend != null) {
+            if (w.pressureTrend >= -1)      pressureFactor = 1.0;
+            else if (w.pressureTrend >= -3) pressureFactor = 0.9;
+            else                            pressureFactor = 0.7;
+        }
+
+        return windFactor * tempFactor * cloudFactor * precipFactor * humidFactor * pressureFactor;
     }
 
     // ── BACKLOG-AKKUMULERING (innført 2026-05-10) ───────────────────────
