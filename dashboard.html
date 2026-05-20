@@ -555,9 +555,9 @@
             <a href="/artikler.html" class="hw-menu-item" style="display:block;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#1B4332;border-bottom:1px solid #eee;text-decoration:none">
                 <span id="hwMenuArticles">Artikler</span>
             </a>
-            <button class="hw-menu-item" data-action="about" style="display:block;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#1B4332;border-bottom:1px solid #eee">
+            <a href="/om.html" class="hw-menu-item" style="display:block;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#1B4332;border-bottom:1px solid #eee;text-decoration:none">
                 <span id="hwMenuAbout">Om HatchWatch</span>
-            </button>
+            </a>
             <button class="hw-menu-item" data-action="feedback" style="display:block;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#1B4332">
                 <span id="hwMenuFeedback">Send tilbakemelding</span>
             </button>
@@ -6962,7 +6962,7 @@ if ('serviceWorker' in navigator) {
                 if (isStandalone && typeof window.hwOpenNotifModal === 'function') {
                     window.hwOpenNotifModal();
                 } else {
-                    openInstallGuideModal();
+                    location.href = '/varsler.html';
                 }
             } else if (action === 'about') {
                 openAboutModal();
