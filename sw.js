@@ -7,7 +7,7 @@
 //
 // Innført 2026-05-19.
 
-const CACHE_VERSION = 'hw-v1';
+const CACHE_VERSION = 'hw-v2';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const API_CACHE = `${CACHE_VERSION}-api`;
 const VENDOR_CACHE = `${CACHE_VERSION}-vendor`;
