@@ -7,7 +7,7 @@
 //
 // Innført 2026-05-19.
 
-const CACHE_VERSION = 'hw-v2';
+const CACHE_VERSION = 'hw-v3';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const API_CACHE = `${CACHE_VERSION}-api`;
 const VENDOR_CACHE = `${CACHE_VERSION}-vendor`;
@@ -134,8 +134,13 @@ async function staleWhileRevalidate(req, cacheName) {
     return cached || fetchPromise;
 }
 
-// ─── PUSH-VARSLER (klargjøring for Fase 3) ──────────────────────────
-// Foreløpig stub — settes opp ordentlig når Web Push-flowen bygges.
+// ─── PUSH-VARSLER ───────────────────────────────────────────────────
+// "Ordentlig varsel": vi setter eksplisitt vibrate-mønster, silent:false,
+// renotify:true (samme tag re-alerter brukeren ved oppdatering), og lar
+// requireInteraction være true på desktop slik at notification ikke
+// forsvinner etter 5s. På iOS overstyrer systemet noe av dette, men
+// kombinasjonen 'urgency: high'-header (server-side) + disse options
+// gir maks sjanse for et hørbart varsel.
 self.addEventListener('push', (event) => {
     if (!event.data) return;
     let data = {};
@@ -147,7 +152,12 @@ self.addEventListener('push', (event) => {
         badge: '/logos/logo-inverted-64.png',
         data: data.url ? { url: data.url } : undefined,
         tag: data.tag || 'hatchwatch',
-        renotify: false,
+        // Hørbart + vibrerende varsel
+        renotify: true,
+        silent: false,
+        vibrate: [200, 100, 200, 100, 300],
+        requireInteraction: true,
+        timestamp: Date.now(),
     };
     event.waitUntil(self.registration.showNotification(title, options));
 });
