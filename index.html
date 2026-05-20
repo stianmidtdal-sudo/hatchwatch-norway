@@ -385,6 +385,9 @@
             <button class="hw-menu-item" data-action="notif" style="display:block;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#1B4332;border-bottom:1px solid #eee">
                 <span id="hwMenuNotif">Varsler</span>
             </button>
+            <a href="/artikler.html" class="hw-menu-item" style="display:block;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#1B4332;border-bottom:1px solid #eee;text-decoration:none">
+                <span id="hwMenuArticles">Artikler</span>
+            </a>
             <button class="hw-menu-item" data-action="about" style="display:block;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#1B4332;border-bottom:1px solid #eee">
                 <span id="hwMenuAbout">Om HatchWatch</span>
             </button>
@@ -829,9 +832,11 @@ if ('serviceWorker' in navigator) {
         var lang = localStorage.getItem('lang') || 'no';
         var isNo = lang !== 'en';
         var notifEl = document.getElementById('hwMenuNotif');
+        var articlesEl = document.getElementById('hwMenuArticles');
         var aboutEl = document.getElementById('hwMenuAbout');
         var fbEl = document.getElementById('hwMenuFeedback');
         if (notifEl) notifEl.textContent = isNo ? 'Varsler' : 'Notifications';
+        if (articlesEl) articlesEl.textContent = isNo ? 'Artikler' : 'Articles';
         if (aboutEl) aboutEl.textContent = isNo ? 'Om HatchWatch' : 'About HatchWatch';
         if (fbEl) fbEl.textContent = isNo ? 'Send tilbakemelding' : 'Submit feedback';
         btn.setAttribute('aria-label', isNo ? 'Meny' : 'Menu');
