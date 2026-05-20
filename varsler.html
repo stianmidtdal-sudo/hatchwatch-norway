@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Varsler · HatchWatch</title>
+    <meta name="theme-color" content="#1B4332">
+    <meta name="description" content="Push-varsler for klekkinger, spinnerfall og stokkmaur — installer HatchWatch som app for å motta varsler.">
+    <link rel="icon" type="image/png" sizes="32x32" href="/logos/logo-inverted-32.png">
+    <link rel="icon" type="image/png" sizes="64x64" href="/logos/logo-inverted-64.png">
+    <link rel="apple-touch-icon" href="/logos/logo-inverted-180.png">
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        * { box-sizing: border-box; }
+        html, body {
+            margin: 0; padding: 0;
+            background: #f5f3ec;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            color: #1d1d1f;
+            -webkit-font-smoothing: antialiased;
+            text-size-adjust: 100%;
+            -webkit-text-size-adjust: 100%;
+        }
+        body { min-height: 100vh; min-height: 100dvh; }
+        nav {
+            background: #1B4332; color: white;
+            padding-top: calc(env(safe-area-inset-top, 0px) + 16px);
+            padding-bottom: 14px;
+            padding-left: calc(env(safe-area-inset-left, 0px) + 18px);
+            padding-right: calc(env(safe-area-inset-right, 0px) + 112px);
+            position: relative; display: flex; align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        .nav-left { display: flex; align-items: center; }
+        .logo-img { height: 36px; width: 36px; margin-right: 10px; }
+        .logo-text { font-weight: 700; letter-spacing: 1.5px; font-size: 0.92rem; }
+        .logo-sub { font-size: 0.7rem; opacity: 0.7; letter-spacing: 0.5px; }
+        .header-controls {
+            position: absolute; top: calc(env(safe-area-inset-top, 0px) + 14px);
+            right: calc(env(safe-area-inset-right, 0px) + 16px);
+            display: flex; align-items: center; gap: 8px; z-index: 20;
+        }
+        #hwMenuBtn {
+            background: rgba(255,255,255,0.12); color: white; border: none;
+            width: 40px; height: 40px; border-radius: 8px; cursor: pointer;
+            font-size: 1.2rem; display: flex; align-items: center; justify-content: center;
+            transition: background 0.15s; line-height: 1;
+        }
+        #hwMenuBtn:hover { background: rgba(255,255,255,0.22); }
+        #hwMenuDropdown {
+            display: none; position: absolute; top: 100%; right: 0; margin-top: 8px;
+            background: white; color: #1B4332; border-radius: 10px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18); min-width: 220px; z-index: 9998;
+            overflow: hidden; border: 1px solid rgba(0,0,0,0.06);
+        }
+        .hw-menu-item {
+            display: block; width: 100%; text-align: left; background: none; border: none;
+            padding: 14px 18px; cursor: pointer; font-size: 0.94rem; color: #1B4332;
+            border-bottom: 1px solid #eee; text-decoration: none;
+        }
+        .hw-menu-item:last-child { border-bottom: none; }
+        .hw-menu-item:hover { background: #f0f5f0; }
+
+        main {
+            max-width: 720px; margin: 0 auto;
+            padding: 28px 18px 80px;
+            padding-bottom: max(80px, env(safe-area-inset-bottom, 0px) + 60px);
+        }
+        .card {
+            background: white; border-radius: 14px; padding: 26px 28px;
+            margin-bottom: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+        }
+        .card.dark {
+            background: #1B4332; color: #f5f3ec;
+        }
+        h1 {
+            margin: 0 0 6px; font-size: 1.6rem; color: #1B4332; font-weight: 700; line-height: 1.25;
+        }
+        .card.dark h1 { color: white; }
+        .lead {
+            color: #555; font-size: 0.97rem; margin: 0 0 18px;
+            padding-bottom: 16px; border-bottom: 1px solid #eee; line-height: 1.6;
+        }
+        .card.dark .lead { color: rgba(255,255,255,0.85); border-bottom-color: rgba(255,255,255,0.15); }
+        h2 {
+            margin: 22px 0 10px; font-size: 1.05rem; color: #1B4332; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        h3 { margin: 18px 0 8px; font-size: 0.96rem; color: #1B4332; font-weight: 700; }
+        p { margin: 0 0 14px; color: #2a2a2a; line-height: 1.7; font-size: 0.98rem; }
+        .card.dark p { color: rgba(255,255,255,0.92); }
+        ul, ol { margin: 0 0 14px; padding-left: 22px; color: #2a2a2a; line-height: 1.7; }
+        ol li { margin-bottom: 8px; }
+        b { color: #1B4332; }
+        .card.dark b { color: #ffd789; }
+
+        .trigger-grid {
+            display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 12px;
+        }
+        @media (min-width: 600px) {
+            .trigger-grid { grid-template-columns: 1fr 1fr; }
+        }
+        .trigger-item {
+            background: #f5f3ec; border-radius: 10px; padding: 14px 16px;
+        }
+        .trigger-item .emoji {
+            font-size: 1.4rem; line-height: 1; margin-bottom: 8px;
+        }
+        .trigger-item .name {
+            font-weight: 700; color: #1B4332; font-size: 0.92rem; margin-bottom: 4px;
+        }
+        .trigger-item .desc {
+            font-size: 0.84rem; color: #555; line-height: 1.5;
+        }
+
+        .install-section {
+            background: #f5f3ec; border-radius: 10px; padding: 18px 20px; margin: 16px 0;
+        }
+        .install-section .platform-title {
+            font-weight: 700; color: #1B4332; font-size: 1rem; margin: 8px 0 6px;
+        }
+        .install-section ol {
+            margin: 0 0 12px; padding-left: 22px; line-height: 1.65;
+        }
+
+        .cta-row { margin-top: 22px; display: flex; gap: 12px; flex-wrap: wrap; }
+        .cta-btn {
+            display: inline-block; background: #1B4332; color: white; border: none;
+            padding: 11px 20px; border-radius: 8px; font-size: 0.93rem;
+            font-weight: 600; text-decoration: none; cursor: pointer;
+        }
+        .cta-btn:hover { background: #2d5a47; }
+        .cta-btn.secondary {
+            background: transparent; color: #1B4332; border: 1px solid #1B4332;
+        }
+        .cta-btn.secondary:hover { background: #f0f5f0; }
+        .cta-btn.light {
+            background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3);
+        }
+        .cta-btn.light:hover { background: rgba(255,255,255,0.25); }
+
+        .note {
+            background: #fff8e1; border-left: 3px solid #d4a52a;
+            padding: 12px 14px; border-radius: 0 8px 8px 0;
+            font-size: 0.88rem; line-height: 1.55; color: #444;
+            margin-top: 14px;
+        }
+
+        @media (max-width: 480px) {
+            .card { padding: 22px 20px; }
+            h1 { font-size: 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="nav-left">
+        <a href="/" style="text-decoration:none;color:white;display:flex;align-items:center;">
+            <img src="/logos/logo-inverted-64.png" class="logo-img" alt="HatchWatch">
+            <div>
+                <div class="logo-text">HATCH WATCH</div>
+                <div class="logo-sub">Norway</div>
+            </div>
+        </a>
+    </div>
+    <div class="header-controls">
+        <button id="hwMenuBtn" type="button" aria-label="Meny" title="Meny">☰</button>
+        <div id="hwMenuDropdown">
+            <a href="/" class="hw-menu-item">Forside</a>
+            <a href="/artikler.html" class="hw-menu-item">Artikler</a>
+            <a href="/om.html" class="hw-menu-item">Om HatchWatch</a>
+            <a href="https://tally.so/r/VLvGQE" class="hw-menu-item" target="_blank" rel="noopener">Send tilbakemelding</a>
+        </div>
+    </div>
+</nav>
+
+<main>
+    <!-- INTRO -->
+    <div class="card">
+        <h1>🔔 Varsler</h1>
+        <div class="lead">Få push-varsler direkte på telefonen når klekkingen flytter seg, når kvelden er ideell for spinnerfall, eller når været matcher stokkmaur-svermings-vinduet.</div>
+
+        <h2>Hvilke varsler kan du få?</h2>
+        <div class="trigger-grid">
+            <div class="trigger-item">
+                <div class="emoji">🎣</div>
+                <div class="name">Klekking starter snart</div>
+                <div class="desc">1-2 dager før dual-trigger fyrer for valgt lokasjon</div>
+            </div>
+            <div class="trigger-item">
+                <div class="emoji">🔄</div>
+                <div class="name">Klekkedato endret</div>
+                <div class="desc">Når prediksjonen flytter seg ≥ 2 dager basert på ny værprognose</div>
+            </div>
+            <div class="trigger-item">
+                <div class="emoji">🌙</div>
+                <div class="name">Spinnerfall i kveld</div>
+                <div class="desc">Når kveldsforholdene treffer vulgata-vinduet</div>
+            </div>
+            <div class="trigger-item">
+                <div class="emoji">🐜</div>
+                <div class="name">Stokkmaur-vindu åpent</div>
+                <div class="desc">Værforholdene matcher stokkmaur-svermings-kriteriene</div>
+            </div>
+            <div class="trigger-item">
+                <div class="emoji">📅</div>
+                <div class="name">Sesongstart</div>
+                <div class="desc">Når vulgata-vinduet snart åpner for valgt lokasjon</div>
+            </div>
+        </div>
+
+        <p style="margin-top:18px">Varsler er valgfrie per lokasjon og kan skrus av når som helst. Du kan abonnere på flere lokasjoner samtidig — relevant hvis du fisker både Østmarka og Hardangervidda gjennom sesongen.</p>
+    </div>
+
+    <!-- INSTALLER-VEILEDER (vises kun i nettleser) -->
+    <div class="card" id="installCard" style="display:none">
+        <h2 style="margin-top:0">📲 Installer appen for å motta varsler</h2>
+        <p>Push-varsler krever at HatchWatch installeres som app — det er gratis, tar 20 sekunder, og bruker ingen plass å snakke om. Det er fortsatt nettsiden, bare pakket inn som et app-ikon på enheten din.</p>
+
+        <div class="install-section">
+            <h3 style="margin-top:0">📱 For mobil</h3>
+
+            <div class="platform-title">iPhone / iPad (Safari)</div>
+            <ol>
+                <li>Sørg for at du er i <b>Safari</b> (ikke Chrome — Apple tillater bare installering fra Safari)</li>
+                <li>Trykk på <b>Del-knappen</b> nederst på skjermen — det er firkanten med en pil som peker oppover</li>
+                <li>Bla nedover i menyen til du ser <b>«Legg til på Hjem-skjerm»</b> og trykk på den</li>
+                <li>Trykk <b>«Legg til»</b> øverst til høyre</li>
+                <li>Åpne HatchWatch fra hjemskjermen — Varsler-knappen i menyen aktiveres da</li>
+            </ol>
+
+            <div class="platform-title">Android (Chrome)</div>
+            <ol>
+                <li>Åpne hatchwatch.no i <b>Chrome</b></li>
+                <li>Trykk på <b>meny-knappen (⋮)</b> øverst til høyre i Chrome</li>
+                <li>Velg <b>«Installer app»</b> eller <b>«Legg til på Hjem-skjerm»</b></li>
+                <li>Bekreft installasjonen — ikonet legger seg på hjemskjermen</li>
+                <li>Åpne HatchWatch fra hjemskjermen — Varsler-knappen i menyen aktiveres da</li>
+            </ol>
+        </div>
+
+        <div class="install-section">
+            <h3 style="margin-top:0">💻 For PC / Mac</h3>
+            <ol>
+                <li>Åpne hatchwatch.no i <b>Chrome</b> eller <b>Edge</b> (Safari på Mac støtter også PWA fra macOS 14)</li>
+                <li>Se etter et lite <b>install-ikon i adressefeltet</b> — vanligvis en dataskjerm med en pil ned. Alternativt: åpne meny-knappen (⋮) og finn <b>«Installer HatchWatch»</b></li>
+                <li>Klikk <b>«Installer»</b> i dialogen som dukker opp</li>
+                <li>HatchWatch åpnes i sitt eget vindu og legger seg blant programmene dine — åpne appen derfra for å aktivere Varsler-menyen</li>
+            </ol>
+        </div>
+
+        <div class="note">
+            Push-varsler krever en installert PWA — vanlig nettleser-tab støtter ikke dette på iPhone, og er ustabilt på andre plattformer. Når appen er installert kan du skru av varsler når som helst via Varsler-knappen inne på en lokasjon.
+        </div>
+    </div>
+
+    <!-- VEILEDER FOR PWA-BRUKERE -->
+    <div class="card" id="setupCard" style="display:none">
+        <h2 style="margin-top:0">✅ Slik setter du opp varsler</h2>
+        <p>HatchWatch er installert som app. Varsler stilles inn <b>per lokasjon</b> — slik kan du velge ulike triggere for Østmarka og Hardangervidda, eller bare abonnere på de stedene du faktisk fisker.</p>
+
+        <ol>
+            <li>Gå til <a href="/" style="color:#1B4332;font-weight:600">forsiden</a> og velg en lokasjon</li>
+            <li>Åpne hamburger-menyen (☰) øverst til høyre</li>
+            <li>Velg <b>Varsler</b></li>
+            <li>Huk av hvilke triggere du vil motta for den lokasjonen</li>
+            <li>Trykk <b>Lagre</b>. Du blir bedt om å tillate varsler — godkjenn for at varslene skal komme fram</li>
+        </ol>
+
+        <p>Du kan teste oppsettet med <b>«Test alle varsler»</b>-knappen — den sender én test-push for hver trigger-type så du ser hvordan de ser ut.</p>
+
+        <div class="cta-row">
+            <a href="/" class="cta-btn">Velg lokasjon</a>
+        </div>
+    </div>
+
+    <!-- VEDVARENDE INFO-SEKSJON -->
+    <div class="card">
+        <h2 style="margin-top:0">Når sendes varslene?</h2>
+        <p>HatchWatch sjekker triggerne hver morgen klokken 08:00 norsk tid. Hvis betingelsene er oppfylt for noen av dine abonnementer, blir varselet sendt ut umiddelbart. Maksimalt ett varsel per trigger-type per lokasjon per dag, så du ikke får spam.</p>
+
+        <h2>Hvordan vil varslene se ut?</h2>
+        <p>Et varsel inneholder lokasjonsnavn, hva som skjer, og kort kontekst (f.eks. ny estimert dato eller dagens skår). Trykker du på varselet, åpnes HatchWatch direkte på lokasjonen.</p>
+
+        <div class="note">
+            <b>iOS-tips:</b> hvis varslene kommer "lydløst" inn i varselsenteret, sjekk Innstillinger → Varsler → HatchWatch og pass på at <b>Lyder</b> er på, og at <b>Banner-stil</b> er satt til "Vedvarende". Sjekk også at Fokus-modus ikke skjuler appen.
+        </div>
+    </div>
+</main>
+
+<script>
+// Vis riktig seksjon basert på om brukeren er i PWA-modus eller nettleser
+(function() {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone === true;
+    const installCard = document.getElementById('installCard');
+    const setupCard = document.getElementById('setupCard');
+    if (isStandalone) {
+        setupCard.style.display = 'block';
+    } else {
+        installCard.style.display = 'block';
+    }
+})();
+
+// Hamburger-meny
+(function() {
+    const btn = document.getElementById('hwMenuBtn');
+    const dropdown = document.getElementById('hwMenuDropdown');
+    if (!btn || !dropdown) return;
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+    });
+    document.addEventListener('click', (e) => {
+        if (!dropdown.contains(e.target) && !btn.contains(e.target)) dropdown.style.display = 'none';
+    });
+})();
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+</script>
+
+</body>
+</html>
