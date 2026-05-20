@@ -202,9 +202,77 @@ async function evaluateTrigger(trigger, locId) {
         }
 
         case 'stokkmaur': {
-            // STUB — implementeres når Stokkmaur-værmelder er bygget.
-            // Foreløpig: aldri fyrer i prod, men kan testes via push-test-trigger.
-            return { fire: false };
+            // Geografisk gate: Camponotus svermer ikke pålitelig i Nord-Norge.
+            // C. herculeanus finnes så langt nord som Bodø-området, men svermer
+            // ujevnt der. Cutoff = lat 65°N (Sør- og Midt-Norge inkluderes,
+            // Nordland/Troms/Finnmark ekskluderes). Lierne (64.4) inkluderes
+            // ikke per STOKKMAUR_LOCATIONS-allowlist heller.
+            if (!STOKKMAUR_LOCATIONS.has(locId)) return { fire: false };
+            const ll = LOC_LATLON[locId];
+            if (!ll) return { fire: false };
+
+            // Sesongvindu: 20. mai - 15. juli (doy 140-196).
+            // Camponotus-sverming i Sør-Norge konsentrerer seg i denne perioden.
+            const todayDoy = dayOfYear(new Date());
+            if (todayDoy < 140 || todayDoy > 196) return { fire: false };
+
+            try {
+                const url = `https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${ll.lat}&lon=${ll.lon}`;
+                const resp = await fetch(url, {
+                    headers: { 'User-Agent': 'hatchwatch.no support@hatchwatch.no' },
+                });
+                if (!resp.ok) return { fire: false };
+                const data = await resp.json();
+                const series = data.properties?.timeseries || [];
+
+                // Sjekk dagens ettermiddag (12-18) — peak svermingstid for stokkmaur
+                const todayIso = new Date().toISOString().slice(0, 10);
+                const afternoon = series.filter(ts => {
+                    const t = new Date(ts.time);
+                    return t.toISOString().slice(0, 10) === todayIso
+                        && t.getUTCHours() >= 10 && t.getUTCHours() <= 16;  // UTC 10-16 ≈ norsk 12-18
+                });
+                if (afternoon.length === 0) return { fire: false };
+
+                let maxTemp = -Infinity, sumWind = 0, sumClouds = 0, sumRain = 0, n = 0;
+                for (const ts of afternoon) {
+                    const det = ts.data?.instant?.details || {};
+                    if (det.air_temperature != null) maxTemp = Math.max(maxTemp, det.air_temperature);
+                    if (det.wind_speed != null) { sumWind += det.wind_speed; }
+                    if (det.cloud_area_fraction != null) { sumClouds += det.cloud_area_fraction; }
+                    const rain1h = ts.data?.next_1_hours?.details?.precipitation_amount;
+                    if (rain1h != null) sumRain += rain1h;
+                    n++;
+                }
+                if (n === 0) return { fire: false };
+                const avgWind = sumWind / n;
+                const avgClouds = sumClouds / n;
+
+                // Kriterier (alle må oppfylles):
+                //   maxTemp ≥ 18°C, vind ≤ 5 m/s, skyer ≤ 70%, nedbør ≤ 1 mm
+                if (maxTemp < 18) return { fire: false };
+                if (avgWind > 5) return { fire: false };
+                if (avgClouds > 70) return { fire: false };
+                if (sumRain > 1) return { fire: false };
+
+                // Skår 0-100 — hvor "ideelt" det er
+                const score = Math.max(0, Math.min(100, Math.round(
+                    Math.min(30, ((maxTemp - 18) / 7) * 30)
+                    + Math.max(0, ((5 - avgWind) / 5) * 25)
+                    + Math.max(0, ((70 - avgClouds) / 70) * 25)
+                    + (sumRain < 0.2 ? 20 : 10)
+                )));
+
+                return {
+                    fire: true,
+                    data: {
+                        info: `Maks ${Math.round(maxTemp)}°C, vind ${avgWind.toFixed(1)} m/s, skyer ${Math.round(avgClouds)} %. Skår ${score}/100.`,
+                    },
+                };
+            } catch (e) {
+                console.error('stokkmaur eval error:', e);
+                return { fire: false };
+            }
         }
 
         default:
@@ -234,12 +302,39 @@ function getBaseUrl() {
 }
 
 // Lat/lon per lokasjon — synkronisert med LOCATIONS i dashboard.html.
-// Brukes for å hente MET-data i spinnerfall-evalueringen.
+// Brukes for å hente MET-data i spinnerfall- og stokkmaur-evalueringen.
 const LOC_LATLON = {
     kautokeino: { lat: 69.01, lon: 23.04 },
     ostmarka:   { lat: 59.70, lon: 11.17 },
     oslo:       { lat: 59.94, lon: 10.72 },
     nordmarka_dyn: { lat: 59.94, lon: 10.72 },
     vestfjella: { lat: 59.30, lon: 11.66 },
+    fjella:     { lat: 59.36, lon: 11.62 },
     bergen:     { lat: 60.39, lon: 5.32 },
+    rena:       { lat: 61.15, lon: 11.37 },
+    trondheim:  { lat: 63.43, lon: 10.39 },
+    finnemarka: { lat: 59.85, lon: 10.10 },
+    hardangervidda: { lat: 60.10, lon: 7.30 },
+    rondane:    { lat: 61.97, lon: 9.84 },
+    roros:      { lat: 62.57, lon: 11.39 },
+    lierne:     { lat: 64.41, lon: 13.61 },
+    bardufoss:  { lat: 69.07, lon: 18.54 },
+    dividalen:  { lat: 68.78, lon: 19.71 },
+    ifjordfjellet: { lat: 70.60, lon: 27.10 },
+    porsanger:  { lat: 70.10, lon: 25.00 },
+    alta:       { lat: 69.97, lon: 23.27 },
+    narvik:     { lat: 68.44, lon: 17.43 },
+    moirana:    { lat: 66.31, lon: 14.14 },
+    borgefjell: { lat: 65.40, lon: 13.80 },
 };
+
+// Lokasjoner der Camponotus-stokkmaur er aktuelt. Allowlist heller enn
+// breddegrad-cutoff — gir eksplisitt kontroll og er lett å justere.
+// Utbredelse: C. herculeanus (Sør- og Midt-Norge) og C. ligniperdus (Sør).
+// Ekskluderer Nord-Norge (Nordland/Troms/Finnmark) og høyfjellslokasjoner
+// der svermer er ujevn og uforutsigbar.
+const STOKKMAUR_LOCATIONS = new Set([
+    'oslo', 'nordmarka_dyn', 'ostmarka', 'vestfjella', 'fjella',
+    'bergen', 'rena', 'finnemarka', 'hardangervidda', 'rondane',
+    'roros', 'trondheim',
+]);
