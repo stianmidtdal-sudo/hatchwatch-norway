@@ -62,93 +62,102 @@
         .hw-menu-item:hover { background: #f0f5f0; }
 
         main {
-            max-width: 720px; margin: 0 auto;
-            padding: 28px 18px 80px;
+            max-width: 1180px; margin: 0 auto;
+            padding: 36px 32px 80px;
             padding-bottom: max(80px, env(safe-area-inset-bottom, 0px) + 60px);
         }
-        .card {
-            background: white; border-radius: 14px; padding: 26px 28px;
-            margin-bottom: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.04);
-        }
-        .card.dark {
-            background: #1B4332; color: #f5f3ec;
-        }
+        .hero-section { max-width: 800px; margin-bottom: 36px; }
         h1 {
-            margin: 0 0 6px; font-size: 1.6rem; color: #1B4332; font-weight: 700; line-height: 1.25;
+            margin: 0 0 8px; font-size: 2.2rem; color: #1B4332; font-weight: 700;
+            line-height: 1.2; letter-spacing: -0.5px;
         }
-        .card.dark h1 { color: white; }
         .lead {
-            color: #555; font-size: 0.97rem; margin: 0 0 18px;
-            padding-bottom: 16px; border-bottom: 1px solid #eee; line-height: 1.6;
+            color: #444; font-size: 1.05rem; margin: 0 0 22px; line-height: 1.65;
+            padding-bottom: 20px; border-bottom: 1px solid #ddd;
         }
-        .card.dark .lead { color: rgba(255,255,255,0.85); border-bottom-color: rgba(255,255,255,0.15); }
         h2 {
-            margin: 22px 0 10px; font-size: 1.05rem; color: #1B4332; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 0.5px;
+            margin: 28px 0 14px; font-size: 0.84rem; color: #1B4332; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1.5px;
         }
+        h2:first-child { margin-top: 0; }
         h3 { margin: 18px 0 8px; font-size: 0.96rem; color: #1B4332; font-weight: 700; }
-        p { margin: 0 0 14px; color: #2a2a2a; line-height: 1.7; font-size: 0.98rem; }
-        .card.dark p { color: rgba(255,255,255,0.92); }
-        ul, ol { margin: 0 0 14px; padding-left: 22px; color: #2a2a2a; line-height: 1.7; }
+        p { margin: 0 0 16px; color: #2a2a2a; line-height: 1.75; font-size: 1rem; }
+        ul, ol { margin: 0 0 16px; padding-left: 22px; color: #2a2a2a; line-height: 1.75; }
         ol li { margin-bottom: 8px; }
         b { color: #1B4332; }
-        .card.dark b { color: #ffd789; }
 
         .trigger-grid {
-            display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 12px;
+            display: grid; grid-template-columns: 1fr; gap: 14px; margin: 18px 0 36px;
         }
         @media (min-width: 600px) {
-            .trigger-grid { grid-template-columns: 1fr 1fr; }
+            .trigger-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
         }
         .trigger-item {
-            background: #f5f3ec; border-radius: 10px; padding: 14px 16px;
+            background: #f5f3ec; padding: 16px 18px;
         }
         .trigger-item .emoji {
-            font-size: 1.4rem; line-height: 1; margin-bottom: 8px;
+            font-size: 1.5rem; line-height: 1; margin-bottom: 8px;
         }
         .trigger-item .name {
-            font-weight: 700; color: #1B4332; font-size: 0.92rem; margin-bottom: 4px;
+            font-weight: 700; color: #1B4332; font-size: 0.94rem; margin-bottom: 4px;
         }
         .trigger-item .desc {
-            font-size: 0.84rem; color: #555; line-height: 1.5;
+            font-size: 0.86rem; color: #555; line-height: 1.5;
         }
 
+        /* Install-guide: 2-kolonne (mobil + PC) på desktop, 1 på mobile */
+        .install-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 28px;
+            margin: 18px 0 28px;
+        }
+        @media (max-width: 800px) {
+            .install-grid { grid-template-columns: 1fr; }
+        }
         .install-section {
-            background: #f5f3ec; border-radius: 10px; padding: 18px 20px; margin: 16px 0;
+            background: #f5f3ec; padding: 22px 24px;
         }
+        .install-section h3 { margin-top: 0; }
         .install-section .platform-title {
-            font-weight: 700; color: #1B4332; font-size: 1rem; margin: 8px 0 6px;
+            font-weight: 700; color: #1B4332; font-size: 0.95rem; margin: 18px 0 6px;
         }
+        .install-section .platform-title:first-of-type { margin-top: 4px; }
         .install-section ol {
-            margin: 0 0 12px; padding-left: 22px; line-height: 1.65;
+            margin: 0 0 14px; padding-left: 22px; line-height: 1.7;
+        }
+
+        .setup-block {
+            background: #f5f3ec; padding: 22px 24px;
+            margin: 0 0 28px; max-width: 800px;
+        }
+        .setup-block h2 { margin-top: 0; }
+
+        .info-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 48px;
+            margin-bottom: 28px;
+        }
+        @media (max-width: 800px) {
+            .info-grid { grid-template-columns: 1fr; gap: 24px; }
         }
 
         .cta-row { margin-top: 22px; display: flex; gap: 12px; flex-wrap: wrap; }
         .cta-btn {
             display: inline-block; background: #1B4332; color: white; border: none;
-            padding: 11px 20px; border-radius: 8px; font-size: 0.93rem;
+            padding: 12px 22px; font-size: 0.92rem;
             font-weight: 600; text-decoration: none; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 1px;
         }
         .cta-btn:hover { background: #2d5a47; }
-        .cta-btn.secondary {
-            background: transparent; color: #1B4332; border: 1px solid #1B4332;
-        }
-        .cta-btn.secondary:hover { background: #f0f5f0; }
-        .cta-btn.light {
-            background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3);
-        }
-        .cta-btn.light:hover { background: rgba(255,255,255,0.25); }
 
         .note {
             background: #fff8e1; border-left: 3px solid #d4a52a;
-            padding: 12px 14px; border-radius: 0 8px 8px 0;
-            font-size: 0.88rem; line-height: 1.55; color: #444;
-            margin-top: 14px;
+            padding: 14px 18px;
+            font-size: 0.93rem; line-height: 1.6; color: #444;
+            margin-top: 18px; max-width: 800px;
         }
 
-        @media (max-width: 480px) {
-            .card { padding: 22px 20px; }
-            h1 { font-size: 1.4rem; }
+        @media (max-width: 600px) {
+            main { padding: 28px 18px 60px; }
+            h1 { font-size: 1.55rem; }
         }
     </style>
 </head>
@@ -177,77 +186,79 @@
 
 <main>
     <!-- INTRO -->
-    <div class="card">
+    <div class="hero-section">
         <h1>🔔 Varsler</h1>
         <div class="lead">Få push-varsler direkte på telefonen når klekkingen flytter seg, når kvelden er ideell for spinnerfall, eller når været matcher stokkmaur-svermings-vinduet.</div>
-
-        <h2>Hvilke varsler kan du få?</h2>
-        <div class="trigger-grid">
-            <div class="trigger-item">
-                <div class="emoji">🎣</div>
-                <div class="name">Klekking starter snart</div>
-                <div class="desc">1-2 dager før dual-trigger fyrer for valgt lokasjon</div>
-            </div>
-            <div class="trigger-item">
-                <div class="emoji">🔄</div>
-                <div class="name">Klekkedato endret</div>
-                <div class="desc">Når prediksjonen flytter seg ≥ 2 dager basert på ny værprognose</div>
-            </div>
-            <div class="trigger-item">
-                <div class="emoji">🌙</div>
-                <div class="name">Spinnerfall i kveld</div>
-                <div class="desc">Når kveldsforholdene treffer vulgata-vinduet</div>
-            </div>
-            <div class="trigger-item">
-                <div class="emoji">🐜</div>
-                <div class="name">Stokkmaur-vindu åpent</div>
-                <div class="desc">Værforholdene matcher stokkmaur-svermings-kriteriene</div>
-            </div>
-            <div class="trigger-item">
-                <div class="emoji">📅</div>
-                <div class="name">Sesongstart</div>
-                <div class="desc">Når vulgata-vinduet snart åpner for valgt lokasjon</div>
-            </div>
-        </div>
-
-        <p style="margin-top:18px">Varsler er valgfrie per lokasjon og kan skrus av når som helst. Du kan abonnere på flere lokasjoner samtidig — relevant hvis du fisker både Østmarka og Hardangervidda gjennom sesongen.</p>
     </div>
 
-    <!-- INSTALLER-VEILEDER (vises kun i nettleser) -->
-    <div class="card" id="installCard" style="display:none">
-        <h2 style="margin-top:0">📲 Installer appen for å motta varsler</h2>
-        <p>Push-varsler krever at HatchWatch installeres som app — det er gratis, tar 20 sekunder, og bruker ingen plass å snakke om. Det er fortsatt nettsiden, bare pakket inn som et app-ikon på enheten din.</p>
-
-        <div class="install-section">
-            <h3 style="margin-top:0">📱 For mobil</h3>
-
-            <div class="platform-title">iPhone / iPad (Safari)</div>
-            <ol>
-                <li>Sørg for at du er i <b>Safari</b> (ikke Chrome — Apple tillater bare installering fra Safari)</li>
-                <li>Trykk på <b>Del-knappen</b> nederst på skjermen — det er firkanten med en pil som peker oppover</li>
-                <li>Bla nedover i menyen til du ser <b>«Legg til på Hjem-skjerm»</b> og trykk på den</li>
-                <li>Trykk <b>«Legg til»</b> øverst til høyre</li>
-                <li>Åpne HatchWatch fra hjemskjermen — Varsler-knappen i menyen aktiveres da</li>
-            </ol>
-
-            <div class="platform-title">Android (Chrome)</div>
-            <ol>
-                <li>Åpne hatchwatch.no i <b>Chrome</b></li>
-                <li>Trykk på <b>meny-knappen (⋮)</b> øverst til høyre i Chrome</li>
-                <li>Velg <b>«Installer app»</b> eller <b>«Legg til på Hjem-skjerm»</b></li>
-                <li>Bekreft installasjonen — ikonet legger seg på hjemskjermen</li>
-                <li>Åpne HatchWatch fra hjemskjermen — Varsler-knappen i menyen aktiveres da</li>
-            </ol>
+    <h2>Hvilke varsler kan du få?</h2>
+    <div class="trigger-grid">
+        <div class="trigger-item">
+            <div class="emoji">🎣</div>
+            <div class="name">Klekking starter snart</div>
+            <div class="desc">1-2 dager før dual-trigger fyrer for valgt lokasjon</div>
         </div>
+        <div class="trigger-item">
+            <div class="emoji">🔄</div>
+            <div class="name">Klekkedato endret</div>
+            <div class="desc">Når prediksjonen flytter seg ≥ 2 dager basert på ny værprognose</div>
+        </div>
+        <div class="trigger-item">
+            <div class="emoji">🌙</div>
+            <div class="name">Spinnerfall i kveld</div>
+            <div class="desc">Når kveldsforholdene treffer vulgata-vinduet</div>
+        </div>
+        <div class="trigger-item">
+            <div class="emoji">🐜</div>
+            <div class="name">Stokkmaur-vindu åpent</div>
+            <div class="desc">Værforholdene matcher stokkmaur-svermings-kriteriene</div>
+        </div>
+        <div class="trigger-item">
+            <div class="emoji">📅</div>
+            <div class="name">Sesongstart</div>
+            <div class="desc">Når vulgata-vinduet snart åpner for valgt lokasjon</div>
+        </div>
+    </div>
 
-        <div class="install-section">
-            <h3 style="margin-top:0">💻 For PC / Mac</h3>
-            <ol>
-                <li>Åpne hatchwatch.no i <b>Chrome</b> eller <b>Edge</b> (Safari på Mac støtter også PWA fra macOS 14)</li>
-                <li>Se etter et lite <b>install-ikon i adressefeltet</b> — vanligvis en dataskjerm med en pil ned. Alternativt: åpne meny-knappen (⋮) og finn <b>«Installer HatchWatch»</b></li>
-                <li>Klikk <b>«Installer»</b> i dialogen som dukker opp</li>
-                <li>HatchWatch åpnes i sitt eget vindu og legger seg blant programmene dine — åpne appen derfra for å aktivere Varsler-menyen</li>
-            </ol>
+    <p style="max-width:800px">Varsler er valgfrie per lokasjon og kan skrus av når som helst. Du kan abonnere på flere lokasjoner samtidig — relevant hvis du fisker både Østmarka og Hardangervidda gjennom sesongen.</p>
+
+    <!-- INSTALLER-VEILEDER (vises kun i nettleser) -->
+    <div id="installCard" style="display:none">
+        <h2>📲 Installer appen for å motta varsler</h2>
+        <p style="max-width:800px">Push-varsler krever at HatchWatch installeres som app — det er gratis, tar 20 sekunder, og bruker ingen plass å snakke om. Det er fortsatt nettsiden, bare pakket inn som et app-ikon på enheten din.</p>
+
+        <div class="install-grid">
+            <div class="install-section">
+                <h3>📱 For mobil</h3>
+
+                <div class="platform-title">iPhone / iPad (Safari)</div>
+                <ol>
+                    <li>Sørg for at du er i <b>Safari</b> (ikke Chrome — Apple tillater bare installering fra Safari)</li>
+                    <li>Trykk på <b>Del-knappen</b> nederst på skjermen — det er firkanten med en pil som peker oppover</li>
+                    <li>Bla nedover i menyen til du ser <b>«Legg til på Hjem-skjerm»</b> og trykk på den</li>
+                    <li>Trykk <b>«Legg til»</b> øverst til høyre</li>
+                    <li>Åpne HatchWatch fra hjemskjermen — Varsler-knappen i menyen aktiveres da</li>
+                </ol>
+
+                <div class="platform-title">Android (Chrome)</div>
+                <ol>
+                    <li>Åpne hatchwatch.no i <b>Chrome</b></li>
+                    <li>Trykk på <b>meny-knappen (⋮)</b> øverst til høyre i Chrome</li>
+                    <li>Velg <b>«Installer app»</b> eller <b>«Legg til på Hjem-skjerm»</b></li>
+                    <li>Bekreft installasjonen — ikonet legger seg på hjemskjermen</li>
+                    <li>Åpne HatchWatch fra hjemskjermen — Varsler-knappen i menyen aktiveres da</li>
+                </ol>
+            </div>
+
+            <div class="install-section">
+                <h3>💻 For PC / Mac</h3>
+                <ol>
+                    <li>Åpne hatchwatch.no i <b>Chrome</b> eller <b>Edge</b> (Safari på Mac støtter også PWA fra macOS 14)</li>
+                    <li>Se etter et lite <b>install-ikon i adressefeltet</b> — vanligvis en dataskjerm med en pil ned. Alternativt: åpne meny-knappen (⋮) og finn <b>«Installer HatchWatch»</b></li>
+                    <li>Klikk <b>«Installer»</b> i dialogen som dukker opp</li>
+                    <li>HatchWatch åpnes i sitt eget vindu og legger seg blant programmene dine — åpne appen derfra for å aktivere Varsler-menyen</li>
+                </ol>
+            </div>
         </div>
 
         <div class="note">
@@ -256,36 +267,41 @@
     </div>
 
     <!-- VEILEDER FOR PWA-BRUKERE -->
-    <div class="card" id="setupCard" style="display:none">
-        <h2 style="margin-top:0">✅ Slik setter du opp varsler</h2>
-        <p>HatchWatch er installert som app. Varsler stilles inn <b>per lokasjon</b> — slik kan du velge ulike triggere for Østmarka og Hardangervidda, eller bare abonnere på de stedene du faktisk fisker.</p>
+    <div id="setupCard" style="display:none">
+        <div class="setup-block">
+            <h2>✅ Slik setter du opp varsler</h2>
+            <p>HatchWatch er installert som app. Varsler stilles inn <b>per lokasjon</b> — slik kan du velge ulike triggere for Østmarka og Hardangervidda, eller bare abonnere på de stedene du faktisk fisker.</p>
 
-        <ol>
-            <li>Gå til <a href="/" style="color:#1B4332;font-weight:600">forsiden</a> og velg en lokasjon</li>
-            <li>Åpne hamburger-menyen (☰) øverst til høyre</li>
-            <li>Velg <b>Varsler</b></li>
-            <li>Huk av hvilke triggere du vil motta for den lokasjonen</li>
-            <li>Trykk <b>Lagre</b>. Du blir bedt om å tillate varsler — godkjenn for at varslene skal komme fram</li>
-        </ol>
+            <ol>
+                <li>Gå til <a href="/" style="color:#1B4332;font-weight:600">forsiden</a> og velg en lokasjon</li>
+                <li>Åpne hamburger-menyen (☰) øverst til høyre</li>
+                <li>Velg <b>Varsler</b></li>
+                <li>Huk av hvilke triggere du vil motta for den lokasjonen</li>
+                <li>Trykk <b>Lagre</b>. Du blir bedt om å tillate varsler — godkjenn for at varslene skal komme fram</li>
+            </ol>
 
-        <p>Du kan teste oppsettet med <b>«Test alle varsler»</b>-knappen — den sender én test-push for hver trigger-type så du ser hvordan de ser ut.</p>
+            <p>Du kan teste oppsettet med <b>«Test alle varsler»</b>-knappen — den sender én test-push for hver trigger-type så du ser hvordan de ser ut.</p>
 
-        <div class="cta-row">
-            <a href="/" class="cta-btn">Velg lokasjon</a>
+            <div class="cta-row">
+                <a href="/" class="cta-btn">Velg lokasjon</a>
+            </div>
         </div>
     </div>
 
-    <!-- VEDVARENDE INFO-SEKSJON -->
-    <div class="card">
-        <h2 style="margin-top:0">Når sendes varslene?</h2>
-        <p>HatchWatch sjekker triggerne hver morgen klokken 08:00 norsk tid. Hvis betingelsene er oppfylt for noen av dine abonnementer, blir varselet sendt ut umiddelbart. Maksimalt ett varsel per trigger-type per lokasjon per dag, så du ikke får spam.</p>
-
-        <h2>Hvordan vil varslene se ut?</h2>
-        <p>Et varsel inneholder lokasjonsnavn, hva som skjer, og kort kontekst (f.eks. ny estimert dato eller dagens skår). Trykker du på varselet, åpnes HatchWatch direkte på lokasjonen.</p>
-
-        <div class="note">
-            <b>iOS-tips:</b> hvis varslene kommer "lydløst" inn i varselsenteret, sjekk Innstillinger → Varsler → HatchWatch og pass på at <b>Lyder</b> er på, og at <b>Banner-stil</b> er satt til "Vedvarende". Sjekk også at Fokus-modus ikke skjuler appen.
+    <!-- VEDVARENDE INFO-SEKSJON (2-kolonne på desktop) -->
+    <div class="info-grid">
+        <div>
+            <h2>Når sendes varslene?</h2>
+            <p>HatchWatch sjekker triggerne hver morgen klokken 08:00 norsk tid. Hvis betingelsene er oppfylt for noen av dine abonnementer, blir varselet sendt ut umiddelbart. Maksimalt ett varsel per trigger-type per lokasjon per dag, så du ikke får spam.</p>
         </div>
+        <div>
+            <h2>Hvordan vil varslene se ut?</h2>
+            <p>Et varsel inneholder lokasjonsnavn, hva som skjer, og kort kontekst (f.eks. ny estimert dato eller dagens skår). Trykker du på varselet, åpnes HatchWatch direkte på lokasjonen.</p>
+        </div>
+    </div>
+
+    <div class="note">
+        <b>iOS-tips:</b> hvis varslene kommer "lydløst" inn i varselsenteret, sjekk Innstillinger → Varsler → HatchWatch og pass på at <b>Lyder</b> er på, og at <b>Banner-stil</b> er satt til "Vedvarende". Sjekk også at Fokus-modus ikke skjuler appen.
     </div>
 </main>
 
