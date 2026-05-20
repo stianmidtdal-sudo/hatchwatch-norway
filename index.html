@@ -629,9 +629,9 @@ buildCards();
     const today = new Date();
     const _badgeLang = localStorage.getItem('lang') || 'no';
     const _badgeText = {
-        no: { high: '🌒 Spinnerfall-vær', good: '🌒 Bra kveld' },
-        en: { high: '🌒 Spinner fall weather', good: '🌒 Good evening' }
-    }[_badgeLang] || { high: '🌒 Spinnerfall-vær', good: '🌒 Bra kveld' };
+        no: { high: '🌒 Spinnerfall-kveld', good: '🌒 Spinnerfall mulig' },
+        en: { high: '🌒 Spinner fall tonight', good: '🌒 Spinner fall possible' }
+    }[_badgeLang] || { high: '🌒 Spinnerfall-kveld', good: '🌒 Spinnerfall mulig' };
     function isInVulgataSeason(region) {
         const m = today.getMonth() + 1;
         const d = today.getDate();
@@ -659,17 +659,20 @@ buildCards();
         const w = eveningData[`${yyyy}-${mm}-${dd}`];
         if (!w) return null;
 
+        // Hold synkronisert med weatherScore() i dashboard.html (v2-modellen 2026-05-20)
         let windFactor;
-        if (w.wind <= 1.0)      windFactor = 1.0;
-        else if (w.wind <= 2.0) windFactor = 0.7;
-        else if (w.wind <= 3.0) windFactor = 0.3;
-        else                    windFactor = 0.05;
+        if (w.wind <= 1.5)      windFactor = 1.0;
+        else if (w.wind <= 2.5) windFactor = 0.85;
+        else if (w.wind <= 3.5) windFactor = 0.4;
+        else if (w.wind <= 5.0) windFactor = 0.15;
+        else                    windFactor = 0.03;
 
         let tempFactor;
         if (w.temp >= 18)      tempFactor = 1.0;
         else if (w.temp >= 16) tempFactor = 0.85;
-        else if (w.temp >= 14) tempFactor = 0.5;
-        else                   tempFactor = 0.15;
+        else if (w.temp >= 14) tempFactor = 0.55;
+        else if (w.temp >= 12) tempFactor = 0.3;
+        else                   tempFactor = 0.05;
 
         let cloudFactor;
         if (w.cloud < 30)      cloudFactor = 1.0;
@@ -678,10 +681,25 @@ buildCards();
 
         let precipFactor;
         if (w.precip < 0.1)      precipFactor = 1.0;
-        else if (w.precip < 0.5) precipFactor = 0.6;
+        else if (w.precip < 0.3) precipFactor = 0.85;
+        else if (w.precip < 0.7) precipFactor = 0.55;
         else                     precipFactor = 0.2;
 
-        return windFactor * tempFactor * cloudFactor * precipFactor;
+        let humidFactor = 1.0;
+        if (w.humid != null) {
+            if (w.humid >= 75)      humidFactor = 1.0;
+            else if (w.humid >= 60) humidFactor = 0.95;
+            else                    humidFactor = 0.85;
+        }
+
+        let pressureFactor = 1.0;
+        if (w.pressureTrend != null) {
+            if (w.pressureTrend >= -1)      pressureFactor = 1.0;
+            else if (w.pressureTrend >= -3) pressureFactor = 0.9;
+            else                            pressureFactor = 0.7;
+        }
+
+        return windFactor * tempFactor * cloudFactor * precipFactor * humidFactor * pressureFactor;
     }
 
     const cards = document.querySelectorAll('.card');
