@@ -6632,6 +6632,10 @@ if ('serviceWorker' in navigator) {
     var VAPID_PUBLIC = 'BDuIQlsFE48rDc_wEer_M6X4HyQd3CD2-4YWcLhKC0cqM9sAYU6fx70nR4PVaueA3T3sfG_c2AEFxn7ETpoLhus';
     var STORAGE_KEY = 'hw_notif_prefs';  // { triggers: {ostmarka: [...], ...}, subscribed: true }
     var TRIGGERS = ['klekkeChange', 'klekkeImminent', 'spinnerfall', 'stokkmaur', 'seasonstart'];
+    // Lokasjoner der stokkmaur er aktuelt (synk med STOKKMAUR_LOCATIONS i cron-daily.js).
+    // Camponotus svermer ikke pålitelig nord for Trøndelag.
+    var STOKKMAUR_LOCS = ['oslo', 'nordmarka_dyn', 'ostmarka', 'vestfjella', 'fjella',
+        'bergen', 'rena', 'finnemarka', 'hardangervidda', 'rondane', 'roros', 'trondheim'];
 
     function urlBase64ToUint8Array(base64String) {
         var padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -6741,7 +6745,7 @@ if ('serviceWorker' in navigator) {
               row('klekkeChange',  T.klekkeChange, T.klekkeChangeDesc) +
               row('klekkeImminent', T.klekkeImminent, T.klekkeImminentDesc) +
               row('spinnerfall',  T.spinnerfall,  T.spinnerfallDesc) +
-              row('stokkmaur',    T.stokkmaur,    T.stokkmaurDesc) +
+              (STOKKMAUR_LOCS.indexOf(locId) !== -1 ? row('stokkmaur', T.stokkmaur, T.stokkmaurDesc) : '') +
               row('seasonstart',  T.seasonstart,  T.seasonstartDesc) +
             '</div>' +
             '<div id="notifModalStatus" style="font-size:0.82rem;color:#666;padding:8px 22px;min-height:1.4em"></div>' +
