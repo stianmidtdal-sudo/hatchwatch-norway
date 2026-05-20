@@ -335,6 +335,6 @@ const LOC_LATLON = {
 // der svermer er ujevn og uforutsigbar.
 const STOKKMAUR_LOCATIONS = new Set([
     'oslo', 'nordmarka_dyn', 'ostmarka', 'vestfjella', 'fjella',
-    'bergen', 'rena', 'finnemarka', 'hardangervidda', 'rondane',
-    'roros', 'trondheim',
+    'bergen', 'rena', 'finnemarka', 'rondane', 'roros', 'trondheim',
+    // Ekskludert: hardangervidda (høyfjellstundra — ingen stokkmaur).
 ]);
