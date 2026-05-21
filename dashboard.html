@@ -3822,6 +3822,21 @@ function renderSpinnerfallSection(eveningData, vulgataDate, historyData) {
         return;
     }
 
+    // Skjul hele seksjonen hvis klekkingen ikke har startet ennå.
+    // Spinnerfall skjer 1-3 dager etter at imagoene har kommet ut av vannet,
+    // så det gir ingen mening å vise vakta før første klekkedato.
+    // Test-modus omgår denne sjekken (vulgataDate er da kunstig flyttet bakover).
+    if (!testMode) {
+        const _today = new Date();
+        _today.setHours(0, 0, 0, 0);
+        const _onset = new Date(vulgataDate);
+        _onset.setHours(0, 0, 0, 0);
+        if (_today < _onset) {
+            section.style.display = 'none';
+            return;
+        }
+    }
+
     const forecast = computeSpinnerfallForecast(eveningData, vulgataDate, historyData);
 
     // Skjul hvis ingen kveld er innenfor sesongen (med mindre vi er i test-modus)
