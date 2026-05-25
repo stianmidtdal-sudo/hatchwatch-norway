@@ -263,6 +263,12 @@ async function evaluateTrigger(trigger, locId) {
                     + (sumRain < 0.2 ? 20 : 10)
                 )));
 
+                // Krev høy sannsynlighet før vi fyrer av push. Tidligere fyrte vi når
+                // bare de harde kriteriene var oppfylt (≥18°C, ≤5 m/s osv.), som ga
+                // notifications ved skår 20-40 — marginalt vær og lav nytteverdi.
+                // 80 ≈ "varmt + lite vind + lite skyer + tørt" — verdt å bli varslet om.
+                if (score < 80) return { fire: false };
+
                 return {
                     fire: true,
                     data: {

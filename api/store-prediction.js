@@ -14,6 +14,11 @@
 // Beholder forrige verdi som pred:{loc}:{species}:prev for sammenligning i cron.
 //
 // Innført 2026-05-19.
+//
+// 2026-05-25: skriver i tillegg én daglig snapshot til predhist:{loc}:{spec}:{year}
+// (Redis hash, felt = ISO-dato). Første skriving per dag vinner — etterfølgende
+// requests samme dag rører ikke historikken. Brukes av konvergensgrafen for å
+// vise ekte historikk i stedet for replay-from-current-data.
 
 import { redis, k } from '../lib/redis.js';
 
@@ -36,12 +41,29 @@ export default async function handler(req, res) {
     try {
         const r = redis();
         const key = k.pred(loc, species);
+        const now = new Date();
+        const todayIso = now.toISOString().slice(0, 10);
+        const year = now.getUTCFullYear();
         const newRecord = {
             predDate: predDate || null,
             predDoy: predDoy != null ? predDoy : null,
             info: info || null,
-            ts: new Date().toISOString(),
+            ts: now.toISOString(),
         };
+
+        // Daglig historikk-snapshot: lagre kun hvis dagens dato ikke allerede finnes.
+        // Dette gir oss "hva sa vi første gang den dagen" — robust mot at samme bruker
+        // refresher dashboard flere ganger og rare side-effekter underveis.
+        if (newRecord.predDoy != null) {
+            const histKey = k.predHist(loc, species, year);
+            const existingDay = await r.hget(histKey, todayIso);
+            if (!existingDay) {
+                await r.hset(histKey, { [todayIso]: JSON.stringify(newRecord) });
+                // TTL ~400 dager — én sesongs historikk + buffer.
+                await r.expire(histKey, 400 * 24 * 3600);
+            }
+        }
+
         // Hent forrige (for cron-sammenligning) — vi roterer kun hvis ny er forskjellig
         // fra forrige eller hvis det er > 6 timer siden siste lagring.
         const existing = await r.get(key);
