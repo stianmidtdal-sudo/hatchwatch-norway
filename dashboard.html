@@ -862,8 +862,6 @@ const T = {
     convStabilityStable: 'Prediksjonen har stabilisert seg de siste 7 dagene (≤1 dags endring).',
     convStabilityMoving: (days) => `Prediksjonen har beveget seg ${days} dager de siste 7 dagene — fortsatt sensitiv for ny data.`,
     convStabilityEarly: 'Sesongen er ung — forvent at prediksjonen vil bevege seg en del før den stabiliserer seg.',
-    convStoredCount: (n, total) => `${n} av ${total} dager viser ekte lagret historikk (resten er estimat fra dagens data).`,
-    convReplayOnly: 'Hele linjen er estimert ut fra dagens data — vi har ennå ikke bygd opp ekte historikk for denne lokasjonen.',
     forecastIncluded: (days) => `Inkluderer langtidsvarsel på ${days} dager.`,
     forecastTestPopupTitle: 'Ny funksjonalitet testes',
     forecastTestPopupBody: 'Ny funksjonalitet testes på denne lokasjonen — integrasjon av MET sitt langtidsvarsel direkte i klekkeprediksjonen. Dette gjør prognosen mer presis i tiden frem til klekking, men er fortsatt under testing. Hvis noe ser rart ut, er det nyttig å rapportere via tilbakemelding-knappen nederst.',
@@ -1044,8 +1042,8 @@ const T = {
     explainBridgeLate:  'Drivkraftene peker mot',
     explainBridgeNormal: 'Drivkraftene balanserer omtrent ut til',
     explainBridgeConflict: 'Drivkraftene trekker mot hverandre, og resultatet ender på',
-    explainBridgeEarlyToNormal: 'Drivkraftene heller mot tidlig, men prognosen lander likevel innenfor det vanlige rommet —',
-    explainBridgeLateToNormal:  'Drivkraftene heller mot sen, men prognosen lander likevel innenfor det vanlige rommet —',
+    explainBridgeEarlyToNormal: 'Indikatorene peker mot tidlig klekking, men prognosen lander likevel innenfor det normale tidsrommet.',
+    explainBridgeLateToNormal:  'Indikatorene peker mot sen klekking, men prognosen lander likevel innenfor det normale tidsrommet.',
     explainEarlySeasonNote: 'Tidlig i sesongen vekter modellen fremtidige værverdier (klima-snitt) tungt, og en varm vår alene flytter ikke prediksjonen så langt frem som man kanskje skulle tro. Det skal mye til før dagens overskudd blir til en sterkt tidligere prognose.',
   },
   en: {
@@ -1081,8 +1079,6 @@ const T = {
     convStabilityStable: 'Prediction has stabilized over the last 7 days (≤1 day movement).',
     convStabilityMoving: (days) => `Prediction has moved ${days} days over the last 7 days — still sensitive to new data.`,
     convStabilityEarly: 'Season is young — expect the prediction to move substantially before it stabilizes.',
-    convStoredCount: (n, total) => `${n} of ${total} days show real stored history (the rest are estimates from today's data).`,
-    convReplayOnly: 'The entire line is estimated from today\'s data — we have not yet built up real history for this location.',
     forecastIncluded: (days) => `Includes ${days}-day long-term forecast.`,
     forecastTestPopupTitle: 'New functionality being tested',
     forecastTestPopupBody: "New functionality is being tested at this location — integration of MET's long-term forecast directly into the hatch prediction. This makes the forecast more accurate in the lead-up to hatching, but it is still under testing. If something looks strange, please report via the feedback button at the bottom.",
@@ -1263,8 +1259,8 @@ const T = {
     explainBridgeLate:  'The drivers point toward',
     explainBridgeNormal: 'The drivers roughly balance out to',
     explainBridgeConflict: 'The drivers pull against each other, with the net result being',
-    explainBridgeEarlyToNormal: 'The drivers lean toward early, but the forecast still lands within the usual range —',
-    explainBridgeLateToNormal:  'The drivers lean toward late, but the forecast still lands within the usual range —',
+    explainBridgeEarlyToNormal: 'The drivers lean toward early, but the forecast still lands within the usual range.',
+    explainBridgeLateToNormal:  'The drivers lean toward late, but the forecast still lands within the usual range.',
     explainEarlySeasonNote: 'Early in the season the model weights future weather (climate average) heavily, and a warm spring alone does not shift the prediction as far forward as one might expect. It takes a lot for today\'s surplus to translate into a strongly earlier forecast.',
   }
 };
@@ -5026,8 +5022,16 @@ function composeExplanation(drivers, deltaDays, ctx) {
         bridgeKey = 'explainBridgeLate';
     }
 
+    // Bro-setningene EarlyToNormal og LateToNormal er ferdig formulert (de sier
+    // allerede "innenfor det vanlige rommet") — derfor hopper vi over verdict-suffikset
+    // for å unngå duplisert ordlyd som "innenfor det vanlige rommet — normal klekkestart
+    // — innenfor det vanlige rommet". For alle andre broer henger vi på verdicten som før.
+    const bridgeIsStandalone = (bridgeKey === 'explainBridgeEarlyToNormal'
+                              || bridgeKey === 'explainBridgeLateToNormal');
     const verdictText = t(verdict.key)(verdict.days);
-    let result = `${firstSentence} ${t(bridgeKey)} ${verdictText}.`;
+    let result = bridgeIsStandalone
+        ? `${firstSentence} ${t(bridgeKey)}`
+        : `${firstSentence} ${t(bridgeKey)} ${verdictText}.`;
 
     // Tidlig-sesong-note: når akkumulert GDD er under 50 % av terskelen, vekter
     // modellen klima-prior (5-års DOY-snitt) tungt for de gjenstående dagene.
@@ -5615,12 +5619,6 @@ async function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate,
             summaryHtml += ` <span style="color:#1B7A3E;font-size:0.85rem">🌤 ${t('forecastIncluded')(days)}</span>`;
         }
     }
-    // Indikator: ekte lagret historikk
-    if (storedCount > 0) {
-        summaryHtml += ` <span style="color:#1B7A3E;font-size:0.85rem">💾 ${t('convStoredCount')(storedCount, predDoys.length)}</span>`;
-    } else {
-        summaryHtml += ` <span style="color:#888;font-size:0.85rem">${t('convReplayOnly')}</span>`;
-    }
     convSummary.innerHTML = summaryHtml;
 
     // Tegn Chart.js
@@ -5628,11 +5626,10 @@ async function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate,
     if (window._convChart) window._convChart.destroy();
     const bandLabel = LOC.calibrated ? t('convBand')(uncDays) : t('convBandIndicative');
 
-    // Hovedlinjen er stiplet på dager UTEN stored history (replay/estimat) og
-    // solid på dager MED stored history (ekte). Bruker Chart.js segment-API:
-    // for hvert segment mellom punkt i og i+1, hvis BÅDE i og i+1 mangler stored,
-    // er segmentet et estimat → stiplet linje + lysere farge. Ellers solid rødt.
-    const isReplay = (idx) => storedPredDoys[idx] == null;
+    // Hovedlinjen: én solid rød strek. Stored history brukes der den finnes,
+    // replay som fallback for dager uten lagring — men visuelt skiller vi ikke
+    // mellom dem. Vi viser bare "dette er hva modellen sa" over tid, og lar
+    // overgangen bygges opp i bakgrunnen som ekte historikk akkumuleres.
     const datasets = [
         {
             label: bandLabel,
@@ -5663,19 +5660,6 @@ async function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate,
             pointRadius: 0,
             tension: 0.3,
             order: 1,
-            segment: {
-                borderColor: ctx => {
-                    // Begge endepunkt = replay → estimat-grå. Ellers ekte-rødt.
-                    return (isReplay(ctx.p0DataIndex) && isReplay(ctx.p1DataIndex))
-                        ? 'rgba(150, 150, 150, 0.8)'
-                        : '#C0392B';
-                },
-                borderDash: ctx => {
-                    return (isReplay(ctx.p0DataIndex) && isReplay(ctx.p1DataIndex))
-                        ? [5, 4]
-                        : undefined;
-                },
-            },
         },
     ];
     if (histMedianDoy != null) {
@@ -5714,13 +5698,6 @@ async function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate,
                             const val = c.parsed.y;
                             if (val == null) return null;
                             const dateStr = fmt(dateFromDoy(YEAR, Math.round(val)));
-                            // Marker tydelig om punktet er ekte lagret eller estimat
-                            if (c.dataset.label === t('convPrediction')) {
-                                const tag = storedPredDoys[c.dataIndex] != null
-                                    ? (LANG === 'no' ? ' (lagret)' : ' (stored)')
-                                    : (LANG === 'no' ? ' (estimat)' : ' (estimate)');
-                                return `${c.dataset.label}: ${dateStr}${tag}`;
-                            }
                             return `${c.dataset.label}: ${dateStr}`;
                         },
                     },
