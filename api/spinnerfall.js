@@ -8,6 +8,8 @@
 //
 // Tidsvindu: 19, 20, 21, 22 lokal tid (paringsdans + spinnerfall).
 //   - Vind:        instant snitt over disse timene
+//   - Vindkast:    instant snitt av wind_speed_of_gust — innført 2026-05-28
+//                  (svermesøyler ødelegges av kast, ikke bare snittvind)
 //   - Temp:        instant snitt
 //   - Skydekke:    instant snitt (0-100%)
 //   - Nedbør:      sum (mm) over de fire timene
@@ -77,6 +79,7 @@ export default async function handler(req, res) {
                     // Evening 19-22 — hovedaggregering
                     windSum: 0, tempSum: 0, cloudSum: 0, precipSum: 0,
                     humidSum: 0, humidN: 0,
+                    gustSum: 0, gustN: 0,
                     pressEveSum: 0, pressEveN: 0,
                     n: 0,
                     // Afternoon 13-16 — kun for trykk-trend
@@ -103,6 +106,7 @@ export default async function handler(req, res) {
             if (hour < 19 || hour > 22) continue;
 
             const wind = inst.wind_speed;
+            const gust = inst.wind_speed_of_gust;   // Valgfri felt fra MET
             const temp = inst.air_temperature;
             const cloud = inst.cloud_area_fraction;
             const humid = inst.relative_humidity;
@@ -121,6 +125,10 @@ export default async function handler(req, res) {
                 b.humidSum += humid;
                 b.humidN += 1;
             }
+            if (gust != null) {
+                b.gustSum += gust;
+                b.gustN += 1;
+            }
             if (pressure != null) {
                 b.pressEveSum += pressure;
                 b.pressEveN += 1;
@@ -136,6 +144,7 @@ export default async function handler(req, res) {
             // n < 3 som indikative.
             if (b.n < 1) continue;
             const humidAvg = b.humidN > 0 ? b.humidSum / b.humidN : null;
+            const gustAvg = b.gustN > 0 ? b.gustSum / b.gustN : null;
             const pressEveAvg = b.pressEveN > 0 ? b.pressEveSum / b.pressEveN : null;
             const pressAftAvg = b.pressAftN > 0 ? b.pressAftSum / b.pressAftN : null;
             // Trykk-trend = (kveld) - (ettermiddag). Stigende/stabilt = god, raskt fall = front.
@@ -145,6 +154,7 @@ export default async function handler(req, res) {
                 : null;
             result[date] = {
                 wind:   Math.round(b.windSum / b.n * 10) / 10,
+                gust:   gustAvg != null ? Math.round(gustAvg * 10) / 10 : null,
                 temp:   Math.round(b.tempSum / b.n * 10) / 10,
                 cloud:  Math.round(b.cloudSum / b.n),
                 precip: Math.round(b.precipSum * 10) / 10,

@@ -3679,6 +3679,20 @@ function computeSpinnerfallForecast(eveningData, vulgataDate, historyData) {
         else if (w.wind <= 5.0) windFactor = 0.15;
         else                    windFactor = 0.03;
 
+        // Vindkast — innført 2026-05-28 etter Stians observasjon at 100% kom
+        // på en kveld med snittvind 2,3 m/s men kast 10 m/s. Svermesøyler kollapser
+        // av kast, ikke bare snittvind. Mykere kurve enn snittvind fordi enkelte
+        // kast tolereres bedre enn konstant vind.
+        // Defaulter til 1.0 (no-op) hvis MET ikke gir gust-data.
+        let gustFactor = 1.0;
+        if (w.gust != null) {
+            if (w.gust <= 3)       gustFactor = 1.0;
+            else if (w.gust <= 5)  gustFactor = 0.9;
+            else if (w.gust <= 7)  gustFactor = 0.7;
+            else if (w.gust <= 10) gustFactor = 0.4;
+            else                   gustFactor = 0.15;
+        }
+
         // Temp — myk bunngrense, ingen klippe på 14°C
         let tempFactor;
         if (w.temp >= 18)      tempFactor = 1.0;
@@ -3716,7 +3730,7 @@ function computeSpinnerfallForecast(eveningData, vulgataDate, historyData) {
             else                            pressureFactor = 0.7;
         }
 
-        return windFactor * tempFactor * cloudFactor * precipFactor * humidFactor * pressureFactor;
+        return windFactor * gustFactor * tempFactor * cloudFactor * precipFactor * humidFactor * pressureFactor;
     }
 
     // ── BACKLOG-AKKUMULERING (innført 2026-05-10) ───────────────────────
@@ -3946,9 +3960,12 @@ function renderSpinnerfallSection(eveningData, vulgataDate, historyData) {
             barFill = 'rgba(244,228,193,0.25)';
         }
 
-        // Faktorlinjer — vind | temp | skydekke
+        // Faktorlinjer — vind (+ kast hvis tilgjengelig) | temp | skydekke
         const w = f.weather;
-        const windStr = `${w.wind} m/s`;
+        const gustSuffix = (w.gust != null && w.gust > w.wind + 0.5)
+            ? ` <span style="opacity:0.65;">(kast ${Math.round(w.gust)})</span>`
+            : '';
+        const windStr = `${w.wind} m/s${gustSuffix}`;
         const tempStr = `${Math.round(w.temp)}°C`;
         const cloudStr = `${w.cloud}% sky`;
         const precipStr = w.precip > 0.1 ? ` · ${w.precip.toFixed(1)} mm` : '';
