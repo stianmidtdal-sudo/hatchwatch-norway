@@ -77,7 +77,8 @@
            Posisjon respekterer iOS safe-area. */
         .header-controls {
             position: absolute;
-            top: calc(env(safe-area-inset-top, 0px) + 14px);
+            top: 50%;
+            transform: translateY(-50%);
             right: calc(env(safe-area-inset-right, 0px) + 16px);
             display: flex;
             align-items: center;
