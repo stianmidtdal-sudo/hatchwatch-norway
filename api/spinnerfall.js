@@ -16,7 +16,13 @@
 //                  trend-beregning (evening - afternoon, hPa).
 //                  Stigende/stabilt = god indikator, raskt fall = front på vei.
 //
-// Kun dager med ≥3 av 4 målinger inkluderes.
+// Dager med ≥3 av 4 målinger gir presis prognose (time-oppløsning, dag 1-2).
+// Dager med 1-2 målinger (dag 3+ — MET går over til 6-timers oppløsning) inkluderes
+// også, men markeres som indikative i frontend. Bedre enn å skjule dem helt.
+//
+// Endret 2026-05-28: minste-grense senket fra 3 til 1 målinger. Stian foreslo
+// dette etter at Østmarka bare viste 2 dager — vi forkastet 7 brukbare dager
+// fordi MET-data har grovere oppløsning lengre ut i prognosen.
 
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -125,8 +131,10 @@ export default async function handler(req, res) {
         const result = {};
         for (const date in buckets) {
             const b = buckets[date];
-            // Krev minst 3 målinger for å akseptere dagen
-            if (b.n < 3) continue;
+            // Krev minst 1 måling. Dag 1-2 har typisk 4 målinger (time-oppløsning),
+            // dag 3+ har 0-1 (6-timers oppløsning). Frontend markerer dager med
+            // n < 3 som indikative.
+            if (b.n < 1) continue;
             const humidAvg = b.humidN > 0 ? b.humidSum / b.humidN : null;
             const pressEveAvg = b.pressEveN > 0 ? b.pressEveSum / b.pressEveN : null;
             const pressAftAvg = b.pressAftN > 0 ? b.pressAftSum / b.pressAftN : null;

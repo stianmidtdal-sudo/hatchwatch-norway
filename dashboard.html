@@ -3820,7 +3820,9 @@ function computeSpinnerfallForecast(eveningData, vulgataDate, historyData) {
             boost,                            // 1.0 = ingen boost; >1 = backlog-effekt
             backlogBefore: backlog - (wscore < 0.4 && hatchMult > 0 ? 1 : 0)
         });
-        if (out.length >= 5) break;
+        // Tidligere: hardkodet break ved 5 dager. Fjernet 2026-05-28 etter at vi
+        // senket n-kravet i api/spinnerfall.js til 1 — nå vises alle dager MET
+        // har data for (typisk 9), der dag 3+ markeres visuelt som indikative.
     }
     return out;
 }
@@ -3960,11 +3962,26 @@ function renderSpinnerfallSection(eveningData, vulgataDate, historyData) {
             boostBadge = `<div style="display:inline-block; margin-top:6px; padding:2px 7px; background:rgba(255,179,71,0.18); border:1px solid rgba(255,179,71,0.4); border-radius:4px; font-size:0.66rem; color:#ffb347; font-weight:600;">↑ ${boostText}</div>`;
         }
 
-        return `<div style="background:rgba(255,255,255,0.05); border:1px solid ${cardBorder}; border-radius:8px; padding:12px 13px;">
+        // Indikativ-markør: dag har ≤ 2 målinger fra MET (typisk dag 3+ der
+        // prognosen går over til 6-timers oppløsning). Bedre å vise det med
+        // dempet stil enn å skjule dagen helt.
+        const isIndicative = (w.n != null && w.n < 3);
+        const cardOpacity = isIndicative ? '0.62' : '1';
+        const cardStyle = isIndicative
+            ? `background:rgba(255,255,255,0.03); border:1px dashed ${cardBorder}; border-radius:8px; padding:12px 13px; opacity:${cardOpacity};`
+            : `background:rgba(255,255,255,0.05); border:1px solid ${cardBorder}; border-radius:8px; padding:12px 13px;`;
+        let indicativeBadge = '';
+        if (isIndicative) {
+            const indText = lang === 'no' ? 'Indikativ · grov prognose' : 'Indicative · coarse forecast';
+            indicativeBadge = `<div style="display:inline-block; margin-top:6px; padding:2px 7px; background:rgba(180,180,180,0.12); border:1px solid rgba(244,228,193,0.18); border-radius:4px; font-size:0.66rem; color:rgba(244,228,193,0.65); font-weight:500;">📡 ${indText}</div>`;
+        }
+
+        return `<div style="${cardStyle}">
             <div style="font-size:0.7rem; color:rgba(244,228,193,0.65); text-transform:uppercase; letter-spacing:0.7px;">${day} ${dateStr}</div>
             <div style="font-size:1.7rem; font-weight:800; color:${probColor}; margin-top:4px; line-height:1;">${pct}%</div>
             <div style="font-size:0.72rem; color:${probColor}; margin-top:2px; font-weight:600;">${labelStr}</div>
             ${boostBadge}
+            ${indicativeBadge}
             <div style="height:4px; border-radius:3px; background:rgba(255,255,255,0.08); margin-top:10px; overflow:hidden;">
                 <div style="height:100%; width:${pct}%; background:${barFill};"></div>
             </div>
@@ -3973,6 +3990,15 @@ function renderSpinnerfallSection(eveningData, vulgataDate, historyData) {
             </div>
         </div>`;
     }).join('');
+
+    // Forklarings-tekst hvis minst én indikativ dag finnes
+    const hasIndicative = forecast.some(f => f.weather && f.weather.n != null && f.weather.n < 3);
+    if (hasIndicative) {
+        const indFootNote = lang === 'no'
+            ? '📡 De første to dagene har time-oppløst værprognose. Senere dager baseres på 6-timers oppløsning og er mer indikative — bruk dem som retning, ikke planlegging.'
+            : '📡 The first two days use hour-resolution weather forecasts. Later days are based on 6-hour resolution and are more indicative — use them as a direction, not for planning.';
+        grid.innerHTML += `<div style="grid-column: 1 / -1; margin-top:8px; font-size:0.72rem; color:rgba(244,228,193,0.55); line-height:1.5; font-style:italic;">${indFootNote}</div>`;
+    }
 
     section.style.display = '';
 
