@@ -502,6 +502,8 @@
             .species-grid { grid-template-columns: repeat(2, 1fr); }
             .best-note { text-align: left; }
             .explain-drivers { grid-template-columns: 1fr 1fr; }
+            /* Spinnerfall: 2 kolonner = 4 rader på mobil (8 dager) */
+            #spinnerfallGrid { grid-template-columns: repeat(2, 1fr) !important; }
         }
         @media (max-width: 520px) {
             header { flex-direction: column; gap: 8px; }
@@ -686,7 +688,7 @@
                 <div id="spinnerfallTitle" style="font-size:0.78rem; font-weight:700; letter-spacing:1.5px; color:#ffd789; text-transform:uppercase;" data-i18n="spinnerfallTitle">▶ Spinnerfall-vakt</div>
                 <div id="spinnerfallSub" style="font-size:0.8rem; color:rgba(244,228,193,0.72);" data-i18n="spinnerfallSub">Sannsynlighet for vulgataspinnerfall · kveld 19–22</div>
             </div>
-            <div id="spinnerfallGrid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px; margin-top:14px;"></div>
+            <div id="spinnerfallGrid" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin-top:14px;"></div>
             <div id="spinnerfallFooter" style="font-size:0.72rem; color:rgba(244,228,193,0.6); margin-top:12px; line-height:1.55;" data-i18n-html="spinnerfallFooter">Modellen vurderer kveldstimene 19–22 (lokal tid) basert på MET-prognose og vekter seks variabler ulikt: <b>vind</b>, <b>lufttemperatur</b>, <b>skydekke</b>, <b>nedbør</b>, <b>luftfuktighet</b> og <b>trykk-trend</b>. Vindstille er det viktigste enkeltkravet — raskt fallende lufttrykk (front på vei) dempes også. Modellen er ikke validert mot observasjoner.</div>
         </section>
 
@@ -3789,7 +3791,9 @@ function computeSpinnerfallForecast(eveningData, vulgataDate, historyData) {
         }
     }
 
-    for (let i = 0; i < 9; i++) {
+    // Cap til 8 dager: gir balansert 4+4-layout i griden. Dag 9 er uansett så
+    // langt frem at det er liten praktisk verdi for planlegging.
+    for (let i = 0; i < 8; i++) {
         const d = new Date(today);
         d.setDate(d.getDate() + i);
         const yyyy = d.getFullYear();
