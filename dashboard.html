@@ -3978,8 +3978,8 @@ function renderSpinnerfallSection(eveningData, vulgataDate, historyData) {
         let boostBadge = '';
         if (f.boost > 1.1) {
             const boostText = lang === 'no'
-                ? `+${Math.round((f.boost - 1) * 100)}% etter dårlig vær`
-                : `+${Math.round((f.boost - 1) * 100)}% after bad weather`;
+                ? `+${Math.round((f.boost - 1) * 100)}% pga. akkumulasjon`
+                : `+${Math.round((f.boost - 1) * 100)}% from accumulation`;
             boostBadge = `<div style="display:inline-block; margin-top:6px; padding:2px 7px; background:rgba(255,179,71,0.18); border:1px solid rgba(255,179,71,0.4); border-radius:4px; font-size:0.66rem; color:#ffb347; font-weight:600;">↑ ${boostText}</div>`;
         }
 
