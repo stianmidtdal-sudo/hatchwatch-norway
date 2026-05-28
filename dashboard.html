@@ -5669,6 +5669,37 @@ async function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate,
     }
     convSummary.innerHTML = summaryHtml;
 
+    // ── Klekkemarkør: stiplet vertikal linje + bakgrunn for klekkeperioden ──
+    // Vises hvis dual-trigger-dato (max av adgDate og l2Date) faller innenfor
+    // grafens x-akse [firstDoy, todayDoy]. Klekkeperioden antas 14 dager (vulgata).
+    const _hatchStart = (adgDate && l2Date) ? (adgDate > l2Date ? adgDate : l2Date) : adgDate;
+    let hatchStartIdx = null;
+    let hatchEndIdx = null;
+    if (_hatchStart) {
+        const startDoy = doy(_hatchStart);
+        const endDoy = startDoy + 14;  // vulgata-sesong ~14 dager
+        const sIdx = startDoy - firstDoy;
+        const eIdx = endDoy - firstDoy;
+        const maxIdx = predDoys.length - 1;
+        if (sIdx >= 0 && sIdx <= maxIdx) hatchStartIdx = sIdx;
+        if (hatchStartIdx != null) {
+            hatchEndIdx = Math.min(eIdx, maxIdx);
+            if (hatchEndIdx <= hatchStartIdx) hatchEndIdx = null;
+        }
+    }
+
+    // Bonus: endre header til "Klekking pågår" hvis dagens dato er >= klekkestart
+    if (_hatchStart) {
+        const _t = new Date(); _t.setHours(0, 0, 0, 0);
+        const _o = new Date(_hatchStart); _o.setHours(0, 0, 0, 0);
+        const bestLabel = document.querySelector('.best-label');
+        if (bestLabel && _t >= _o) {
+            bestLabel.textContent = LANG === 'no'
+                ? '🎣 Klekking pågår'
+                : '🎣 Hatching in progress';
+        }
+    }
+
     // Tegn Chart.js
     const ctx = document.getElementById('convChart').getContext('2d');
     if (window._convChart) window._convChart.destroy();
@@ -5723,10 +5754,54 @@ async function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate,
         });
     }
 
+    // Plugin: tegn klekkemarkør (vertikal linje + bakgrunn) etter alle datasets
+    const hatchMarkerPlugin = {
+        id: 'hatchMarker',
+        afterDatasetsDraw(chart) {
+            if (hatchStartIdx == null) return;
+            const ctx2 = chart.ctx;
+            const xScale = chart.scales.x;
+            const yScale = chart.scales.y;
+            const topY = yScale.top;
+            const bottomY = yScale.bottom;
+
+            // Bakgrunnsskygge over klekkeperioden
+            if (hatchEndIdx != null && hatchEndIdx > hatchStartIdx) {
+                const xStart = xScale.getPixelForValue(hatchStartIdx);
+                const xEnd = xScale.getPixelForValue(hatchEndIdx);
+                ctx2.save();
+                ctx2.fillStyle = 'rgba(40, 167, 100, 0.10)';
+                ctx2.fillRect(xStart, topY, xEnd - xStart, bottomY - topY);
+                ctx2.restore();
+            }
+
+            // Vertikal stiplet linje på klekkestart
+            const x = xScale.getPixelForValue(hatchStartIdx);
+            ctx2.save();
+            ctx2.beginPath();
+            ctx2.moveTo(x, topY);
+            ctx2.lineTo(x, bottomY);
+            ctx2.lineWidth = 1.5;
+            ctx2.strokeStyle = 'rgba(40, 130, 80, 0.75)';
+            ctx2.setLineDash([5, 4]);
+            ctx2.stroke();
+            ctx2.setLineDash([]);
+
+            // Tekst-etikett
+            ctx2.fillStyle = 'rgba(40, 130, 80, 0.95)';
+            ctx2.font = '600 10px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+            ctx2.textAlign = 'left';
+            const _label = LANG === 'no' ? 'Klekking starter' : 'Hatching starts';
+            ctx2.fillText(_label, x + 5, topY + 13);
+            ctx2.restore();
+        },
+    };
+
     // Yakseverdier: konverter DOY tilbake til dato i tooltip/ticks
     window._convChart = new Chart(ctx, {
         type: 'line',
         data: { labels, datasets },
+        plugins: [hatchMarkerPlugin],
         options: {
             responsive: true,
             maintainAspectRatio: false,
