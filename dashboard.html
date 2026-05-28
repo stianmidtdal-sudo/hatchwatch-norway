@@ -1342,6 +1342,7 @@ const LOCATIONS = {
         // Kilde: Sentinel Hub-observasjoner.
         isgangWater: 'Jorbajávri (sør for Cabara)',
         isgangHistory: {
+            2026: '2026-05-28',  // observert av Stian
             2025: '2025-05-31', 2024: '2024-05-28', 2023: '2023-05-23',
             2022: '2022-05-28', 2021: '2021-06-02', 2020: '2020-06-07',
             2019: '2019-05-19', 2018: '2018-05-23', 2017: '2017-06-10',
@@ -2990,6 +2991,28 @@ function renderHistoricalGDDSection(stats, correctionDelta, snowData, airData) {
 }
 
 function projectADGDate(airData, currentADG, forecastData) {
+    const threshold = getEffectiveGddThreshold(LOC);
+
+    // BUG-FIX 2026-05-28: hvis terskelen ALLEREDE er nådd, returner faktisk
+    // krysningsdato fra observert data (i fortid eller i dag). Tidligere
+    // versjon startet ekstrapolering fra todayDoy+1 selv om GDD var over
+    // terskel — det ga klekkedato = i morgen og forskyvning dag for dag,
+    // selv etter at klekkingen biologisk hadde startet.
+    if (currentADG >= threshold) {
+        let adg = 0;
+        const todayDoy = doy(new Date());
+        for (let d = 1; d <= todayDoy; d++) {
+            const dt = dateFromDoy(YEAR, d);
+            const key = `${YEAR}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+            const v = airData[key];
+            if (v != null) adg += Math.max(0, v);
+            if (adg >= threshold) return dt;
+        }
+        // Fallback hvis vi ikke fant krysningsdato (sjeldent — kan skje hvis
+        // currentADG er fra ekstern kilde og ikke matcher airData). Return i dag.
+        return new Date();
+    }
+
     // Bruk MET-prognose for de neste 9 dager hvis tilgjengelig (test-modus på Lierne).
     // Etter 9 dager: 10-års klimasnitt som før.
     const avgTemp = forecastData
@@ -2999,7 +3022,7 @@ function projectADGDate(airData, currentADG, forecastData) {
     const todayDoy = doy(new Date());
     for (let d = todayDoy + 1; d <= 300; d++) {
         adg += Math.max(0, avgTemp[d] || 0);
-        if (adg >= getEffectiveGddThreshold(LOC)) return dateFromDoy(YEAR, d);
+        if (adg >= threshold) return dateFromDoy(YEAR, d);
     }
     return null;
 }
@@ -3376,6 +3399,24 @@ function _extrapolateWTLive(waterTempData, asOfDate, opts) {
     const temps = recent.map(([,v]) => v);
     const currentWT = temps.at(-1);
     if (currentWT < wtFloor) return null;       // STABILITETSKRAV: vannet må være varmet til ≥wtFloor°C
+
+    // BUG-FIX 2026-05-28: hvis WT-terskel ALLEREDE er passert i målårets observerte
+    // data, returner faktisk første krysningsdato (i fortid) i stedet for å lage
+    // en lookup-prediksjon som ender på "asOfDate + 0". Ellers blir hatchDate =
+    // max(adgDate, wtDate) feil-anchored på "i dag" i stedet for biologisk faktisk
+    // krysningsdato.
+    const wtTriggerVal = getWtThreshold(LOC);
+    if (currentWT >= wtTriggerVal) {
+        const allYearData = Object.entries(waterTempData)
+            .filter(([d]) => d.startsWith(String(targetYear)) && d <= cutoff)
+            .sort(([a],[b]) => a < b ? -1 : 1);
+        for (const [d, v] of allYearData) {
+            if (v != null && v >= wtTriggerVal) return parseDate(d);
+        }
+        // Fallback hvis ingen krysning ble funnet (sjeldent — kan skje hvis siste
+        // verdi er over terskel men tidligere data mangler). Return asOfDate.
+        return new Date(asOfDate);
+    }
 
     // Lookup-modell (default 2026-05-11, kan skrus av med ?wtmodel=linear)
     // Empirisk: dagens WT + snitt antall dager fra denne WT til terskel
@@ -5560,7 +5601,14 @@ async function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate,
 
     // Hovedlinje: bruk stored der det finnes, ellers replay. Dette er hva
     // grafen "sier" på hver dag — ekte historikk eller estimat.
+    //
+    // UNNTAK for siste dag (i dag): bruk alltid live rå-prediksjon, ikke stored.
+    // Stored ble lagret første gang dashboardet ble besøkt i dag, og prediksjonen
+    // kan ha flyttet seg gjennom dagen. Header (Beste estimat) viser nyeste rå
+    // verdi, så grafens endepunkt MÅ også gjøre det — ellers oppstår 1-dags
+    // mismatch mellom "Beste estimat" og "Nåværende estimat"-summary under grafen.
     const predDoys = isoDates.map((iso, i) => {
+        if (i === isoDates.length - 1) return rawPredDoys[i];
         return storedPredDoys[i] != null ? storedPredDoys[i] : smoothedReplay[i];
     });
 
