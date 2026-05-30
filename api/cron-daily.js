@@ -147,6 +147,13 @@ async function evaluateTrigger(trigger, locId) {
             if (!cur || !prev || cur.predDoy == null || prev.predDoy == null) {
                 return { fire: false };
             }
+            // Bug-fix 2026-05-29: når klekkingen har startet (predDoy <= today),
+            // gir et "prediksjonen har flyttet seg X dager"-varsel ingen mening.
+            // Det skjer typisk når modellen begynner å rapportere faktisk krysnings-
+            // dato i fortid i stedet for en fremtidig prediksjon. Varselet skal kun
+            // utløses så lenge klekkingen fortsatt ligger fremover i tid.
+            const todayDoy = dayOfYear(new Date());
+            if (cur.predDoy <= todayDoy) return { fire: false };
             const delta = cur.predDoy - prev.predDoy;
             if (Math.abs(delta) < 2) return { fire: false };  // Krev ≥ 2 dager
             const isEarlier = delta < 0;

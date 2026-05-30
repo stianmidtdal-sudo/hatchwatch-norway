@@ -703,7 +703,7 @@
         </section>
 
         <!-- ═══ GDD MODEL ═══ -->
-        <section>
+        <section id="gddModelSection">
             <h2 id="modelHeading">GDD Model · Loading…</h2>
             <div class="model-grid">
                 <div class="card">
@@ -5737,14 +5737,26 @@ async function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate,
     }
 
     // Bonus: endre header til "Klekking pågår" hvis dagens dato er >= klekkestart
+    // OG skjul prediksjonshistorikk + GDD-modell-seksjonene (de har gjort jobben sin).
+    // Seksjonene vises naturlig igjen neste sesong når predDoy > todayDoy.
     if (_hatchStart) {
         const _t = new Date(); _t.setHours(0, 0, 0, 0);
         const _o = new Date(_hatchStart); _o.setHours(0, 0, 0, 0);
-        const bestLabel = document.querySelector('.best-label');
-        if (bestLabel && _t >= _o) {
-            bestLabel.textContent = LANG === 'no'
-                ? '🎣 Klekking pågår'
-                : '🎣 Hatching in progress';
+        if (_t >= _o) {
+            const bestLabel = document.querySelector('.best-label');
+            if (bestLabel) {
+                bestLabel.textContent = LANG === 'no'
+                    ? '🎣 Klekking pågår'
+                    : '🎣 Hatching in progress';
+            }
+            // Skjul prediksjonshistorikk-seksjonen
+            const convSection = document.getElementById('convergenceSection');
+            if (convSection) convSection.style.display = 'none';
+            // Skjul GDD-modell-seksjonen (under grafen — viser akkumulert GDD osv.)
+            const gddSection = document.getElementById('gddModelSection');
+            if (gddSection) gddSection.style.display = 'none';
+            // Stopper render her — Chart.js, summary osv. trengs ikke når seksjonen er skjult
+            return;
         }
     }
 
