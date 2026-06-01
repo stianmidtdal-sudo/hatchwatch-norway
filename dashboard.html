@@ -683,6 +683,14 @@
             <div class="explain-text" id="seasonExplainText"></div>
         </div>
 
+        <!-- ═══ FORECAST-EFFEKT-VARSLING (rett under Sesongbarometeret 2026-05-29) ═══ -->
+        <!-- Trigget når 9-dagers MET-prognose flytter klekkeprediksjon ≥ 4 dager
+             vs klimasnitt. Plasseres her fordi det er direkte relevant for
+             prognosen som vises i Sesongbarometeret rett over. -->
+        <section id="forecastEffectSection" style="display:none;margin-top:14px">
+            <div id="forecastEffectBanner" style="padding:14px 16px;border-radius:8px;border:1px solid;font-size:0.92rem"></div>
+        </section>
+
         <!-- ═══ SPINNERFALL-VAKT (skumringstema, vises kun i/nær vulgata-sesongen) ═══ -->
         <section id="spinnerfallSection" style="display:none; margin: 20px 0 28px; padding: 20px 22px; background: linear-gradient(135deg, #1a1f2e 0%, #2d2238 55%, #3d2820 100%); border-radius: 12px; color: #f4e4c1; box-shadow: 0 6px 20px rgba(0,0,0,0.18);">
             <div style="display:flex; align-items:baseline; flex-wrap:wrap; gap:10px;">
@@ -748,9 +756,7 @@
             <strong>🔁 Vann-proxy aktiv (DEBUG)</strong> &mdash; <span id="waterProxyBannerInfo">Beregner...</span>
         </div>
 
-        <section id="forecastEffectSection" style="display:none;margin-top:14px">
-            <div id="forecastEffectBanner" style="padding:14px 16px;border-radius:8px;border:1px solid;font-size:0.92rem"></div>
-        </section>
+        <!-- forecastEffectSection flyttet til under Sesongbarometeret 2026-05-29 -->
 
         <!-- ═══ WATER TEMPERATURE CHART ═══ -->
         <section id="wtSection">
