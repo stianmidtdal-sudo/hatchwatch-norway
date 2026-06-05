@@ -3990,26 +3990,16 @@ function renderSpinnerfallSection(eveningData, vulgataDate, historyData) {
             boostBadge = `<div style="display:inline-block; margin-top:6px; padding:2px 7px; background:rgba(255,179,71,0.18); border:1px solid rgba(255,179,71,0.4); border-radius:4px; font-size:0.66rem; color:#ffb347; font-weight:600;">↑ ${boostText}</div>`;
         }
 
-        // Indikativ-markør: dag har ≤ 2 målinger fra MET (typisk dag 3+ der
-        // prognosen går over til 6-timers oppløsning). Bedre å vise det med
-        // dempet stil enn å skjule dagen helt.
-        const isIndicative = (w.n != null && w.n < 3);
-        const cardOpacity = isIndicative ? '0.62' : '1';
-        const cardStyle = isIndicative
-            ? `background:rgba(255,255,255,0.03); border:1px dashed ${cardBorder}; border-radius:8px; padding:12px 13px; opacity:${cardOpacity};`
-            : `background:rgba(255,255,255,0.05); border:1px solid ${cardBorder}; border-radius:8px; padding:12px 13px;`;
-        let indicativeBadge = '';
-        if (isIndicative) {
-            const indText = lang === 'no' ? 'Indikativ · grov prognose' : 'Indicative · coarse forecast';
-            indicativeBadge = `<div style="display:inline-block; margin-top:6px; padding:2px 7px; background:rgba(180,180,180,0.12); border:1px solid rgba(244,228,193,0.18); border-radius:4px; font-size:0.66rem; color:rgba(244,228,193,0.65); font-weight:500;">📡 ${indText}</div>`;
-        }
+        // Alle dager rendres med samme visuelle stil — kortene skal være like
+        // synlige uansett om dagen har time-presis eller 6-timers oppløsning fra
+        // MET. Datakvalitets-forskjellen forklares kun i fotnoten under griden.
+        const cardStyle = `background:rgba(255,255,255,0.05); border:1px solid ${cardBorder}; border-radius:8px; padding:12px 13px;`;
 
         return `<div style="${cardStyle}">
             <div style="font-size:0.7rem; color:rgba(244,228,193,0.65); text-transform:uppercase; letter-spacing:0.7px;">${day} ${dateStr}</div>
             <div style="font-size:1.7rem; font-weight:800; color:${probColor}; margin-top:4px; line-height:1;">${pct}%</div>
             <div style="font-size:0.72rem; color:${probColor}; margin-top:2px; font-weight:600;">${labelStr}</div>
             ${boostBadge}
-            ${indicativeBadge}
             <div style="height:4px; border-radius:3px; background:rgba(255,255,255,0.08); margin-top:10px; overflow:hidden;">
                 <div style="height:100%; width:${pct}%; background:${barFill};"></div>
             </div>
