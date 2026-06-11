@@ -4982,39 +4982,69 @@ function computeSeasonDrivers(args) {
     ];
 }
 
-// Tempo-markør: posisjon 10-90% basert på z-score (Δdager / σ) clamped til [-3, 3].
-// Endret 2026-05-29 fra flat dag-clamp til σ-basert skalering — én uke betyr noe
-// annet i Kauto (σ=3.3) enn i Vestfjella (σ=6.0). Med σ-skalering blir bånd-
-// grensene automatisk tilpasset lokasjonens kalibreringsnøyaktighet.
-// Justert 2026-05-29 v2: clamp til ±3σ (i stedet for ±2.5σ) og output 10-90 %
-// (i stedet for 0-100 %) — så markøren får luft og aldri klistrer seg mot kantene.
-// Stian observerte at z=-2.12 (-7 d / σ=3.3) landet på 8 % = praktisk talt på
-// venstre kant. Nå lander samme verdi på ca. 21 % = pent inne i Veldig tidlig-båndet.
-function computeTempoPosition(deltaDays, sdDays) {
+// Tempo-markør: posisjon 10-90 % basert på avvik mot historisk maks/min.
+// Endret 2026-05-29 v3 etter Stians observasjon: tidligere σ-skala plasserte
+// Kauto -7 d (50 % av historisk maks +13 d) for langt til venstre. Brukeren
+// forventet at "halvparten av maks avvik" lander rundt midten av "Tidlig"-
+// båndet — ikke på kanten av "Veldig tidlig".
+//
+// Ny tilnærming: bruk maks absolutt historisk Δdager som ekstrem-grense.
+// Δ = +13 d (Kauto's mest sene år, 2017) → 90 %. Halvparten (Δ = -7 d eller
+// +6 d) → midten av Tidlig/Sen. Skalaen blir lineær mellom (-extreme, +extreme).
+//
+// Fallback til σ-basert skala hvis historiske min/max ikke finnes.
+function computeTempoPosition(deltaDays, sdDays, histStats) {
     if (deltaDays == null) return 50;
+
+    // Foretrukket: bruk historisk maks absolutt avvik som ekstrem-grense.
+    if (histStats && histStats.median != null
+        && histStats.earliest != null && histStats.latest != null) {
+        const minDelta = histStats.earliest - histStats.median;  // negativt
+        const maxDelta = histStats.latest   - histStats.median;  // positivt
+        const extreme = Math.max(Math.abs(minDelta), Math.abs(maxDelta), 5);
+        const clamped = Math.max(-extreme, Math.min(extreme, deltaDays));
+        return 10 + ((clamped + extreme) / (2 * extreme)) * 80;
+    }
+
+    // Fallback: σ-basert skala når historiske min/max mangler
     const sd = (sdDays && sdDays > 0) ? sdDays : 5;
     const z = deltaDays / sd;
     const clamped = Math.max(-3, Math.min(3, z));
-    // Map [-3, 3] → [10, 90] %. Z = 0 → 50 %.
     return 10 + ((clamped + 3) / 6) * 80;
 }
 
-// Verdict-kategori basert på z-score (Δdager / σ).
-// Bånd-grenser:
-//   z ≤ -2.0      → veldig tidlig
-//   z ≤ -1.5      → tydelig tidlig
-//   z ≤ -0.5      → noe tidlig
-//   |z| < 0.5     → normal
-//   z < 1.5       → noe sen
-//   z < 2.0       → tydelig sen
-//   z ≥ 2.0       → veldig sen
-// Endret 2026-05-29 fra flate dag-grenser til σ-baserte. "days"-feltet
-// returneres fortsatt i antall dager for naturlig formulering i teksten.
-function categorizeDelta(deltaDays, sdDays) {
+// Verdict-kategori basert på avvik mot historisk maks (samme prinsipp som
+// computeTempoPosition så markør og forklarings-tekst alltid er konsistente).
+// Bånd-grenser (som fraksjon av historisk maks avvik):
+//   |Δ| / extreme ≥ 0.85  → veldig tidlig/sen   (nær historisk ekstremt)
+//   |Δ| / extreme ≥ 0.55  → tydelig tidlig/sen  (klart anomalt)
+//   |Δ| / extreme ≥ 0.25  → noe tidlig/sen      (merkbart utenfor median)
+//   |Δ| / extreme <  0.25 → normal              (innenfor det vanlige rommet)
+//
+// Fallback til σ-skala når historiske min/max mangler.
+function categorizeDelta(deltaDays, sdDays, histStats) {
     if (deltaDays == null) return { key: 'explainVerdictNormal', days: 0 };
+    const absDays = Math.abs(deltaDays);
+
+    // Foretrukket: histStats-basert klassifisering
+    if (histStats && histStats.median != null
+        && histStats.earliest != null && histStats.latest != null) {
+        const minDelta = histStats.earliest - histStats.median;
+        const maxDelta = histStats.latest   - histStats.median;
+        const extreme = Math.max(Math.abs(minDelta), Math.abs(maxDelta), 5);
+        const frac = deltaDays / extreme;  // -1..+1 i typisk rom
+        if (frac <= -0.85) return { key: 'explainVerdictExtremeEarly', days: absDays };
+        if (frac <= -0.55) return { key: 'explainVerdictEarlyStrong',  days: absDays };
+        if (frac <= -0.25) return { key: 'explainVerdictEarlyMild',    days: absDays };
+        if (frac <   0.25) return { key: 'explainVerdictNormal',       days: 0 };
+        if (frac <   0.55) return { key: 'explainVerdictLateMild',     days: deltaDays };
+        if (frac <   0.85) return { key: 'explainVerdictLateStrong',   days: deltaDays };
+        return { key: 'explainVerdictExtremeLate', days: deltaDays };
+    }
+
+    // Fallback: σ-basert
     const sd = (sdDays && sdDays > 0) ? sdDays : 5;
     const z = deltaDays / sd;
-    const absDays = Math.abs(deltaDays);
     if (z <= -2.0) return { key: 'explainVerdictExtremeEarly', days: absDays };
     if (z <= -1.5) return { key: 'explainVerdictEarlyStrong',  days: absDays };
     if (z <= -0.5) return { key: 'explainVerdictEarlyMild',    days: absDays };
@@ -5071,10 +5101,11 @@ function composeExplanation(drivers, deltaDays, ctx) {
     const valid = drivers.filter(d => d != null);
     const anom  = valid.filter(d => d.anomaly !== 'normal');
     const sdDays = (ctx && ctx.sdDays) ? ctx.sdDays : null;
+    const histStats = (ctx && ctx.histStats) ? ctx.histStats : null;
 
     if (anom.length === 0) {
         if (valid.length === 0) return t('seasonExplainEmpty');
-        const verdict = categorizeDelta(deltaDays, sdDays);
+        const verdict = categorizeDelta(deltaDays, sdDays, histStats);
         const verdictText = t(verdict.key)(verdict.days);
         return `${t('explainSentenceAllNormal')} ${t('explainBridgeNormal')} ${verdictText}.`;
     }
@@ -5106,7 +5137,7 @@ function composeExplanation(drivers, deltaDays, ctx) {
         else if (d.direction === 'late') lateVotes++;
     }
     const conflict = earlyVotes > 0 && lateVotes > 0;
-    const verdict = categorizeDelta(deltaDays, sdDays);
+    const verdict = categorizeDelta(deltaDays, sdDays, histStats);
     const verdictIsNormal = verdict.key === 'explainVerdictNormal';
 
     // Brosetning: konflikt / drivere-vs-normal-mismatch / normal / tidlig / sen.
@@ -5196,7 +5227,7 @@ function renderSeasonExplain(args) {
     const _sdDays = (args.histStats && args.histStats.sd != null && args.histStats.sd > 0)
         ? args.histStats.sd
         : (LOC.uncertaintyDays || 5);
-    const pos = computeTempoPosition(args.deltaDays, _sdDays);
+    const pos = computeTempoPosition(args.deltaDays, _sdDays, args.histStats);
     document.getElementById('seasonExplainMarker').style.left = pos + '%';
 
     // Driver-celler
@@ -5219,6 +5250,7 @@ function renderSeasonExplain(args) {
         currentADG: args.currentADG,
         threshold: getEffectiveGddThreshold(LOC),
         sdDays: _sdDays,
+        histStats: args.histStats,
     });
     document.getElementById('seasonExplainText').innerHTML = text;
 }
