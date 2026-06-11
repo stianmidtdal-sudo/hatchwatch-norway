@@ -4982,22 +4982,40 @@ function computeSeasonDrivers(args) {
     ];
 }
 
-// Tempo-markør: 0-100% basert på Δdager vs. median (clamped -25..+25).
-function computeTempoPosition(deltaDays) {
+// Tempo-markør: 0-100% basert på z-score (Δdager / σ) clamped til [-2.5, 2.5].
+// Endret 2026-05-29 fra flat dag-clamp til σ-basert skalering — én uke betyr noe
+// annet i Kauto (σ=3.8) enn i Vestfjella (σ=6.0). Med σ-skalering blir bånd-
+// grensene automatisk tilpasset lokasjonens kalibreringsnøyaktighet.
+function computeTempoPosition(deltaDays, sdDays) {
     if (deltaDays == null) return 50;
-    const d = Math.max(-25, Math.min(25, deltaDays));
-    return ((d + 25) / 50) * 100;
+    const sd = (sdDays && sdDays > 0) ? sdDays : 5;
+    const z = deltaDays / sd;
+    const clamped = Math.max(-2.5, Math.min(2.5, z));
+    return ((clamped + 2.5) / 5) * 100;
 }
 
-// Verdict-kategori basert på Δdager
-function categorizeDelta(deltaDays) {
+// Verdict-kategori basert på z-score (Δdager / σ).
+// Bånd-grenser:
+//   z ≤ -2.0      → veldig tidlig
+//   z ≤ -1.5      → tydelig tidlig
+//   z ≤ -0.5      → noe tidlig
+//   |z| < 0.5     → normal
+//   z < 1.5       → noe sen
+//   z < 2.0       → tydelig sen
+//   z ≥ 2.0       → veldig sen
+// Endret 2026-05-29 fra flate dag-grenser til σ-baserte. "days"-feltet
+// returneres fortsatt i antall dager for naturlig formulering i teksten.
+function categorizeDelta(deltaDays, sdDays) {
     if (deltaDays == null) return { key: 'explainVerdictNormal', days: 0 };
-    if (deltaDays <= -15) return { key: 'explainVerdictExtremeEarly', days: Math.abs(deltaDays) };
-    if (deltaDays <= -10) return { key: 'explainVerdictEarlyStrong',  days: Math.abs(deltaDays) };
-    if (deltaDays <= -5)  return { key: 'explainVerdictEarlyMild',    days: Math.abs(deltaDays) };
-    if (deltaDays < 5)    return { key: 'explainVerdictNormal',       days: 0 };
-    if (deltaDays < 10)   return { key: 'explainVerdictLateMild',     days: deltaDays };
-    if (deltaDays < 15)   return { key: 'explainVerdictLateStrong',   days: deltaDays };
+    const sd = (sdDays && sdDays > 0) ? sdDays : 5;
+    const z = deltaDays / sd;
+    const absDays = Math.abs(deltaDays);
+    if (z <= -2.0) return { key: 'explainVerdictExtremeEarly', days: absDays };
+    if (z <= -1.5) return { key: 'explainVerdictEarlyStrong',  days: absDays };
+    if (z <= -0.5) return { key: 'explainVerdictEarlyMild',    days: absDays };
+    if (z <  0.5)  return { key: 'explainVerdictNormal',       days: 0 };
+    if (z <  1.5)  return { key: 'explainVerdictLateMild',     days: deltaDays };
+    if (z <  2.0)  return { key: 'explainVerdictLateStrong',   days: deltaDays };
     return { key: 'explainVerdictExtremeLate', days: deltaDays };
 }
 
@@ -5047,10 +5065,11 @@ function capitalizeFirst(s) {
 function composeExplanation(drivers, deltaDays, ctx) {
     const valid = drivers.filter(d => d != null);
     const anom  = valid.filter(d => d.anomaly !== 'normal');
+    const sdDays = (ctx && ctx.sdDays) ? ctx.sdDays : null;
 
     if (anom.length === 0) {
         if (valid.length === 0) return t('seasonExplainEmpty');
-        const verdict = categorizeDelta(deltaDays);
+        const verdict = categorizeDelta(deltaDays, sdDays);
         const verdictText = t(verdict.key)(verdict.days);
         return `${t('explainSentenceAllNormal')} ${t('explainBridgeNormal')} ${verdictText}.`;
     }
@@ -5082,7 +5101,7 @@ function composeExplanation(drivers, deltaDays, ctx) {
         else if (d.direction === 'late') lateVotes++;
     }
     const conflict = earlyVotes > 0 && lateVotes > 0;
-    const verdict = categorizeDelta(deltaDays);
+    const verdict = categorizeDelta(deltaDays, sdDays);
     const verdictIsNormal = verdict.key === 'explainVerdictNormal';
 
     // Brosetning: konflikt / drivere-vs-normal-mismatch / normal / tidlig / sen.
@@ -5099,7 +5118,8 @@ function composeExplanation(drivers, deltaDays, ctx) {
         bridgeKey = 'explainBridgeEarlyToNormal';
     } else if (verdictIsNormal && lateVotes > 0 && earlyVotes === 0) {
         bridgeKey = 'explainBridgeLateToNormal';
-    } else if (deltaDays != null && deltaDays >= -2 && deltaDays <= 2) {
+    } else if (deltaDays != null && sdDays && Math.abs(deltaDays / sdDays) < 0.25) {
+        // Svært nær median (under 0.25 σ unna) — drivere balanserer ut.
         bridgeKey = 'explainBridgeNormal';
     } else if (earlyVotes >= lateVotes) {
         bridgeKey = 'explainBridgeEarly';
@@ -5164,8 +5184,14 @@ function renderSeasonExplain(args) {
         tlElems[4].textContent = t('tempoExtremeLate');
     }
 
-    // Tempo-markør
-    const pos = computeTempoPosition(args.deltaDays);
+    // Tempo-markør — bruk σ-basert skalering. Standardavvik = histStats.sd hvis
+    // tilgjengelig (data-drevet fra historisk validering), ellers LOC.uncertaintyDays
+    // (prior, typisk 4 for kalibrerte og 6-14 for ukalibrerte). σ gjør at "én uke
+    // tidligere" betyr noe annet i Kauto (σ=3.8) enn i Vestfjella (σ=6.0).
+    const _sdDays = (args.histStats && args.histStats.sd != null && args.histStats.sd > 0)
+        ? args.histStats.sd
+        : (LOC.uncertaintyDays || 5);
+    const pos = computeTempoPosition(args.deltaDays, _sdDays);
     document.getElementById('seasonExplainMarker').style.left = pos + '%';
 
     // Driver-celler
@@ -5187,6 +5213,7 @@ function renderSeasonExplain(args) {
     const text = composeExplanation(drivers, args.deltaDays, {
         currentADG: args.currentADG,
         threshold: getEffectiveGddThreshold(LOC),
+        sdDays: _sdDays,
     });
     document.getElementById('seasonExplainText').innerHTML = text;
 }
@@ -6094,6 +6121,7 @@ function rebuildDashboard() {
             wtData,            // rå vanntemp, samme som KPI viser
             snowData,
             deltaDays,
+            histStats,         // brukes for σ-basert tempo-skala
         });
     }
 
