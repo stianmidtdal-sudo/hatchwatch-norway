@@ -1042,9 +1042,9 @@ const T = {
     explainSentenceAllNormal: 'Varmesum, isgang, vanntemperatur og snødybde ligger alle nær 5-årssnittet.',
     explainVerdictExtremeEarly: (days) => `<span class="verdict-early-strong">veldig tidlig klekkestart</span> — anslagsvis ${days} dager tidligere enn vanlig`,
     explainVerdictEarlyStrong:  (days) => `<span class="verdict-early-strong">tydelig tidlig klekkestart</span> — anslagsvis ${days} dager tidligere enn vanlig`,
-    explainVerdictEarlyMild:    (days) => `<span class="verdict-early-mild">noe tidlig klekkestart</span> — anslagsvis ${days} dager tidligere enn vanlig`,
+    explainVerdictEarlyMild:    (days) => `<span class="verdict-early-mild">tidlig klekkestart</span> — anslagsvis ${days} dager tidligere enn vanlig`,
     explainVerdictNormal:       ()     => `<span class="verdict-normal">normal klekkestart</span> — innenfor det vanlige rommet`,
-    explainVerdictLateMild:     (days) => `<span class="verdict-late-mild">noe sen klekkestart</span> — anslagsvis ${days} dager senere enn vanlig`,
+    explainVerdictLateMild:     (days) => `<span class="verdict-late-mild">sen klekkestart</span> — anslagsvis ${days} dager senere enn vanlig`,
     explainVerdictLateStrong:   (days) => `<span class="verdict-late-strong">tydelig sen klekkestart</span> — anslagsvis ${days} dager senere enn vanlig`,
     explainVerdictExtremeLate:  (days) => `<span class="verdict-late-strong">veldig sen klekkestart</span> — anslagsvis ${days} dager senere enn vanlig`,
     explainBridgeEarly: 'Drivkraftene peker mot',
@@ -1259,9 +1259,9 @@ const T = {
     explainSentenceAllNormal: 'GDD, ice-out, water temperature, and snow depth are all near the 5-year average.',
     explainVerdictExtremeEarly: (days) => `<span class="verdict-early-strong">very early hatch start</span> — roughly ${days} days earlier than usual`,
     explainVerdictEarlyStrong:  (days) => `<span class="verdict-early-strong">clearly early hatch start</span> — roughly ${days} days earlier than usual`,
-    explainVerdictEarlyMild:    (days) => `<span class="verdict-early-mild">somewhat early hatch start</span> — roughly ${days} days earlier than usual`,
+    explainVerdictEarlyMild:    (days) => `<span class="verdict-early-mild">early hatch start</span> — roughly ${days} days earlier than usual`,
     explainVerdictNormal:       ()     => `<span class="verdict-normal">normal hatch start</span> — within the usual range`,
-    explainVerdictLateMild:     (days) => `<span class="verdict-late-mild">somewhat late hatch start</span> — roughly ${days} days later than usual`,
+    explainVerdictLateMild:     (days) => `<span class="verdict-late-mild">late hatch start</span> — roughly ${days} days later than usual`,
     explainVerdictLateStrong:   (days) => `<span class="verdict-late-strong">clearly late hatch start</span> — roughly ${days} days later than usual`,
     explainVerdictExtremeLate:  (days) => `<span class="verdict-late-strong">very late hatch start</span> — roughly ${days} days later than usual`,
     explainBridgeEarly: 'The drivers point toward',
@@ -5018,7 +5018,7 @@ function computeTempoPosition(deltaDays, sdDays, histStats) {
 // Bånd-grenser (som fraksjon av historisk maks avvik):
 //   |Δ| / extreme ≥ 0.85  → veldig tidlig/sen   (nær historisk ekstremt)
 //   |Δ| / extreme ≥ 0.55  → tydelig tidlig/sen  (klart anomalt)
-//   |Δ| / extreme ≥ 0.25  → noe tidlig/sen      (merkbart utenfor median)
+//   |Δ| / extreme ≥ 0.25  → tidlig/sen          (merkbart utenfor median)
 //   |Δ| / extreme <  0.25 → normal              (innenfor det vanlige rommet)
 //
 // Fallback til σ-skala når historiske min/max mangler.
@@ -5032,7 +5032,7 @@ function categorizeDelta(deltaDays, sdDays, histStats) {
         const minDelta = histStats.earliest - histStats.median;
         const maxDelta = histStats.latest   - histStats.median;
         const extreme = Math.max(Math.abs(minDelta), Math.abs(maxDelta), 5);
-        const frac = deltaDays / extreme;  // -1..+1 i typisk rom
+        const frac = deltaDays / extreme;
         if (frac <= -0.85) return { key: 'explainVerdictExtremeEarly', days: absDays };
         if (frac <= -0.55) return { key: 'explainVerdictEarlyStrong',  days: absDays };
         if (frac <= -0.25) return { key: 'explainVerdictEarlyMild',    days: absDays };
