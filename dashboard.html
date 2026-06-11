@@ -457,6 +457,126 @@
         .explain-text .verdict-late-mild    { color: #8a3b13; font-weight: 600; }
         .explain-text .verdict-late-strong  { color: #8a3b13; font-weight: 700; }
 
+        /* ── SETTEFISK-KORT (kun nordmarka_dyn) ── */
+        .settefisk-wrap {
+            background: white;
+            border-radius: 12px;
+            padding: 16px 22px;
+            margin: 18px 0 24px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            border-top: 4px solid #74C69D;
+        }
+        .settefisk-toggle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            user-select: none;
+            background: transparent;
+            border: 0;
+            width: 100%;
+            padding: 0;
+            text-align: left;
+            color: #1B4332;
+        }
+        .settefisk-toggle:focus-visible { outline: 2px solid #74C69D; outline-offset: 4px; border-radius: 4px; }
+        .settefisk-label {
+            font-size: 0.72rem;
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: #1B4332;
+            font-weight: 700;
+        }
+        .settefisk-summary {
+            font-size: 0.82rem;
+            color: #2D6A4F;
+            font-weight: 600;
+        }
+        .settefisk-summary .nofish { color: #888; font-weight: 500; }
+        .settefisk-body {
+            margin-top: 14px;
+            border-top: 1px solid rgba(27,67,50,0.08);
+            padding-top: 14px;
+            display: none;
+        }
+        .settefisk-wrap.open .settefisk-body { display: block; }
+        .settefisk-wrap.open .settefisk-chev { transform: rotate(90deg); }
+        .settefisk-chev {
+            display: inline-block;
+            font-size: 0.7rem;
+            color: #1B4332;
+            transition: transform 0.18s ease;
+            margin-right: 6px;
+        }
+        .settefisk-bars {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .settefisk-bar {
+            background: #f5f7f3;
+            border-radius: 8px;
+            padding: 10px 8px;
+            text-align: center;
+            position: relative;
+            border: 1px solid #e8eee5;
+        }
+        .settefisk-bar.zero { background: #fafafa; opacity: 0.7; }
+        .settefisk-bar .yr {
+            font-size: 0.66rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: rgba(27,67,50,0.6);
+            text-transform: uppercase;
+        }
+        .settefisk-bar .num {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #1B4332;
+            line-height: 1.2;
+            margin-top: 4px;
+            font-variant-numeric: tabular-nums;
+        }
+        .settefisk-bar.zero .num { color: #b8b8b8; font-weight: 500; }
+        .settefisk-bar .bar-fill {
+            position: absolute;
+            left: 0; right: 0; bottom: 0;
+            height: 3px;
+            background: #74C69D;
+            border-radius: 0 0 8px 8px;
+            transform-origin: left;
+        }
+        .settefisk-bar.zero .bar-fill { background: #e0e0e0; }
+        .settefisk-meta {
+            font-size: 0.75rem;
+            color: #555;
+            line-height: 1.5;
+            margin-top: 4px;
+        }
+        .settefisk-meta strong { color: #1B4332; }
+        .settefisk-meta .comment {
+            display: block;
+            margin-top: 6px;
+            padding: 8px 10px;
+            background: #fff8e1;
+            border-left: 3px solid #d4a52a;
+            border-radius: 4px;
+            color: #5a4000;
+            font-size: 0.78rem;
+        }
+        .settefisk-link {
+            display: inline-block;
+            margin-top: 10px;
+            font-size: 0.78rem;
+            color: #2D6A4F;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .settefisk-link:hover { text-decoration: underline; }
+
         /* ── LOCATION INFO STRIP ── */
         .loc-strip {
             background: white;
@@ -557,6 +677,9 @@
             </button>
             <a href="/artikler.html" class="hw-menu-item" style="display:block;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#1B4332;border-bottom:1px solid #eee;text-decoration:none">
                 <span id="hwMenuArticles">Artikler</span>
+            </a>
+            <a href="/ofa-settefisk.html" id="hwMenuOfaLink" class="hw-menu-item" style="display:none;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#1B4332;border-bottom:1px solid #eee;text-decoration:none">
+                <span id="hwMenuOfa">OFA settefisk historikk</span>
             </a>
             <a href="/om.html" class="hw-menu-item" style="display:block;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#1B4332;border-bottom:1px solid #eee;text-decoration:none">
                 <span id="hwMenuAbout">Om HatchWatch</span>
@@ -699,6 +822,19 @@
             </div>
             <div id="spinnerfallGrid" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin-top:14px;"></div>
             <div id="spinnerfallFooter" style="font-size:0.72rem; color:rgba(244,228,193,0.6); margin-top:12px; line-height:1.55;" data-i18n-html="spinnerfallFooter">Modellen vurderer kveldstimene 19–22 (lokal tid) basert på MET-prognose og vekter seks variabler ulikt: <b>vind</b>, <b>lufttemperatur</b>, <b>skydekke</b>, <b>nedbør</b>, <b>luftfuktighet</b> og <b>trykk-trend</b>. Vindstille er det viktigste enkeltkravet — raskt fallende lufttrykk (front på vei) dempes også. Modellen er ikke validert mot observasjoner.</div>
+        </section>
+
+        <!-- ═══ SETTEFISK-KORT (kun nordmarka_dyn, vises når valgt vann er ett av de 16 OFA-vannene) ═══ -->
+        <section id="settefiskSection" class="settefisk-wrap" style="display:none">
+            <button type="button" class="settefisk-toggle" id="settefiskToggle" aria-expanded="false">
+                <span><span class="settefisk-chev">▶</span><span class="settefisk-label" id="settefiskLabel">Settefisk (OFA)</span></span>
+                <span class="settefisk-summary" id="settefiskSummary">–</span>
+            </button>
+            <div class="settefisk-body" id="settefiskBody">
+                <div class="settefisk-bars" id="settefiskBars"></div>
+                <div class="settefisk-meta" id="settefiskMeta"></div>
+                <a class="settefisk-link" href="ofa-settefisk.html">Se hele OFA-historikken →</a>
+            </div>
         </section>
 
         <!-- ═══ PREDICTION CONVERGENCE ═══ -->
@@ -4048,6 +4184,110 @@ function renderSpinnerfallSection(eveningData, vulgataDate, historyData) {
     }
 }
 
+// ═══════════════════════════════════════════════════════════════════
+//  SETTEFISK-KORT (kun nordmarka_dyn — innført 2026-06-11)
+// ═══════════════════════════════════════════════════════════════════
+// Viser per-vann settefisk-historikk for de 16 OFA-vannene i nordmarka_dyn.
+// Data hentet fra Oslomarkas Fiskeadministrasjon (Excel-utsettingslister 2021–2025).
+// Mapping er manuell siden vannnavn varierer mellom dashboard og OFA-lister
+// (f.eks. "Måsjøen Sør" → "Måsjøen Søndre", "Katnosa" → "Katnostjernet").
+// Vann uten registreringer (Gåslungen, Gørja Lille) vises som "ingen utsetting".
+const SETTEFISK_DATA = {
+    "Øyungen": { omrade: "Nordmarka Nord/Øst", years: {"2021":1000,"2022":0,"2023":350,"2024":0,"2025":1000}, comments: {}, total: 2350 },
+    "Gåslungen": null,
+    "Åklungen Lille": { omrade: "Nordmarka Sør", years: {"2021":200,"2022":187,"2023":200,"2024":0,"2025":200}, comments: {}, total: 787 },
+    "Åklungen Store": { omrade: "Nordmarka Sør", years: {"2021":400,"2022":500,"2023":600,"2024":0,"2025":500}, comments: {}, total: 2000 },
+    "Blankvann": { omrade: "Nordmarka Sør", years: {"2021":100,"2022":100,"2023":100,"2024":60,"2025":0}, comments: {}, total: 360 },
+    "Gørja Lille": null,
+    "Gørja Store": { omrade: "Nordmarka Øst", years: {"2021":30,"2022":0,"2023":0,"2024":0,"2025":0}, comments: {}, total: 30 },
+    "Måsjøen Sør": { omrade: "Nordmarka Nord/Øst", years: {"2021":60,"2022":60,"2023":60,"2024":0,"2025":80}, comments: {}, total: 260 },
+    "Måsjøen Nord": { omrade: "Nordmarka Nord/Øst", years: {"2021":100,"2022":80,"2023":100,"2024":0,"2025":150}, comments: {}, total: 430 },
+    "Auretjern Nord": { omrade: "Nordmarka Øst", years: {"2021":60,"2022":60,"2023":0,"2024":0,"2025":0}, comments: {}, total: 120 },
+    "Auretjern Sør": { omrade: "Nordmarka Øst", years: {"2021":60,"2022":60,"2023":0,"2024":0,"2025":0}, comments: {}, total: 120 },
+    "Fjellsjøen": { omrade: "Nordmarka Nord", years: {"2021":0,"2022":100,"2023":100,"2024":0,"2025":100}, comments: {}, total: 300 },
+    "Daltjuven Store": { omrade: "Nordmarka Nord", years: {"2021":0,"2022":0,"2023":400,"2024":0,"2025":0}, comments: {}, total: 400 },
+    "Storflåtan": { omrade: "Krokskogen Nord", years: {"2021":0,"2022":0,"2023":700,"2024":0,"2025":0}, comments: {}, total: 700 },
+    "Katnosa": { omrade: "Nordmarka Nord", years: {"2021":0,"2022":0,"2023":10,"2024":0,"2025":0}, comments: {}, total: 10 },
+    "Heggerlivann Søndre": { omrade: "Krokskogen", years: {"2021":1500,"2022":1500,"2023":1500,"2024":1500,"2025":1500}, comments: {"2024":"Fettfinnemerket"}, total: 7500 },
+};
+
+function renderSettefiskSection() {
+    const section = document.getElementById('settefiskSection');
+    if (!section) return;
+
+    // Kun synlig på nordmarka_dyn (eller hvilken som helst lokasjon med altitudeAdjustable + ofaLakes)
+    if (!LOC.altitudeAdjustable || !LOC.ofaLakes) {
+        section.style.display = 'none';
+        return;
+    }
+    // Vises kun når bruker har valgt et spesifikt vann (ikke "Standard — Nordmarka snitt")
+    if (!userSelectedLakeName) {
+        section.style.display = 'none';
+        return;
+    }
+    // Sjekk at vannet faktisk finnes i SETTEFISK_DATA (alle 16 ofaLakes-vann skal ha en oppføring,
+    // null for de uten registrert utsetting)
+    if (!(userSelectedLakeName in SETTEFISK_DATA)) {
+        section.style.display = 'none';
+        return;
+    }
+
+    section.style.display = '';
+
+    const data = SETTEFISK_DATA[userSelectedLakeName];
+    const labelEl   = document.getElementById('settefiskLabel');
+    const summaryEl = document.getElementById('settefiskSummary');
+    const barsEl    = document.getElementById('settefiskBars');
+    const metaEl    = document.getElementById('settefiskMeta');
+
+    labelEl.textContent = `Settefisk (OFA) · ${userSelectedLakeName}`;
+
+    if (!data) {
+        summaryEl.innerHTML = '<span class="nofish">Ingen utsetting registrert 2021–2025</span>';
+        barsEl.innerHTML = '';
+        metaEl.innerHTML = 'Vannet står ikke på OFAs utsettingsliste i perioden 2021–2025. Bestanden vedlikeholdes av naturlig gyting eller flyttefisk.';
+        return;
+    }
+
+    const total = data.total;
+    summaryEl.textContent = total > 0
+        ? `${total.toLocaleString('no')} fisk satt ut 2021–2025`
+        : 'Ingen utsetting 2021–2025';
+
+    // Maks-verdi for prosent-fyll
+    const maxYear = Math.max(...Object.values(data.years), 1);
+    const yrs = ['2021','2022','2023','2024','2025'];
+    barsEl.innerHTML = yrs.map(y => {
+        const n = data.years[y] || 0;
+        const pct = maxYear > 0 ? Math.round(n / maxYear * 100) : 0;
+        const cls = n === 0 ? ' zero' : '';
+        return `<div class="settefisk-bar${cls}">
+            <div class="yr">${y}</div>
+            <div class="num">${n.toLocaleString('no')}</div>
+            <div class="bar-fill" style="width:${pct}%"></div>
+        </div>`;
+    }).join('');
+
+    // Meta + kommentarer
+    const comments = data.comments || {};
+    const commentLines = Object.entries(comments)
+        .filter(([, v]) => v && v.trim())
+        .map(([y, v]) => `<span class="comment"><strong>${y}:</strong> ${v}</span>`)
+        .join('');
+    metaEl.innerHTML = `<strong>Område:</strong> ${data.omrade} · Total 2021–2025: ${total.toLocaleString('no')} fisk${commentLines}`;
+}
+
+// Toggle for settefisk-kortet (default lukket)
+document.addEventListener('DOMContentLoaded', function() {
+    const toggle = document.getElementById('settefiskToggle');
+    const wrap   = document.getElementById('settefiskSection');
+    if (!toggle || !wrap) return;
+    toggle.addEventListener('click', function() {
+        const isOpen = wrap.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+});
+
 // ── TERMISK WT-MODELL TEST-BANNER (innført 2026-05-11) ───────────────────
 // Vises kun når URL-flag ?wtmodel=thermal er satt. Forteller brukeren at
 // vanntemp-prediksjonen bruker fysikkbasert termisk balanse-modell istedenfor
@@ -6103,6 +6343,7 @@ function rebuildDashboard() {
     // renderModel ved å bruke max(adgDate, wtDate) som onset.
     const _hatchOnset = (adgDate && wtDate) ? (adgDate > wtDate ? adgDate : wtDate) : adgDate;
     renderSpinnerfallSection(eveningData, _hatchOnset, eveningHistory);  // Spinnerfall-vakt (skjult utenfor vulgata-sesongen)
+    renderSettefiskSection();                            // OFA settefisk-historikk (kun nordmarka_dyn)
     renderWaterTempChart(wtData);                       // Graf: rå verdier fra stasjon
     renderSnowChart(snowData);
     renderIceChart(airDataCorrected, snowData);
@@ -6249,6 +6490,12 @@ async function main() {
 
         // Build picker UI (only renders if LOC.altitudeAdjustable)
         buildLakePickerUI();
+
+        // Vis OFA settefisk-lenke i burger-menyen kun for lokasjoner med ofaLakes (nordmarka_dyn)
+        if (LOC.altitudeAdjustable && LOC.ofaLakes) {
+            const ofaLink = document.getElementById('hwMenuOfaLink');
+            if (ofaLink) ofaLink.style.display = 'block';
+        }
 
         // Initial render
         rebuildDashboard();
