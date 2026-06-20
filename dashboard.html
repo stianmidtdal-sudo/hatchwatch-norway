@@ -3791,13 +3791,17 @@ function renderForecastEffectBanner(adgDateWith, adgDateWithout) {
 function computeSpinnerfallForecast(eveningData, vulgataDate, historyData) {
     if (!eveningData || !vulgataDate) return [];
 
-    // Klekkestatus-multiplikator basert på dager fra vulgata-onset
+    // Klekkestatus-multiplikator basert på dager fra vulgata-onset.
+    // Klekkevinduet vi viser i grafen er 14 dager (se renderConvergence: endDoy = startDoy + 14).
+    // Spinnerfall-vakta beholdes 7 dager etter klekkevinduets slutt (= dag 21) for å
+    // dekke etterslep: imago fra siste klekking lever 1-3 dager før spinnerfall.
+    // Etter dag 21 skjules kortet helt — konsistent med at vi sier sesongen er over.
     function hatchStatusMult(daysSinceOnset) {
         if (daysSinceOnset < 0) return 0;          // Ikke startet
         if (daysSinceOnset <= 3) return 0.55;       // Tidlig — paringsdans bygger seg
-        if (daysSinceOnset <= 14) return 1.0;       // Kjerne-vinduet
-        if (daysSinceOnset <= 21) return 0.6;       // Avtagende
-        return 0.2;                                 // Sjelden
+        if (daysSinceOnset <= 14) return 1.0;       // Kjerne — matcher klekkevinduet vi viser
+        if (daysSinceOnset <= 21) return 0.6;       // Etterslep — siste imagoer fra siste klekkere
+        return 0;                                   // Sesongen er over — kortet skjules av anyInSeason-sjekk
     }
 
     // Værscore — multiplikativ (AND-betingelse). Kurver kalibrert mot
