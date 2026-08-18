@@ -4914,18 +4914,45 @@ function wxPressureArrow(trend) {
     return ' →';
 }
 
-// Timerad. Viser inntil 8 timer fra og med den nærmeste hele timen som
-// finnes i prognosen. Returnerer tom streng når MET har gått over til
-// 6-timers oppløsning og vi ikke har nok punkter til å fylle en rad.
-function wxHoursHtml(hours, isToday) {
-    if (!hours || hours.length < 4) return '';
-    let list = hours;
+// Plukk n punkter jevnt fordelt utover et array (alltid med første og siste).
+function wxEvenly(arr, n) {
+    if (arr.length <= n) return arr;
+    const out = [];
+    const step = (arr.length - 1) / (n - 1);
+    for (let i = 0; i < n; i++) out.push(arr[Math.round(i * step)]);
+    return out;
+}
+
+// Velg hvilke timer som skal vises i timeraden.
+//
+// BUG-FIX 2026-08-18 (Stian): koden tok tidligere `hours.slice(0, 8)` for alle
+// dager unntatt i dag. Siden timelista er sortert fra midnatt, viste morgendagens
+// bolk kl. 00–07 — altså natta, den eneste delen av døgnet ingen fisker. For
+// i dag skal raden starte nå og gå framover; for andre dager skal den dekke
+// den fiskbare delen av døgnet.
+function wxPickHours(hours, isToday) {
+    if (!hours || !hours.length) return [];
+    const sorted = hours.slice().sort((a, b) => a.h - b.h);
+
     if (isToday) {
-        const nowH = new Date().getHours();
-        const fromNow = hours.filter(h => h.h >= nowH - 1);
-        if (fromNow.length >= 4) list = fromNow;
+        // Fra inneværende time og framover. Sent på kvelden er det få timer
+        // igjen — da viser vi dem heller enn å falle tilbake på fortiden.
+        let rest = sorted.filter(h => h.h >= new Date().getHours());
+        if (rest.length === 0) rest = sorted.slice(-4);
+        return wxEvenly(rest, 8);
     }
-    list = list.slice(0, 8);
+
+    // Andre dager: fiskerelevant del av døgnet. Faller tilbake på hele døgnet
+    // hvis MET bare har grove 6-timers steg og 06–23 gir for få punkter.
+    const daytime = sorted.filter(h => h.h >= 6 && h.h <= 23);
+    return wxEvenly(daytime.length >= 4 ? daytime : sorted, 8);
+}
+
+// Timerad. Returnerer tom streng når MET har gått over til 6-timers oppløsning
+// og vi ikke har nok punkter til å fylle en meningsfull rad.
+function wxHoursHtml(hours, isToday) {
+    const list = wxPickHours(hours, isToday);
+    if (list.length < 4) return '';
     return `<div class="wx-hours">` + list.map(h => {
         const tc = wxTempClass(h.temp);
         const wc = wxWindClass(h.wind);
@@ -5351,8 +5378,9 @@ function renderWtNormalChart(wtData, wtNormal) {
 //
 // Tre tilstander:
 //   open         — sesongen er i gang eller nærmer seg, alt vises
-//   closedAfter  — klekkingen er over (>21 d siden). Datoen BEHOLDES, for den
-//                  er observert og sann. Bare et banner legges til.
+//   closedAfter  — sesongen er over (>21 d siden anslått klekkestart). Datoen
+//                  BEHOLDES, for den er nå bakoverskuende og endrer seg ikke
+//                  mer. Bare et banner legges til.
 //   closedBefore — for tidlig på året. Datoen SKJULES, for den bygger ikke på
 //                  noe. Vintersignaler, historikk og grafer vises fortsatt.
 
@@ -5423,15 +5451,21 @@ function renderSeasonStatus(status) {
     }
 
     if (status.state === 'closedAfter') {
-        // Datoen er observert og sann — den blir stående. Bare konteksten mangler.
+        // Datoen blir stående fordi den er bakoverskuende og ikke endrer seg mer.
+        //
+        // ⚠ ORDLYD (Stian 2026-08-18): IKKE skriv at vulgata "klekket" den
+        // datoen. Vi har ikke observert klekkingen — vi har observert at
+        // varmesum og vanntemperatur krysset terskler vi selv har satt, og på
+        // ukalibrerte lokasjoner er de tersklene kvalifiserte gjett. Teksten
+        // skal si hva MODELLEN anslo, ikke hva naturen gjorde.
         const hd = fmt(status.hatchDate);
         banner.innerHTML = no
-            ? `<strong>Klekkesesongen er over for i år.</strong> Vulgata klekket rundt ${hd}, `
-              + `for ${status.daysSince} dager siden.`
+            ? `<strong>Klekkesesongen er over for i år.</strong> Modellen anslo klekkestart `
+              + `rundt ${hd}, for ${status.daysSince} dager siden.`
               + `<span class="sb-sub">Prognosen for ${YEAR + 1} åpner 1. april. `
               + `Vanntemperatur, vannføring og historiske klekkedatoer oppdateres i mellomtiden.</span>`
-            : `<strong>The hatch season is over for this year.</strong> Vulgata hatched around ${hd}, `
-              + `${status.daysSince} days ago.`
+            : `<strong>The hatch season is over for this year.</strong> The model estimated `
+              + `hatch onset around ${hd}, ${status.daysSince} days ago.`
               + `<span class="sb-sub">The ${YEAR + 1} forecast opens on 1 April. `
               + `Water temperature, flow and historical hatch dates keep updating.</span>`;
         banner.style.display = '';
