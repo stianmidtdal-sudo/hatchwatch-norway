@@ -617,6 +617,25 @@
             .mode-btn { flex: 1; padding: 10px 8px; }
         }
 
+        /* ── SESONGSTATUS-BANNER ── */
+        .season-banner {
+            background: #eef3f7;
+            border-left: 4px solid #5b8db8;
+            border-radius: 0;
+            padding: 14px 18px;
+            margin: 0 0 22px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: #34506a;
+        }
+        .season-banner strong { color: #1f3c56; font-weight: 700; }
+        .season-banner .sb-sub {
+            display: block;
+            margin-top: 5px;
+            font-size: 0.82rem;
+            color: #6b8299;
+        }
+
         /* ── VÆRVISNING (Forhold-modus) ──
            Fast lyseblå vask — bevisst IKKE dynamisk etter været (Stian 2026-08-18).
            Været bæres av ikonene og de fargede tallene, ikke av flatene. */
@@ -1002,6 +1021,13 @@
                 <button type="button" class="mode-btn" id="modeBtnConditions" data-mode="conditions" role="tab" aria-selected="false">Forhold</button>
             </div>
         </div>
+
+        <!-- ═══ SESONGSTATUS-BANNER — innført 2026-08-18 ═══ -->
+        <!-- Vises utenfor klekkesesongen, i begge modi. Prognosen har ingen
+             verdi i november, og enda mindre i januar — da er varmesummen
+             nullstilt og modellen viser i praksis klimatologi forkledd som
+             prediksjon. Banneret sier det rett ut i stedet. -->
+        <div id="seasonStatusBanner" class="season-banner" style="display:none"></div>
 
         <!-- ═══ TODAY'S STATUS ═══ -->
         <section id="todayStatusSection">
@@ -3853,32 +3879,50 @@ function _extrapolateWTLive(waterTempData, asOfDate, opts) {
     const wtFloor = (opts && opts.wtFloor != null) ? opts.wtFloor : 5;
     const targetYear = (opts && opts.year != null) ? opts.year : YEAR;
     const cutoff = isoDate(asOfDate);
-    const recent = Object.entries(waterTempData)
+    const wtTriggerVal = getWtThreshold(LOC);
+
+    // ── STEG 1: er terskelen allerede krysset i år? ────────────────────────
+    // Da er svaret OBSERVERT, ikke predikert, og vi er ferdige. Denne sjekken
+    // må stå aller først — før stabilitetskravene under, som bare gjelder
+    // ekstrapolering. En observert krysning trenger verken 10 datapunkter
+    // eller varmt vann i dag for å være sann.
+    //
+    // BUG-FIX 2026-05-28: returner faktisk første krysningsdato (i fortid) i
+    // stedet for en lookup-prediksjon som ender på "asOfDate + 0". Ellers blir
+    // hatchDate = max(adgDate, wtDate) feil-anchored på "i dag".
+    //
+    // BUG-FIX 2026-08-18 (Stian, Bardu): sjekken lå gatet bak
+    // `currentWT >= wtTriggerVal` — altså DAGENS temperatur — og dessuten
+    // NEDENFOR wtFloor-sjekken. Da glapp den på to måter når vannet kjølnet
+    // utover sensommeren: modellen "glemte" at krysningen skjedde i juni og
+    // begynte å ekstrapolere framover fra en synkende kurve. Predikert
+    // klekkedato rømte raskere enn én dag per dag (Bardu viste 24. august,
+    // 51 dager etter medianen). Kautokeino var upåvirket kun fordi
+    // Suohpatjohka fortsatt lå over 12 °C — samme feil ville truffet der i
+    // september.
+    //
+    // NB: `d <= cutoff` gjør at retrospektive kall i konvergensgrafen bare ser
+    // data fram til sin egen dato. Historikken forblir ærlig.
+    const allYearData = Object.entries(waterTempData)
         .filter(([d]) => d.startsWith(String(targetYear)) && d <= cutoff)
-        .sort(([a],[b]) => a < b ? -1 : 1)
+        .sort(([a],[b]) => a < b ? -1 : 1);
+    for (const [d, v] of allYearData) {
+        if (v != null && v >= wtTriggerVal) return parseDate(d);
+    }
+
+    // ── STEG 2: ikke krysset ennå — ekstrapoler framover ───────────────────
+    // Herfra og ned gjelder stabilitetskravene, som skal hindre villprediksjon
+    // fra tynne eller kalde datagrunnlag.
+    const recent = allYearData
         .slice(-21);  // 21-dags vindu — stabilere enn 14, enkeltdagsvariasjoner får mindre vekt
     if (recent.length < 10) return null;       // STABILITETSKRAV: minst 10 datapunkter
     const temps = recent.map(([,v]) => v);
     const currentWT = temps.at(-1);
     if (currentWT < wtFloor) return null;       // STABILITETSKRAV: vannet må være varmet til ≥wtFloor°C
 
-    // BUG-FIX 2026-05-28: hvis WT-terskel ALLEREDE er passert i målårets observerte
-    // data, returner faktisk første krysningsdato (i fortid) i stedet for å lage
-    // en lookup-prediksjon som ender på "asOfDate + 0". Ellers blir hatchDate =
-    // max(adgDate, wtDate) feil-anchored på "i dag" i stedet for biologisk faktisk
-    // krysningsdato.
-    const wtTriggerVal = getWtThreshold(LOC);
-    if (currentWT >= wtTriggerVal) {
-        const allYearData = Object.entries(waterTempData)
-            .filter(([d]) => d.startsWith(String(targetYear)) && d <= cutoff)
-            .sort(([a],[b]) => a < b ? -1 : 1);
-        for (const [d, v] of allYearData) {
-            if (v != null && v >= wtTriggerVal) return parseDate(d);
-        }
-        // Fallback hvis ingen krysning ble funnet (sjeldent — kan skje hvis siste
-        // verdi er over terskel men tidligere data mangler). Return asOfDate.
-        return new Date(asOfDate);
-    }
+    // Vannet er over terskelen i dag, men steg 1 fant ingen krysning — kan skje
+    // ved hull i NVE-data. Da er "i dag" beste tilgjengelige anslag.
+    if (currentWT >= wtTriggerVal) return new Date(asOfDate);
 
     // Lookup-modell (default 2026-05-11, kan skrus av med ?wtmodel=linear)
     // Empirisk: dagens WT + snitt antall dager fra denne WT til terskel
@@ -5293,6 +5337,137 @@ function renderWtNormalChart(wtData, wtNormal) {
             return txt;
         }
     });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  SESONGSTATUS (innført 2026-08-18)
+// ═══════════════════════════════════════════════════════════════════
+//
+// Bakgrunn: varmesummen nullstilles 1. januar, og modellen begynner straks å
+// regne på neste sesong. Men i januar har den nesten ingenting å regne på —
+// vanntemp-siden krever ≥5 °C og returnerer null, så det som vises er ren
+// klimatologi forkledd som prediksjon. Samme problem i motsatt ende: etter at
+// klekkingen er over blir datoen stående og lyse resten av høsten.
+//
+// Tre tilstander:
+//   open         — sesongen er i gang eller nærmer seg, alt vises
+//   closedAfter  — klekkingen er over (>21 d siden). Datoen BEHOLDES, for den
+//                  er observert og sann. Bare et banner legges til.
+//   closedBefore — for tidlig på året. Datoen SKJULES, for den bygger ikke på
+//                  noe. Vintersignaler, historikk og grafer vises fortsatt.
+
+// Når begynner varmesummen å bygge seg for denne lokasjonen?
+// Vi akkumulerer klimasnittet døgn for døgn og finner dagen den passerer 15 %
+// av terskelen. Det gir ~1. mars i Østmarka og midten av april i Kautokeino,
+// helt uten regionshardkoding — forskjellen ligger allerede i temperaturdataene.
+//
+// 15 % er valgt fordi det er der de kaldeste og varmeste årene begynner å
+// skille lag målbart. Under det er spredningen mellom år mindre enn
+// måleusikkerheten, og en "prognose" er bare klimasnittet med ekstra steg.
+const SEASON_OPEN_FRACTION = 0.15;
+
+function computeSeasonOpenDoy(airData) {
+    if (!airData) return null;
+    const avg = buildDoyAvgTemp(airData);
+    if (!avg || Object.keys(avg).length === 0) return null;
+    const target = getEffectiveGddThreshold(LOC) * SEASON_OPEN_FRACTION;
+    if (!target) return null;
+    let acc = 0;
+    for (let d = 1; d <= 366; d++) {
+        const v = avg[d];
+        if (v != null) acc += Math.max(0, v);
+        if (acc >= target) return d;
+    }
+    return null;   // klimaet når aldri 15 % — svært høyfjell, la sesongen stå åpen
+}
+
+// Antall dager etter klekkestart før sesongen regnes som over.
+// Samme grense som spinnerfall-vakta bruker, så de to slår av samtidig.
+const SEASON_CLOSE_DAYS = 21;
+
+function computeSeasonStatus(airData, hatchDate) {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const openDoy = computeSeasonOpenDoy(airData);
+
+    // Etter sesongen — har forrang, siden en observert klekkedato alltid
+    // trumfer et kalenderestimat.
+    if (hatchDate) {
+        const h = new Date(hatchDate); h.setHours(0, 0, 0, 0);
+        const daysSince = Math.round((today - h) / 86400000);
+        if (daysSince > SEASON_CLOSE_DAYS) {
+            return { state: 'closedAfter', hatchDate: h, daysSince, openDoy };
+        }
+    }
+
+    // Før sesongen
+    if (openDoy != null && doy(today) < openDoy) {
+        return { state: 'closedBefore', openDoy };
+    }
+
+    return { state: 'open', openDoy };
+}
+
+function renderSeasonStatus(status) {
+    const banner = document.getElementById('seasonStatusBanner');
+    if (!banner) return;
+
+    const lang = (typeof LANG !== 'undefined' && LANG) ? LANG : 'no';
+    const no = lang !== 'en';
+
+    // Seksjoner som bare gir mening når prognosen er levende. Vintersignaler,
+    // historiske klekkedatoer, varmesum-kortet og alle grafene holdes utenfor —
+    // de er faktiske observasjoner og skal vises hele året.
+    const PREDICTION_SECTIONS = [
+        'seasonCalendarSection', 'seasonExplainSection',
+        'forecastEffectSection', 'convergenceSection',
+    ];
+
+    if (status.state === 'open') {
+        // Ingen opprydding nødvendig: renderne over har allerede satt riktig
+        // hwSelfHidden på hver seksjon i denne runden. Ville vi "gjenåpnet" dem
+        // her, ville vi overstyrt seksjoner som har skjult seg selv av gode
+        // grunner — f.eks. forecast-effekt-banneret når utslaget er under
+        // terskelen. Vi rører dem derfor ikke.
+        banner.style.display = 'none';
+        return;
+    }
+
+    const nextYear = YEAR + 1;
+    const openTxt = status.openDoy != null
+        ? fmt(dateFromDoy(nextYear, status.openDoy))
+        : null;
+
+    if (status.state === 'closedAfter') {
+        // Datoen er observert og sann — den blir stående. Bare konteksten mangler.
+        const hd = fmt(status.hatchDate);
+        banner.innerHTML = no
+            ? `<strong>Klekkesesongen er over for i år.</strong> Vulgata klekket rundt ${hd}, `
+              + `for ${status.daysSince} dager siden.`
+              + (openTxt ? `<span class="sb-sub">Prognosen for ${nextYear} åpner når varmesummen begynner å bygge seg — for denne lokasjonen rundt ${openTxt}. Vanntemperatur, vannføring og historikk oppdateres i mellomtiden.</span>` : '')
+            : `<strong>The hatch season is over for this year.</strong> Vulgata hatched around ${hd}, `
+              + `${status.daysSince} days ago.`
+              + (openTxt ? `<span class="sb-sub">The ${nextYear} forecast opens when growing degree days start accumulating — around ${openTxt} for this location. Water temperature, flow and history keep updating.</span>` : '');
+        banner.style.display = '';
+        return;
+    }
+
+    // closedBefore — skjul prediksjonen, den bygger ikke på noe ennå
+    banner.innerHTML = no
+        ? `<strong>Prognosen for ${YEAR} har ikke åpnet ennå.</strong> `
+          + (openTxt
+              ? `Varmesummen begynner å bygge seg rundt ${openTxt} for denne lokasjonen, og prognosen åpner av seg selv da.`
+              : `Varmesummen har ikke begynt å bygge seg ennå.`)
+          + `<span class="sb-sub">Snødybde, isgang og historiske klekkedatoer oppdateres gjennom hele vinteren.</span>`
+        : `<strong>The ${YEAR} forecast has not opened yet.</strong> `
+          + (openTxt
+              ? `Growing degree days start accumulating around ${openTxt} for this location, and the forecast opens by itself then.`
+              : `Growing degree days have not started accumulating yet.`)
+          + `<span class="sb-sub">Snow depth, ice-off and historical hatch dates keep updating through the winter.</span>`;
+    banner.style.display = '';
+
+    for (const id of PREDICTION_SECTIONS) {
+        markSelfHidden(document.getElementById(id), true);
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -7566,6 +7741,13 @@ function rebuildDashboard() {
         const indSec = document.getElementById('seasonIndicatorsSection');
         if (indSec) markSelfHidden(indSec, inHatchSeason);
     }
+
+    // ── SESONGSTATUS ────────────────────────────────────────────────────
+    // Kjøres etter alle renderne, men FØR applyMode: den kan skjule
+    // prediksjonsseksjoner utenfor sesongen, og applyMode må se det flagget.
+    const _seasonStatus = computeSeasonStatus(airDataCorrected, _hatchOnset);
+    window._lastSeasonStatus = _seasonStatus;
+    renderSeasonStatus(_seasonStatus);
 
     // ── MODUS-TOGGLE — MÅ KJØRE SIST ────────────────────────────────────
     // Alle renderne over har nå satt sine hwSelfHidden-flagg. applyMode leser
