@@ -1294,8 +1294,8 @@ const T = {
     modeConditions: 'Forhold',
     weatherHeading: 'Været',
     weatherDaysHeading: 'Neste dager',
-    flowChartHeading: 'Vannføring mot normalen',
-    wtNormalHeading: 'Vanntemperatur mot normalen',
+    flowChartHeading: 'Vannføring',
+    wtNormalHeading: 'Vanntemperatur',
     southSignalHeading: 'Sør-Norge-signal',
     convToday: 'I dag',
     convPrediction: 'Historisk prediksjon',
@@ -1518,8 +1518,8 @@ const T = {
     modeConditions: 'Conditions',
     weatherHeading: 'Weather',
     weatherDaysHeading: 'Coming days',
-    flowChartHeading: 'Water flow vs. normal',
-    wtNormalHeading: 'Water temperature vs. normal',
+    flowChartHeading: 'Water flow',
+    wtNormalHeading: 'Water temperature',
     southSignalHeading: 'Southern Norway signal',
     convToday: 'Today',
     convPrediction: 'Historic prediction',
@@ -5296,16 +5296,19 @@ function renderWtNormalChart(wtData, wtNormal) {
 //  MODUS-STYRING (Prognose / Forhold)
 // ═══════════════════════════════════════════════════════════════════
 // Seksjoner rutes til én av modusene. Alt som ikke står i listene under
-// er alltid synlig (header, KPI-kort, lokasjonsvelger, footer).
+// er alltid synlig (header, lokasjonsvelger, settefiskkort, footer).
 //
-// KPI-kortene (todayStatusSection) er bevisst i BEGGE — "hva er vanntemp
-// og vannføring akkurat nå" er relevant uansett modus.
+// KPI-kortene (todayStatusSection) hører kun til Prognose. De sto opprinnelig
+// i begge, men da ble Forhold-fanen innledet med nøyaktig samme kortrekke som
+// Prognose — og fanen skal føles som et annet verktøy, ikke samme side på nytt.
+// Forhold starter derfor rett på Været. (Stian 2026-08-18)
 // Ingen seksjon skal stå i BEGGE lister — da vises den samme grafen i begge
 // modi, og modusbyttet mister mening. De to vanntemp-grafene er bevisst delt:
 //   wtSection       — år-for-år-spaghetti, en analysegraf → Prognose
 //   wtNormalSection — normalbånd + i år, en beslutningsgraf → Forhold
 const MODE_SECTIONS = {
     forecast: [
+        'todayStatusSection',
         'seasonExplainSection', 'forecastEffectSection',
         'convergenceSection', 'gddModelSection', 'gddHistSection',
         'wtSection', 'snowSection', 'iceSection',
