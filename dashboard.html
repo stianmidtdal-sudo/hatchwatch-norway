@@ -5356,29 +5356,19 @@ function renderWtNormalChart(wtData, wtNormal) {
 //   closedBefore — for tidlig på året. Datoen SKJULES, for den bygger ikke på
 //                  noe. Vintersignaler, historikk og grafer vises fortsatt.
 
-// Når begynner varmesummen å bygge seg for denne lokasjonen?
-// Vi akkumulerer klimasnittet døgn for døgn og finner dagen den passerer 15 %
-// av terskelen. Det gir ~1. mars i Østmarka og midten av april i Kautokeino,
-// helt uten regionshardkoding — forskjellen ligger allerede i temperaturdataene.
+// Prognosen åpner 1. april, likt for alle lokasjoner.
 //
-// 15 % er valgt fordi det er der de kaldeste og varmeste årene begynner å
-// skille lag målbart. Under det er spredningen mellom år mindre enn
-// måleusikkerheten, og en "prognose" er bare klimasnittet med ekstra steg.
-const SEASON_OPEN_FRACTION = 0.15;
-
-function computeSeasonOpenDoy(airData) {
-    if (!airData) return null;
-    const avg = buildDoyAvgTemp(airData);
-    if (!avg || Object.keys(avg).length === 0) return null;
-    const target = getEffectiveGddThreshold(LOC) * SEASON_OPEN_FRACTION;
-    if (!target) return null;
-    let acc = 0;
-    for (let d = 1; d <= 366; d++) {
-        const v = avg[d];
-        if (v != null) acc += Math.max(0, v);
-        if (acc >= target) return d;
-    }
-    return null;   // klimaet når aldri 15 % — svært høyfjell, la sesongen stå åpen
+// Vi hadde først en datadrevet variant som åpnet når klimatologisk varmesum
+// passerte 15 % av terskelen. Den ga pene tall — 4. april i Østmarka, 15. mai
+// i Kautokeino — men Stian forkastet den 2026-08-18: for komplisert, og altfor
+// sen åpning i nord. En fast dato er lettere å forklare og lettere å stole på.
+//
+// 1. april er bevisst litt tidlig for de nordligste vannene. Der viser modellen
+// i praksis klimasnittet i april og mai, siden varmesummen så vidt har begynt
+// og vanntemperaturen ligger under 5 °C-gulvet. Det er en begrensning vi heller
+// er ærlige om enn skjuler ved å holde siden stengt.
+function computeSeasonOpenDoy() {
+    return doy(new Date(YEAR, 3, 1));   // 3 = april. Håndterer skuddår av seg selv.
 }
 
 // Antall dager etter klekkestart før sesongen regnes som over.
@@ -5387,7 +5377,7 @@ const SEASON_CLOSE_DAYS = 21;
 
 function computeSeasonStatus(airData, hatchDate) {
     const today = new Date(); today.setHours(0, 0, 0, 0);
-    const openDoy = computeSeasonOpenDoy(airData);
+    const openDoy = computeSeasonOpenDoy();
 
     // Etter sesongen — har forrang, siden en observert klekkedato alltid
     // trumfer et kalenderestimat.
@@ -5432,36 +5422,29 @@ function renderSeasonStatus(status) {
         return;
     }
 
-    const nextYear = YEAR + 1;
-    const openTxt = status.openDoy != null
-        ? fmt(dateFromDoy(nextYear, status.openDoy))
-        : null;
-
     if (status.state === 'closedAfter') {
         // Datoen er observert og sann — den blir stående. Bare konteksten mangler.
         const hd = fmt(status.hatchDate);
         banner.innerHTML = no
             ? `<strong>Klekkesesongen er over for i år.</strong> Vulgata klekket rundt ${hd}, `
               + `for ${status.daysSince} dager siden.`
-              + (openTxt ? `<span class="sb-sub">Prognosen for ${nextYear} åpner når varmesummen begynner å bygge seg — for denne lokasjonen rundt ${openTxt}. Vanntemperatur, vannføring og historikk oppdateres i mellomtiden.</span>` : '')
+              + `<span class="sb-sub">Prognosen for ${YEAR + 1} åpner 1. april. `
+              + `Vanntemperatur, vannføring og historiske klekkedatoer oppdateres i mellomtiden.</span>`
             : `<strong>The hatch season is over for this year.</strong> Vulgata hatched around ${hd}, `
               + `${status.daysSince} days ago.`
-              + (openTxt ? `<span class="sb-sub">The ${nextYear} forecast opens when growing degree days start accumulating — around ${openTxt} for this location. Water temperature, flow and history keep updating.</span>` : '');
+              + `<span class="sb-sub">The ${YEAR + 1} forecast opens on 1 April. `
+              + `Water temperature, flow and historical hatch dates keep updating.</span>`;
         banner.style.display = '';
         return;
     }
 
     // closedBefore — skjul prediksjonen, den bygger ikke på noe ennå
     banner.innerHTML = no
-        ? `<strong>Prognosen for ${YEAR} har ikke åpnet ennå.</strong> `
-          + (openTxt
-              ? `Varmesummen begynner å bygge seg rundt ${openTxt} for denne lokasjonen, og prognosen åpner av seg selv da.`
-              : `Varmesummen har ikke begynt å bygge seg ennå.`)
+        ? `<strong>Prognosen for ${YEAR} åpner 1. april.</strong> `
+          + `Varmesummen nullstilles 1. januar og har ennå ikke bygget seg nok til å si noe.`
           + `<span class="sb-sub">Snødybde, isgang og historiske klekkedatoer oppdateres gjennom hele vinteren.</span>`
-        : `<strong>The ${YEAR} forecast has not opened yet.</strong> `
-          + (openTxt
-              ? `Growing degree days start accumulating around ${openTxt} for this location, and the forecast opens by itself then.`
-              : `Growing degree days have not started accumulating yet.`)
+        : `<strong>The ${YEAR} forecast opens on 1 April.</strong> `
+          + `Growing degree days reset on 1 January and have not yet accumulated enough to be informative.`
           + `<span class="sb-sub">Snow depth, ice-off and historical hatch dates keep updating through the winter.</span>`;
     banner.style.display = '';
 
