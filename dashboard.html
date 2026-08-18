@@ -972,6 +972,18 @@
             <div id="conditionsFoot" class="cond-foot"></div>
         </section>
 
+        <!-- ═══ VANNTEMPERATUR MOT NORMALEN (Forhold-modus) ═══ -->
+        <!-- Samme visuelle språk som vannføringsgrafen: grønt bånd = normalspenn
+             for årstiden, blå linje = i år. Den gamle år-for-år-grafen (wtSection)
+             er en analysegraf og hører hjemme i Prognose-modus. -->
+        <section id="wtNormalSection" style="display:none">
+            <h2 id="wtNormalHeading" data-i18n="wtNormalHeading">Vanntemperatur mot normalen</h2>
+            <div class="chart-wrap" style="height:300px">
+                <canvas id="wtNormalChart"></canvas>
+            </div>
+            <div id="wtNormalNote" class="flow-note"></div>
+        </section>
+
         <!-- ═══ VANNFØRING MOT NORMALEN (Forhold-modus) ═══ -->
         <!-- Modellert etter NVE Sildre: grønt bånd = normalspennet (p25-p75) for
              årstiden, blå linje = i år. Vises kun når lokasjonen har nveStation
@@ -1064,7 +1076,9 @@
         </section>
 
         <!-- ═══ SNOW DEPTH CHART ═══ -->
-        <section>
+        <!-- Kun Prognose-modus. Snødybde er et vintersignal for sesongplanlegging —
+             irrelevant når du står ved vannet i juli. -->
+        <section id="snowSection">
             <h2 id="snowHeading">Snow Depth Nov–May · Year-by-Year</h2>
             <div class="chart-wrap">
                 <canvas id="snowChart"></canvas>
@@ -1157,6 +1171,7 @@ const T = {
     modeConditions: 'Forhold',
     conditionsHeading: 'Forhold de neste dagene',
     flowChartHeading: 'Vannføring mot normalen',
+    wtNormalHeading: 'Vanntemperatur mot normalen',
     southSignalHeading: 'Sør-Norge-signal',
     convToday: 'I dag',
     convPrediction: 'Historisk prediksjon',
@@ -1379,6 +1394,7 @@ const T = {
     modeConditions: 'Conditions',
     conditionsHeading: 'Conditions in the coming days',
     flowChartHeading: 'Water flow vs. normal',
+    wtNormalHeading: 'Water temperature vs. normal',
     southSignalHeading: 'Southern Norway signal',
     convToday: 'Today',
     convPrediction: 'Historic prediction',
@@ -2616,7 +2632,10 @@ document.getElementById('yearCol').textContent = YEAR;
 document.getElementById('locStrip').style.display = 'none';
 
 // Show/hide sections based on calibration
-if (LOC.showIce) document.getElementById('iceSection').style.display = '';
+// Is-grafen finnes kun for lokasjoner med LOC.showIce. markSelfHidden brukes
+// (ikke rå style.display) så modus-rutingen ikke tvinger den fram i Prognose
+// for lokasjoner som ikke har den.
+markSelfHidden(document.getElementById('iceSection'), !LOC.showIce);
 if (!LOC.calibrated) {
     document.getElementById('priorNotice').style.display = '';
 }
@@ -4499,8 +4518,11 @@ function _percentile(sorted, p) {
     return sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
 }
 
-// ── VANNFØRINGSNORMAL ────────────────────────────────────────────────────
-// Bygger p25/p50/p75-bånd per dag-i-året fra historisk NVE-vannføring.
+// ── NORMALBÅND PER DAG-I-ÅRET ────────────────────────────────────────────
+// Bygger p25/p50/p75-bånd per dag-i-året fra en historisk dato→verdi-serie.
+// Brukes både for vannføring og vanntemperatur — samme matematikk, samme
+// visuelle språk i grafene (jf. NVE Sildre).
+//
 // Glidende vindu ±3 dager glatter støyen — uten det blir båndet hakkete
 // fordi hvert enkelt doy bare har ~10 observasjoner (ett per år).
 //
@@ -4509,10 +4531,11 @@ function _percentile(sorted, p) {
 //
 // Returnerer null hvis vi har færre enn 3 historiske år — da er "normalen"
 // for tynn til å vise som et normalspenn, og vi hopper over både graf og
-// vannføringsfaktoren i scoren.
-function computeFlowNormal(flowData) {
-    if (!flowData) return null;
-    const keys = Object.keys(flowData);
+// den tilhørende faktoren i forhold-scoren.
+function computeDoyNormal(data, opts) {
+    const allowNegative = !!(opts && opts.allowNegative);
+    if (!data) return null;
+    const keys = Object.keys(data);
     if (keys.length === 0) return null;
 
     const thisYear = new Date().getFullYear();
@@ -4520,8 +4543,9 @@ function computeFlowNormal(flowData) {
     const yearsSeen = new Set();
 
     for (const dateStr of keys) {
-        const v = flowData[dateStr];
-        if (v == null || !isFinite(v) || v < 0) continue;
+        const v = data[dateStr];
+        if (v == null || !isFinite(v)) continue;
+        if (!allowNegative && v < 0) continue;
         const yr = Number(dateStr.slice(0, 4));
         if (!isFinite(yr) || yr >= thisYear) continue;
         const d = doy(parseDate(dateStr));
@@ -4559,11 +4583,11 @@ function computeFlowNormal(flowData) {
 
 // Status for én dato mot normalen. Returnerer null hvis vi mangler enten
 // måling eller normal for det doy-et.
-function flowStatusFor(flowData, flowNormal, dateStr) {
-    if (!flowData || !flowNormal) return null;
-    const v = flowData[dateStr];
+function statusVsNormal(data, normal, dateStr) {
+    if (!data || !normal) return null;
+    const v = data[dateStr];
     if (v == null || !isFinite(v)) return null;
-    const norm = flowNormal.byDoy[doy(parseDate(dateStr))];
+    const norm = normal.byDoy[doy(parseDate(dateStr))];
     if (!norm || !norm.p50 || norm.p50 <= 0) return null;
     return {
         date: dateStr,
@@ -4739,7 +4763,7 @@ function renderConditionsSection(dayData, flowData, flowNormal) {
     let flowStatus = null;
     if (flowData && flowNormal) {
         const fl = latest(flowData, 10);
-        if (fl.date) flowStatus = flowStatusFor(flowData, flowNormal, fl.date);
+        if (fl.date) flowStatus = statusVsNormal(flowData, flowNormal, fl.date);
     }
 
     const forecast = computeConditionsForecast(dayData, flowStatus);
@@ -4854,23 +4878,30 @@ function renderConditionsSection(dayData, flowData, flowNormal) {
     markSelfHidden(section, false);
 }
 
-// ── VANNFØRINGSGRAF MED NORMALBÅND ───────────────────────────────────────
+// ── GENERISK NORMALBÅND-GRAF ─────────────────────────────────────────────
 // Modellert etter NVE Sildre: grønt bånd = p25-p75 for årstiden, blå linje
 // = i år. Viser siste 45 dager fram til nyeste måling.
-function renderFlowChart(flowData, flowNormal) {
-    const section = document.getElementById('flowChartSection');
+//
+// Brukes av BÅDE vannføring og vanntemperatur. Samme visuelle språk gjør at
+// de to grafene kan leses side om side uten å bytte mental modell — man ser
+// umiddelbart om «i år» ligger i, over eller under det vanlige.
+//
+// cfg: { sectionId, canvasId, noteId, chartKey, data, normal,
+//        unit, decimals, yTitle, beginAtZero, noteBuilder }
+function renderBandChart(cfg) {
+    const section = document.getElementById(cfg.sectionId);
     if (!section) return;
 
-    const canvas = document.getElementById('flowChart');
-    if (!canvas || !flowData || !flowNormal) {
+    const canvas = document.getElementById(cfg.canvasId);
+    if (!canvas || !cfg.data || !cfg.normal) {
         markSelfHidden(section, true);
         return;
     }
 
-    const fl = latest(flowData, 30);
-    if (!fl.date) { markSelfHidden(section, true); return; }
+    const last = latest(cfg.data, 30);
+    if (!last.date) { markSelfHidden(section, true); return; }
 
-    const endDate = parseDate(fl.date);
+    const endDate = parseDate(last.date);
     const DAYS = 45;
     const dates = [];
     for (let i = DAYS - 1; i >= 0; i--) {
@@ -4881,20 +4912,21 @@ function renderFlowChart(flowData, flowNormal) {
 
     const lang = (typeof LANG !== 'undefined' && LANG) ? LANG : 'no';
     const no = lang !== 'en';
+    const dec = cfg.decimals != null ? cfg.decimals : 1;
 
     const labels = dates.map(d => fmt(d));
     const keyOf = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-    const p25 = dates.map(d => { const n = flowNormal.byDoy[doy(d)]; return n ? n.p25 : null; });
-    const p75 = dates.map(d => { const n = flowNormal.byDoy[doy(d)]; return n ? n.p75 : null; });
-    const p50 = dates.map(d => { const n = flowNormal.byDoy[doy(d)]; return n ? n.p50 : null; });
-    const cur = dates.map(d => { const v = flowData[keyOf(d)]; return v != null ? v : null; });
+    const p25 = dates.map(d => { const n = cfg.normal.byDoy[doy(d)]; return n ? n.p25 : null; });
+    const p75 = dates.map(d => { const n = cfg.normal.byDoy[doy(d)]; return n ? n.p75 : null; });
+    const p50 = dates.map(d => { const n = cfg.normal.byDoy[doy(d)]; return n ? n.p50 : null; });
+    const cur = dates.map(d => { const v = cfg.data[keyOf(d)]; return v != null ? v : null; });
 
     if (cur.every(v => v == null)) { markSelfHidden(section, true); return; }
 
     const ctx = canvas.getContext('2d');
-    if (window._flowChart) window._flowChart.destroy();
-    window._flowChart = new Chart(ctx, {
+    if (window[cfg.chartKey]) window[cfg.chartKey].destroy();
+    window[cfg.chartKey] = new Chart(ctx, {
         type: 'line',
         data: {
             labels,
@@ -4930,44 +4962,90 @@ function renderFlowChart(flowData, flowNormal) {
                 tooltip: {
                     filter: (item) => item.dataset.label !== '_p25',
                     callbacks: {
-                        label: c => `${c.dataset.label}: ${c.parsed.y != null ? c.parsed.y.toFixed(1) : '–'} m³/s`
+                        label: c => `${c.dataset.label}: ${c.parsed.y != null ? c.parsed.y.toFixed(dec) : '–'} ${cfg.unit}`
                     }
                 }
             },
             scales: {
                 x: { ticks: { maxTicksLimit: 10, font: { size: 10 } } },
-                y: { beginAtZero: false,
-                     title: { display: true, text: 'm³/s', font: { size: 11 } },
+                y: { beginAtZero: !!cfg.beginAtZero,
+                     title: { display: true, text: cfg.yTitle || cfg.unit, font: { size: 11 } },
                      ticks: { font: { size: 10 } } }
             }
         }
     });
 
-    const noteEl = document.getElementById('flowChartNote');
-    if (noteEl) {
-        const stn = LOC.waterStationName || LOC.name || LOC.place;
-        const status = flowStatusFor(flowData, flowNormal, fl.date);
-        let txt = no
-            ? `Stasjon: ${stn} (${LOC.nveStation}). Normalspennet er 25.–75. persentil fra ${flowNormal.nYears} tidligere år.`
-            : `Station: ${stn} (${LOC.nveStation}). The normal range is the 25th–75th percentile from ${flowNormal.nYears} previous years.`;
-        if (status) {
-            const pct = Math.round(status.ratio * 100);
-            const where = status.aboveBand ? (no ? 'over' : 'above')
-                        : status.belowBand ? (no ? 'under' : 'below')
-                        : (no ? 'innenfor' : 'within');
-            txt += no
-                ? ` Siste måling ${status.value.toFixed(1)} m³/s — ${pct}% av medianen, ${where} normalspennet.`
-                : ` Latest reading ${status.value.toFixed(1)} m³/s — ${pct}% of median, ${where} the normal range.`;
-        }
-        if (LOC.flowRegulated) {
-            txt += no
-                ? ' Merk: vassdraget er regulert, så "normalen" gjenspeiler driftsmønster like mye som natur.'
-                : ' Note: this watercourse is regulated, so the "normal" reflects operating patterns as much as nature.';
-        }
-        noteEl.textContent = txt;
+    const noteEl = document.getElementById(cfg.noteId);
+    if (noteEl && cfg.noteBuilder) {
+        noteEl.textContent = cfg.noteBuilder(statusVsNormal(cfg.data, cfg.normal, last.date), no);
     }
 
     markSelfHidden(section, false);
+}
+
+// Felles setning: "Siste måling X — Y% av medianen, over/innenfor/under normalspennet."
+function _bandStatusSentence(status, no, unit, dec) {
+    if (!status) return '';
+    const pct = Math.round(status.ratio * 100);
+    const where = status.aboveBand ? (no ? 'over' : 'above')
+                : status.belowBand ? (no ? 'under' : 'below')
+                : (no ? 'innenfor' : 'within');
+    return no
+        ? ` Siste måling ${status.value.toFixed(dec)} ${unit} — ${pct}% av medianen, ${where} normalspennet.`
+        : ` Latest reading ${status.value.toFixed(dec)} ${unit} — ${pct}% of median, ${where} the normal range.`;
+}
+
+function renderFlowChart(flowData, flowNormal) {
+    const stn = LOC.waterStationName || LOC.name || LOC.place;
+    renderBandChart({
+        sectionId: 'flowChartSection', canvasId: 'flowChart',
+        noteId: 'flowChartNote', chartKey: '_flowChart',
+        data: flowData, normal: flowNormal,
+        unit: 'm³/s', decimals: 1, yTitle: 'm³/s', beginAtZero: false,
+        noteBuilder: (status, no) => {
+            let txt = no
+                ? `Stasjon: ${stn} (${LOC.nveStation}). Normalspennet er 25.–75. persentil fra ${flowNormal.nYears} tidligere år.`
+                : `Station: ${stn} (${LOC.nveStation}). The normal range is the 25th–75th percentile from ${flowNormal.nYears} previous years.`;
+            txt += _bandStatusSentence(status, no, 'm³/s', 1);
+            if (LOC.flowRegulated) {
+                txt += no
+                    ? ' Merk: vassdraget er regulert, så "normalen" gjenspeiler driftsmønster like mye som natur.'
+                    : ' Note: this watercourse is regulated, so the "normal" reflects operating patterns as much as nature.';
+            }
+            return txt;
+        }
+    });
+}
+
+// Vanntemperatur mot normalen — Forhold-modus. Den gamle år-for-år-grafen
+// (wtSection) er en analysegraf og hører hjemme i Prognose-modus.
+function renderWtNormalChart(wtData, wtNormal) {
+    const stn = LOC.waterStationName || LOC.name || LOC.place;
+    const stnId = LOC.nveWaterTempStation || LOC.nveStation;
+    const thr = getWtThreshold(LOC);
+    renderBandChart({
+        sectionId: 'wtNormalSection', canvasId: 'wtNormalChart',
+        noteId: 'wtNormalNote', chartKey: '_wtNormalChart',
+        data: wtData, normal: wtNormal,
+        unit: '°C', decimals: 1, yTitle: '°C', beginAtZero: false,
+        noteBuilder: (status, no) => {
+            let txt = no
+                ? `Stasjon: ${stn} (${stnId}). Normalspennet er 25.–75. persentil fra ${wtNormal.nYears} tidligere år.`
+                : `Station: ${stn} (${stnId}). The normal range is the 25th–75th percentile from ${wtNormal.nYears} previous years.`;
+            txt += _bandStatusSentence(status, no, '°C', 1);
+            if (status && thr) {
+                const diff = status.value - thr;
+                txt += no
+                    ? (diff >= 0
+                        ? ` Klekketerskelen på ${thr} °C er passert.`
+                        : ` Det er ${Math.abs(diff).toFixed(1)} °C igjen til klekketerskelen på ${thr} °C.`)
+                    : (diff >= 0
+                        ? ` The ${thr} °C hatch threshold has been passed.`
+                        : ` ${Math.abs(diff).toFixed(1)} °C remaining to the ${thr} °C hatch threshold.`);
+            }
+            return txt;
+        }
+    });
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -4978,15 +5056,20 @@ function renderFlowChart(flowData, flowNormal) {
 //
 // KPI-kortene (todayStatusSection) er bevisst i BEGGE — "hva er vanntemp
 // og vannføring akkurat nå" er relevant uansett modus.
+// Ingen seksjon skal stå i BEGGE lister — da vises den samme grafen i begge
+// modi, og modusbyttet mister mening. De to vanntemp-grafene er bevisst delt:
+//   wtSection       — år-for-år-spaghetti, en analysegraf → Prognose
+//   wtNormalSection — normalbånd + i år, en beslutningsgraf → Forhold
 const MODE_SECTIONS = {
     forecast: [
         'seasonExplainSection', 'forecastEffectSection',
         'convergenceSection', 'gddModelSection', 'gddHistSection',
-        'seasonIndicatorsSection',
+        'wtSection', 'snowSection', 'iceSection',
+        'seasonIndicatorsSection', 'southSignalSection',
     ],
     conditions: [
-        'conditionsSection', 'flowChartSection', 'spinnerfallSection',
-        'wtSection',
+        'conditionsSection', 'wtNormalSection', 'flowChartSection',
+        'spinnerfallSection',
     ],
 };
 
@@ -6457,13 +6540,13 @@ function renderSouthSignal() {
     //   - Eventuelt litteraturstøtte (NAO/AO-papirer som peker på lignende)
     //
     // Funksjonen og UI-koden er beholdt intakt nedenfor for rask reaktivering.
-    section.style.display = 'none';
+    markSelfHidden(section, true);
     return;
     // ────────────────────────────────────────────────────────────────────
 
     // Vises kun for Finnmark-lokasjoner (Kautokeino, Alta, Porsanger, Ifjordfjellet)
     if (LOC.region !== 'Finnmark') {
-        section.style.display = 'none';
+        markSelfHidden(section, true);
         return;
     }
 
@@ -7156,8 +7239,10 @@ function rebuildDashboard() {
     // Vannføringsnormalen bygges én gang per rebuild og deles av både
     // forhold-scoren og grafen. Returnerer null for lokasjoner uten
     // NVE-vannføring eller med færre enn 3 historiske år.
-    const flowNormal = computeFlowNormal(flowData);
+    const flowNormal = computeDoyNormal(flowData);
+    const wtNormal   = computeDoyNormal(wtData, { allowNegative: true });
     renderConditionsSection(dayData, flowData, flowNormal);
+    renderWtNormalChart(wtData, wtNormal);
     renderFlowChart(flowData, flowNormal);
     renderWaterTempChart(wtData);                       // Graf: rå verdier fra stasjon
     renderSnowChart(snowData);
