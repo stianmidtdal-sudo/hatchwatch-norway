@@ -617,84 +617,108 @@
             .mode-btn { flex: 1; padding: 10px 8px; }
         }
 
-        /* ── FORHOLD-STRIPE ── */
-        .cond-best {
-            background: #edf7f2;
-            border-left: 4px solid #2D6A4F;
-            border-radius: 0;
-            padding: 12px 16px;
-            font-size: 0.92rem;
-            color: #1B4332;
-            margin-bottom: 14px;
+        /* ── VÆRVISNING (Forhold-modus) ──
+           Fast lyseblå vask — bevisst IKKE dynamisk etter været (Stian 2026-08-18).
+           Været bæres av ikonene og de fargede tallene, ikke av flatene. */
+        .wx-ico {
+            display: block;
+            --c-sun:  #f5b942;
+            --c-cl:   #dbe6ee;
+            --c-cld:  #9dafbe;
+            --c-drop: #4f9bd4;
+            --c-snow: #b9d4e6;
         }
-        .cond-best strong { font-weight: 700; }
-        .cond-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-        }
-        @media (max-width: 900px) { .cond-grid { grid-template-columns: repeat(3, 1fr); } }
-        @media (max-width: 640px) { .cond-grid { grid-template-columns: repeat(2, 1fr); } }
-        .cond-card {
-            background: #ffffff;
-            border: 1px solid #dfe8e2;
-            border-radius: 10px;
-            padding: 12px 13px;
-        }
-        .cond-card.is-best { border-color: #2D6A4F; box-shadow: 0 0 0 1px #2D6A4F inset; }
-        .cond-day {
-            font-size: 0.7rem;
-            color: #7b8b81;
-            text-transform: uppercase;
-            letter-spacing: 0.7px;
-            font-weight: 600;
-        }
-        .cond-score {
-            font-size: 1.7rem;
-            font-weight: 800;
-            line-height: 1;
-            margin-top: 5px;
-        }
-        .cond-verdict { font-size: 0.74rem; font-weight: 600; margin-top: 2px; }
-        .cond-bar {
-            height: 4px;
-            border-radius: 3px;
-            background: #eef2ef;
-            margin-top: 10px;
+        .wx-big {
+            border-radius: 12px;
             overflow: hidden;
+            margin-bottom: 11px;
+            background: linear-gradient(170deg, #d8e8f4 0%, #edf4f9 44%, #ffffff 100%);
         }
-        .cond-bar span { display: block; height: 100%; border-radius: 3px; }
-        .cond-limit {
-            font-size: 0.71rem;
-            color: #8a3b13;
-            margin-top: 9px;
-            line-height: 1.45;
-            font-weight: 600;
+        .wx-top { display: flex; align-items: center; gap: 18px; padding: 19px 22px 13px; }
+        .wx-when {
+            font-size: 0.66rem; font-weight: 700; letter-spacing: 1.4px;
+            text-transform: uppercase; color: #8496a3;
         }
-        .cond-limit.ok { color: #2D6A4F; }
-        .cond-facts {
-            font-size: 0.7rem;
-            color: #77857c;
-            margin-top: 7px;
-            line-height: 1.55;
+        .wx-date { font-size: 1.1rem; font-weight: 700; color: #1f3340; margin-top: 2px; }
+        .wx-head { flex: 1; min-width: 0; }
+        .wx-temp { font-size: 2.5rem; font-weight: 300; line-height: 1; letter-spacing: -1.5px; text-align: right; }
+        .wx-tmin { font-size: 0.79rem; color: #93a5b1; text-align: right; margin-top: 3px; }
+        .wx-comment { padding: 0 22px 15px; font-size: 0.9rem; line-height: 1.6; color: #4a5a64; }
+        .wx-comment b { color: #22333d; font-weight: 600; }
+        .wx-hours {
+            display: grid; grid-template-columns: repeat(8, 1fr);
+            background: rgba(255,255,255,0.62);
         }
-        .cond-note {
-            font-size: 0.78rem;
-            color: #5a4000;
-            background: #fff8e1;
-            border-left: 3px solid #d4a52a;
-            padding: 10px 13px;
-            margin-top: 14px;
-            line-height: 1.55;
-            border-radius: 0;
+        .wx-hr { padding: 11px 3px 12px; text-align: center; }
+        .wx-hr + .wx-hr { border-left: 1px solid rgba(120,150,170,0.15); }
+        .wx-hr .t { font-size: 0.66rem; font-weight: 700; color: #8496a3; letter-spacing: 0.4px; }
+        .wx-hr .i { margin: 6px auto 4px; }
+        .wx-hr .deg { font-size: 0.82rem; font-weight: 700; }
+        .wx-hr .w { font-size: 0.65rem; margin-top: 2px; }
+        .wx-facts {
+            display: flex; background: rgba(255,255,255,0.82);
+            border-top: 1px solid rgba(120,150,170,0.15);
         }
-        .cond-foot {
-            font-size: 0.72rem;
-            color: #8b968f;
-            margin-top: 12px;
-            line-height: 1.55;
-            font-style: italic;
+        .wx-fact { flex: 1; padding: 11px 5px 13px; text-align: center; }
+        .wx-fact + .wx-fact { border-left: 1px solid rgba(120,150,170,0.15); }
+        .wx-fact .k {
+            font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.7px;
+            color: #9aabb5; font-weight: 700;
         }
+        .wx-fact .v { font-size: 0.9rem; font-weight: 700; color: #24363f; margin-top: 3px; }
+        .wx-fact .v small { font-size: 0.7rem; color: #93a5b1; font-weight: 500; }
+
+        .wx-days { background: white; border-radius: 12px; overflow: hidden; }
+        .wx-row {
+            display: grid; grid-template-columns: 4px 96px 40px 1fr auto 16px;
+            gap: 0 13px; align-items: center; padding-right: 18px;
+            cursor: pointer; border-bottom: 1px solid #f2f4f1;
+            transition: background .12s; user-select: none;
+            background: none; border-left: 0; border-right: 0; border-top: 0;
+            width: 100%; text-align: left; font-family: inherit;
+        }
+        .wx-row:hover { background: #f9fbfc; }
+        .wx-row:focus-visible { outline: 2px solid #74C69D; outline-offset: -2px; }
+        .wx-bar { height: 58px; background: #cfe2f0; }
+        .wx-dname { font-size: 0.82rem; font-weight: 700; color: #26382d; }
+        .wx-dname small { display: block; font-size: 0.66rem; color: #a3aca6; font-weight: 400; margin-top: 1px; }
+        .wx-dmid { display: flex; gap: 14px; font-size: 0.75rem; color: #5f6d64; }
+        .wx-dmid .ar { color: #a3aea6; }
+        .wx-dt { font-size: 0.88rem; font-weight: 700; white-space: nowrap; }
+        .wx-dt small { font-size: 0.72rem; color: #9aa49c; font-weight: 500; }
+        .wx-chev { font-size: 0.62rem; color: #b8c0ba; text-align: center; transition: transform .18s; }
+        .wx-row.open .wx-chev { transform: rotate(90deg); }
+        .wx-detail { display: none; background: #f7fafc; border-bottom: 1px solid #f2f4f1; }
+        .wx-detail.open { display: block; }
+        .wx-detail .wx-txt { padding: 14px 20px 6px; font-size: 0.83rem; color: #55625a; line-height: 1.6; }
+        .wx-detail .wx-hours { background: transparent; }
+        .wx-detail .wx-facts { background: rgba(255,255,255,0.7); }
+        .wx-thin { padding: 12px 20px 14px; font-size: 0.75rem; color: #93a5b1; line-height: 1.55; }
+        .wx-foot { font-size: 0.72rem; color: #8b968f; margin-top: 12px; line-height: 1.55; }
+
+        /* Fargeskalaer — temperatur og vind */
+        .t-cold { color: #4a86b8; }
+        .t-cool { color: #3f8f86; }
+        .t-mild { color: #5a9440; }
+        .t-warm { color: #c08a1e; }
+        .t-hot  { color: #c4632c; }
+        .wv-calm   { color: #6f8a7c; }
+        .wv-fresh  { color: #b3702f; font-weight: 700; }
+        .wv-strong { color: #b4472f; font-weight: 700; }
+        .wx-rain-on  { color: #3d86bd; font-weight: 700; }
+        .wx-rain-off { color: #b9c2bc; }
+
+        @media (max-width: 700px) {
+            .wx-hours { grid-template-columns: repeat(4, 1fr); }
+            .wx-hr:nth-child(n+5) { border-top: 1px solid rgba(120,150,170,0.15); }
+            .wx-hr:nth-child(5) { border-left: 0; }
+            .wx-temp { font-size: 2.1rem; }
+            .wx-row { grid-template-columns: 4px 76px 34px 1fr 16px; gap: 0 10px; padding-right: 12px; }
+            .wx-dmid { display: none; }
+            .wx-facts { flex-wrap: wrap; }
+            .wx-fact { flex: 1 1 33%; }
+        }
+
         .flow-note {
             font-size: 0.75rem;
             color: #77857c;
@@ -822,6 +846,104 @@
         <div class="spinner"></div>
         <div id="loadingText">Fetching live data from MET Norway &amp; NVE…</div>
     </div>
+
+    <!-- ═══ VÆRIKONER ═══
+         VIKTIG: <use> lager en shadow-DOM, og vanlige CSS-selektorer krysser
+         ikke den grensen — derfor settes fargene med CSS-VARIABLER inne i hvert
+         symbol. Variabler arver gjennom shadow-grensen; klasseselektorer gjør det
+         ikke. (Uten dette rendrer alle ikonene som svarte silhuetter.) -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+      <symbol id="wx-sun" viewBox="0 0 32 26">
+        <circle cx="16" cy="13" r="6" style="fill:var(--c-sun,#f5b942)"/>
+        <g style="stroke:var(--c-sun,#f5b942);stroke-width:2;stroke-linecap:round">
+          <line x1="16" y1="1.5" x2="16" y2="4"/><line x1="16" y1="22" x2="16" y2="24.5"/>
+          <line x1="4.5" y1="13" x2="7" y2="13"/><line x1="25" y1="13" x2="27.5" y2="13"/>
+          <line x1="7.9" y1="4.9" x2="9.7" y2="6.7"/><line x1="22.3" y1="19.3" x2="24.1" y2="21.1"/>
+          <line x1="24.1" y1="4.9" x2="22.3" y2="6.7"/><line x1="9.7" y1="19.3" x2="7.9" y2="21.1"/>
+        </g>
+      </symbol>
+      <symbol id="wx-moon" viewBox="0 0 32 26">
+        <path d="M21.5 4.2a8.4 8.4 0 1 0 6.1 12.4A9.6 9.6 0 0 1 21.5 4.2z" style="fill:var(--c-sun,#e8cd83)"/>
+      </symbol>
+      <symbol id="wx-partly" viewBox="0 0 32 26">
+        <circle cx="11" cy="9" r="5" style="fill:var(--c-sun,#f5b942)"/>
+        <g style="stroke:var(--c-sun,#f5b942);stroke-width:2;stroke-linecap:round">
+          <line x1="11" y1="0.5" x2="11" y2="2.5"/><line x1="2.5" y1="9" x2="4.5" y2="9"/>
+          <line x1="4.8" y1="2.8" x2="6.2" y2="4.2"/><line x1="17.2" y1="2.8" x2="15.8" y2="4.2"/>
+        </g>
+        <g style="fill:var(--c-cl,#dbe6ee)">
+          <circle cx="14" cy="17" r="4.6"/><circle cx="20" cy="14.5" r="6"/>
+          <circle cx="25.4" cy="18" r="4.2"/><rect x="14" y="17.4" width="11.4" height="5" rx="2.5"/>
+        </g>
+      </symbol>
+      <symbol id="wx-partly-night" viewBox="0 0 32 26">
+        <path d="M13.5 2.5a6.6 6.6 0 1 0 5 9.8A7.6 7.6 0 0 1 13.5 2.5z" style="fill:var(--c-sun,#e8cd83)"/>
+        <g style="fill:var(--c-cl,#dbe6ee)">
+          <circle cx="14" cy="17" r="4.6"/><circle cx="20" cy="14.5" r="6"/>
+          <circle cx="25.4" cy="18" r="4.2"/><rect x="14" y="17.4" width="11.4" height="5" rx="2.5"/>
+        </g>
+      </symbol>
+      <symbol id="wx-cloud" viewBox="0 0 32 26">
+        <g style="fill:var(--c-cl,#dbe6ee)">
+          <circle cx="10" cy="16" r="5"/><circle cx="16.5" cy="13" r="6.6"/>
+          <circle cx="22.5" cy="16.6" r="4.6"/><rect x="10" y="16.4" width="12.5" height="5.4" rx="2.7"/>
+        </g>
+      </symbol>
+      <symbol id="wx-overcast" viewBox="0 0 32 26">
+        <g style="fill:var(--c-cld,#9dafbe)">
+          <circle cx="10" cy="16" r="5"/><circle cx="16.5" cy="13" r="6.6"/>
+          <circle cx="22.5" cy="16.6" r="4.6"/><rect x="10" y="16.4" width="12.5" height="5.4" rx="2.7"/>
+        </g>
+      </symbol>
+      <symbol id="wx-rain" viewBox="0 0 32 26">
+        <g style="fill:var(--c-cld,#9dafbe)">
+          <circle cx="10" cy="12.5" r="4.6"/><circle cx="16.2" cy="9.8" r="6"/>
+          <circle cx="21.8" cy="13" r="4.2"/><rect x="10" y="12.9" width="11.8" height="4.9" rx="2.4"/>
+        </g>
+        <g style="stroke:var(--c-drop,#4f9bd4);stroke-width:2.2;stroke-linecap:round">
+          <line x1="11" y1="20" x2="9.6" y2="23.6"/><line x1="16" y1="20" x2="14.6" y2="23.6"/>
+          <line x1="21" y1="20" x2="19.6" y2="23.6"/>
+        </g>
+      </symbol>
+      <symbol id="wx-rain-heavy" viewBox="0 0 32 26">
+        <g style="fill:var(--c-cld,#8e9daa)">
+          <circle cx="10" cy="12" r="4.8"/><circle cx="16.4" cy="9.2" r="6.3"/>
+          <circle cx="22.2" cy="12.6" r="4.4"/><rect x="10" y="12.4" width="12.2" height="5" rx="2.5"/>
+        </g>
+        <g style="stroke:var(--c-drop,#4f9bd4);stroke-width:2.2;stroke-linecap:round">
+          <line x1="9" y1="19.4" x2="7.4" y2="23.8"/><line x1="13.5" y1="19.4" x2="11.9" y2="23.8"/>
+          <line x1="18" y1="19.4" x2="16.4" y2="23.8"/><line x1="22.5" y1="19.4" x2="20.9" y2="23.8"/>
+        </g>
+      </symbol>
+      <symbol id="wx-sleet" viewBox="0 0 32 26">
+        <g style="fill:var(--c-cld,#9dafbe)">
+          <circle cx="10" cy="12.5" r="4.6"/><circle cx="16.2" cy="9.8" r="6"/>
+          <circle cx="21.8" cy="13" r="4.2"/><rect x="10" y="12.9" width="11.8" height="4.9" rx="2.4"/>
+        </g>
+        <g style="stroke:var(--c-drop,#4f9bd4);stroke-width:2.2;stroke-linecap:round">
+          <line x1="11" y1="20" x2="9.6" y2="23.6"/><line x1="21" y1="20" x2="19.6" y2="23.6"/>
+        </g>
+        <circle cx="16" cy="21.6" r="1.9" style="fill:var(--c-snow,#b9d4e6)"/>
+      </symbol>
+      <symbol id="wx-snow" viewBox="0 0 32 26">
+        <g style="fill:var(--c-cld,#9dafbe)">
+          <circle cx="10" cy="12.5" r="4.6"/><circle cx="16.2" cy="9.8" r="6"/>
+          <circle cx="21.8" cy="13" r="4.2"/><rect x="10" y="12.9" width="11.8" height="4.9" rx="2.4"/>
+        </g>
+        <g style="fill:var(--c-snow,#b9d4e6)">
+          <circle cx="11" cy="21.4" r="1.9"/><circle cx="16.2" cy="22.4" r="1.9"/><circle cx="21.4" cy="21.4" r="1.9"/>
+        </g>
+      </symbol>
+      <symbol id="wx-fog" viewBox="0 0 32 26">
+        <g style="fill:var(--c-cld,#b6c3cd)">
+          <circle cx="10" cy="12.5" r="4.6"/><circle cx="16.2" cy="9.8" r="6"/>
+          <circle cx="21.8" cy="13" r="4.2"/><rect x="10" y="12.9" width="11.8" height="4.9" rx="2.4"/>
+        </g>
+        <g style="stroke:var(--c-cld,#9dafbe);stroke-width:2;stroke-linecap:round">
+          <line x1="7" y1="20.5" x2="24" y2="20.5"/><line x1="10" y1="24" x2="21" y2="24"/>
+        </g>
+      </symbol>
+    </defs></svg>
 
     <div id="dashboard" style="display:none">
 
@@ -960,16 +1082,17 @@
             <div id="spinnerfallFooter" style="font-size:0.72rem; color:rgba(244,228,193,0.6); margin-top:12px; line-height:1.55;" data-i18n-html="spinnerfallFooter">Modellen vurderer kveldstimene 19–22 (lokal tid) basert på MET-prognose og vekter seks variabler ulikt: <b>vind</b>, <b>lufttemperatur</b>, <b>skydekke</b>, <b>nedbør</b>, <b>luftfuktighet</b> og <b>trykk-trend</b>. Vindstille er det viktigste enkeltkravet — raskt fallende lufttrykk (front på vei) dempes også. Modellen er ikke validert mot observasjoner.</div>
         </section>
 
-        <!-- ═══ FORHOLD-STRIPE (Forhold-modus) — innført 2026-08-18 ═══ -->
-        <!-- Svarer på "er det verdt å dra ut i dag/i morgen", i motsetning til
-             Klekkeprognosen som svarer "når starter sesongen". Viktigste elementet
-             er ikke prosenten, men den begrensende faktoren under hvert kort. -->
-        <section id="conditionsSection" style="display:none">
-            <h2 id="conditionsHeading" data-i18n="conditionsHeading">Forhold de neste dagene</h2>
-            <div id="conditionsBest" class="cond-best" style="display:none"></div>
-            <div id="conditionsGrid" class="cond-grid"></div>
-            <div id="conditionsNote" class="cond-note" style="display:none"></div>
-            <div id="conditionsFoot" class="cond-foot"></div>
+        <!-- ═══ VÆRVISNING (Forhold-modus) — innført 2026-08-18 ═══ -->
+        <!-- Ren gjengivelse av MET-prognosen. Ingen score, ingen "beste dag".
+             Forhold-fanen viser HVA SOM ER og HVA SOM KOMMER — den tolker ikke.
+             All tolkning hører hjemme i Prognose-fanen og Spinnerfall-vakta,
+             der vi har en modell å stå til ansvar for. -->
+        <section id="weatherSection" style="display:none">
+            <h2 id="weatherHeading" data-i18n="weatherHeading">Været</h2>
+            <div id="weatherBig"></div>
+            <h2 id="weatherDaysHeading" data-i18n="weatherDaysHeading" style="margin-top:26px">Neste dager</h2>
+            <div id="weatherDays" class="wx-days"></div>
+            <div id="weatherFoot" class="wx-foot"></div>
         </section>
 
         <!-- ═══ VANNTEMPERATUR MOT NORMALEN (Forhold-modus) ═══ -->
@@ -1169,7 +1292,8 @@ const T = {
     // Forhold-modus (innført 2026-08-18)
     modeForecast: 'Prognose',
     modeConditions: 'Forhold',
-    conditionsHeading: 'Forhold de neste dagene',
+    weatherHeading: 'Været',
+    weatherDaysHeading: 'Neste dager',
     flowChartHeading: 'Vannføring mot normalen',
     wtNormalHeading: 'Vanntemperatur mot normalen',
     southSignalHeading: 'Sør-Norge-signal',
@@ -1392,7 +1516,8 @@ const T = {
     // Conditions mode (added 2026-08-18)
     modeForecast: 'Forecast',
     modeConditions: 'Conditions',
-    conditionsHeading: 'Conditions in the coming days',
+    weatherHeading: 'Weather',
+    weatherDaysHeading: 'Coming days',
     flowChartHeading: 'Water flow vs. normal',
     wtNormalHeading: 'Water temperature vs. normal',
     southSignalHeading: 'Southern Norway signal',
@@ -4599,284 +4724,320 @@ function statusVsNormal(data, normal, dateStr) {
     };
 }
 
-// ── FORHOLD-SCORE ────────────────────────────────────────────────────────
-// Multiplikativ (AND-betingelse) som spinnerfall-modellen: én dårlig faktor
-// er nok til å ødelegge dagen. Men vektingen er ANNERLEDES enn spinnerfall
-// på to punkter:
+// ── VÆRVISNING ───────────────────────────────────────────────────────────
+// Ren gjengivelse av MET-prognosen. Ingen score, ingen «beste dag».
 //
-//   Skydekke: motsatt. Spinnerfall vil ha klarvær og vindstille kvelder.
-//   Døgnflueklekking på dagtid går ofte BEDRE i lettskyet/overskyet vær —
-//   klassisk fluefiskerkunnskap, og subimago tørker langsommere i fuktig
-//   luft, som forlenger tiden de sitter på overflaten.
+// Bakgrunn: den første versjonen av Forhold-fanen ga hver dag en prosentscore
+// for hvor gode fiskeforholdene var. Stian forkastet den 2026-08-18 — vi
+// strekker oss allerede langt med to prognoser (klekking og spinnerfall), og
+// en tredje som gjetter «beste fiskedag» er å be om å bli tatt. Fanen viser
+// nå hva som er og hva som kommer, og lar fiskeren tolke selv.
+
+// MET sine symbolkoder → vårt ikonsett. Koden kan ha suffiks _day/_night/
+// _polartwilight; vi splitter det av og velger natt-variant der vi har en.
+function wxIcon(symbolCode, hour) {
+    if (!symbolCode) return 'wx-cloud';
+    const parts = String(symbolCode).split('_');
+    const base = parts[0];
+    const variant = parts[1] || '';
+    // Natt: MET markerer selv, men for 6-timers steg mangler suffikset iblant.
+    // Vi faller tilbake på klokkeslett når variant ikke er oppgitt.
+    const isNight = variant === 'night'
+        || (variant === '' && hour != null && (hour >= 22 || hour < 4));
+
+    if (base === 'clearsky' || base === 'fair')  return isNight ? 'wx-moon' : 'wx-sun';
+    if (base === 'partlycloudy')                 return isNight ? 'wx-partly-night' : 'wx-partly';
+    if (base === 'cloudy')                       return 'wx-overcast';
+    if (base === 'fog')                          return 'wx-fog';
+    if (base.indexOf('snow') !== -1)             return 'wx-snow';
+    if (base.indexOf('sleet') !== -1)            return 'wx-sleet';
+    if (base.indexOf('heavyrain') !== -1)        return 'wx-rain-heavy';
+    if (base.indexOf('rain') !== -1)             return 'wx-rain';
+    return 'wx-cloud';
+}
+
+// Temperaturklasse — kald blå til varm oransje.
+function wxTempClass(t) {
+    if (t == null) return '';
+    if (t < 5)  return 't-cold';
+    if (t < 10) return 't-cool';
+    if (t < 15) return 't-mild';
+    if (t < 20) return 't-warm';
+    return 't-hot';
+}
+// Vindklasse — grå under 5 m/s, oransje 5-8, rød over 8.
+// Terskelen er satt der vinden begynner å bety noe for fluekast, ikke der
+// meteorologene setter kuling.
+function wxWindClass(w) {
+    if (w == null) return '';
+    if (w < 5) return 'wv-calm';
+    if (w < 8) return 'wv-fresh';
+    return 'wv-strong';
+}
+
+// Vindretning som pil. MET oppgir retningen vinden kommer FRA; pila peker
+// dit vinden blåser, som på yr.no. Derfor +180°.
 //
-//   Vind: mer tolerant. 3-4 m/s ødelegger et spinnerfall, men er helt
-//   levelig for dagfiske og hindrer ikke klekkingen i seg selv.
-function _condTempScore(tempMax) {
-    if (tempMax == null) return 1;
-    if (tempMax < 6)  return 0.25;
-    if (tempMax < 10) return _ramp(tempMax, 6, 0.25, 10, 0.75);
-    if (tempMax < 14) return _ramp(tempMax, 10, 0.75, 14, 1.0);
-    if (tempMax <= 22) return 1.0;
-    if (tempMax <= 27) return _ramp(tempMax, 22, 1.0, 27, 0.8);
-    return 0.7;
+// Arrayet er indeksert på KOMPASSRETNINGEN vinden blåser mot, med nord først:
+// nord peker opp på skjermen, øst peker høyre. Nordavind (fra 0°) blåser mot
+// sør og gir dermed pil NED. Rekkefølgen var rotert fire steg feil i første
+// versjon — nordavind pekte oppover. Fanget av enhetstest 2026-08-18.
+const _WX_ARROWS = ['↑','↗','→','↘','↓','↙','←','↖'];
+function wxArrow(dirFrom) {
+    if (dirFrom == null) return '';
+    const to = (dirFrom + 180) % 360;
+    return _WX_ARROWS[Math.round(to / 45) % 8];
 }
-function _condWindScore(wind, gustMax) {
-    if (wind == null) return 1;
-    // Kast teller, men mindre enn for spinnerfall (0.5-vekt mot 1.0)
-    const eff = (gustMax != null && gustMax > wind)
-        ? Math.max(wind, wind * 0.5 + gustMax * 0.5)
-        : wind;
-    if (eff < 2)  return 1.0;
-    if (eff < 5)  return _ramp(eff, 2, 1.0, 5, 0.85);
-    if (eff < 8)  return _ramp(eff, 5, 0.85, 8, 0.5);
-    if (eff < 12) return _ramp(eff, 8, 0.5, 12, 0.2);
-    return 0.15;
-}
-function _condCloudScore(cloud) {
-    if (cloud == null) return 1;
-    if (cloud < 20) return 0.8;                          // klarvær — litt dårligere
-    if (cloud < 60) return _ramp(cloud, 20, 0.8, 60, 1.0);
-    if (cloud <= 95) return 1.0;                         // lettskyet/overskyet — best
-    return 0.9;                                          // tungt overskyet, ofte regn
-}
-function _condPrecipScore(precip) {
-    if (precip == null) return 1;
-    if (precip <= 0.1) return 1.0;
-    if (precip <= 1)   return 0.95;
-    if (precip <= 4)   return _ramp(precip, 1, 0.95, 4, 0.6);
-    if (precip <= 10)  return _ramp(precip, 4, 0.6, 10, 0.35);
-    return 0.25;
-}
-function _condPressureScore(trend) {
-    if (trend == null) return 1;
-    if (trend >= 0)  return 1.0;
-    if (trend >= -2) return _ramp(trend, 0, 1.0, -2, 0.8);
-    return 0.7;                                          // raskt fall = front på vei
-}
-// Vannføring: både for mye OG for lite er et problem. For mye = grumsete,
-// sterk strøm, fisken står dypt. For lite = varmt, stillestående, sky fisk.
-function _condFlowScore(ratio) {
-    if (ratio == null) return 1;
-    if (ratio <= 0.5) return 0.75;
-    if (ratio < 0.8)  return _ramp(ratio, 0.5, 0.75, 0.8, 1.0);
-    if (ratio <= 1.5) return 1.0;
-    if (ratio <= 2.5) return _ramp(ratio, 1.5, 1.0, 2.5, 0.55);
-    if (ratio <= 3.5) return _ramp(ratio, 2.5, 0.55, 3.5, 0.3);
-    return 0.25;
+// Himmelretning på norsk — «nordavind» sier mer enn «350°».
+function wxDirName(dirFrom, no) {
+    if (dirFrom == null) return null;
+    const namesNo = ['nordlig','nordøstlig','østlig','sørøstlig','sørlig','sørvestlig','vestlig','nordvestlig'];
+    const namesEn = ['northerly','north-easterly','easterly','south-easterly','southerly','south-westerly','westerly','north-westerly'];
+    const i = Math.round(dirFrom / 45) % 8;
+    return (no ? namesNo : namesEn)[i];
 }
 
-// Bygger forhold-prognosen for de neste dagene.
-//   dayData    — { 'YYYY-MM-DD': {wind, windMax, gustMax, temp, tempMax, cloud, precip, pressureTrend, n} }
-//   flowStatus — siste kjente vannføringsstatus (gjelder alle dager; vi har
-//                ingen vannføringsPROGNOSE, og vannføring endrer seg tregt)
-function computeConditionsForecast(dayData, flowStatus) {
-    if (!dayData) return [];
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const out = [];
+// Beskrivende setning bygget fra tallene. Ingen vurdering av om det er bra
+// eller dårlig — bare hva som står i dataene, satt sammen til noe lesbart.
+function wxComment(d, hours, no) {
+    const bits = [];
 
-    for (let i = 0; i < 9; i++) {
-        const d = new Date(today);
-        d.setDate(d.getDate() + i);
-        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        const w = dayData[key];
-        if (!w) continue;
-
-        const flowRatio = flowStatus ? flowStatus.ratio : null;
-        const parts = {
-            flow:     _condFlowScore(flowRatio),
-            temp:     _condTempScore(w.tempMax != null ? w.tempMax : w.temp),
-            wind:     _condWindScore(w.wind, w.gustMax),
-            cloud:    _condCloudScore(w.cloud),
-            precip:   _condPrecipScore(w.precip),
-            pressure: _condPressureScore(w.pressureTrend),
-        };
-
-        const score = parts.flow * parts.temp * parts.wind
-                    * parts.cloud * parts.precip * parts.pressure;
-
-        // Begrensende faktor = den laveste delscoren, men bare hvis den
-        // faktisk trekker merkbart ned. Over 0.8 er ingenting "begrensende".
-        let limitKey = null, limitVal = 1;
-        for (const k in parts) {
-            if (parts[k] < limitVal) { limitVal = parts[k]; limitKey = k; }
-        }
-        if (limitVal >= 0.8) limitKey = null;
-
-        out.push({
-            date: d, dateKey: key,
-            score, parts, weather: w,
-            limitKey, limitVal,
-            flowRatio,
-            indicative: (w.n != null && w.n < 4),
-        });
+    // 1. Himmel og vind
+    const sky = (() => {
+        const c = d.cloud;
+        if (c == null) return null;
+        if (c < 20) return no ? 'Klarvær' : 'Clear skies';
+        if (c < 50) return no ? 'Lettskyet' : 'Fair';
+        if (c < 85) return no ? 'Delvis skyet' : 'Partly cloudy';
+        return no ? 'Overskyet' : 'Overcast';
+    })();
+    const dirName = wxDirName(d.windDir, no);
+    let first = sky || (no ? 'Vind' : 'Wind');
+    if (d.wind != null) {
+        const windTxt = dirName
+            ? (no ? `${dirName} vind ${fmtNum(d.wind, 1)} m/s` : `${dirName} wind ${d.wind} m/s`)
+            : (no ? `vind ${fmtNum(d.wind, 1)} m/s` : `wind ${d.wind} m/s`);
+        first += (no ? ' og ' : ' with ') + `<b>${windTxt}</b>`;
     }
-    return out;
-}
-
-// Menneskelig tekst for den begrensende faktoren.
-function _condLimitText(f, lang) {
-    const w = f.weather;
-    const no = (lang !== 'en');
-    switch (f.limitKey) {
-        case 'flow': {
-            const pct = Math.round(f.flowRatio * 100);
-            return no ? `Vannføring ${pct}% av normalen`
-                      : `Water flow ${pct}% of normal`;
-        }
-        case 'temp': {
-            const tm = w.tempMax != null ? Math.round(w.tempMax) : Math.round(w.temp);
-            return no ? `Kaldt — maks ${tm}°C` : `Cold — max ${tm}°C`;
-        }
-        case 'wind': {
-            const wv = w.gustMax != null && w.gustMax > w.wind
-                ? `${w.wind} m/s (kast ${Math.round(w.gustMax)})`
-                : `${w.wind} m/s`;
-            return no ? `Vind ${wv}` : `Wind ${wv}`;
-        }
-        case 'cloud':
-            return no ? `Klarvær — ${w.cloud}% skydekke`
-                      : `Clear sky — ${w.cloud}% cloud`;
-        case 'precip':
-            return no ? `Nedbør ${w.precip} mm` : `Precipitation ${w.precip} mm`;
-        case 'pressure':
-            return no ? `Fallende trykk — front på vei`
-                      : `Falling pressure — front approaching`;
-        default:
-            return no ? 'Ingen tydelig begrensning' : 'No clear limitation';
+    // Kast nevnes bare når de skiller seg vesentlig fra snittvinden
+    if (d.gustMax != null && d.wind != null && d.gustMax > d.wind + 3) {
+        first += no
+            ? ` med kast opp mot ${Math.round(d.gustMax)}`
+            : `, gusting to ${Math.round(d.gustMax)}`;
     }
+    bits.push(first + '.');
+
+    // 2. Nedbør
+    const p = d.precip24 != null ? d.precip24 : d.precip;
+    if (p == null || p < 0.2) {
+        bits.push(no ? 'Tørt hele døgnet.' : 'Dry all day.');
+    } else if (p < 2) {
+        bits.push(no ? `Litt nedbør, ${fmtNum(p, 1)} mm.` : `Some precipitation, ${p} mm.`);
+    } else {
+        bits.push(no ? `Nedbør ${fmtNum(p, 1)} mm.` : `Precipitation ${p} mm.`);
+    }
+
+    // 3. Kveldsutvikling — det fiskeren faktisk lurer på.
+    //    Bare tatt med når vi har timedata som viser en reell endring.
+    if (hours && hours.length) {
+        const eve = hours.filter(h => h.h >= 19 && h.h <= 22);
+        if (eve.length && d.wind != null) {
+            const eveWind = eve.reduce((s, h) => s + h.wind, 0) / eve.length;
+            const diff = eveWind - d.wind;
+            if (diff <= -1.5) {
+                bits.push(no
+                    ? `Vinden løyer utover kvelden — <b>${fmtNum(eveWind, 1)} m/s kl. 21</b>.`
+                    : `Wind eases through the evening — <b>${eveWind.toFixed(1)} m/s at 21</b>.`);
+            } else if (diff >= 1.5) {
+                bits.push(no
+                    ? `Vinden friskner mot kvelden — <b>${fmtNum(eveWind, 1)} m/s kl. 21</b>.`
+                    : `Wind picks up towards evening — <b>${eveWind.toFixed(1)} m/s at 21</b>.`);
+            }
+        }
+    }
+
+    return bits.join(' ');
 }
 
-function renderConditionsSection(dayData, flowData, flowNormal) {
-    const section = document.getElementById('conditionsSection');
-    const grid = document.getElementById('conditionsGrid');
-    if (!section || !grid) return;
+// Trykkpil for nøkkeltallsraden
+function wxPressureArrow(trend) {
+    if (trend == null) return '';
+    if (trend >= 0.7) return ' ↗';
+    if (trend <= -0.7) return ' ↘';
+    return ' →';
+}
+
+// Timerad. Viser inntil 8 timer fra og med den nærmeste hele timen som
+// finnes i prognosen. Returnerer tom streng når MET har gått over til
+// 6-timers oppløsning og vi ikke har nok punkter til å fylle en rad.
+function wxHoursHtml(hours, isToday) {
+    if (!hours || hours.length < 4) return '';
+    let list = hours;
+    if (isToday) {
+        const nowH = new Date().getHours();
+        const fromNow = hours.filter(h => h.h >= nowH - 1);
+        if (fromNow.length >= 4) list = fromNow;
+    }
+    list = list.slice(0, 8);
+    return `<div class="wx-hours">` + list.map(h => {
+        const tc = wxTempClass(h.temp);
+        const wc = wxWindClass(h.wind);
+        return `<div class="wx-hr">
+            <div class="t">${String(h.h).padStart(2, '0')}</div>
+            <svg class="wx-ico i" width="25" height="20"><use href="#${wxIcon(h.symbol, h.h)}"/></svg>
+            <div class="deg ${tc}">${Math.round(h.temp)}°</div>
+            <div class="w ${wc}">${wxArrow(h.dir)} ${Math.round(h.wind)}</div>
+        </div>`;
+    }).join('') + `</div>`;
+}
+
+// Nøkkeltallsrad
+function wxFactsHtml(d, no) {
+    const gustTxt = (d.gustMax != null && d.wind != null && d.gustMax > d.wind + 1)
+        ? ` <span class="wv-fresh">↑${Math.round(d.gustMax)}</span>` : '';
+    const p = d.precip24 != null ? d.precip24 : d.precip;
+    const cells = [
+        [no ? 'Vind' : 'Wind',
+         `<span class="${wxWindClass(d.wind)}">${fmtNum(d.wind, 1)}</span> <small>m/s</small>${gustTxt}`],
+        [no ? 'Skydekke' : 'Cloud', `${d.cloud != null ? d.cloud : '–'} <small>%</small>`],
+        [no ? 'Nedbør' : 'Precip.', `${p != null ? fmtNum(p, 1) : '–'} <small>mm</small>`],
+        [no ? 'Luftfukt' : 'Humidity', `${d.humid != null ? d.humid : '–'} <small>%</small>`],
+        [no ? 'Trykk' : 'Pressure',
+         d.pressure != null ? `${Math.round(d.pressure)} <small>hPa${wxPressureArrow(d.pressureTrend)}</small>` : '–'],
+    ];
+    return `<div class="wx-facts">` + cells.map(c =>
+        `<div class="wx-fact"><div class="k">${c[0]}</div><div class="v">${c[1]}</div></div>`
+    ).join('') + `</div>`;
+}
+
+function renderWeatherSection(dayData, hourlyData) {
+    const section = document.getElementById('weatherSection');
+    const bigWrap = document.getElementById('weatherBig');
+    const daysWrap = document.getElementById('weatherDays');
+    if (!section || !bigWrap || !daysWrap) return;
 
     if (!dayData || Object.keys(dayData).length === 0) {
-        markSelfHidden(section, true);
-        window._condForecast = [];
-        return;
-    }
-
-    // Siste kjente vannføring mot normalen. Vi har ingen vannføringsprognose,
-    // så samme status brukes for alle dagene — vannføring endrer seg tregt
-    // sammenlignet med været, så det er en akseptabel forenkling.
-    let flowStatus = null;
-    if (flowData && flowNormal) {
-        const fl = latest(flowData, 10);
-        if (fl.date) flowStatus = statusVsNormal(flowData, flowNormal, fl.date);
-    }
-
-    const forecast = computeConditionsForecast(dayData, flowStatus);
-    window._condForecast = forecast;
-    if (forecast.length === 0) {
         markSelfHidden(section, true);
         return;
     }
 
     const lang = (typeof LANG !== 'undefined' && LANG) ? LANG : 'no';
     const no = lang !== 'en';
-    const dayNames = no
-        ? ['søn','man','tir','ons','tor','fre','lør']
-        : ['sun','mon','tue','wed','thu','fri','sat'];
-    const monthNames = no
+    const dayNamesLong = no
+        ? ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag']
+        : ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const monthsLong = no
+        ? ['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember']
+        : ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const monthsShort = no
         ? ['jan','feb','mar','apr','mai','jun','jul','aug','sep','okt','nov','des']
         : ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
 
-    // Beste dag — kun uthevet hvis den faktisk er merkbart bedre enn i dag
-    let best = forecast[0];
-    for (const f of forecast) if (f.score > best.score) best = f;
-    const showBest = best.score >= 0.5 && (best.score - forecast[0].score) >= 0.12;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const keyOf = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-    const bestEl = document.getElementById('conditionsBest');
-    if (bestEl) {
-        if (showBest) {
-            const bd = `${dayNames[best.date.getDay()]} ${best.date.getDate()}. ${monthNames[best.date.getMonth()]}`;
-            bestEl.innerHTML = no
-                ? `Beste dag i prognosen: <strong>${bd}</strong> (${Math.round(best.score * 100)}%).`
-                : `Best day in the forecast: <strong>${bd}</strong> (${Math.round(best.score * 100)}%).`;
-            bestEl.style.display = '';
-        } else {
-            bestEl.style.display = 'none';
-        }
+    // Samle dagene vi har data for, fra i dag og framover
+    const days = [];
+    for (let i = 0; i < 10; i++) {
+        const d = new Date(today);
+        d.setDate(d.getDate() + i);
+        const k = keyOf(d);
+        if (!dayData[k]) continue;
+        days.push({ date: d, key: k, d: dayData[k], hours: (hourlyData && hourlyData[k]) || null });
     }
+    if (days.length === 0) { markSelfHidden(section, true); return; }
 
-    grid.innerHTML = forecast.map(f => {
-        const pct = Math.round(f.score * 100);
-        const day = dayNames[f.date.getDay()];
-        const dateStr = `${f.date.getDate()}. ${monthNames[f.date.getMonth()]}`;
-        const w = f.weather;
-
-        let col, barCol, verdict;
-        if (f.score >= 0.6)      { col = '#2D6A4F'; barCol = '#52a378'; verdict = no ? 'Gode forhold' : 'Good'; }
-        else if (f.score >= 0.35){ col = '#8a6a1a'; barCol = '#d4a52a'; verdict = no ? 'Brukbart'     : 'Fair'; }
-        else if (f.score >= 0.15){ col = '#a35a20'; barCol = '#d4762a'; verdict = no ? 'Krevende'     : 'Poor'; }
-        else                     { col = '#a03020'; barCol = '#c1431f'; verdict = no ? 'Dårlig'       : 'Bad'; }
-
-        const limitTxt = f.limitKey
-            ? `<div class="cond-limit">${_condLimitText(f, lang)}</div>`
-            : `<div class="cond-limit ok">${no ? 'Ingen tydelig begrensning' : 'No clear limitation'}</div>`;
-
-        const tmax = w.tempMax != null ? Math.round(w.tempMax) : Math.round(w.temp);
-        const facts = `${w.wind} m/s · ${tmax}°C · ${w.cloud}%`
-            + (w.precip > 0.1 ? ` · ${w.precip} mm` : '');
-
-        const isBest = showBest && f.dateKey === best.dateKey;
-
-        return `<div class="cond-card${isBest ? ' is-best' : ''}">
-            <div class="cond-day">${day} ${dateStr}</div>
-            <div class="cond-score" style="color:${col}">${pct}%</div>
-            <div class="cond-verdict" style="color:${col}">${verdict}</div>
-            <div class="cond-bar"><span style="width:${pct}%;background:${barCol}"></span></div>
-            ${limitTxt}
-            <div class="cond-facts">${facts}</div>
+    // ── Storbolker: i dag og i morgen ──────────────────────────────────
+    bigWrap.innerHTML = days.slice(0, 2).map((it, idx) => {
+        const d = it.d;
+        const when = idx === 0 ? (no ? 'I dag' : 'Today') : (no ? 'I morgen' : 'Tomorrow');
+        const dateStr = `${dayNamesLong[it.date.getDay()]} ${it.date.getDate()}. ${monthsLong[it.date.getMonth()]}`;
+        const tmax = d.tempMax24 != null ? d.tempMax24 : d.tempMax;
+        const tmin = d.tempMin24;
+        return `<div class="wx-big">
+            <div class="wx-top">
+                <svg class="wx-ico" width="58" height="47"><use href="#${wxIcon(d.symbol, 13)}"/></svg>
+                <div class="wx-head">
+                    <div class="wx-when">${when}</div>
+                    <div class="wx-date">${dateStr}</div>
+                </div>
+                <div>
+                    <div class="wx-temp ${wxTempClass(tmax)}">${tmax != null ? Math.round(tmax) : '–'}°</div>
+                    <div class="wx-tmin">${tmin != null ? (no ? `ned mot ${Math.round(tmin)}°` : `down to ${Math.round(tmin)}°`) : ''}</div>
+                </div>
+            </div>
+            <div class="wx-comment">${wxComment(d, it.hours, no)}</div>
+            ${wxHoursHtml(it.hours, idx === 0)}
+            ${wxFactsHtml(d, no)}
         </div>`;
     }).join('');
 
-    // Stillevann-anbefaling når vannføringen er den store bremsen
-    const noteEl = document.getElementById('conditionsNote');
-    if (noteEl) {
-        if (flowStatus && flowStatus.ratio >= 1.8) {
-            const pct = Math.round(flowStatus.ratio * 100);
-            noteEl.innerHTML = no
-                ? `<strong>Høy vannføring.</strong> Elva ligger på ${pct}% av normalen for årstiden. `
-                  + `Vurder stillevann i stedet — innsjøer og tjern påvirkes langt mindre av avrenning, `
-                  + `og klekkingen der går sin gang.`
-                : `<strong>High water flow.</strong> The river is at ${pct}% of the seasonal normal. `
-                  + `Consider still water instead — lakes and ponds are far less affected by runoff.`;
-            noteEl.style.display = '';
-        } else if (flowStatus && flowStatus.ratio <= 0.55) {
-            const pct = Math.round(flowStatus.ratio * 100);
-            noteEl.innerHTML = no
-                ? `<strong>Lav vannføring.</strong> Elva ligger på ${pct}% av normalen. Vannet er ofte varmt `
-                  + `og klart, fisken sky. Fisk tidlig morgen og sen kveld, og gå ned i flustørrelse.`
-                : `<strong>Low water flow.</strong> The river is at ${pct}% of normal. Water is often warm `
-                  + `and clear, fish spooky. Fish early and late, and size down.`;
-            noteEl.style.display = '';
-        } else {
-            noteEl.style.display = 'none';
-        }
+    // ── Dagrader ───────────────────────────────────────────────────────
+    const rest = days.slice(2);
+    if (rest.length === 0) {
+        daysWrap.innerHTML = '';
+        daysWrap.style.display = 'none';
+        const h = document.getElementById('weatherDaysHeading');
+        if (h) h.style.display = 'none';
+    } else {
+        daysWrap.style.display = '';
+        const h = document.getElementById('weatherDaysHeading');
+        if (h) h.style.display = '';
+        daysWrap.innerHTML = rest.map((it, i) => {
+            const d = it.d;
+            const tmax = d.tempMax24 != null ? d.tempMax24 : d.tempMax;
+            const tmin = d.tempMin24;
+            const p = d.precip24 != null ? d.precip24 : d.precip;
+            const rainTxt = (p != null && p >= 0.2)
+                ? `<span class="wx-rain-on">${fmtNum(p, 1)} mm</span>`
+                : `<span class="wx-rain-off">${no ? 'tørt' : 'dry'}</span>`;
+            const hoursHtml = wxHoursHtml(it.hours, false);
+            const detail = hoursHtml
+                ? `<div class="wx-txt">${wxComment(d, it.hours, no)}</div>${hoursHtml}${wxFactsHtml(d, no)}`
+                : `<div class="wx-thin">${no
+                        ? 'MET har seks timers oppløsning så langt fram. Time-for-time kommer etter hvert som prognosen nærmer seg.'
+                        : 'MET provides six-hour resolution this far ahead. Hour-by-hour appears as the date approaches.'
+                   }</div>${wxFactsHtml(d, no)}`;
+            return `<button type="button" class="wx-row" data-wx="${i}" aria-expanded="false">
+                    <span class="wx-bar"></span>
+                    <span class="wx-dname">${dayNamesLong[it.date.getDay()]}<small>${it.date.getDate()}. ${monthsShort[it.date.getMonth()]}</small></span>
+                    <svg class="wx-ico" width="32" height="26"><use href="#${wxIcon(d.symbol, 13)}"/></svg>
+                    <span class="wx-dmid">
+                        <span>${wxArrow(d.windDir)} <span class="${wxWindClass(d.wind)}">${fmtNum(d.wind, 1)} m/s</span></span>
+                        <span>${d.cloud != null ? d.cloud : '–'} % ${no ? 'sky' : 'cloud'}</span>
+                        <span>${rainTxt}</span>
+                    </span>
+                    <span class="wx-dt ${wxTempClass(tmax)}">${tmax != null ? Math.round(tmax) : '–'}<small>°${tmin != null ? ` / ${Math.round(tmin)}°` : ''}</small></span>
+                    <span class="wx-chev">▶</span>
+                </button>
+                <div class="wx-detail" data-wxd="${i}">${detail}</div>`;
+        }).join('');
     }
 
-    // Fotnote — ærlighet om datagrunnlag og kalibrering
-    const footEl = document.getElementById('conditionsFoot');
+    const footEl = document.getElementById('weatherFoot');
     if (footEl) {
-        const bits = [];
-        bits.push(no
-            ? 'Scoren vurderer dagtimene 10–18 og vekter vannføring, temperatur, vind, skydekke, nedbør og trykk-trend.'
-            : 'The score assesses daytime hours 10–18, weighting water flow, temperature, wind, cloud, precipitation and pressure trend.');
-        if (!flowStatus) {
-            bits.push(no
-                ? 'Vannføring inngår ikke for denne lokasjonen — mangler måledata eller historikk.'
-                : 'Water flow is not included for this location — no gauge data or history available.');
-        }
-        bits.push(no
-            ? 'Modellen er ikke validert mot observasjoner.'
-            : 'The model has not been validated against observations.');
-        footEl.textContent = bits.join(' ');
+        footEl.textContent = no
+            ? 'Data: MET Norway (yr.no). Dagverdiene er snitt for kl. 10–18; maks- og minimumstemperatur gjelder hele døgnet.'
+            : 'Data: MET Norway (yr.no). Daily values are averages for 10:00–18:00; max and min temperatures cover the full day.';
     }
 
     markSelfHidden(section, false);
 }
+
+// Utfelling av dagradene. Delegert lytter — settes opp én gang.
+document.addEventListener('DOMContentLoaded', function () {
+    const wrap = document.getElementById('weatherDays');
+    if (!wrap) return;
+    wrap.addEventListener('click', function (e) {
+        const row = e.target.closest('.wx-row');
+        if (!row) return;
+        const det = wrap.querySelector('.wx-detail[data-wxd="' + row.dataset.wx + '"]');
+        const open = row.classList.toggle('open');
+        row.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (det) det.classList.toggle('open', open);
+    });
+});
+
 
 // ── GENERISK NORMALBÅND-GRAF ─────────────────────────────────────────────
 // Modellert etter NVE Sildre: grønt bånd = p25-p75 for årstiden, blå linje
@@ -5151,7 +5312,7 @@ const MODE_SECTIONS = {
         'seasonIndicatorsSection', 'southSignalSection',
     ],
     conditions: [
-        'conditionsSection', 'wtNormalSection', 'flowChartSection',
+        'weatherSection', 'wtNormalSection', 'flowChartSection',
         'spinnerfallSection',
     ],
 };
@@ -7272,7 +7433,7 @@ function rebuildDashboard() {
     if (!cachedData) return;
     // Nullstill diagnose-flagg før hver rebuild
     window._lastWTFallbackToLinear = false;
-    const { airData, snowData, flowData, wtData, forecastData, eveningData, eveningHistory, dayData } = cachedData;
+    const { airData, snowData, flowData, wtData, forecastData, eveningData, eveningHistory, dayData, hourlyData } = cachedData;
 
     // Apply altitude lapse-rate correction (uses getCurrentAltitude internally).
     // Luft: 0.6°C/100m (brukes gjennomgående — GDD, graf, historikk).
@@ -7324,7 +7485,7 @@ function rebuildDashboard() {
     // NVE-vannføring eller med færre enn 3 historiske år.
     const flowNormal = computeDoyNormal(flowData);
     const wtNormal   = computeDoyNormal(wtData, { allowNegative: true });
-    renderConditionsSection(dayData, flowData, flowNormal);
+    renderWeatherSection(dayData, hourlyData);
     renderWtNormalChart(wtData, wtNormal);
     renderFlowChart(flowData, flowNormal);
     renderWaterTempChart(wtData);                       // Graf: rå verdier fra stasjon
@@ -7459,6 +7620,7 @@ async function main() {
         // å tolke payloaden som ren kveldsdata, slik den var før 2026-08-18.
         const eveningData = (metWindows && metWindows.evening) ? metWindows.evening : metWindows;
         const dayData     = (metWindows && metWindows.day)     ? metWindows.day     : null;
+        const hourlyData  = (metWindows && metWindows.hourly)  ? metWindows.hourly  : null;
 
         // Waterproxy: hent proxy-luft og juster wtData med (lokal_luft - proxy_luft) × k
         if (waterProxy) {
@@ -7480,7 +7642,7 @@ async function main() {
         }
 
         // Cache for potential rebuild on altitude-change
-        cachedData = { airData, snowData, flowData, wtData, forecastData, eveningData, eveningHistory, dayData };
+        cachedData = { airData, snowData, flowData, wtData, forecastData, eveningData, eveningHistory, dayData, hourlyData };
 
         // Build picker UI (only renders if LOC.altitudeAdjustable)
         buildLakePickerUI();
