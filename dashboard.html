@@ -577,6 +577,131 @@
         }
         .settefisk-link:hover { text-decoration: underline; }
 
+        /* ── MODUS-TOGGLE (Prognose / Forhold) ── */
+        .mode-toggle {
+            display: inline-flex;
+            background: #e8eee9;
+            border-radius: 10px;
+            padding: 4px;
+            gap: 4px;
+            margin: 4px 0 22px;
+        }
+        .mode-btn {
+            border: 0;
+            background: transparent;
+            color: #4a6b57;
+            font-size: 0.88rem;
+            font-weight: 600;
+            padding: 9px 20px;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+            font-family: inherit;
+        }
+        .mode-btn:hover { color: #1B4332; }
+        .mode-btn.active {
+            background: #ffffff;
+            color: #1B4332;
+            box-shadow: 0 1px 3px rgba(27,67,50,0.12);
+        }
+        .mode-btn .mode-dot {
+            display: inline-block;
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: #C0392B;
+            margin-left: 6px;
+            vertical-align: 1px;
+        }
+        @media (max-width: 640px) {
+            .mode-toggle { display: flex; width: 100%; }
+            .mode-btn { flex: 1; padding: 10px 8px; }
+        }
+
+        /* ── FORHOLD-STRIPE ── */
+        .cond-best {
+            background: #edf7f2;
+            border-left: 4px solid #2D6A4F;
+            border-radius: 0;
+            padding: 12px 16px;
+            font-size: 0.92rem;
+            color: #1B4332;
+            margin-bottom: 14px;
+        }
+        .cond-best strong { font-weight: 700; }
+        .cond-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        @media (max-width: 900px) { .cond-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 640px) { .cond-grid { grid-template-columns: repeat(2, 1fr); } }
+        .cond-card {
+            background: #ffffff;
+            border: 1px solid #dfe8e2;
+            border-radius: 10px;
+            padding: 12px 13px;
+        }
+        .cond-card.is-best { border-color: #2D6A4F; box-shadow: 0 0 0 1px #2D6A4F inset; }
+        .cond-day {
+            font-size: 0.7rem;
+            color: #7b8b81;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            font-weight: 600;
+        }
+        .cond-score {
+            font-size: 1.7rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-top: 5px;
+        }
+        .cond-verdict { font-size: 0.74rem; font-weight: 600; margin-top: 2px; }
+        .cond-bar {
+            height: 4px;
+            border-radius: 3px;
+            background: #eef2ef;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .cond-bar span { display: block; height: 100%; border-radius: 3px; }
+        .cond-limit {
+            font-size: 0.71rem;
+            color: #8a3b13;
+            margin-top: 9px;
+            line-height: 1.45;
+            font-weight: 600;
+        }
+        .cond-limit.ok { color: #2D6A4F; }
+        .cond-facts {
+            font-size: 0.7rem;
+            color: #77857c;
+            margin-top: 7px;
+            line-height: 1.55;
+        }
+        .cond-note {
+            font-size: 0.78rem;
+            color: #5a4000;
+            background: #fff8e1;
+            border-left: 3px solid #d4a52a;
+            padding: 10px 13px;
+            margin-top: 14px;
+            line-height: 1.55;
+            border-radius: 0;
+        }
+        .cond-foot {
+            font-size: 0.72rem;
+            color: #8b968f;
+            margin-top: 12px;
+            line-height: 1.55;
+            font-style: italic;
+        }
+        .flow-note {
+            font-size: 0.75rem;
+            color: #77857c;
+            margin-top: 10px;
+            line-height: 1.55;
+        }
+
         /* ── LOCATION INFO STRIP ── */
         .loc-strip {
             background: white;
@@ -745,8 +870,19 @@
             </div>
         </div>
 
+        <!-- ═══ MODUS-TOGGLE (Prognose / Forhold) — innført 2026-08-18 ═══ -->
+        <!-- Default velges automatisk av pickDefaultMode(): Prognose før klekkestart,
+             Forhold fra klekkestart t.o.m. dag 21, Prognose etterpå. Brukerens
+             manuelle valg lagres i localStorage og overstyrer til neste modusskifte. -->
+        <div id="modeToggleWrap" style="display:none">
+            <div class="mode-toggle" role="tablist" aria-label="Visningsmodus">
+                <button type="button" class="mode-btn active" id="modeBtnForecast" data-mode="forecast" role="tab" aria-selected="true">Prognose</button>
+                <button type="button" class="mode-btn" id="modeBtnConditions" data-mode="conditions" role="tab" aria-selected="false">Forhold</button>
+            </div>
+        </div>
+
         <!-- ═══ TODAY'S STATUS ═══ -->
-        <section>
+        <section id="todayStatusSection">
             <h2 data-i18n="todayStatus">Today's Status</h2>
             <div class="kpi-grid">
                 <div class="kpi-card">
@@ -822,6 +958,30 @@
             </div>
             <div id="spinnerfallGrid" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin-top:14px;"></div>
             <div id="spinnerfallFooter" style="font-size:0.72rem; color:rgba(244,228,193,0.6); margin-top:12px; line-height:1.55;" data-i18n-html="spinnerfallFooter">Modellen vurderer kveldstimene 19–22 (lokal tid) basert på MET-prognose og vekter seks variabler ulikt: <b>vind</b>, <b>lufttemperatur</b>, <b>skydekke</b>, <b>nedbør</b>, <b>luftfuktighet</b> og <b>trykk-trend</b>. Vindstille er det viktigste enkeltkravet — raskt fallende lufttrykk (front på vei) dempes også. Modellen er ikke validert mot observasjoner.</div>
+        </section>
+
+        <!-- ═══ FORHOLD-STRIPE (Forhold-modus) — innført 2026-08-18 ═══ -->
+        <!-- Svarer på "er det verdt å dra ut i dag/i morgen", i motsetning til
+             Klekkeprognosen som svarer "når starter sesongen". Viktigste elementet
+             er ikke prosenten, men den begrensende faktoren under hvert kort. -->
+        <section id="conditionsSection" style="display:none">
+            <h2 id="conditionsHeading" data-i18n="conditionsHeading">Forhold de neste dagene</h2>
+            <div id="conditionsBest" class="cond-best" style="display:none"></div>
+            <div id="conditionsGrid" class="cond-grid"></div>
+            <div id="conditionsNote" class="cond-note" style="display:none"></div>
+            <div id="conditionsFoot" class="cond-foot"></div>
+        </section>
+
+        <!-- ═══ VANNFØRING MOT NORMALEN (Forhold-modus) ═══ -->
+        <!-- Modellert etter NVE Sildre: grønt bånd = normalspennet (p25-p75) for
+             årstiden, blå linje = i år. Vises kun når lokasjonen har nveStation
+             og vi har minst 3 historiske år å bygge normalen på. -->
+        <section id="flowChartSection" style="display:none">
+            <h2 id="flowChartHeading" data-i18n="flowChartHeading">Vannføring mot normalen</h2>
+            <div class="chart-wrap" style="height:300px">
+                <canvas id="flowChart"></canvas>
+            </div>
+            <div id="flowChartNote" class="flow-note"></div>
         </section>
 
         <!-- ═══ SETTEFISK-KORT (kun nordmarka_dyn, vises når valgt vann er ett av de 16 OFA-vannene) ═══ -->
@@ -992,6 +1152,11 @@ const T = {
     wStep1: 'Nivå 1 · Snøfri + 32 dager',
     wStep2: 'Nivå 2 · Vanntemp. ekstrapolering',
     convergenceHeading: 'Prediksjonshistorikk',
+    // Forhold-modus (innført 2026-08-18)
+    modeForecast: 'Prognose',
+    modeConditions: 'Forhold',
+    conditionsHeading: 'Forhold de neste dagene',
+    flowChartHeading: 'Vannføring mot normalen',
     southSignalHeading: 'Sør-Norge-signal',
     convToday: 'I dag',
     convPrediction: 'Historisk prediksjon',
@@ -1209,6 +1374,11 @@ const T = {
     wStep1: 'Level 1 · Snow-free + 32 days',
     wStep2: 'Level 2 · Water temp extrapolation',
     convergenceHeading: 'Prediction history',
+    // Conditions mode (added 2026-08-18)
+    modeForecast: 'Forecast',
+    modeConditions: 'Conditions',
+    conditionsHeading: 'Conditions in the coming days',
+    flowChartHeading: 'Water flow vs. normal',
     southSignalHeading: 'Southern Norway signal',
     convToday: 'Today',
     convPrediction: 'Historic prediction',
@@ -3740,14 +3910,14 @@ function renderForecastEffectBanner(adgDateWith, adgDateWithout) {
     const banner = document.getElementById('forecastEffectBanner');
     if (!section || !banner) return;
     if (!adgDateWith || !adgDateWithout) {
-        section.style.display = 'none';
+        markSelfHidden(section, true);
         return;
     }
     // Effekt = uten - med. Positiv = forecast gjør prognose tidligere (varmere fremover).
     const effectMs = adgDateWithout.getTime() - adgDateWith.getTime();
     const effectDays = Math.round(effectMs / 86400000);
     if (Math.abs(effectDays) < FORECAST_EFFECT_THRESHOLD_DAYS) {
-        section.style.display = 'none';
+        markSelfHidden(section, true);
         return;
     }
     if (effectDays > 0) {
@@ -3763,7 +3933,7 @@ function renderForecastEffectBanner(adgDateWith, adgDateWithout) {
         banner.style.color = '#1f4060';
         banner.innerHTML = t('forecastEffectLater')(Math.abs(effectDays));
     }
-    section.style.display = '';
+    markSelfHidden(section, false);
 }
 
 // ── SPINNERFALL-VAKT (innført 2026-05-10) ──────────────────────────────────
@@ -4032,7 +4202,7 @@ function renderSpinnerfallSection(eveningData, vulgataDate, historyData) {
     }
 
     if (!eveningData || !vulgataDate) {
-        section.style.display = 'none';
+        markSelfHidden(section, true);
         return;
     }
 
@@ -4046,7 +4216,7 @@ function renderSpinnerfallSection(eveningData, vulgataDate, historyData) {
         const _onset = new Date(vulgataDate);
         _onset.setHours(0, 0, 0, 0);
         if (_today < _onset) {
-            section.style.display = 'none';
+            markSelfHidden(section, true);
             return;
         }
     }
@@ -4056,7 +4226,7 @@ function renderSpinnerfallSection(eveningData, vulgataDate, historyData) {
     // Skjul hvis ingen kveld er innenfor sesongen (med mindre vi er i test-modus)
     const anyInSeason = forecast.some(f => f.hatchMult > 0);
     if ((!anyInSeason || forecast.length === 0) && !testMode) {
-        section.style.display = 'none';
+        markSelfHidden(section, true);
         return;
     }
 
@@ -4158,7 +4328,7 @@ function renderSpinnerfallSection(eveningData, vulgataDate, historyData) {
         grid.innerHTML += `<div style="grid-column: 1 / -1; margin-top:8px; font-size:0.72rem; color:rgba(244,228,193,0.55); line-height:1.5; font-style:italic;">${indFootNote}</div>`;
     }
 
-    section.style.display = '';
+    markSelfHidden(section, false);
 
     // Onboarding-popup første gang seksjonen vises (også i test-modus så
     // den kan verifiseres uten å vente på faktisk sesong)
@@ -4291,6 +4461,638 @@ document.addEventListener('DOMContentLoaded', function() {
         toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
     });
 });
+
+// ═══════════════════════════════════════════════════════════════════
+//  FORHOLD-MODUS (innført 2026-08-18)
+// ═══════════════════════════════════════════════════════════════════
+//
+// Bakgrunn (Stian, Kautokeino sommeren 2026): HatchWatch har vært et
+// PROGNOSEverktøy — den svarer "når starter klekkingen". Når svaret ble
+// "nå", hadde siden ingenting mer å si, akkurat i det øyeblikket han sto
+// i Finnmark med fire fiskedager og skulle velge hvor og når. Vannføringen
+// var for høy i elvene, det var kaldt til fredag, nordavinden løyet lørdag.
+// Ingenting av det var synlig i dashbordet.
+//
+// Forhold-modus svarer på "er det verdt å dra ut i dag, og hvilken dag er
+// best". Viktigste elementet er ikke prosentscoren, men den BEGRENSENDE
+// FAKTOREN — det er den som gjør at du velger stillevann framfor elv.
+//
+// ⚠ MODELLEN ER UKALIBRERT. Vi har ingen observasjoner som kobler
+// "forholdene var X" til "det klekket / det klekket ikke". Vektene er satt
+// ut fra fluefiske-litteratur og skjønn, på samme måte som spinnerfall-
+// modellen var ved lansering. Merkes tydelig som indikativ i UI.
+
+// Lineær rampe mellom to punkter, klampet i begge ender.
+function _ramp(x, x0, y0, x1, y1) {
+    if (x == null || !isFinite(x)) return y1;
+    if (x <= x0) return y0;
+    if (x >= x1) return y1;
+    return y0 + (y1 - y0) * ((x - x0) / (x1 - x0));
+}
+
+// Percentil fra sortert array (lineær interpolasjon mellom naboer).
+function _percentile(sorted, p) {
+    if (!sorted || !sorted.length) return null;
+    const idx = (sorted.length - 1) * p;
+    const lo = Math.floor(idx), hi = Math.ceil(idx);
+    if (lo === hi) return sorted[lo];
+    return sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
+}
+
+// ── VANNFØRINGSNORMAL ────────────────────────────────────────────────────
+// Bygger p25/p50/p75-bånd per dag-i-året fra historisk NVE-vannføring.
+// Glidende vindu ±3 dager glatter støyen — uten det blir båndet hakkete
+// fordi hvert enkelt doy bare har ~10 observasjoner (ett per år).
+//
+// Inneværende år ekskluderes bevisst: vi vil sammenligne i år MOT historikken,
+// ikke mot et snitt der i år inngår.
+//
+// Returnerer null hvis vi har færre enn 3 historiske år — da er "normalen"
+// for tynn til å vise som et normalspenn, og vi hopper over både graf og
+// vannføringsfaktoren i scoren.
+function computeFlowNormal(flowData) {
+    if (!flowData) return null;
+    const keys = Object.keys(flowData);
+    if (keys.length === 0) return null;
+
+    const thisYear = new Date().getFullYear();
+    const rawByDoy = {};          // doy → [verdier fra tidligere år]
+    const yearsSeen = new Set();
+
+    for (const dateStr of keys) {
+        const v = flowData[dateStr];
+        if (v == null || !isFinite(v) || v < 0) continue;
+        const yr = Number(dateStr.slice(0, 4));
+        if (!isFinite(yr) || yr >= thisYear) continue;
+        const d = doy(parseDate(dateStr));
+        if (!rawByDoy[d]) rawByDoy[d] = [];
+        rawByDoy[d].push(v);
+        yearsSeen.add(yr);
+    }
+
+    if (yearsSeen.size < 3) return null;
+
+    // Glidende vindu ±3 dager
+    const WIN = 3;
+    const byDoy = {};
+    for (let d = 1; d <= 366; d++) {
+        let pool = [];
+        for (let off = -WIN; off <= WIN; off++) {
+            let dd = d + off;
+            if (dd < 1) dd += 366;
+            if (dd > 366) dd -= 366;
+            if (rawByDoy[dd]) pool = pool.concat(rawByDoy[dd]);
+        }
+        if (pool.length < 5) continue;   // for tynt for dette doy-et
+        pool.sort((a, b) => a - b);
+        byDoy[d] = {
+            p25: _percentile(pool, 0.25),
+            p50: _percentile(pool, 0.50),
+            p75: _percentile(pool, 0.75),
+            n:   pool.length,
+        };
+    }
+
+    if (Object.keys(byDoy).length === 0) return null;
+    return { byDoy, nYears: yearsSeen.size, years: Array.from(yearsSeen).sort() };
+}
+
+// Status for én dato mot normalen. Returnerer null hvis vi mangler enten
+// måling eller normal for det doy-et.
+function flowStatusFor(flowData, flowNormal, dateStr) {
+    if (!flowData || !flowNormal) return null;
+    const v = flowData[dateStr];
+    if (v == null || !isFinite(v)) return null;
+    const norm = flowNormal.byDoy[doy(parseDate(dateStr))];
+    if (!norm || !norm.p50 || norm.p50 <= 0) return null;
+    return {
+        date: dateStr,
+        value: v,
+        p25: norm.p25, p50: norm.p50, p75: norm.p75,
+        ratio: v / norm.p50,
+        aboveBand: v > norm.p75,
+        belowBand: v < norm.p25,
+    };
+}
+
+// ── FORHOLD-SCORE ────────────────────────────────────────────────────────
+// Multiplikativ (AND-betingelse) som spinnerfall-modellen: én dårlig faktor
+// er nok til å ødelegge dagen. Men vektingen er ANNERLEDES enn spinnerfall
+// på to punkter:
+//
+//   Skydekke: motsatt. Spinnerfall vil ha klarvær og vindstille kvelder.
+//   Døgnflueklekking på dagtid går ofte BEDRE i lettskyet/overskyet vær —
+//   klassisk fluefiskerkunnskap, og subimago tørker langsommere i fuktig
+//   luft, som forlenger tiden de sitter på overflaten.
+//
+//   Vind: mer tolerant. 3-4 m/s ødelegger et spinnerfall, men er helt
+//   levelig for dagfiske og hindrer ikke klekkingen i seg selv.
+function _condTempScore(tempMax) {
+    if (tempMax == null) return 1;
+    if (tempMax < 6)  return 0.25;
+    if (tempMax < 10) return _ramp(tempMax, 6, 0.25, 10, 0.75);
+    if (tempMax < 14) return _ramp(tempMax, 10, 0.75, 14, 1.0);
+    if (tempMax <= 22) return 1.0;
+    if (tempMax <= 27) return _ramp(tempMax, 22, 1.0, 27, 0.8);
+    return 0.7;
+}
+function _condWindScore(wind, gustMax) {
+    if (wind == null) return 1;
+    // Kast teller, men mindre enn for spinnerfall (0.5-vekt mot 1.0)
+    const eff = (gustMax != null && gustMax > wind)
+        ? Math.max(wind, wind * 0.5 + gustMax * 0.5)
+        : wind;
+    if (eff < 2)  return 1.0;
+    if (eff < 5)  return _ramp(eff, 2, 1.0, 5, 0.85);
+    if (eff < 8)  return _ramp(eff, 5, 0.85, 8, 0.5);
+    if (eff < 12) return _ramp(eff, 8, 0.5, 12, 0.2);
+    return 0.15;
+}
+function _condCloudScore(cloud) {
+    if (cloud == null) return 1;
+    if (cloud < 20) return 0.8;                          // klarvær — litt dårligere
+    if (cloud < 60) return _ramp(cloud, 20, 0.8, 60, 1.0);
+    if (cloud <= 95) return 1.0;                         // lettskyet/overskyet — best
+    return 0.9;                                          // tungt overskyet, ofte regn
+}
+function _condPrecipScore(precip) {
+    if (precip == null) return 1;
+    if (precip <= 0.1) return 1.0;
+    if (precip <= 1)   return 0.95;
+    if (precip <= 4)   return _ramp(precip, 1, 0.95, 4, 0.6);
+    if (precip <= 10)  return _ramp(precip, 4, 0.6, 10, 0.35);
+    return 0.25;
+}
+function _condPressureScore(trend) {
+    if (trend == null) return 1;
+    if (trend >= 0)  return 1.0;
+    if (trend >= -2) return _ramp(trend, 0, 1.0, -2, 0.8);
+    return 0.7;                                          // raskt fall = front på vei
+}
+// Vannføring: både for mye OG for lite er et problem. For mye = grumsete,
+// sterk strøm, fisken står dypt. For lite = varmt, stillestående, sky fisk.
+function _condFlowScore(ratio) {
+    if (ratio == null) return 1;
+    if (ratio <= 0.5) return 0.75;
+    if (ratio < 0.8)  return _ramp(ratio, 0.5, 0.75, 0.8, 1.0);
+    if (ratio <= 1.5) return 1.0;
+    if (ratio <= 2.5) return _ramp(ratio, 1.5, 1.0, 2.5, 0.55);
+    if (ratio <= 3.5) return _ramp(ratio, 2.5, 0.55, 3.5, 0.3);
+    return 0.25;
+}
+
+// Bygger forhold-prognosen for de neste dagene.
+//   dayData    — { 'YYYY-MM-DD': {wind, windMax, gustMax, temp, tempMax, cloud, precip, pressureTrend, n} }
+//   flowStatus — siste kjente vannføringsstatus (gjelder alle dager; vi har
+//                ingen vannføringsPROGNOSE, og vannføring endrer seg tregt)
+function computeConditionsForecast(dayData, flowStatus) {
+    if (!dayData) return [];
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const out = [];
+
+    for (let i = 0; i < 9; i++) {
+        const d = new Date(today);
+        d.setDate(d.getDate() + i);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const w = dayData[key];
+        if (!w) continue;
+
+        const flowRatio = flowStatus ? flowStatus.ratio : null;
+        const parts = {
+            flow:     _condFlowScore(flowRatio),
+            temp:     _condTempScore(w.tempMax != null ? w.tempMax : w.temp),
+            wind:     _condWindScore(w.wind, w.gustMax),
+            cloud:    _condCloudScore(w.cloud),
+            precip:   _condPrecipScore(w.precip),
+            pressure: _condPressureScore(w.pressureTrend),
+        };
+
+        const score = parts.flow * parts.temp * parts.wind
+                    * parts.cloud * parts.precip * parts.pressure;
+
+        // Begrensende faktor = den laveste delscoren, men bare hvis den
+        // faktisk trekker merkbart ned. Over 0.8 er ingenting "begrensende".
+        let limitKey = null, limitVal = 1;
+        for (const k in parts) {
+            if (parts[k] < limitVal) { limitVal = parts[k]; limitKey = k; }
+        }
+        if (limitVal >= 0.8) limitKey = null;
+
+        out.push({
+            date: d, dateKey: key,
+            score, parts, weather: w,
+            limitKey, limitVal,
+            flowRatio,
+            indicative: (w.n != null && w.n < 4),
+        });
+    }
+    return out;
+}
+
+// Menneskelig tekst for den begrensende faktoren.
+function _condLimitText(f, lang) {
+    const w = f.weather;
+    const no = (lang !== 'en');
+    switch (f.limitKey) {
+        case 'flow': {
+            const pct = Math.round(f.flowRatio * 100);
+            return no ? `Vannføring ${pct}% av normalen`
+                      : `Water flow ${pct}% of normal`;
+        }
+        case 'temp': {
+            const tm = w.tempMax != null ? Math.round(w.tempMax) : Math.round(w.temp);
+            return no ? `Kaldt — maks ${tm}°C` : `Cold — max ${tm}°C`;
+        }
+        case 'wind': {
+            const wv = w.gustMax != null && w.gustMax > w.wind
+                ? `${w.wind} m/s (kast ${Math.round(w.gustMax)})`
+                : `${w.wind} m/s`;
+            return no ? `Vind ${wv}` : `Wind ${wv}`;
+        }
+        case 'cloud':
+            return no ? `Klarvær — ${w.cloud}% skydekke`
+                      : `Clear sky — ${w.cloud}% cloud`;
+        case 'precip':
+            return no ? `Nedbør ${w.precip} mm` : `Precipitation ${w.precip} mm`;
+        case 'pressure':
+            return no ? `Fallende trykk — front på vei`
+                      : `Falling pressure — front approaching`;
+        default:
+            return no ? 'Ingen tydelig begrensning' : 'No clear limitation';
+    }
+}
+
+function renderConditionsSection(dayData, flowData, flowNormal) {
+    const section = document.getElementById('conditionsSection');
+    const grid = document.getElementById('conditionsGrid');
+    if (!section || !grid) return;
+
+    if (!dayData || Object.keys(dayData).length === 0) {
+        markSelfHidden(section, true);
+        window._condForecast = [];
+        return;
+    }
+
+    // Siste kjente vannføring mot normalen. Vi har ingen vannføringsprognose,
+    // så samme status brukes for alle dagene — vannføring endrer seg tregt
+    // sammenlignet med været, så det er en akseptabel forenkling.
+    let flowStatus = null;
+    if (flowData && flowNormal) {
+        const fl = latest(flowData, 10);
+        if (fl.date) flowStatus = flowStatusFor(flowData, flowNormal, fl.date);
+    }
+
+    const forecast = computeConditionsForecast(dayData, flowStatus);
+    window._condForecast = forecast;
+    if (forecast.length === 0) {
+        markSelfHidden(section, true);
+        return;
+    }
+
+    const lang = (typeof LANG !== 'undefined' && LANG) ? LANG : 'no';
+    const no = lang !== 'en';
+    const dayNames = no
+        ? ['søn','man','tir','ons','tor','fre','lør']
+        : ['sun','mon','tue','wed','thu','fri','sat'];
+    const monthNames = no
+        ? ['jan','feb','mar','apr','mai','jun','jul','aug','sep','okt','nov','des']
+        : ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+
+    // Beste dag — kun uthevet hvis den faktisk er merkbart bedre enn i dag
+    let best = forecast[0];
+    for (const f of forecast) if (f.score > best.score) best = f;
+    const showBest = best.score >= 0.5 && (best.score - forecast[0].score) >= 0.12;
+
+    const bestEl = document.getElementById('conditionsBest');
+    if (bestEl) {
+        if (showBest) {
+            const bd = `${dayNames[best.date.getDay()]} ${best.date.getDate()}. ${monthNames[best.date.getMonth()]}`;
+            bestEl.innerHTML = no
+                ? `Beste dag i prognosen: <strong>${bd}</strong> (${Math.round(best.score * 100)}%).`
+                : `Best day in the forecast: <strong>${bd}</strong> (${Math.round(best.score * 100)}%).`;
+            bestEl.style.display = '';
+        } else {
+            bestEl.style.display = 'none';
+        }
+    }
+
+    grid.innerHTML = forecast.map(f => {
+        const pct = Math.round(f.score * 100);
+        const day = dayNames[f.date.getDay()];
+        const dateStr = `${f.date.getDate()}. ${monthNames[f.date.getMonth()]}`;
+        const w = f.weather;
+
+        let col, barCol, verdict;
+        if (f.score >= 0.6)      { col = '#2D6A4F'; barCol = '#52a378'; verdict = no ? 'Gode forhold' : 'Good'; }
+        else if (f.score >= 0.35){ col = '#8a6a1a'; barCol = '#d4a52a'; verdict = no ? 'Brukbart'     : 'Fair'; }
+        else if (f.score >= 0.15){ col = '#a35a20'; barCol = '#d4762a'; verdict = no ? 'Krevende'     : 'Poor'; }
+        else                     { col = '#a03020'; barCol = '#c1431f'; verdict = no ? 'Dårlig'       : 'Bad'; }
+
+        const limitTxt = f.limitKey
+            ? `<div class="cond-limit">${_condLimitText(f, lang)}</div>`
+            : `<div class="cond-limit ok">${no ? 'Ingen tydelig begrensning' : 'No clear limitation'}</div>`;
+
+        const tmax = w.tempMax != null ? Math.round(w.tempMax) : Math.round(w.temp);
+        const facts = `${w.wind} m/s · ${tmax}°C · ${w.cloud}%`
+            + (w.precip > 0.1 ? ` · ${w.precip} mm` : '');
+
+        const isBest = showBest && f.dateKey === best.dateKey;
+
+        return `<div class="cond-card${isBest ? ' is-best' : ''}">
+            <div class="cond-day">${day} ${dateStr}</div>
+            <div class="cond-score" style="color:${col}">${pct}%</div>
+            <div class="cond-verdict" style="color:${col}">${verdict}</div>
+            <div class="cond-bar"><span style="width:${pct}%;background:${barCol}"></span></div>
+            ${limitTxt}
+            <div class="cond-facts">${facts}</div>
+        </div>`;
+    }).join('');
+
+    // Stillevann-anbefaling når vannføringen er den store bremsen
+    const noteEl = document.getElementById('conditionsNote');
+    if (noteEl) {
+        if (flowStatus && flowStatus.ratio >= 1.8) {
+            const pct = Math.round(flowStatus.ratio * 100);
+            noteEl.innerHTML = no
+                ? `<strong>Høy vannføring.</strong> Elva ligger på ${pct}% av normalen for årstiden. `
+                  + `Vurder stillevann i stedet — innsjøer og tjern påvirkes langt mindre av avrenning, `
+                  + `og klekkingen der går sin gang.`
+                : `<strong>High water flow.</strong> The river is at ${pct}% of the seasonal normal. `
+                  + `Consider still water instead — lakes and ponds are far less affected by runoff.`;
+            noteEl.style.display = '';
+        } else if (flowStatus && flowStatus.ratio <= 0.55) {
+            const pct = Math.round(flowStatus.ratio * 100);
+            noteEl.innerHTML = no
+                ? `<strong>Lav vannføring.</strong> Elva ligger på ${pct}% av normalen. Vannet er ofte varmt `
+                  + `og klart, fisken sky. Fisk tidlig morgen og sen kveld, og gå ned i flustørrelse.`
+                : `<strong>Low water flow.</strong> The river is at ${pct}% of normal. Water is often warm `
+                  + `and clear, fish spooky. Fish early and late, and size down.`;
+            noteEl.style.display = '';
+        } else {
+            noteEl.style.display = 'none';
+        }
+    }
+
+    // Fotnote — ærlighet om datagrunnlag og kalibrering
+    const footEl = document.getElementById('conditionsFoot');
+    if (footEl) {
+        const bits = [];
+        bits.push(no
+            ? 'Scoren vurderer dagtimene 10–18 og vekter vannføring, temperatur, vind, skydekke, nedbør og trykk-trend.'
+            : 'The score assesses daytime hours 10–18, weighting water flow, temperature, wind, cloud, precipitation and pressure trend.');
+        if (!flowStatus) {
+            bits.push(no
+                ? 'Vannføring inngår ikke for denne lokasjonen — mangler måledata eller historikk.'
+                : 'Water flow is not included for this location — no gauge data or history available.');
+        }
+        bits.push(no
+            ? 'Modellen er ikke validert mot observasjoner.'
+            : 'The model has not been validated against observations.');
+        footEl.textContent = bits.join(' ');
+    }
+
+    markSelfHidden(section, false);
+}
+
+// ── VANNFØRINGSGRAF MED NORMALBÅND ───────────────────────────────────────
+// Modellert etter NVE Sildre: grønt bånd = p25-p75 for årstiden, blå linje
+// = i år. Viser siste 45 dager fram til nyeste måling.
+function renderFlowChart(flowData, flowNormal) {
+    const section = document.getElementById('flowChartSection');
+    if (!section) return;
+
+    const canvas = document.getElementById('flowChart');
+    if (!canvas || !flowData || !flowNormal) {
+        markSelfHidden(section, true);
+        return;
+    }
+
+    const fl = latest(flowData, 30);
+    if (!fl.date) { markSelfHidden(section, true); return; }
+
+    const endDate = parseDate(fl.date);
+    const DAYS = 45;
+    const dates = [];
+    for (let i = DAYS - 1; i >= 0; i--) {
+        const d = new Date(endDate);
+        d.setDate(d.getDate() - i);
+        dates.push(d);
+    }
+
+    const lang = (typeof LANG !== 'undefined' && LANG) ? LANG : 'no';
+    const no = lang !== 'en';
+
+    const labels = dates.map(d => fmt(d));
+    const keyOf = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+    const p25 = dates.map(d => { const n = flowNormal.byDoy[doy(d)]; return n ? n.p25 : null; });
+    const p75 = dates.map(d => { const n = flowNormal.byDoy[doy(d)]; return n ? n.p75 : null; });
+    const p50 = dates.map(d => { const n = flowNormal.byDoy[doy(d)]; return n ? n.p50 : null; });
+    const cur = dates.map(d => { const v = flowData[keyOf(d)]; return v != null ? v : null; });
+
+    if (cur.every(v => v == null)) { markSelfHidden(section, true); return; }
+
+    const ctx = canvas.getContext('2d');
+    if (window._flowChart) window._flowChart.destroy();
+    window._flowChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                // Nedre båndkant — usynlig linje, kun ankerpunkt for fyllet
+                { label: '_p25', data: p25, borderColor: 'transparent', borderWidth: 0,
+                  pointRadius: 0, fill: false, tension: 0.3 },
+                // Øvre båndkant — fyller ned til forrige datasett (p25)
+                { label: no ? 'Normalt nivå' : 'Normal range', data: p75,
+                  borderColor: 'transparent', borderWidth: 0, pointRadius: 0,
+                  backgroundColor: 'rgba(116,198,157,0.32)', fill: '-1', tension: 0.3 },
+                // Median
+                { label: no ? 'Median' : 'Median', data: p50,
+                  borderColor: 'rgba(45,106,79,0.45)', borderWidth: 1.5,
+                  borderDash: [5, 4], pointRadius: 0, fill: false, tension: 0.3 },
+                // I år
+                { label: no ? `I år (${YEAR})` : `This year (${YEAR})`, data: cur,
+                  borderColor: '#2f5fc4', borderWidth: 2.5, pointRadius: 0,
+                  fill: false, tension: 0.25, spanGaps: true },
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        boxWidth: 14, font: { size: 10 }, padding: 10,
+                        filter: (item) => item.text !== '_p25',
+                    }
+                },
+                tooltip: {
+                    filter: (item) => item.dataset.label !== '_p25',
+                    callbacks: {
+                        label: c => `${c.dataset.label}: ${c.parsed.y != null ? c.parsed.y.toFixed(1) : '–'} m³/s`
+                    }
+                }
+            },
+            scales: {
+                x: { ticks: { maxTicksLimit: 10, font: { size: 10 } } },
+                y: { beginAtZero: false,
+                     title: { display: true, text: 'm³/s', font: { size: 11 } },
+                     ticks: { font: { size: 10 } } }
+            }
+        }
+    });
+
+    const noteEl = document.getElementById('flowChartNote');
+    if (noteEl) {
+        const stn = LOC.waterStationName || LOC.name || LOC.place;
+        const status = flowStatusFor(flowData, flowNormal, fl.date);
+        let txt = no
+            ? `Stasjon: ${stn} (${LOC.nveStation}). Normalspennet er 25.–75. persentil fra ${flowNormal.nYears} tidligere år.`
+            : `Station: ${stn} (${LOC.nveStation}). The normal range is the 25th–75th percentile from ${flowNormal.nYears} previous years.`;
+        if (status) {
+            const pct = Math.round(status.ratio * 100);
+            const where = status.aboveBand ? (no ? 'over' : 'above')
+                        : status.belowBand ? (no ? 'under' : 'below')
+                        : (no ? 'innenfor' : 'within');
+            txt += no
+                ? ` Siste måling ${status.value.toFixed(1)} m³/s — ${pct}% av medianen, ${where} normalspennet.`
+                : ` Latest reading ${status.value.toFixed(1)} m³/s — ${pct}% of median, ${where} the normal range.`;
+        }
+        if (LOC.flowRegulated) {
+            txt += no
+                ? ' Merk: vassdraget er regulert, så "normalen" gjenspeiler driftsmønster like mye som natur.'
+                : ' Note: this watercourse is regulated, so the "normal" reflects operating patterns as much as nature.';
+        }
+        noteEl.textContent = txt;
+    }
+
+    markSelfHidden(section, false);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  MODUS-STYRING (Prognose / Forhold)
+// ═══════════════════════════════════════════════════════════════════
+// Seksjoner rutes til én av modusene. Alt som ikke står i listene under
+// er alltid synlig (header, KPI-kort, lokasjonsvelger, footer).
+//
+// KPI-kortene (todayStatusSection) er bevisst i BEGGE — "hva er vanntemp
+// og vannføring akkurat nå" er relevant uansett modus.
+const MODE_SECTIONS = {
+    forecast: [
+        'seasonExplainSection', 'forecastEffectSection',
+        'convergenceSection', 'gddModelSection', 'gddHistSection',
+        'seasonIndicatorsSection',
+    ],
+    conditions: [
+        'conditionsSection', 'flowChartSection', 'spinnerfallSection',
+        'wtSection',
+    ],
+};
+
+let _currentMode = null;
+
+// Seksjoner som styrer sin egen synlighet (spinnerfall utenfor sesongen,
+// forecast-effekt uten utslag, forhold uten data) setter dette flagget.
+// applyMode respekterer det og tvinger dem ikke fram i sin egen modus.
+function markSelfHidden(el, hidden) {
+    if (!el) return;
+    el.dataset.hwSelfHidden = hidden ? '1' : '0';
+    if (hidden) el.style.display = 'none';
+}
+
+function _modeStorageKey() { return `hw_mode_${LOC.id}`; }
+
+// Automatisk default: Prognose før klekkestart, Forhold i klekkevinduet
+// (dag 0-21, samme grense som spinnerfall-vakta), Prognose etterpå.
+function pickDefaultMode(hatchOnset) {
+    if (!hatchOnset) return 'forecast';
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const onset = new Date(hatchOnset); onset.setHours(0, 0, 0, 0);
+    const days = Math.round((today - onset) / 86400000);
+    return (days >= 0 && days <= 21) ? 'conditions' : 'forecast';
+}
+
+// Brukerens manuelle valg lagres sammen med hvilken auto-default som gjaldt
+// da han valgte. Når auto-defaulten endrer seg (sesongen starter/slutter),
+// forkastes det lagrede valget — ellers ville et klikk i april låst deg til
+// Prognose-modus gjennom hele sommeren.
+function resolveMode(hatchOnset) {
+    const auto = pickDefaultMode(hatchOnset);
+    try {
+        const raw = localStorage.getItem(_modeStorageKey());
+        if (raw) {
+            const saved = JSON.parse(raw);
+            if (saved && saved.auto === auto && saved.mode) return saved.mode;
+        }
+    } catch (e) { /* localStorage blokkert — bruk auto */ }
+    return auto;
+}
+
+function applyMode(mode) {
+    _currentMode = mode;
+    for (const m in MODE_SECTIONS) {
+        const show = (m === mode);
+        for (const id of MODE_SECTIONS[m]) {
+            const el = document.getElementById(id);
+            if (!el) continue;
+            if (show) {
+                // Seksjoner som styrer sin egen synlighet (spinnerfall utenfor
+                // sesongen, forecast-effekt uten utslag, forhold uten data) har
+                // satt _hwSelfHidden. Da lar vi dem være skjult.
+                if (el.dataset.hwSelfHidden === '1') el.style.display = 'none';
+                else el.style.display = '';
+            } else {
+                el.style.display = 'none';
+            }
+        }
+    }
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        const on = btn.dataset.mode === mode;
+        btn.classList.toggle('active', on);
+        btn.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+}
+
+function setMode(mode, hatchOnset, persist) {
+    if (persist) {
+        try {
+            localStorage.setItem(_modeStorageKey(), JSON.stringify({
+                mode, auto: pickDefaultMode(hatchOnset)
+            }));
+        } catch (e) { /* ignore */ }
+    }
+    applyMode(mode);
+}
+
+function renderModeToggle(hatchOnset) {
+    const wrap = document.getElementById('modeToggleWrap');
+    if (!wrap) return;
+
+    const lang = (typeof LANG !== 'undefined' && LANG) ? LANG : 'no';
+    const no = lang !== 'en';
+    const fBtn = document.getElementById('modeBtnForecast');
+    const cBtn = document.getElementById('modeBtnConditions');
+    if (fBtn) fBtn.textContent = t('modeForecast');
+    if (cBtn) {
+        // Rød prikk når klekkingen pågår — signaliserer "her skjer det noe nå"
+        const inSeason = pickDefaultMode(hatchOnset) === 'conditions';
+        cBtn.innerHTML = t('modeConditions')
+            + (inSeason ? '<span class="mode-dot" aria-hidden="true"></span>' : '');
+    }
+
+    if (!wrap.dataset.bound) {
+        wrap.addEventListener('click', (e) => {
+            const btn = e.target.closest('.mode-btn');
+            if (!btn) return;
+            setMode(btn.dataset.mode, window._hatchOnsetForMode, true);
+        });
+        wrap.dataset.bound = '1';
+    }
+
+    wrap.style.display = '';
+    applyMode(resolveMode(hatchOnset));
+}
 
 // ── TERMISK WT-MODELL TEST-BANNER (innført 2026-05-11) ───────────────────
 // Vises kun når URL-flag ?wtmodel=thermal er satt. Forteller brukeren at
@@ -6040,9 +6842,18 @@ async function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate,
         }
     }
 
-    // Bonus: endre header til "Klekking pågår" hvis dagens dato er >= klekkestart
-    // OG skjul prediksjonshistorikk + GDD-modell-seksjonene (de har gjort jobben sin).
-    // Seksjonene vises naturlig igjen neste sesong når predDoy > todayDoy.
+    // Endre header til "Klekking pågår" hvis dagens dato er >= klekkestart.
+    //
+    // ⚠ ENDRET 2026-08-18: her lå tidligere logikk som SKJULTE prediksjonshistorikk-
+    // og GDD-modell-seksjonene når klekkingen hadde startet, og som returnerte
+    // tidlig slik at Chart.js aldri kjørte. Den er fjernet fordi Forhold-modus
+    // nå håndterer seksjonsstyringen (se MODE_SECTIONS/applyMode). To konkurrerende
+    // mekanismer for å skjule de samme seksjonene ga uforutsigbar oppførsel når
+    // brukeren byttet modus manuelt — seksjonene kom ikke tilbake.
+    //
+    // Konsekvens: grafen tegnes nå også under klekkesesongen. Det er ønskelig —
+    // i Prognose-modus vil man fortsatt kunne se hvordan prognosen konvergerte,
+    // og klekkemarkøren (stiplet linje + skygge) er bygget nettopp for det.
     if (_hatchStart) {
         const _t = new Date(); _t.setHours(0, 0, 0, 0);
         const _o = new Date(_hatchStart); _o.setHours(0, 0, 0, 0);
@@ -6053,14 +6864,6 @@ async function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate,
                     ? '🎣 Klekking pågår'
                     : '🎣 Hatching in progress';
             }
-            // Skjul prediksjonshistorikk-seksjonen
-            const convSection = document.getElementById('convergenceSection');
-            if (convSection) convSection.style.display = 'none';
-            // Skjul GDD-modell-seksjonen (under grafen — viser akkumulert GDD osv.)
-            const gddSection = document.getElementById('gddModelSection');
-            if (gddSection) gddSection.style.display = 'none';
-            // Stopper render her — Chart.js, summary osv. trengs ikke når seksjonen er skjult
-            return;
         }
     }
 
@@ -6303,7 +7106,7 @@ function rebuildDashboard() {
     if (!cachedData) return;
     // Nullstill diagnose-flagg før hver rebuild
     window._lastWTFallbackToLinear = false;
-    const { airData, snowData, flowData, wtData, forecastData, eveningData, eveningHistory } = cachedData;
+    const { airData, snowData, flowData, wtData, forecastData, eveningData, eveningHistory, dayData } = cachedData;
 
     // Apply altitude lapse-rate correction (uses getCurrentAltitude internally).
     // Luft: 0.6°C/100m (brukes gjennomgående — GDD, graf, historikk).
@@ -6348,6 +7151,14 @@ function rebuildDashboard() {
     const _hatchOnset = (adgDate && wtDate) ? (adgDate > wtDate ? adgDate : wtDate) : adgDate;
     renderSpinnerfallSection(eveningData, _hatchOnset, eveningHistory);  // Spinnerfall-vakt (skjult utenfor vulgata-sesongen)
     renderSettefiskSection();                            // OFA settefisk-historikk (kun nordmarka_dyn)
+
+    // ── FORHOLD-MODUS (innført 2026-08-18) ──────────────────────────────
+    // Vannføringsnormalen bygges én gang per rebuild og deles av både
+    // forhold-scoren og grafen. Returnerer null for lokasjoner uten
+    // NVE-vannføring eller med færre enn 3 historiske år.
+    const flowNormal = computeFlowNormal(flowData);
+    renderConditionsSection(dayData, flowData, flowNormal);
+    renderFlowChart(flowData, flowNormal);
     renderWaterTempChart(wtData);                       // Graf: rå verdier fra stasjon
     renderSnowChart(snowData);
     renderIceChart(airDataCorrected, snowData);
@@ -6416,10 +7227,14 @@ function rebuildDashboard() {
         const month = new Date().getMonth();  // 0 = jan, 4 = mai, 8 = sept
         const inHatchSeason = month >= 4 && month <= 8;
         const indSec = document.getElementById('seasonIndicatorsSection');
-        if (indSec && inHatchSeason) {
-            indSec.style.display = 'none';
-        }
+        if (indSec) markSelfHidden(indSec, inHatchSeason);
     }
+
+    // ── MODUS-TOGGLE — MÅ KJØRE SIST ────────────────────────────────────
+    // Alle renderne over har nå satt sine hwSelfHidden-flagg. applyMode leser
+    // dem og har siste ord om hva som faktisk vises.
+    window._hatchOnsetForMode = _hatchOnset;
+    renderModeToggle(_hatchOnset);
 }
 
 async function main() {
@@ -6438,7 +7253,7 @@ async function main() {
             ? waterProxy.nveStation
             : (LOC.nveWaterTempStation || LOC.nveStation);
         const useForecast = shouldUseLongTermForecast();
-        const [airData, snowData, flowData, wtDataRaw, forecastData, eveningData, eveningHistory] = await Promise.all([
+        const [airData, snowData, flowData, wtDataRaw, forecastData, metWindows, eveningHistory] = await Promise.all([
             fetchFrost('mean(air_temperature P1D)', dataStart, dataEnd),
             (async () => {
                 // Try duration_of_snow_covered_ground first; fall back to surface_snow_thickness
@@ -6456,10 +7271,11 @@ async function main() {
             useForecast
                 ? fetch(`/api/forecast?lat=${LOC.lat}&lon=${LOC.lon}`).then(r => r.ok ? r.json() : null).catch(() => null)
                 : Promise.resolve(null),
-            // Spinnerfall: kveldsvindu-aggregering (innført 2026-05-10). Stand-alone fetch,
-            // egen endpoint, brukes kun til Spinnerfall-vakten.
+            // Spinnerfall + forhold: kveldsvindu (19-22) og dagvindu (10-18) fra
+            // samme MET-payload. window=both innført 2026-08-18 — ett kall dekker
+            // både Spinnerfall-vakta og Forhold-stripa.
             (LOC.lat != null && LOC.lon != null)
-                ? fetch(`/api/spinnerfall?lat=${LOC.lat}&lon=${LOC.lon}`).then(r => r.ok ? r.json() : null).catch(() => null)
+                ? fetch(`/api/spinnerfall?lat=${LOC.lat}&lon=${LOC.lon}&window=both`).then(r => r.ok ? r.json() : null).catch(() => null)
                 : Promise.resolve(null),
             // Spinnerfall-historikk: time-data fra Frost siste 7 dager → fyller
             // starting-backlog. Hopper hvis frostStation mangler.
@@ -6469,6 +7285,12 @@ async function main() {
         ]);
         // Fill short sensor gaps (≤7 days) with linear interpolation before rendering
         let wtData = interpolateGaps(wtDataRaw, 7);
+
+        // Splitt MET-vinduene. window=both gir { evening, day }; eldre cachede
+        // svar (eller feilrespons) kan være flat/null — da faller vi tilbake til
+        // å tolke payloaden som ren kveldsdata, slik den var før 2026-08-18.
+        const eveningData = (metWindows && metWindows.evening) ? metWindows.evening : metWindows;
+        const dayData     = (metWindows && metWindows.day)     ? metWindows.day     : null;
 
         // Waterproxy: hent proxy-luft og juster wtData med (lokal_luft - proxy_luft) × k
         if (waterProxy) {
@@ -6490,7 +7312,7 @@ async function main() {
         }
 
         // Cache for potential rebuild on altitude-change
-        cachedData = { airData, snowData, flowData, wtData, forecastData, eveningData, eveningHistory };
+        cachedData = { airData, snowData, flowData, wtData, forecastData, eveningData, eveningHistory, dayData };
 
         // Build picker UI (only renders if LOC.altitudeAdjustable)
         buildLakePickerUI();

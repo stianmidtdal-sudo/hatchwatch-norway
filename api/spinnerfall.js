@@ -25,6 +25,17 @@
 // Endret 2026-05-28: minste-grense senket fra 3 til 1 målinger. Stian foreslo
 // dette etter at Østmarka bare viste 2 dager — vi forkastet 7 brukbare dager
 // fordi MET-data har grovere oppløsning lengre ut i prognosen.
+//
+// Utvidet 2026-08-18: DAGVINDU (10-18 lokal tid) for Forhold-modus.
+// Samme MET-payload gir nå to aggregeringer:
+//   ?window=evening (default) — uendret kveldsvindu, brukt av spinnerfall-vakta
+//   ?window=day               — dagvindu 10-18, brukt av forhold-stripa
+//   ?window=both              — { evening: {...}, day: {...} } i ett kall
+// Default er bevisst uendret så eksisterende kallere ikke påvirkes.
+//
+// Dagvinduet returnerer i tillegg tempMax og windMax, fordi forhold-modellen
+// bryr seg om dagens topptemperatur (klekkingen trigges av varmeste time,
+// ikke snittet) og om verste vindkast i løpet av fiskedagen.
 
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -32,8 +43,12 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=600');
 
     const { lat, lon } = req.query;
+    const window = (req.query.window || 'evening').toLowerCase();
     if (!lat || !lon) {
         return res.status(400).json({ error: 'Missing required query params: lat, lon' });
+    }
+    if (['evening', 'day', 'both'].indexOf(window) === -1) {
+        return res.status(400).json({ error: "window must be one of: evening, day, both" });
     }
 
     const url = `https://api.met.no/weatherapi/locationforecast/2.0/complete?lat=${lat}&lon=${lon}`;
@@ -70,20 +85,32 @@ export default async function handler(req, res) {
             };
         }
 
-        // Akkumulator per dato. Vi samler både kvelds-vindu (19-22) som er
-        // hovedmaten, og ettermiddag (13-16) for trykk-trend-beregning.
+        // Akkumulator per dato. Vi samler tre tidsvinduer:
+        //   morgen  (07-10) — kun trykk, for dagvinduets trend
+        //   dag     (10-18) — full aggregering for forhold-stripa
+        //   emiddag (13-16) — trykk, brukes av begge trender
+        //   kveld   (19-22) — full aggregering for spinnerfall-vakta
         const buckets = {};
         function bucket(dateStr) {
             if (!buckets[dateStr]) {
                 buckets[dateStr] = {
-                    // Evening 19-22 — hovedaggregering
+                    // Evening 19-22 — hovedaggregering (uendret)
                     windSum: 0, tempSum: 0, cloudSum: 0, precipSum: 0,
                     humidSum: 0, humidN: 0,
                     gustSum: 0, gustN: 0,
                     pressEveSum: 0, pressEveN: 0,
                     n: 0,
-                    // Afternoon 13-16 — kun for trykk-trend
+                    // Afternoon 13-16 — trykk-trend for begge vinduer
                     pressAftSum: 0, pressAftN: 0,
+                    // Morning 07-10 — trykk-trend for dagvinduet
+                    pressMornSum: 0, pressMornN: 0,
+                    // Day 10-18 — aggregering for forhold-stripa
+                    dWindSum: 0, dWindMax: -Infinity,
+                    dTempSum: 0, dTempMax: -Infinity,
+                    dCloudSum: 0, dPrecipSum: 0,
+                    dHumidSum: 0, dHumidN: 0,
+                    dGustSum: 0, dGustMax: -Infinity, dGustN: 0,
+                    dN: 0,
                 };
             }
             return buckets[dateStr];
@@ -95,15 +122,19 @@ export default async function handler(req, res) {
             if (!inst) continue;
             const pressure = inst.air_pressure_at_sea_level;
 
+            // Morgen (07-10): bare trykk, for dagvinduets trend
+            if (hour >= 7 && hour <= 10 && pressure != null) {
+                const b = bucket(date);
+                b.pressMornSum += pressure;
+                b.pressMornN += 1;
+            }
+
             // Ettermiddag (13-16): bare trykk, for trend-sammenligning
             if (hour >= 13 && hour <= 16 && pressure != null) {
                 const b = bucket(date);
                 b.pressAftSum += pressure;
                 b.pressAftN += 1;
             }
-
-            // Kveldsvindu (19-22): full aggregering
-            if (hour < 19 || hour > 22) continue;
 
             const wind = inst.wind_speed;
             const gust = inst.wind_speed_of_gust;   // Valgfri felt fra MET
@@ -113,6 +144,27 @@ export default async function handler(req, res) {
             // Nedbør: bruk next_1_hours hvis tilgjengelig (kun dag 1-3)
             const next1 = ts.data.next_1_hours && ts.data.next_1_hours.details;
             const precip = next1 ? next1.precipitation_amount : null;
+
+            // Dagvindu (10-18): full aggregering for forhold-stripa
+            if (hour >= 10 && hour <= 18 && wind != null && temp != null && cloud != null) {
+                const b = bucket(date);
+                b.dWindSum += wind;
+                if (wind > b.dWindMax) b.dWindMax = wind;
+                b.dTempSum += temp;
+                if (temp > b.dTempMax) b.dTempMax = temp;
+                b.dCloudSum += cloud;
+                b.dPrecipSum += (precip != null ? precip : 0);
+                if (humid != null) { b.dHumidSum += humid; b.dHumidN += 1; }
+                if (gust != null) {
+                    b.dGustSum += gust;
+                    if (gust > b.dGustMax) b.dGustMax = gust;
+                    b.dGustN += 1;
+                }
+                b.dN += 1;
+            }
+
+            // Kveldsvindu (19-22): full aggregering
+            if (hour < 19 || hour > 22) continue;
 
             if (wind == null || temp == null || cloud == null) continue;
 
@@ -136,7 +188,10 @@ export default async function handler(req, res) {
             b.n += 1;
         }
 
-        const result = {};
+        const r1 = (v) => Math.round(v * 10) / 10;
+
+        // ── Kveldsvindu (uendret output-form) ──────────────────────────────
+        const evening = {};
         for (const date in buckets) {
             const b = buckets[date];
             // Krev minst 1 måling. Dag 1-2 har typisk 4 målinger (time-oppløsning),
@@ -152,20 +207,50 @@ export default async function handler(req, res) {
             const pressureTrend = (pressEveAvg != null && pressAftAvg != null)
                 ? pressEveAvg - pressAftAvg
                 : null;
-            result[date] = {
-                wind:   Math.round(b.windSum / b.n * 10) / 10,
-                gust:   gustAvg != null ? Math.round(gustAvg * 10) / 10 : null,
-                temp:   Math.round(b.tempSum / b.n * 10) / 10,
+            evening[date] = {
+                wind:   r1(b.windSum / b.n),
+                gust:   gustAvg != null ? r1(gustAvg) : null,
+                temp:   r1(b.tempSum / b.n),
                 cloud:  Math.round(b.cloudSum / b.n),
-                precip: Math.round(b.precipSum * 10) / 10,
+                precip: r1(b.precipSum),
                 humid:  humidAvg != null ? Math.round(humidAvg) : null,
-                pressure: pressEveAvg != null ? Math.round(pressEveAvg * 10) / 10 : null,
-                pressureTrend: pressureTrend != null ? Math.round(pressureTrend * 10) / 10 : null,
+                pressure: pressEveAvg != null ? r1(pressEveAvg) : null,
+                pressureTrend: pressureTrend != null ? r1(pressureTrend) : null,
                 n: b.n,
             };
         }
 
-        res.json(result);
+        // ── Dagvindu 10-18 (nytt — forhold-stripa) ─────────────────────────
+        const day = {};
+        for (const date in buckets) {
+            const b = buckets[date];
+            if (b.dN < 1) continue;
+            const humidAvg = b.dHumidN > 0 ? b.dHumidSum / b.dHumidN : null;
+            const gustAvg  = b.dGustN > 0 ? b.dGustSum / b.dGustN : null;
+            const pressMornAvg = b.pressMornN > 0 ? b.pressMornSum / b.pressMornN : null;
+            const pressAftAvg  = b.pressAftN > 0 ? b.pressAftSum / b.pressAftN : null;
+            // Dagens trykk-trend = ettermiddag - morgen. Stigende = stabilt vær.
+            const pressureTrend = (pressAftAvg != null && pressMornAvg != null)
+                ? pressAftAvg - pressMornAvg
+                : null;
+            day[date] = {
+                wind:    r1(b.dWindSum / b.dN),
+                windMax: b.dWindMax > -Infinity ? r1(b.dWindMax) : null,
+                gust:    gustAvg != null ? r1(gustAvg) : null,
+                gustMax: b.dGustMax > -Infinity ? r1(b.dGustMax) : null,
+                temp:    r1(b.dTempSum / b.dN),
+                tempMax: b.dTempMax > -Infinity ? r1(b.dTempMax) : null,
+                cloud:   Math.round(b.dCloudSum / b.dN),
+                precip:  r1(b.dPrecipSum),
+                humid:   humidAvg != null ? Math.round(humidAvg) : null,
+                pressureTrend: pressureTrend != null ? r1(pressureTrend) : null,
+                n: b.dN,
+            };
+        }
+
+        if (window === 'day')  return res.json(day);
+        if (window === 'both') return res.json({ evening, day });
+        res.json(evening);   // default — uendret for eksisterende kallere
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

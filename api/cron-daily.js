@@ -218,10 +218,14 @@ async function evaluateTrigger(trigger, locId) {
             const ll = LOC_LATLON[locId];
             if (!ll) return { fire: false };
 
-            // Sesongvindu: 20. mai - 15. juli (doy 140-196).
-            // Camponotus-sverming i Sør-Norge konsentrerer seg i denne perioden.
+            // Sesongvindu: 20. mai - 30. juni (doy 140-181).
+            // Camponotus-sverming i Sør-Norge konsentrerer seg fra siste halvdel
+            // av mai gjennom juni, med topp rundt midtsommer. Juli-sverming er
+            // unntaket, ikke regelen.
+            // Endret 2026-08-18 (Stian): var doy 196 (15. juli) — for sent, ga
+            // varsler i en periode der stokkmaur i praksis ikke svermer.
             const todayDoy = dayOfYear(new Date());
-            if (todayDoy < 140 || todayDoy > 196) return { fire: false };
+            if (todayDoy < 140 || todayDoy > 181) return { fire: false };
 
             try {
                 const url = `https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${ll.lat}&lon=${ll.lon}`;
