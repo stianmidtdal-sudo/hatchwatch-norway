@@ -7178,7 +7178,29 @@ async function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate,
         return;
     }
 
-    // Beregn daglig prediksjon fra firstDoy til today.
+    // ── GRAFEN STOPPER VED KLEKKEDATOEN (innført 2026-08-18) ──────────────
+    // Stian, om Nordmarka: «Grafen er død når den har estimert dato. Da må den
+    // stoppes. Alt annet blir bug/støy.»
+    //
+    // Grafen handler om hvordan prognosen KONVERGERTE mot klekkingen. Når
+    // datoen først er passert er det ingenting igjen å predikere, og å tegne
+    // videre til i dag gir enten en meningsløs flat strek — eller, som på
+    // Nordmarka gjennom sommeren 2026, ren sagtann.
+    //
+    // Sagtannen kom av WT-gate-buggen som ble fikset samme dag: Sinnerdammen
+    // vippet rundt 14 °C-terskelen, og hver kryssing opp eller ned flippet
+    // prediksjonen mellom «7. juni» og en ekstrapolert framtidsdato. Fiksen
+    // stopper nye feilverdier, men den lagrede historikken i Redis beholder
+    // sommerens wobble. Kappingen skjuler den — og er uansett riktig i seg selv.
+    const _hatchStartForGraph = (adgDate && l2Date)
+        ? (adgDate > l2Date ? adgDate : l2Date)
+        : adgDate;
+    const _hatchDoyForGraph = _hatchStartForGraph ? doy(_hatchStartForGraph) : null;
+    const lastDoy = (_hatchDoyForGraph != null && _hatchDoyForGraph < todayDoy)
+        ? Math.max(firstDoy, _hatchDoyForGraph)
+        : todayDoy;
+
+    // Beregn daglig prediksjon fra firstDoy til lastDoy.
     // Live-prediksjon (ekstrapolasjon framover): siste av forventet GDD-krysning
     // og forventet vanntemp-krysning. Konsistent med "Estimert klekkedato"-kortet.
     // (NB: historikk og kalibrering bruker "første dag begge oppfylt"-logikk fra
@@ -7187,7 +7209,7 @@ async function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate,
     const labels = [];
     const rawPredDoys = [];
     const isoDates = [];  // parallell med labels — brukt til oppslag i stored history
-    for (let d = firstDoy; d <= todayDoy; d++) {
+    for (let d = firstDoy; d <= lastDoy; d++) {
         const gddPred = predictHatchDoyFromDay(airData, YEAR, d, threshold, avgTemp);
         const dt = dateFromDoy(YEAR, d);
         const wtPredDate = wtData ? extrapolateWTFromDate(wtData, dt) : null;
@@ -7246,11 +7268,15 @@ async function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate,
     // Hovedlinje: bruk stored der det finnes, ellers replay. Dette er hva
     // grafen "sier" på hver dag — ekte historikk eller estimat.
     //
-    // UNNTAK for siste dag (i dag): bruk alltid live rå-prediksjon, ikke stored.
-    // Stored ble lagret første gang dashboardet ble besøkt i dag, og prediksjonen
-    // kan ha flyttet seg gjennom dagen. Header (Beste estimat) viser nyeste rå
-    // verdi, så grafens endepunkt MÅ også gjøre det — ellers oppstår 1-dags
-    // mismatch mellom "Beste estimat" og "Nåværende estimat"-summary under grafen.
+    // UNNTAK for siste dag: bruk alltid live rå-prediksjon, ikke stored.
+    // Før klekking er siste dag = i dag, og stored kan ha flyttet seg gjennom
+    // dagen. Header (Beste estimat) viser nyeste rå verdi, så grafens endepunkt
+    // MÅ også gjøre det — ellers oppstår 1-dags mismatch mellom "Beste estimat"
+    // og "Nåværende estimat"-summary under grafen.
+    //
+    // Etter klekking er siste dag = klekkedatoen, og rå-prediksjonen der er den
+    // observerte krysningen. Da matcher endepunktet headeren like godt, og vi
+    // slipper å arve et wobblete lagret punkt fra den dagen.
     const predDoys = isoDates.map((iso, i) => {
         if (i === isoDates.length - 1) return rawPredDoys[i];
         return storedPredDoys[i] != null ? storedPredDoys[i] : smoothedReplay[i];
@@ -7314,9 +7340,14 @@ async function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate,
     convSummary.innerHTML = summaryHtml;
 
     // ── Klekkemarkør: stiplet vertikal linje + bakgrunn for klekkeperioden ──
-    // Vises hvis dual-trigger-dato (max av adgDate og l2Date) faller innenfor
-    // grafens x-akse [firstDoy, todayDoy]. Klekkeperioden antas 14 dager (vulgata).
-    const _hatchStart = (adgDate && l2Date) ? (adgDate > l2Date ? adgDate : l2Date) : adgDate;
+    // Vises hvis dual-trigger-dato faller innenfor grafens x-akse
+    // [firstDoy, lastDoy]. Klekkeperioden antas 14 dager (vulgata).
+    //
+    // Etter at klekkingen har startet kappes serien ved klekkedatoen, og da
+    // lander markøren på siste indeks. Skyggen får ingen bredde og settes til
+    // null av seg selv i sjekken under — vi får en ren avslutningsstrek i
+    // høyre kant, som er nøyaktig det vi vil ha.
+    const _hatchStart = _hatchStartForGraph;
     let hatchStartIdx = null;
     let hatchEndIdx = null;
     if (_hatchStart) {
