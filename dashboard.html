@@ -1031,7 +1031,7 @@
         </section>
 
         <!-- ═══ SEASON HATCH CALENDAR ═══ -->
-        <div class="best-wrap">
+        <div class="best-wrap" id="seasonCalendarSection">
             <div class="best-header">
                 <div class="best-label" id="bestLabel">▶ Hatch Forecast</div>
                 <div class="best-note" id="bestNote">Loading…</div>
@@ -1072,15 +1072,6 @@
             <div id="forecastEffectBanner" style="padding:14px 16px;border-radius:8px;border:1px solid;font-size:0.92rem"></div>
         </section>
 
-        <!-- ═══ SPINNERFALL-VAKT (skumringstema, vises kun i/nær vulgata-sesongen) ═══ -->
-        <section id="spinnerfallSection" style="display:none; margin: 20px 0 28px; padding: 20px 22px; background: linear-gradient(135deg, #1a1f2e 0%, #2d2238 55%, #3d2820 100%); border-radius: 12px; color: #f4e4c1; box-shadow: 0 6px 20px rgba(0,0,0,0.18);">
-            <div style="display:flex; align-items:baseline; flex-wrap:wrap; gap:10px;">
-                <div id="spinnerfallTitle" style="font-size:0.78rem; font-weight:700; letter-spacing:1.5px; color:#ffd789; text-transform:uppercase;" data-i18n="spinnerfallTitle">▶ Spinnerfall-vakt</div>
-                <div id="spinnerfallSub" style="font-size:0.8rem; color:rgba(244,228,193,0.72);" data-i18n="spinnerfallSub">Sannsynlighet for vulgataspinnerfall · kveld 19–22</div>
-            </div>
-            <div id="spinnerfallGrid" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin-top:14px;"></div>
-            <div id="spinnerfallFooter" style="font-size:0.72rem; color:rgba(244,228,193,0.6); margin-top:12px; line-height:1.55;" data-i18n-html="spinnerfallFooter">Modellen vurderer kveldstimene 19–22 (lokal tid) basert på MET-prognose og vekter seks variabler ulikt: <b>vind</b>, <b>lufttemperatur</b>, <b>skydekke</b>, <b>nedbør</b>, <b>luftfuktighet</b> og <b>trykk-trend</b>. Vindstille er det viktigste enkeltkravet — raskt fallende lufttrykk (front på vei) dempes også. Modellen er ikke validert mot observasjoner.</div>
-        </section>
 
         <!-- ═══ VÆRVISNING (Forhold-modus) — innført 2026-08-18 ═══ -->
         <!-- Ren gjengivelse av MET-prognosen. Ingen score, ingen "beste dag".
@@ -1117,6 +1108,16 @@
                 <canvas id="flowChart"></canvas>
             </div>
             <div id="flowChartNote" class="flow-note"></div>
+        </section>
+
+        <!-- ═══ SPINNERFALL-VAKT (skumringstema, vises kun i/nær vulgata-sesongen) ═══ -->
+        <section id="spinnerfallSection" style="display:none; margin: 20px 0 28px; padding: 20px 22px; background: linear-gradient(135deg, #1a1f2e 0%, #2d2238 55%, #3d2820 100%); border-radius: 12px; color: #f4e4c1; box-shadow: 0 6px 20px rgba(0,0,0,0.18);">
+            <div style="display:flex; align-items:baseline; flex-wrap:wrap; gap:10px;">
+                <div id="spinnerfallTitle" style="font-size:0.78rem; font-weight:700; letter-spacing:1.5px; color:#ffd789; text-transform:uppercase;" data-i18n="spinnerfallTitle">▶ Spinnerfall-vakt</div>
+                <div id="spinnerfallSub" style="font-size:0.8rem; color:rgba(244,228,193,0.72);" data-i18n="spinnerfallSub">Sannsynlighet for vulgataspinnerfall · kveld 19–22</div>
+            </div>
+            <div id="spinnerfallGrid" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin-top:14px;"></div>
+            <div id="spinnerfallFooter" style="font-size:0.72rem; color:rgba(244,228,193,0.6); margin-top:12px; line-height:1.55;" data-i18n-html="spinnerfallFooter">Modellen vurderer kveldstimene 19–22 (lokal tid) basert på MET-prognose og vekter seks variabler ulikt: <b>vind</b>, <b>lufttemperatur</b>, <b>skydekke</b>, <b>nedbør</b>, <b>luftfuktighet</b> og <b>trykk-trend</b>. Vindstille er det viktigste enkeltkravet — raskt fallende lufttrykk (front på vei) dempes også. Modellen er ikke validert mot observasjoner.</div>
         </section>
 
         <!-- ═══ SETTEFISK-KORT (kun nordmarka_dyn, vises når valgt vann er ett av de 16 OFA-vannene) ═══ -->
@@ -2761,9 +2762,10 @@ document.getElementById('locStrip').style.display = 'none';
 // (ikke rå style.display) så modus-rutingen ikke tvinger den fram i Prognose
 // for lokasjoner som ikke har den.
 markSelfHidden(document.getElementById('iceSection'), !LOC.showIce);
-if (!LOC.calibrated) {
-    document.getElementById('priorNotice').style.display = '';
-}
+// "Indikativ prognose"-varselet gjelder klekkemodellen, ikke værdataene, og
+// rutes derfor til Prognose-modus. markSelfHidden (ikke rå style.display) så
+// modus-rutingen ikke tvinger det fram for kalibrerte lokasjoner.
+markSelfHidden(document.getElementById('priorNotice'), !!LOC.calibrated);
 
 // Test-popup for langtidsvarsel: vises som modal første gang brukeren åpner
 // en lokasjon der useLongTermForecast er aktivert. Lukkes med × eller knapp.
@@ -2809,7 +2811,7 @@ if (!LOC.nveStation) {
     document.getElementById('kpiWaterTemp').textContent = 'N/A';
     document.getElementById('kpiWtUnit').textContent = t('noNveStation');
     // wL2Date/wL2Unc/wL2Badge elements are gone (Early Warning section replaced by convergence graph).
-    document.getElementById('wtSection').style.display = 'none';
+    markSelfHidden(document.getElementById('wtSection'), true);
     document.getElementById('wtNote').textContent = '';
 } else {
     const wtStnNote = LOC.nveWaterTempStation || LOC.nveStation;
@@ -3339,9 +3341,10 @@ function computeHistoricalStats(airData, threshold, wtData) {
 
 function renderHistoricalGDDSection(stats, correctionDelta, snowData, airData) {
     if (!stats || stats.n < 2) {
-        document.getElementById('gddHistSection').style.display = 'none';
+        markSelfHidden(document.getElementById('gddHistSection'), true);
         return;
     }
+    markSelfHidden(document.getElementById('gddHistSection'), false);
     const e = fmt(dateFromDoy(YEAR, stats.earliest));
     const l = fmt(dateFromDoy(YEAR, stats.latest));
     const m = fmt(dateFromDoy(YEAR, stats.median));
@@ -5298,17 +5301,19 @@ function renderWtNormalChart(wtData, wtNormal) {
 // Seksjoner rutes til én av modusene. Alt som ikke står i listene under
 // er alltid synlig (header, lokasjonsvelger, settefiskkort, footer).
 //
-// KPI-kortene (todayStatusSection) hører kun til Prognose. De sto opprinnelig
-// i begge, men da ble Forhold-fanen innledet med nøyaktig samme kortrekke som
-// Prognose — og fanen skal føles som et annet verktøy, ikke samme side på nytt.
-// Forhold starter derfor rett på Været. (Stian 2026-08-18)
+// KPI-kortene (todayStatusSection) og Klekkeprognosen (seasonCalendarSection,
+// den som bytter til "Klekking pågår" i sesongen) hører kun til Prognose. Begge
+// sto opprinnelig i begge modi, men da ble Forhold-fanen innledet med nøyaktig
+// samme to blokker som Prognose — og fanen skal føles som et annet verktøy,
+// ikke samme side på nytt. Forhold starter derfor rett på Været.
+// (Stian 2026-08-18)
 // Ingen seksjon skal stå i BEGGE lister — da vises den samme grafen i begge
 // modi, og modusbyttet mister mening. De to vanntemp-grafene er bevisst delt:
 //   wtSection       — år-for-år-spaghetti, en analysegraf → Prognose
 //   wtNormalSection — normalbånd + i år, en beslutningsgraf → Forhold
 const MODE_SECTIONS = {
     forecast: [
-        'todayStatusSection',
+        'priorNotice', 'todayStatusSection', 'seasonCalendarSection',
         'seasonExplainSection', 'forecastEffectSection',
         'convergenceSection', 'gddModelSection', 'gddHistSection',
         'wtSection', 'snowSection', 'iceSection',
