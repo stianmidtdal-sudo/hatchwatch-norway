@@ -4880,14 +4880,20 @@ function renderConditionsSection(dayData, flowData, flowNormal) {
 
 // ── GENERISK NORMALBÅND-GRAF ─────────────────────────────────────────────
 // Modellert etter NVE Sildre: grønt bånd = p25-p75 for årstiden, blå linje
-// = i år. Viser siste 45 dager fram til nyeste måling.
+// = i år.
 //
 // Brukes av BÅDE vannføring og vanntemperatur. Samme visuelle språk gjør at
 // de to grafene kan leses side om side uten å bytte mental modell — man ser
 // umiddelbart om «i år» ligger i, over eller under det vanlige.
 //
+// TIDSVINDU: 14 dager (endret fra 45 den 2026-08-18 etter Stians innspill).
+// Dette er et LIVE-verktøy for noen som står ved vannet, ikke en analysegraf.
+// Det du trenger å vite er om vannet har steget eller falt den siste tida —
+// og den trenden ser du på to uker. Med 45 dager drukner dagens punkt i
+// høyrekanten, og eldre historikk er bare støy i beslutningsøyeblikket.
+//
 // cfg: { sectionId, canvasId, noteId, chartKey, data, normal,
-//        unit, decimals, yTitle, beginAtZero, noteBuilder }
+//        unit, decimals, yTitle, beginAtZero, noteBuilder, days }
 function renderBandChart(cfg) {
     const section = document.getElementById(cfg.sectionId);
     if (!section) return;
@@ -4902,7 +4908,7 @@ function renderBandChart(cfg) {
     if (!last.date) { markSelfHidden(section, true); return; }
 
     const endDate = parseDate(last.date);
-    const DAYS = 45;
+    const DAYS = cfg.days || 14;
     const dates = [];
     for (let i = DAYS - 1; i >= 0; i--) {
         const d = new Date(endDate);
@@ -4967,7 +4973,7 @@ function renderBandChart(cfg) {
                 }
             },
             scales: {
-                x: { ticks: { maxTicksLimit: 10, font: { size: 10 } } },
+                x: { ticks: { maxTicksLimit: 8, font: { size: 10 } } },
                 y: { beginAtZero: !!cfg.beginAtZero,
                      title: { display: true, text: cfg.yTitle || cfg.unit, font: { size: 11 } },
                      ticks: { font: { size: 10 } } }
@@ -4977,7 +4983,11 @@ function renderBandChart(cfg) {
 
     const noteEl = document.getElementById(cfg.noteId);
     if (noteEl && cfg.noteBuilder) {
-        noteEl.textContent = cfg.noteBuilder(statusVsNormal(cfg.data, cfg.normal, last.date), no);
+        noteEl.textContent = cfg.noteBuilder(
+            statusVsNormal(cfg.data, cfg.normal, last.date),
+            no,
+            _trendOverDays(cfg.data, last.date, 7)
+        );
     }
 
     markSelfHidden(section, false);
@@ -4991,8 +5001,52 @@ function _bandStatusSentence(status, no, unit, dec) {
                 : status.belowBand ? (no ? 'under' : 'below')
                 : (no ? 'innenfor' : 'within');
     return no
-        ? ` Siste måling ${status.value.toFixed(dec)} ${unit} — ${pct}% av medianen, ${where} normalspennet.`
+        ? ` Siste måling ${fmtNum(status.value, dec)} ${unit} — ${pct}% av medianen, ${where} normalspennet.`
         : ` Latest reading ${status.value.toFixed(dec)} ${unit} — ${pct}% of median, ${where} the normal range.`;
+}
+
+// ── TREND OVER TID ───────────────────────────────────────────────────────
+// Det du egentlig leser ut av en 14-dagers graf er én ting: har kurven pekt
+// opp eller ned den siste uka. Denne funksjonen henter ut det tallet så vi
+// kan skrive det som en setning i stedet for å la brukeren tolke kurven selv.
+//
+// Måleserier har hull (NVE-sensorer faller ut i dagevis), så vi godtar
+// slingring på ±3 dager rundt måldatoen og rapporterer det FAKTISKE spennet
+// vi endte opp med — ikke "siste uke" hvis det egentlig ble 4 dager.
+function _trendOverDays(data, endDateStr, days) {
+    if (!data || !endDateStr) return null;
+    const to = data[endDateStr];
+    if (to == null) return null;
+
+    const end = parseDate(endDateStr);
+    const keyOf = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+    // Prøv måldatoen først, så nærmeste nabo utover: 0, -1, +1, -2, +2, -3, +3
+    const offsets = [0];
+    for (let i = 1; i <= 3; i++) offsets.push(-i, i);
+
+    for (const off of offsets) {
+        const d = new Date(end);
+        d.setDate(d.getDate() - days + off);
+        const v = data[keyOf(d)];
+        if (v == null) continue;
+        const spanDays = Math.round((end - d) / 86400000);
+        if (spanDays < 2) continue;          // for kort spenn til å kalle en trend
+        return {
+            from: v, to,
+            delta: to - v,
+            pct: v !== 0 ? (to - v) / Math.abs(v) * 100 : null,
+            spanDays,
+        };
+    }
+    return null;
+}
+
+// Beskriver spennet i ord: "den siste uka" når det er 6-8 dager, ellers
+// det faktiske antallet dager.
+function _spanPhrase(spanDays, no) {
+    if (spanDays >= 6 && spanDays <= 8) return no ? 'den siste uka' : 'over the past week';
+    return no ? `de siste ${spanDays} dagene` : `over the past ${spanDays} days`;
 }
 
 function renderFlowChart(flowData, flowNormal) {
@@ -5002,11 +5056,25 @@ function renderFlowChart(flowData, flowNormal) {
         noteId: 'flowChartNote', chartKey: '_flowChart',
         data: flowData, normal: flowNormal,
         unit: 'm³/s', decimals: 1, yTitle: 'm³/s', beginAtZero: false,
-        noteBuilder: (status, no) => {
+        noteBuilder: (status, no, trend) => {
             let txt = no
                 ? `Stasjon: ${stn} (${LOC.nveStation}). Normalspennet er 25.–75. persentil fra ${flowNormal.nYears} tidligere år.`
                 : `Station: ${stn} (${LOC.nveStation}). The normal range is the 25th–75th percentile from ${flowNormal.nYears} previous years.`;
             txt += _bandStatusSentence(status, no, 'm³/s', 1);
+            // Trend i prosent — for vannføring er relativ endring det som betyr
+            // noe. 20% mer vann er 20% mer vann enten elva er stor eller liten.
+            if (trend && trend.pct != null) {
+                const span = _spanPhrase(trend.spanDays, no);
+                const p = Math.abs(Math.round(trend.pct));
+                if (p < 8) {
+                    txt += no ? ` Vannføringen har vært stabil ${span}.`
+                              : ` Water flow has been stable ${span}.`;
+                } else {
+                    const dir = trend.pct > 0 ? (no ? 'steget' : 'risen') : (no ? 'falt' : 'fallen');
+                    txt += no ? ` Vannføringen har ${dir} ${p} % ${span}.`
+                              : ` Water flow has ${dir} ${p}% ${span}.`;
+                }
+            }
             if (LOC.flowRegulated) {
                 txt += no
                     ? ' Merk: vassdraget er regulert, så "normalen" gjenspeiler driftsmønster like mye som natur.'
@@ -5028,17 +5096,32 @@ function renderWtNormalChart(wtData, wtNormal) {
         noteId: 'wtNormalNote', chartKey: '_wtNormalChart',
         data: wtData, normal: wtNormal,
         unit: '°C', decimals: 1, yTitle: '°C', beginAtZero: false,
-        noteBuilder: (status, no) => {
+        noteBuilder: (status, no, trend) => {
             let txt = no
                 ? `Stasjon: ${stn} (${stnId}). Normalspennet er 25.–75. persentil fra ${wtNormal.nYears} tidligere år.`
                 : `Station: ${stn} (${stnId}). The normal range is the 25th–75th percentile from ${wtNormal.nYears} previous years.`;
             txt += _bandStatusSentence(status, no, '°C', 1);
+            // Trend i grader — for temperatur er den ABSOLUTTE endringen det
+            // relevante. "10% varmere" sier ingenting; "2 grader varmere" sier
+            // alt, særlig når du nærmer deg klekketerskelen.
+            if (trend) {
+                const span = _spanPhrase(trend.spanDays, no);
+                const dAbs = Math.abs(trend.delta);
+                if (dAbs < 0.5) {
+                    txt += no ? ` Vanntemperaturen har vært stabil ${span}.`
+                              : ` Water temperature has been stable ${span}.`;
+                } else {
+                    const dir = trend.delta > 0 ? (no ? 'steget' : 'risen') : (no ? 'falt' : 'fallen');
+                    txt += no ? ` Vanntemperaturen har ${dir} ${fmtNum(dAbs, 1)} °C ${span}.`
+                              : ` Water temperature has ${dir} ${dAbs.toFixed(1)} °C ${span}.`;
+                }
+            }
             if (status && thr) {
                 const diff = status.value - thr;
                 txt += no
                     ? (diff >= 0
                         ? ` Klekketerskelen på ${thr} °C er passert.`
-                        : ` Det er ${Math.abs(diff).toFixed(1)} °C igjen til klekketerskelen på ${thr} °C.`)
+                        : ` Det er ${fmtNum(Math.abs(diff), 1)} °C igjen til klekketerskelen på ${thr} °C.`)
                     : (diff >= 0
                         ? ` The ${thr} °C hatch threshold has been passed.`
                         : ` ${Math.abs(diff).toFixed(1)} °C remaining to the ${thr} °C hatch threshold.`);
