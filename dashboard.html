@@ -7363,7 +7363,7 @@ async function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate,
         }
     }
 
-    // Endre header til "Klekking pågår" hvis dagens dato er >= klekkestart.
+    // Overskriften i klekkeboksen har tre tilstander.
     //
     // ⚠ ENDRET 2026-08-18: her lå tidligere logikk som SKJULTE prediksjonshistorikk-
     // og GDD-modell-seksjonene når klekkingen hadde startet, og som returnerte
@@ -7372,18 +7372,26 @@ async function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate,
     // mekanismer for å skjule de samme seksjonene ga uforutsigbar oppførsel når
     // brukeren byttet modus manuelt — seksjonene kom ikke tilbake.
     //
-    // Konsekvens: grafen tegnes nå også under klekkesesongen. Det er ønskelig —
-    // i Prognose-modus vil man fortsatt kunne se hvordan prognosen konvergerte,
-    // og klekkemarkøren (stiplet linje + skygge) er bygget nettopp for det.
+    // ⚠ ENDRET 2026-08-18 (Stian, Kautokeino): «Klekking pågår» ble stående fra
+    // klekkestart til nyttår — en påstand i presens som holdt seg sann i to uker
+    // og feil i ti måneder. Etiketten bytter nå ved samme 21-dagers grense som
+    // stenger sesongen og slår av spinnerfall-vakta, så alle tre skifter samtidig.
+    //
+    // Etter sesongen står det «Anslått klekkestart», ikke «Klekking startet».
+    // Vi har ikke observert klekkingen — vi har observert at varmesum og
+    // vanntemperatur krysset terskler vi selv har satt. Samme ordlyd som
+    // sesongbanneret rett over. Se feedback-notatet om epistemisk ordlyd.
     if (_hatchStart) {
         const _t = new Date(); _t.setHours(0, 0, 0, 0);
         const _o = new Date(_hatchStart); _o.setHours(0, 0, 0, 0);
         if (_t >= _o) {
+            const _daysSince = Math.round((_t - _o) / 86400000);
+            const _ongoing = _daysSince <= SEASON_CLOSE_DAYS;
             const bestLabel = document.querySelector('.best-label');
             if (bestLabel) {
                 bestLabel.textContent = LANG === 'no'
-                    ? '🎣 Klekking pågår'
-                    : '🎣 Hatching in progress';
+                    ? (_ongoing ? '🎣 Klekking pågår' : '🎣 Anslått klekkestart')
+                    : (_ongoing ? '🎣 Hatching in progress' : '🎣 Estimated hatch onset');
             }
         }
     }
