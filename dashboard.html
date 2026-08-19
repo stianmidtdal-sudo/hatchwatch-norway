@@ -49,14 +49,20 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        /* ── MØRKT SKALL (redesign 2027, innført 2026-08-19) ──
+           Prinsipp: mørkt skall, lyse datakort. Siden deler nå flate med
+           kartforsiden (kart.html) så overgangen er sømløs — men alt
+           informasjonstungt (grafer, tabeller, værkort) beholder lys
+           bakgrunn, som leses best i sollys ved elva. Ikke én Chart.js-
+           konfigurasjon er endret. Full svart ble vurdert og forkastet. */
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f0f7f4;
+            background: #0c1310;
             color: #1a3a2a;
             min-height: 100vh;
         }
         header {
-            background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%);
+            background: linear-gradient(135deg, #0d1f16 0%, #123024 100%);
             color: white;
             /* iOS PWA safe-area: legg statusbar-høyden ON TOP av standard 16px padding.
                Pluss ekstra right-padding for å lage plass til absolutt-plasserte kontroller. */
@@ -115,11 +121,17 @@
             font-weight: 700;
             letter-spacing: 1.8px;
             text-transform: uppercase;
-            color: #2D6A4F;
+            color: #8fb3a0;
             margin-bottom: 10px;
             padding-bottom: 5px;
-            border-bottom: 2px solid #52B788;
+            border-bottom: 1px solid #1f3a2b;
         }
+
+        /* Tekst som ligger DIREKTE på det mørke skallet (utenfor kortene).
+           Inline-styler med #888 må overstyres med !important. */
+        #wtNote, #snowNote, #iceSection [data-i18n="iceShortNote"] { color: #7d8a80 !important; }
+        .flow-note, .wx-foot { color: #7d8a80; }
+        .loading-wrap { color: #8fb3a0 !important; }
 
         /* ── PRIOR MODEL NOTICE ── */
         /* ── HISTORICAL GDD WINDOW ── */
@@ -577,10 +589,11 @@
         }
         .settefisk-link:hover { text-decoration: underline; }
 
-        /* ── MODUS-TOGGLE (Prognose / Forhold) ── */
+        /* ── MODUS-TOGGLE (Prognose / Forhold) — mørkt skall-variant ── */
         .mode-toggle {
             display: inline-flex;
-            background: #e8eee9;
+            background: #121b15;
+            border: 1px solid #223028;
             border-radius: 10px;
             padding: 4px;
             gap: 4px;
@@ -589,7 +602,7 @@
         .mode-btn {
             border: 0;
             background: transparent;
-            color: #4a6b57;
+            color: #6d8577;
             font-size: 0.88rem;
             font-weight: 600;
             padding: 9px 20px;
@@ -598,11 +611,10 @@
             transition: background 0.15s, color 0.15s;
             font-family: inherit;
         }
-        .mode-btn:hover { color: #1B4332; }
+        .mode-btn:hover { color: #cfe8d8; }
         .mode-btn.active {
             background: #ffffff;
-            color: #1B4332;
-            box-shadow: 0 1px 3px rgba(27,67,50,0.12);
+            color: #0d1f16;
         }
         .mode-btn .mode-dot {
             display: inline-block;
