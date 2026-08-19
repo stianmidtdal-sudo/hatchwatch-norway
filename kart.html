@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>HatchWatch — Norgeskartet</title>
+<meta name="theme-color" content="#0a1410">
+<meta name="description" content="Klekkestatus for alle HatchWatch-lokasjoner på ett kart.">
+<link rel="icon" type="image/png" sizes="32x32" href="/logos/logo-inverted-32.png">
+<link rel="apple-touch-icon" href="/logos/logo-inverted-180.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: #0a1410; color: #e8f0ea;
+    display: flex; flex-direction: column;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── KARTFLATE ── */
+  #map {
+    flex: 1; position: relative; overflow: hidden; touch-action: none;
+    background: radial-gradient(120% 90% at 60% 30%, #0e1d15 0%, #0a1410 55%, #071009 100%);
+    cursor: grab;
+  }
+  #map.dragging { cursor: grabbing; }
+  #world { position: absolute; inset: 0; transform-origin: 0 0; will-change: transform; }
+  #world svg { width: 100%; height: 100%; display: block; }
+  .land {
+    fill: #142e20; stroke: #2f6a4b; stroke-width: 0.9; vector-effect: non-scaling-stroke;
+    filter: drop-shadow(0 0 16px rgba(79,180,230,0.10));
+  }
+
+  /* Pinner (SVG) */
+  .pin { cursor: pointer; }
+  .pin circle.core { stroke: #0a1410; stroke-width: 2; }
+  .pin.st-now circle.core { fill: #4fb4e6; }
+  .pin.st-now circle.halo { fill: none; stroke: #4fb4e6; opacity: 0.5; animation: halo 2s infinite; transform-origin: center; transform-box: fill-box; }
+  @keyframes halo { 0% { stroke-width: 1; opacity: .55; r: 7; } 100% { stroke-width: 0.5; opacity: 0; r: 15; } }
+  .pin.st-soon circle.core { fill: #e8b25e; }
+  .pin.st-later circle.core { fill: #4a7a5e; }
+  .pin.st-closed circle.core { fill: #26382e; stroke: #182a20; }
+  .pin.st-pre circle.core { fill: #2c4436; }
+  .pin.st-unknown circle.core { fill: #223429; }
+  .pin text {
+    font-family: 'JetBrains Mono', monospace; font-size: 7.4px; letter-spacing: 0.4px;
+    fill: #7fa892; text-anchor: middle; pointer-events: none;
+    paint-order: stroke; stroke: #071009; stroke-width: 2.4px; stroke-linejoin: round;
+  }
+  .pin.st-now text { fill: #a8d8ef; font-weight: 600; }
+  .pin.st-closed text, .pin.st-pre text { fill: #44584c; }
+  .pin.selected circle.core { stroke: #e8f0ea; stroke-width: 2.4; }
+
+  .clusterpin { cursor: pointer; }
+  .clusterpin circle { fill: rgba(38,56,46,0.92); stroke: #4a7a5e; stroke-width: 1.4; }
+  .clusterpin text { font-family: 'JetBrains Mono'; font-size: 8.6px; font-weight: 600; fill: #9fc4ae; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+
+  /* ── OVERLEGG ── */
+  .topbar {
+    position: absolute; top: calc(env(safe-area-inset-top, 0px) + 12px);
+    left: 14px; right: 14px; z-index: 20;
+    display: flex; justify-content: space-between; align-items: center; pointer-events: none;
+  }
+  .brand { font-family: 'Space Grotesk'; font-weight: 700; font-size: 1rem; color: #eef4ef; letter-spacing: 0.4px; }
+  .brand b { color: #4fb4e6; }
+  .datechip {
+    font-family: 'JetBrains Mono'; font-size: 0.6rem; letter-spacing: 1px;
+    color: #9fc4ae; background: rgba(10,20,16,0.72); border: 1px solid #1d3a2a;
+    padding: 5px 11px; border-radius: 20px; backdrop-filter: blur(6px);
+  }
+  .zoomctl {
+    position: absolute; right: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 96px);
+    z-index: 20; display: flex; flex-direction: column; gap: 6px;
+  }
+  .zoomctl button {
+    width: 38px; height: 38px; border-radius: 10px; border: 1px solid #223828;
+    background: rgba(16,26,20,0.9); color: #cfe8d8; font-size: 1.15rem; font-weight: 600;
+    cursor: pointer; backdrop-filter: blur(6px);
+  }
+  .legend {
+    position: absolute; left: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 96px);
+    z-index: 18; display: flex; flex-direction: column; gap: 5px; pointer-events: none;
+  }
+  .lg { display: flex; align-items: center; gap: 7px; font-size: 0.6rem; font-weight: 600; color: #9fc4ae;
+    background: rgba(10,20,16,0.72); border: 1px solid #1d3a2a; padding: 4px 10px; border-radius: 16px; width: fit-content; backdrop-filter: blur(6px); }
+  .lg i { width: 7px; height: 7px; border-radius: 50%; }
+
+  /* ── BUNNARK ── */
+  #sheet {
+    position: absolute; left: 10px; right: 10px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 78px);
+    z-index: 25; background: rgba(16,26,20,0.97); border: 1px solid #223828;
+    border-radius: 18px; padding: 13px 16px 13px; backdrop-filter: blur(10px);
+    box-shadow: 0 -8px 34px rgba(0,0,0,0.5);
+    transform: translateY(calc(100% + 100px)); transition: transform 0.28s cubic-bezier(.3,.9,.3,1);
+  }
+  #sheet.open { transform: translateY(0); }
+  .grip { width: 32px; height: 4px; background: #2c443a; border-radius: 2px; margin: 0 auto 10px; }
+  .sh-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; gap: 10px; }
+  .sh-nm { font-family: 'Space Grotesk'; font-weight: 700; font-size: 1.02rem; color: #f0f6f1; display: flex; align-items: center; gap: 9px; min-width: 0; }
+  .favbtn { background: none; border: 0; cursor: pointer; padding: 2px; line-height: 0; }
+  .favbtn svg { width: 17px; height: 17px; stroke: #56705f; fill: none; stroke-width: 2; }
+  .favbtn.faved svg { stroke: #e8b25e; fill: #e8b25e; }
+  .sh-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 0.58rem; font-weight: 700; letter-spacing: 0.5px; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
+  .sh-pill.now { background: rgba(79,180,230,0.15); color: #4fb4e6; }
+  .sh-pill.now i { width: 6px; height: 6px; border-radius: 50%; background: #4fb4e6; }
+  .sh-pill.soon { background: rgba(232,178,94,0.14); color: #e8b25e; }
+  .sh-pill.later { background: rgba(159,196,174,0.1); color: #9fc4ae; }
+  .sh-pill.closed, .sh-pill.pre, .sh-pill.unknown { background: rgba(255,255,255,0.06); color: #8aa595; }
+  .sh-line { font-size: 0.74rem; color: #9fc4ae; line-height: 1.55; }
+  .sh-line b { color: #d9f2e2; font-weight: 600; }
+  .sh-cta { display: flex; gap: 8px; margin-top: 11px; }
+  .sh-btn {
+    flex: 1; text-align: center; font-size: 0.74rem; font-weight: 700; padding: 10px 0;
+    border-radius: 10px; border: 0; cursor: pointer; text-decoration: none; font-family: inherit;
+  }
+  .sh-btn.pri { background: #4fb4e6; color: #061018; }
+
+  /* ── SPOTIFY-BAR ── */
+  #bar {
+    flex-shrink: 0; z-index: 30; position: relative;
+    background: linear-gradient(180deg, rgba(7,13,9,0.0) 0%, rgba(7,13,9,0.88) 34%, #070d09 70%);
+    margin-top: -26px;
+    display: grid; grid-template-columns: repeat(4, 1fr); align-items: end;
+    padding: 30px 6px calc(env(safe-area-inset-bottom, 0px) + 10px);
+  }
+  .bi { text-align: center; background: none; border: 0; cursor: pointer; padding: 4px 0 0; font-family: inherit; }
+  .bi svg { width: 23px; height: 23px; margin: 0 auto 3px; display: block; stroke: #7d8a80; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .bi .t { font-size: 0.58rem; font-weight: 600; color: #7d8a80; }
+  .bi.on svg { stroke: #fff; }
+  .bi.on svg .fillme { fill: #fff; stroke: none; }
+  .bi.on .t { color: #fff; font-weight: 700; }
+
+  /* ── OVERLEGG-PANELER (Favoritter / Meny) ── */
+  .panel {
+    position: absolute; inset: 0; z-index: 40; background: #0c1310;
+    display: none; flex-direction: column;
+    padding: calc(env(safe-area-inset-top, 0px) + 16px) 16px 0;
+  }
+  .panel.open { display: flex; }
+  .p-title { font-family: 'Space Grotesk'; font-weight: 700; font-size: 1.3rem; color: #f0f6f1; margin: 6px 2px 14px; display: flex; justify-content: space-between; align-items: center; }
+  .p-close { background: none; border: 0; color: #6d8577; font-size: 1.4rem; cursor: pointer; padding: 4px 10px; }
+  .p-scroll { flex: 1; overflow-y: auto; padding-bottom: 100px; }
+  .mrow {
+    display: flex; align-items: center; gap: 14px; padding: 13px 10px;
+    border-radius: 12px; color: #d7e6dc; text-decoration: none; cursor: pointer;
+  }
+  .mrow:hover { background: rgba(255,255,255,0.04); }
+  .mrow svg { width: 21px; height: 21px; stroke: #8fb3a0; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+  .mrow .mt { flex: 1; font-size: 0.9rem; font-weight: 600; }
+  .mrow .ms { font-size: 0.67rem; color: #6d8577; margin-top: 1px; }
+  .mrow .chev { color: #44584c; font-size: 0.8rem; }
+  .msep { height: 1px; background: #1a2a20; margin: 10px 10px; }
+  .fav-status { font-family: 'JetBrains Mono'; font-size: 0.6rem; color: #6d8577; }
+  .fav-empty { text-align: center; color: #56705f; font-size: 0.8rem; line-height: 1.7; padding: 40px 30px; }
+  .mfoot { font-family: 'JetBrains Mono'; font-size: 0.58rem; color: #44584c; padding: 16px 10px; }
+</style>
+</head>
+<body>
+
+<div id="map">
+  <div id="world">
+    <svg viewBox="0 0 340 620" preserveAspectRatio="xMidYMid meet" id="mapsvg">
+      <path class="land" d="M242.709,223.472L241.639,223.65L238.521,224.205L240.072,226.105L240.624,226.869L240.816,228.031L240.767,230.27L240.259,232.183L239.597,233.783L238.195,235.442L240.648,236.74L239.249,238.889L238.575,239.756L237.698,239.664L236.103,239.098L232.286,237.671L230.492,237.143L228.913,237.042L228.056,237.136L224.66,235.874L224.025,236.071L222.864,236.78L222.781,238.162L223.053,241.673L223.379,244.371L222.992,245.971L222.607,247.044L221.366,249.981L218.235,248.175L216.086,246.965L214.803,248.753L211.536,251.974L209.96,258.25L209.837,258.456L208.852,260.058L207.522,260.816L206.535,261.2L205.959,263.073L207.398,265.675L208.141,267.076L208.874,269.325L208.776,270.744L208.633,271.638L207.166,273.53L204.019,278.399L201.053,283.491L199.828,284.957L200.43,289.241L199.392,290.503L197.335,291.927L196.251,292.495L195.098,292.778L191.567,293.329L192.183,297.946L192.411,299.97L192.404,301.184L192.018,302.355L191.553,304.617L190.83,312.622L190.296,313.508L189.537,315.685L187.138,320.876L185.196,324.325L182.375,329.289L184.579,330.91L186.619,332.117L187.029,333.903L187.243,336.86L187.179,338.882L186.348,340.691L185.705,341.976L185.255,342.576L182.327,341.914L178.566,341.016L177.576,340.988L175.358,341.489L173.336,342.596L172.233,343.569L171.962,343.923L170.549,346.138L168.014,350.045L166.597,351.766L166.901,354.209L164.476,358.758L165.696,363.554L165.765,363.719L166.442,365.652L165.589,366.83L165.216,367.462L165.233,369.65L165.353,372.126L165.098,373.533L164.95,375.106L166.659,382.349L166.589,384.007L166.426,385.093L165.612,389.474L164.483,395.42L165.927,397.061L168.005,399.008L169.176,399.781L170.898,402.069L172.189,404.299L171.981,405.749L171.526,407.313L170.882,408.425L170.303,409.944L170.02,411.068L169.766,411.342L167.326,411.373L166.009,411.767L165.339,412.225L165.437,414.781L166.721,419.571L167.869,422.976L168.159,425.214L167.663,427.422L167.205,428.539L167.146,430.116L166.696,433.177L165.632,434.675L164.306,436.322L162.826,437.516L161.675,437.831L160.7,437.949L159.997,438.565L159.319,440.437L158.675,442.392L156.735,444.729L156.735,445.58L157.315,448.526L157.797,451.832L157.09,454.877L156.456,458.129L155.529,460.23L154.277,460.937L153.433,460.487L152.597,457.483L152.591,456.794L152.424,455.893L149.678,454.846L149.16,454.857L148.117,454.268L147.482,454.067L146.171,453.662L145.263,451.008L144.209,448.749L144.139,447.852L144.408,443.771L144.186,441.971L144.233,439.986L143.41,441.513L143.62,444.084L142.658,445.074L141.518,445.524L141.499,447.024L141.948,447.339L141.971,448.883L141.517,451.125L138.928,456.058L138.417,456.549L138.065,457.214L136.934,456.685L135.361,457.989L133.964,458.085L133.569,456.47L131.759,454.173L130.804,454.217L131.579,455.337L132.287,456.775L131.742,457.625L131.221,458.152L130.418,458.412L127.372,459.947L128.269,461.202L127.285,462.501L126.269,462.617L125.652,463.174L125.404,464.006L122.179,466.2L116.644,471.991L113.873,473.511L111.923,475.188L110.342,474.944L108.19,476.308L102.997,477.128L99.748,476.145L97.343,476.393L96.231,475.197L96.146,474.41L96.283,474.018L96.567,473.521L96.151,473.266L95.235,473.073L94.774,473.548L94.587,474.711L94.105,474.978L92.469,474.08L92.104,473.42L92.872,472.29L94.113,471.3L93.918,471.071L93.784,470.359L93.311,470.218L91.753,470.185L90.506,469.821L86.758,466.79L86.019,465.339L83.036,462.798L81.874,460.339L81.399,457.77L81.807,455.531L82.693,452.089L83.463,451.296L86.21,452.951L88.86,455.4L89.307,455.337L90.469,453.854L92.401,452.798L91.933,452.369L89.113,453.51L88.238,452.532L86.923,450.632L87.04,449.787L87.889,449.002L88.262,447.865L88.074,446.693L88.449,445.228L89.816,443.776L91.773,442.401L93.252,441.001L94.69,440.207L94.563,439.863L93.046,440.278L91.468,441.132L89.576,442.678L87.344,443.806L85.783,444.121L84.992,444.501L83.823,444.786L82.384,446.63L81.023,447.294L78.742,447.082L78.495,445.525L79.917,440.359L80.975,437.888L81.959,436.187L83.137,436.072L84.177,434.828L84.849,434.926L85.303,435.647L87.49,436.572L88.825,434.996L90.329,434.958L93.16,433.621L93.161,433.293L91.351,433.418L90.25,433.349L88.643,433.536L87.844,433.138L87.648,431.798L88.439,430.721L91.28,428.329L92.319,427.243L92.929,426.179L92.95,425.404L93.577,423.892L96.345,421.437L98.451,420.404L98.924,421.61L97.95,424.92L97.768,426.329L99.976,421.582L100.789,420.458L101.673,419.752L103.594,419.419L104.227,418.679L102.015,418.691L96.547,419.909L94.096,421.3L93.302,422.503L91.501,424.263L90.624,425.412L90.029,427.255L89.015,428.138L87.756,428.329L85.79,430.467L84.801,432.293L82.949,433.542L81.728,434.552L81.326,434.944L80.57,435.981L80.095,435.992L79.77,435.286L79.952,433.794L80.435,431.443L81.482,429.876L82.11,428.246L81.839,426.645L82.357,425.737L83.021,425.836L84.244,426.468L85.622,426.629L88.044,425.705L87.773,424.929L86.831,424.712L84.995,424.527L83.676,423.142L82.832,420.594L82.775,417.342L83.284,416.474L88.064,413.857L89.416,412.576L88.786,412.322L86.931,413.897L84.44,414.636L83.24,412.895L82.716,411.131L82.805,407.571L83.244,405.79L83.447,403.398L84.531,402.784L85.557,403.35L86.581,403.668L89.069,403.832L94.627,403.19L97.936,404.501L99.358,404.609L101.697,403.646L103.564,403.762L104.859,404.865L105.491,406.046L105.433,407.51L105.968,408.515L106.448,408.288L106.226,407.076L106.357,405.336L112.238,403.992L113.01,403.305L110.79,402.763L110.361,400.876L111.882,398.278L111.804,397.902L110.395,399.206L109.551,401.188L109.601,402.827L109.269,403.563L108.058,403.786L105.467,403.592L103.903,402.701L102.427,402.105L101.972,401.514L102.283,400.369L102.034,400.091L101.257,401.053L100.421,403.071L99.15,403.395L95.874,402.174L90.948,401.931L88.624,402.659L87.234,402.33L85.063,400.113L84.323,398.521L84.456,395.543L84.781,394.237L86.73,394.003L87.678,394.187L88.655,393.636L87.973,393.041L86.996,391.99L86.513,390.109L85.454,389.371L84.942,387.73L85.103,385.413L85.59,383.845L86.259,383.416L87.653,384.001L91.493,384.334L94.833,386.46L97.143,387.729L102.132,387.915L105.194,386.841L104.735,386.373L101.479,386.805L98.613,386.376L93.738,384.048L91.744,383.182L89.476,383.088L88.376,382.428L87.919,380.715L88.9,377.704L90.053,377.183L90.514,378.074L91.202,378.259L92.093,377.08L92.866,376.415L93.652,374.85L95.851,373.572L96.718,373.574L98.017,373.022L98.761,373.332L99.122,374.12L99.657,374.809L101.021,374.915L105.169,374.203L105.646,373.856L106.548,372.951L103.984,373.064L101.804,373.507L100.425,373.523L100.355,372.612L100.972,371.838L101.858,371.1L102.445,369.665L103.376,369.137L104.291,369.301L106.245,369.273L107.634,369.085L109.904,369.619L113.289,370.606L115.356,372.239L116.178,372.213L117.105,371.952L117.583,371.517L115.881,370.75L115.903,369.896L116.165,369.314L119.128,368.511L122.255,368.61L121.819,367.626L114.895,368.226L113.247,367.09L111.871,366.922L110.889,367.332L108.208,367.646L107.768,367.14L108.471,365.595L110.365,363.18L110.56,362.551L111.362,361.998L115.56,360.999L117.697,359.455L118.594,359.314L119.411,359.53L120.755,359.478L123.229,360.279L124.129,362.617L125.119,363.413L128.148,366.532L128.075,365.711L125.608,361.672L124.607,360.63L124.011,358.692L124.46,356.988L125.486,355.916L128.777,355.644L129.409,355.015L129.6,353.853L129.191,353.039L127.99,352.958L127.068,352.374L126.937,351.098L127.397,350.291L129.414,348.949L130.469,348.526L132.265,348.173L135.161,349.666L135.325,350.332L134.363,351.789L134.359,352.643L135.096,352.833L137.045,350.406L139.124,350.222L140.028,349.73L141.025,349.448L142.248,351.905L142.784,352.72L143.21,353.038L143.506,355.011L143.946,355.167L144.658,354.248L145.821,353.808L147.416,353.602L149.964,354.27L151.186,353.988L151.745,354.066L151.337,352.294L150.997,351.784L151.662,350.247L152.26,349.678L154.114,348.703L155.851,348.324L157.026,347.34L158.563,346.456L158.382,345.716L157.991,344.802L157.036,344.665L156.696,344.158L157.979,343.098L159.707,341.9L159.44,341.398L158.225,340.761L157.248,341.109L155.791,342.035L154.037,343.506L154.561,343.986L155.292,345.329L154.036,346.994L147.553,351.217L144.54,352.371L143.175,352.06L142.942,350.742L142.421,349.766L141.911,347.774L140.758,347.719L140.09,348.11L139.848,347.439L140.504,345.422L141.599,343.889L143.322,342.771L144.174,341.377L145.095,339.053L147.566,337.01L151.274,331.678L154.103,330.084L155.202,328.209L156.836,327.46L158.29,326.048L159.339,325.947L161.349,324.683L162.508,323.124L161.799,323.005L160.063,323.962L159.075,324.31L159.248,322.577L159.814,320.826L161.29,319.289L168.097,314.89L168.732,315.688L169.447,317.137L171.438,316.895L173.793,314.311L175.612,311.458L174.685,311.913L173.626,313.09L171.561,314.672L170.636,314.878L170.117,314.654L169.883,313.51L169.195,313.157L168.553,313.371L167.958,312.535L167.941,310.589L168.872,307.755L169.615,305.884L170.37,304.459L173.223,300.483L173.891,298.24L175.164,297.111L176.727,297.447L177.217,297.098L176.717,295.625L175.054,294.395L174.978,293.664L180.701,291.936L183.41,292.04L184.242,291.126L185.707,290.546L186.84,289.392L186.275,288.856L183.524,289.857L181.79,290.344L181.013,290.325L180.395,290.673L178.229,290.734L177.899,286.068L178.312,283.531L179.111,283.635L179.347,281.214L180.317,279.824L181.619,279.534L182.263,278.943L183.218,277.71L184.733,278.025L186.325,277.77L185.938,277.197L184.006,276.391L183.572,275.087L184.244,274.413L185.01,273.902L185.669,273.793L187.021,271.307L187.821,270.227L188.667,270.441L189.919,269.322L191.12,269.738L192.266,269.019L193.862,268.541L199.649,268.33L199.805,267.317L198.57,267.082L194.29,266.803L192.118,266.833L191.175,267.109L190.854,266.742L190.924,266.095L191.709,265.131L192.104,264.082L193.695,261.46L195.558,259.685L196.968,260.129L198.449,261.823L199.543,262.019L200.029,262.542L200.853,264.841L201.21,264.919L201.027,262.695L202.037,260.905L201.775,260.381L200.21,261.043L199.019,260.404L198.084,259.033L197.824,257.78L198.393,256.564L198.93,255.954L198.577,255.228L196.229,257.176L194.603,257.62L193.934,257.335L194.29,255.596L194.104,254.22L196.319,250.784L197.043,250.419L198.271,250.657L199.379,251.622L200.324,251.454L201.328,250.959L201.161,250.03L198.99,249.683L198.42,248.917L198.636,248.147L200.103,247.369L201.589,245.899L203.268,245.474L204.591,244.361L204.844,244.6L205.101,245.041L205.641,249.037L206.932,252.29L207.408,252.401L206.877,249.62L207.3,248.802L207.82,248.184L207.992,247.492L207.361,247.263L206.81,246.303L205.999,243.122L206.262,242.268L207.805,240.576L209.772,240.123L211.906,241.237L212.65,241.254L213.876,240.89L215.91,239.845L217.128,239.393L217.745,239.367L217.879,238.876L217.28,238.576L217.084,238.301L216.615,238.117L214.727,238.714L209.427,238.716L208.92,238.162L208.804,237.193L209.321,235.804L209.912,234.979L211.856,233.547L213.922,233.277L216.02,230.73L216.795,228.877L217.129,225.988L218.349,223.628L221.603,222.177L221.693,221.605L221.275,220.411L221.197,218.267L221.981,215.675L222.525,214.795L222.783,214.66L223.535,215.47L224.487,217.159L225.873,218.051L227.631,218.146L228.074,217.631L226.652,216.707L225.543,215.476L225.376,214.148L225.833,213.432L226.571,213.468L227.528,213.246L228.351,212.341L228.426,211.687L228.402,210.878L228.576,209.974L229.718,207.869L233.556,206.25L233.889,206.793L233.988,210.723L233.715,213.301L233.856,215.157L234.506,213.24L235.126,208.076L235.715,205.632L236.467,204.19L237.072,203.814L237.617,203.077L238.382,202.564L238.69,203.105L239.059,204.333L238.986,208.809L239.168,210.215L238.834,212.113L237.28,216.469L237.411,216.986L237.837,216.748L238.517,216L240.518,211.843L242.609,212.138L242.608,211.813L241.856,210.704L240.937,209.65L240.58,208.301L240.361,204.622L240.828,203.075L242.566,203.074L243.608,202.769L244.164,203.406L245.194,203.262L245.638,200.531L247.041,200.14L248.488,201.776L250.107,202.779L251.534,204.33L251.824,203.807L250.715,199.94L249.844,198.612L248.224,198.017L246.389,196.423L245.884,195.702L245.905,195.089L247.256,194.376L249.245,194.809L250.743,193.171L251.268,193.518L252.472,192.601L253.38,193.512L253.824,193.173L253.961,191.728L255.9,190.629L257.292,191.266L258.098,191.978L258.641,193.5L259.536,196.568L260.784,198.117L261.553,198.871L262.349,198.966L262.574,198.077L261.754,197.168L261.423,196.232L261.437,193.817L261.704,192.84L263.396,189.042L264.965,186.931L266.024,186.61L267.281,182.238L267.718,181.433L268.181,181.155L267.894,180.216L266.782,179.733L266.536,178.5L267.66,176.767L268.885,173.987L269.669,173.696L270.266,174.297L272.054,175.192L273.225,176.351L274.041,176.87L274.482,176.67L274.69,175.606L275.074,175.087L276.118,175.151L276.827,175.684L277.33,175.677L277.801,175.963L278.06,176.782L277.353,177.855L276.279,180.555L275.27,183.567L275.018,185.09L275.188,188.966L274.392,191.606L274.593,193.339L275.204,194.059L276.422,193.197L277.632,190.645L277.636,188.177L280.42,180.926L281.605,176.955L283.098,173.576L284.142,172.755L285.09,174.593L285.135,177.27L284.579,179.072L285.382,179.701L285.631,181.718L285.647,182.83L285.725,183.971L285.924,185.006L286.507,184.604L288.554,182.051L288.737,179.698L288.973,177.912L288.954,176.426L289.627,174.88L291.414,174.509L291.378,173.936L288.831,172.518L288.41,171.694L288.906,170.433L290.402,167.841L291.466,167.864L292.19,168.248L294.696,168.075L296.885,169.208L297.374,171.635L297.174,172.761L296.902,173.445L294.901,175.838L294.682,176.798L295.513,176.95L296.944,175.68L297.563,176.416L297.511,178.63L298.085,181.744L298.294,183.61L298.66,185.274L299.083,186.136L298.957,182.424L298.983,181.503L299.67,179.936L299.417,177.164L299.611,173.749L300.236,171.648L300.735,170.991L302.768,170.597L303.824,171.096L304.948,172.454L305.667,172.949L307.64,173.177L308.493,173.844L308.719,174.29L309.182,174.301L310.102,172.814L310.862,172.413L312.621,173.891L312.703,175.337L312.896,175.749L314.451,175.264L315.888,175.434L319.134,177.555L319.756,178.776L320.041,180.382L316.863,183.073L315.712,185.132L313.261,186.424L304.144,187.449L304.622,188.63L311.423,189.767L311.971,190.427L312.161,192.052L312.452,193.361L312.806,194.194L313.452,194.872L314.314,195.078L315.822,194.492L316.696,194.733L317.063,193.927L316.71,191.711L317.039,191.124L318.072,191.53L319.038,193.757L319.353,193.927L319.348,192.165L320.252,192.055L321.15,191.693L322.433,191.647L323.643,194.479L323.926,195.539L324,196.613L323.852,197.199L323.334,197.547L321.945,197.829L319.759,197.137L318.282,196.342L317.903,196.396L317.762,196.558L318.327,197.588L318.49,198.469L318.53,199.465L318.483,200.357L318.328,201.192L317.809,202.286L316.69,203.319L313.483,205.606L313.345,206.307L313.12,210.536L312.938,211.204L312.64,211.775L311.526,212.703L310.738,211.968L309.93,210.738L309.746,209.405L310.613,206.536L311.526,204.444L311.751,203.723L312.095,201.721L309.48,197.584L306.492,196.864L302.951,195.462L301.572,194.605L299.318,192.69L297.663,190.889L296.532,191.09L295.434,191.861L293.906,194.126L292.998,195.305L292.432,195.71L292.298,195.778L290.799,195.499L289.246,195.68L288.059,196.076L287.659,196.442L286.497,199.799L285.584,201.577L285.028,202.257L284.7,203.224L284.565,204.773L284.587,210.043L284.257,212.079L284.324,213.303L285.102,216.83L285.308,218.852L284.757,220.596L284.293,221.459L283.515,221.759L282.568,222.333L281.833,223.444L281.418,224.829L281.181,227.869L280.142,229.108L278.916,229.019L277.896,228.074L275.982,227.514L274.574,227.198L272.927,226.3L271.472,225.615L270.276,225.627L269.741,226.81L269.347,227.93L267.41,229.062L266.317,229.866L264.823,230.231L264.115,229.549L261.873,229.35L259.199,229.113L258.443,229.206L258.045,227.948L257.13,226.182L254.927,223.22L254.05,222.179L252.325,219.726L250.399,217.208L250.183,217.15L249.081,217.187L247.494,217.434L246.55,218.14L245.979,219.011L245.92,219.627L246.79,222.022L246.675,222.685L246.375,223L244.844,222.458L243.086,222.665ZM83.051,402.227L81.995,402.392L81.269,402.031L81.897,399.869L82.355,399.571L82.981,399.504L83.436,400.808ZM81.718,420.426L81.346,423.162L80.342,422.804L80.006,421.684L79.987,420.983L80.31,419.43L80.317,417.746L80.728,416.988L81.157,416.931L81.594,418.476ZM315.222,193.177L313.892,194.22L313.586,193.71L313.682,192.765L313.645,190.933L314.282,190.858L315.068,191.373L315.745,192.04ZM166.734,304.375L166.076,305.072L164.874,304.809L164.802,304.198L165.177,302.961L165.928,302.472L166.853,302.639L167.138,303.179ZM128.456,347.305L127.303,347.226L126.617,346.625L128.424,345.795L131.187,345.056L131.468,344.473L131.808,344.425L132.177,345.234L132.149,346.29L131.801,346.785ZM123.847,354.559L122.835,354.449L121.676,353.954L120.976,353.101L120.937,352.444L122.45,351.757L123.884,351.425L124.456,352.424L124.333,353.919ZM260.346,179.656L260.283,180.401L260.137,181.157L259.606,181.967L258.19,185.184L257.197,185.765L256.899,186.294L256.52,186.629L255.137,186.398L254.825,187.05L254.486,187.501L253.561,187.779L252.957,187.689L251.355,186.781L250.358,185.716L249.766,184.725L251.125,184.606L251.565,184.309L252.501,184.4L252.897,183.291L254.068,183.268L256.177,182.263L257.027,182.56L258.542,179.905L259.127,179.907L259.907,179.104ZM275.273,169.58L277.411,170.103L278.081,169.981L279.374,171.433L279.854,171.178L279.959,172.19L279.051,172.852L277.538,173.416L277.331,173.659L275.98,173.735L274.993,172.551L273.666,172.411L273.59,171.972L274.223,170.834ZM262.535,185.605L262.829,186.668L263.016,187.583L262.475,188.969L261.061,190.884L261.206,191.314L260.706,191.833L259.88,192.272L259.359,192.015L259.222,190.562L259.023,190.14L258.459,190.827L257.687,190.153L257.565,189.434L257.676,188.766L258.183,187.677L259.125,186.897L259.852,187.044L261.787,184.116L262.116,184.642ZM265.575,184.751L264.245,185.89L263.27,185.213L262.795,184.463L262.508,182.663L262.544,181.553L263.143,180.852L263.646,181.229L263.803,181.533L264.652,181.776L265.755,182.758ZM186.155,243.494L186.676,243.908L188.014,243.808L188.261,243.973L188.065,244.618L187.462,245.337L186.238,245.761L185.656,246.843L185.273,247.2L184.209,247.218L183.578,247.447L182.772,248.399L182.163,247.656L181.993,248.177L181.844,249.104L181.492,249.338L180.414,249.672L180.225,247.522L180.748,246.727L181.148,245.848L181.745,245.702L182.273,245.797L183.257,243.797L184.575,243.26L185.383,243.236ZM178.091,252.394L176.752,253.603L177.305,251.355L178.073,249.114L179.055,247.85L179.542,248.351L179.289,249.436L179.255,250.528L179.018,251.047ZM197.627,227.801L198.725,230.143L199.219,231.516L198.839,234.107L197.775,235.407L196.123,235.653L194.961,235.531L194.228,234.882L194.139,234.194L193.713,233.99L192.578,234.874L191.813,234.99L190.842,234.294L190.579,233.158L191.626,231.752L192.12,230.663L193.271,230.792L193.573,231.117L194.209,231.321L194.607,230.028L194.519,229.097L194.822,228.491L196.211,228.937L196.209,226.469L196.72,226.266L196.961,226.387L197.353,226.912ZM233.442,196.638L233.89,196.887L234.273,196.694L234.604,196.911L235.356,198.068L236.106,198.493L236.214,199.093L235.609,199.752L234.738,199.986L233.81,199.857L233.493,199.11L233.111,197.881L232.25,196.689L232.054,195.608L232.688,195.357ZM241.676,198.889L241.302,199.494L240.665,199.756L240.293,199.466L239.787,199.268L239.228,199.441L238.683,198.474L238.639,197.665L239.19,196.477L240.404,195.715L241.444,195.861L241.762,196.197ZM229.665,200.449L230.468,201.65L231.089,201.483L231.225,200.986L231.636,200.713L232.545,201.335L232.516,202.473L231.418,204.016L230.699,206.096L229.635,206.658L229.098,206.451L228.163,207.69L227.461,208.992L226.744,210.579L226.736,211.39L226.627,212.005L223.621,212.79L222.56,213.253L221.363,212.83L220.754,211.807L220.901,211.233L222.057,210.97L222.035,209.999L222.296,209.418L222.656,209.074L222.851,207.848L223.297,207.499L224.182,207.732L224.709,206.81L225.02,206.67L225.468,207.373L225.581,206.352L225.351,205.434L225.401,204.823L226.394,203.14L226.807,201.938L227.444,201.126L228.081,201.206L228.206,200.062L227.931,198.944L227.968,198.212L228.412,196.357L229.029,196.233L229.453,197.826ZM172.179,298.174L171.423,298.225L171.461,297.295L171.941,296.424L172.646,295.885L173.538,295.757L174.53,295.712L174.82,296.209L174.216,296.835ZM171.458,294.865L170.6,294.991L170.781,293.946L171.535,293.005L171.833,292.37L172.001,291.566L172.633,291.025L173.483,291.827L173.469,293.082L172.981,294.278ZM158.586,321.687L158.049,322.303L156.906,321.706L154.638,321.966L153.753,321.299L154.547,320.094L156.688,318.935L157.781,319.084L158.786,320.726ZM216.202,212.136L217.253,213.428L217.675,213.005L218.518,212.846L219.183,213.261L219.751,214.085L220.398,214.094L220.834,215.166L221.113,216.611L220.695,217.725L220.068,218.242L219.951,219.503L220.303,221.269L218.872,221.943L217.155,222.302L216.465,221.48L215.183,223.069L213.894,225.545L213.273,225.85L213.187,225.084L212.211,224.59L210.951,224.588L210.965,224.021L211.192,223.61L212.249,222.969L212.418,221.749L212.139,219.573L212.313,218.514L212.317,217.745L212.968,216.873L215.255,217.195L215.49,216.376L215.292,215.857L214.111,215.011L214.265,214.398L215.066,213.801L215.883,213.688L216.082,212.789L216.095,212.383ZM202.349,236.665L202.474,236.825L203.606,234.544L204.846,233.836L204.924,233.066L205.397,232.289L205.314,231.036L205.569,230.06L206.199,229.765L206.585,229.433L207.035,229.221L207.87,230.012L208.345,230.891L208.972,232.899L208.777,234.847L207.282,236.419L206.069,237.132L204.841,238.894L204.247,240.32L203.727,240.652L203.385,240.536L203.072,240.176L202.423,240.184L201.758,241.446L199.661,242.477L198.822,242.199L198.785,240.945L198.29,241.069L197.491,242.528L196.717,243.016L196.22,243.178L195.258,242.611L192.669,245.151L190.234,245.576L189.458,245.284L189.476,243.746L191.048,241.781L192.327,240.415L196.711,239.496L199.397,235.399L200.004,230.984L200.626,229.401L200.316,228.473L199.59,228.317L199.55,226.942L199.9,225.442L201.288,223.366L202.024,222.467L203.241,219.943L203.826,219.367L204.508,219.356L205.201,219.991L205.107,221.328L204.134,223.773L202.666,225.858L202.867,227.352L203.487,228.557L203.669,230.618L203.73,232.64L202.608,235.327ZM16.881,147.602L16.178,147.483L16,146.832L17.5,145.913L21.693,144.74L23.911,142.872L26.653,143.014L26.274,144.4L25.453,146.004L22.774,146.461L20.068,146.365Z"/>
+      <g id="pinlayer"></g>
+    </svg>
+  </div>
+  <div class="topbar">
+    <span class="brand">HATCH<b>WATCH</b></span>
+    <span class="datechip" id="chip">LASTER…</span>
+  </div>
+  <div class="legend" id="legend"></div>
+  <div class="zoomctl">
+    <button id="zin" aria-label="Zoom inn">+</button>
+    <button id="zout" aria-label="Zoom ut">−</button>
+  </div>
+  <div id="sheet">
+    <div class="grip"></div>
+    <div class="sh-top">
+      <span class="sh-nm"><span id="shName">–</span>
+        <button class="favbtn" id="favToggle" aria-label="Favoritt">
+          <svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.4.8-4.7 4.3 1.2 6.3-5.5-3.2-5.5 3.2 1.2-6.3L3 9.4l6.4-.8z"/></svg>
+        </button>
+      </span>
+      <span id="shPill" class="sh-pill closed">–</span>
+    </div>
+    <div class="sh-line" id="shLine">–</div>
+    <div class="sh-cta">
+      <a class="sh-btn pri" id="shOpen" href="#">Åpne dashbord</a>
+    </div>
+  </div>
+
+  <div class="panel" id="favPanel">
+    <div class="p-title">Favoritter <button class="p-close" data-close="favPanel">×</button></div>
+    <div class="p-scroll" id="favList"></div>
+  </div>
+
+  <div class="panel" id="menuPanel">
+    <div class="p-title">Meny <button class="p-close" data-close="menuPanel">×</button></div>
+    <div class="p-scroll">
+      <a class="mrow" href="/varsler.html">
+        <svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>
+        <span><span class="mt">Varsler &amp; push</span><br><span class="ms">Klekking · spinnerfall · stokkmaur</span></span>
+        <span class="chev">›</span>
+      </a>
+      <a class="mrow" href="/artikler.html">
+        <svg viewBox="0 0 24 24"><path d="M4 19V5a2 2 0 0 1 2-2h13v18H6a2 2 0 0 1-2-2z"/><path d="M8 7h7M8 11h7"/></svg>
+        <span><span class="mt">Artikler</span><br><span class="ms">Døgnfluer, spinnerfall, stokkmaur</span></span>
+        <span class="chev">›</span>
+      </a>
+      <a class="mrow" href="/ofa-settefisk.html">
+        <svg viewBox="0 0 24 24"><path d="M12 3c3 4.5 6 7.5 6 11a6 6 0 1 1-12 0c0-3.5 3-6.5 6-11z"/></svg>
+        <span><span class="mt">OFA settefisk-historikk</span><br><span class="ms">Utsett i Nordmarka 2021–2025</span></span>
+        <span class="chev">›</span>
+      </a>
+      <div class="msep"></div>
+      <a class="mrow" href="/om.html">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>
+        <span><span class="mt">Om HatchWatch</span><br><span class="ms">Modellen, datakildene, stasjonene</span></span>
+        <span class="chev">›</span>
+      </a>
+      <a class="mrow" href="https://tally.so/r/EkBErN" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9"/><path d="M21 3l-9 9"/><path d="M15 3h6v6"/></svg>
+        <span><span class="mt">Send tilbakemelding</span></span>
+        <span class="chev">›</span>
+      </a>
+      <a class="mrow" href="/index.html">
+        <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7"/></svg>
+        <span><span class="mt">Klassisk forside</span><br><span class="ms">Listen, slik den var</span></span>
+        <span class="chev">›</span>
+      </a>
+      <div class="mfoot">HATCHWATCH.NO · BETA · DATA: MET · NVE · SENTINEL</div>
+    </div>
+  </div>
+</div>
+
+<div id="bar">
+  <button class="bi on" id="navHome">
+    <svg viewBox="0 0 24 24"><path class="fillme" d="M3 11.2 12 3l9 8.2v9.3a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 20.5z"/></svg>
+    <span class="t">Forside</span>
+  </button>
+  <button class="bi" id="navFav">
+    <svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.7-9.3-9A5.2 5.2 0 0 1 12 6.6a5.2 5.2 0 0 1 9.3 4.9c-1.8 4.3-9.3 9-9.3 9z"/></svg>
+    <span class="t">Favoritter</span>
+  </button>
+  <a class="bi" href="https://tally.so/r/VLvGQE" target="_blank" rel="noopener" style="text-decoration:none">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+    <span class="t">Observasjon</span>
+  </a>
+  <button class="bi" id="navMenu">
+    <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    <span class="t">Meny</span>
+  </button>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+//  HATCHWATCH KARTFORSIDE (beta) — innført 2026-08-19
+//  Del av redesign 2027: kart som forside, Spotify-bar, isblå aksent.
+//  Gammel forside (index.html) er urørt og lenket fra menyen.
+// ═══════════════════════════════════════════════════════════════════
+
+var LOCS = [{"id": "kautokeino", "name": "Kautokeino", "x": 262.8, "y": 221.8, "cluster": false}, {"id": "alta", "name": "Alta", "x": 261.7, "y": 199.4, "cluster": false}, {"id": "porsanger", "name": "Porsanger", "x": 275, "y": 195, "cluster": false}, {"id": "bardu", "name": "Bardu", "x": 227.7, "y": 224.5, "cluster": false}, {"id": "mo_i_rana", "name": "Mo i Rana", "x": 193, "y": 288, "cluster": false}, {"id": "borgefjell", "name": "Børgefjell", "x": 187, "y": 317.1, "cluster": false}, {"id": "roros", "name": "Røros", "x": 157.1, "y": 375.2, "cluster": false}, {"id": "trondheim", "name": "Trondheim", "x": 152.3, "y": 353.7, "cluster": false}, {"id": "rena", "name": "Rena", "x": 158.2, "y": 408.7, "cluster": false}, {"id": "nordmarka_dyn", "name": "Nordmarka", "x": 145.9, "y": 436, "cluster": true}, {"id": "finnemarka", "name": "Finnemarka", "x": 140.9, "y": 437.5, "cluster": true}, {"id": "ostmarka", "name": "Østmarka", "x": 150.9, "y": 441.9, "cluster": true}, {"id": "vestfjella", "name": "Vestfjella", "x": 156.2, "y": 451.5, "cluster": true}, {"id": "hardangervidda", "name": "Hardangervidda", "x": 121.1, "y": 429.3, "cluster": false}, {"id": "bergen", "name": "Bergen", "x": 89.4, "y": 417, "cluster": false}];
+var CLUSTER_C = { x: 148.5, y: 441.7 };
+var W = 340, H = 620;
+
+// ── Sesongregler — SPEILER dashboard.html (computeSeasonStatus) ──────
+// Åpner 1. april. Pågår = 0–21 dager etter anslått klekkestart (samme
+// grense som spinnerfall-vakta). "Snart" = under 14 dager fram.
+function seasonState(predDateStr) {
+  var today = new Date(); today.setHours(0,0,0,0);
+  var yr = today.getFullYear();
+  var open = new Date(yr, 3, 1);
+  if (today < open) return { st: 'pre' };
+  if (!predDateStr) return { st: 'unknown' };
+  var pd = new Date(predDateStr); pd.setHours(0,0,0,0);
+  var diff = Math.round((pd - today) / 86400000);
+  if (diff > 14) return { st: 'later', days: diff, date: pd };
+  if (diff > 0)  return { st: 'soon',  days: diff, date: pd };
+  var since = -diff;
+  if (since <= 21) return { st: 'now', days: since, date: pd };
+  return { st: 'closed', days: since, date: pd };
+}
+
+function fmtDate(d) {
+  return d.getDate() + '. ' + ['jan','feb','mars','april','mai','juni','juli','aug','sep','okt','nov','des'][d.getMonth()];
+}
+
+// Epistemisk ordlyd: "modellen anslo/anslår" — aldri "det klekket".
+function sheetLine(s) {
+  switch (s.st) {
+    case 'now':    return 'Anslått klekkestart <b>' + fmtDate(s.date) + '</b> — dag ' + s.days + ' av sesongen.';
+    case 'soon':   return 'Anslått klekkestart <b>' + fmtDate(s.date) + '</b> — om ' + s.days + ' dager.';
+    case 'later':  return 'Anslått klekkestart <b>' + fmtDate(s.date) + '</b> — om ~' + Math.round(s.days/7) + ' uker.';
+    case 'closed': return 'Sesongen er over for i år. Modellen anslo klekkestart <b>' + fmtDate(s.date) + '</b>.';
+    case 'pre':    return 'Prognosen åpner <b>1. april</b>. Historikk og vintersignaler er tilgjengelig i dashbordet.';
+    default:       return 'Ingen lagret prognose ennå — åpne dashbordet, så beregnes den.';
+  }
+}
+function pillFor(s) {
+  switch (s.st) {
+    case 'now':    return ['now',    '<i></i>KLEKKING · DAG ' + s.days];
+    case 'soon':   return ['soon',   'OM ' + s.days + ' D'];
+    case 'later':  return ['later',  'OM ~' + Math.round(s.days/7) + ' UKER'];
+    case 'closed': return ['closed', 'SESONG OVER'];
+    case 'pre':    return ['pre',    'ÅPNER 1. APRIL'];
+    default:       return ['unknown','INGEN PROGNOSE'];
+  }
+}
+
+// ── Favoritter (localStorage) ────────────────────────────────────────
+function getFavs() {
+  try { return JSON.parse(localStorage.getItem('hw_favs') || '[]'); } catch(e) { return []; }
+}
+function setFavs(f) { try { localStorage.setItem('hw_favs', JSON.stringify(f)); } catch(e) {} }
+
+// ── Bygg pinner i SVG ────────────────────────────────────────────────
+var pinlayer = document.getElementById('pinlayer');
+var states = {};   // id → seasonState
+var selected = null;
+var SVGNS = 'http://www.w3.org/2000/svg';
+
+function el(tag, attrs) {
+  var e = document.createElementNS(SVGNS, tag);
+  for (var k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+
+function buildPins() {
+  pinlayer.innerHTML = '';
+  var clusterOpen = scale >= 1.9;
+
+  LOCS.forEach(function(p) {
+    if (p.cluster && !clusterOpen) return;
+    var s = states[p.id] || { st: 'unknown' };
+    var g = el('g', { 'class': 'pin st-' + s.st + (selected === p.id ? ' selected' : ''), 'data-id': p.id });
+    if (s.st === 'now') g.appendChild(el('circle', { 'class': 'halo', cx: p.x, cy: p.y, r: 7 }));
+    g.appendChild(el('circle', { 'class': 'core', cx: p.x, cy: p.y, r: 5.2 }));
+    var t = el('text', { x: p.x, y: p.y + 13.5 });
+    t.textContent = p.name.toUpperCase();
+    g.appendChild(t);
+    g.addEventListener('click', function(ev) { ev.stopPropagation(); selectLoc(p.id); });
+    pinlayer.appendChild(g);
+  });
+
+  if (!clusterOpen) {
+    var anyNow = LOCS.some(function(p){ return p.cluster && states[p.id] && states[p.id].st === 'now'; });
+    var g = el('g', { 'class': 'clusterpin' });
+    g.appendChild(el('circle', { cx: CLUSTER_C.x, cy: CLUSTER_C.y, r: 10,
+      style: anyNow ? 'stroke:#4fb4e6' : '' }));
+    var t = el('text', { x: CLUSTER_C.x, y: CLUSTER_C.y });
+    t.textContent = '4';
+    g.appendChild(t);
+    g.addEventListener('click', function(ev) {
+      ev.stopPropagation();
+      zoomTo(2.4, CLUSTER_C.x, CLUSTER_C.y);
+    });
+    pinlayer.appendChild(g);
+  }
+}
+
+// ── Bunnark ──────────────────────────────────────────────────────────
+function selectLoc(id) {
+  selected = id;
+  var p = LOCS.find(function(x){ return x.id === id; });
+  var s = states[id] || { st: 'unknown' };
+  document.getElementById('shName').textContent = p.name;
+  var pill = pillFor(s);
+  var pillEl = document.getElementById('shPill');
+  pillEl.className = 'sh-pill ' + pill[0];
+  pillEl.innerHTML = pill[1];
+  document.getElementById('shLine').innerHTML = sheetLine(s);
+  document.getElementById('shOpen').href = '/dashboard.html?loc=' + encodeURIComponent(id);
+  var favB = document.getElementById('favToggle');
+  favB.className = 'favbtn' + (getFavs().indexOf(id) !== -1 ? ' faved' : '');
+  document.getElementById('sheet').classList.add('open');
+  buildPins();
+}
+document.getElementById('map').addEventListener('click', function() {
+  document.getElementById('sheet').classList.remove('open');
+  selected = null; buildPins();
+});
+document.getElementById('sheet').addEventListener('click', function(e){ e.stopPropagation(); });
+document.getElementById('favToggle').addEventListener('click', function() {
+  if (!selected) return;
+  var f = getFavs(); var i = f.indexOf(selected);
+  if (i === -1) f.push(selected); else f.splice(i, 1);
+  setFavs(f);
+  this.className = 'favbtn' + (f.indexOf(selected) !== -1 ? ' faved' : '');
+});
+
+// ── Zoom & pan (pointer events, pinch) ───────────────────────────────
+var scale = 1, tx = 0, ty = 0;
+var world = document.getElementById('world');
+var mapEl = document.getElementById('map');
+function applyT() {
+  world.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + scale + ')';
+}
+function clamp() {
+  scale = Math.min(4, Math.max(1, scale));
+  var r = mapEl.getBoundingClientRect();
+  var maxPan = 0.6 * Math.max(r.width, r.height) * (scale - 1);
+  tx = Math.min(maxPan, Math.max(-maxPan, tx));
+  ty = Math.min(maxPan, Math.max(-maxPan, ty));
+}
+function zoomAt(factor, px, py) {
+  var old = scale;
+  scale = Math.min(4, Math.max(1, scale * factor));
+  var f = scale / old;
+  tx = px - f * (px - tx);
+  ty = py - f * (py - ty);
+  clamp(); applyT(); buildPins();
+}
+function zoomTo(target, wx, wy) {
+  // wx/wy i SVG-koordinater → sentrer dem
+  var r = mapEl.getBoundingClientRect();
+  var svgR = document.getElementById('mapsvg').getBoundingClientRect();
+  var sx = svgR.width / W, sy = svgR.height / H, s = Math.min(sx, sy);
+  var ox = (svgR.left - r.left) + (svgR.width - W * s) / 2;
+  var oy = (svgR.top - r.top) + (svgR.height - H * s) / 2;
+  var px = ox + wx * s, py = oy + wy * s;   // skjermpos ved scale=1, t=0
+  scale = target;
+  tx = r.width / 2 - px * scale;
+  ty = r.height / 2 - py * scale;
+  clamp(); applyT(); buildPins();
+}
+document.getElementById('zin').addEventListener('click', function(e){ e.stopPropagation(); var r = mapEl.getBoundingClientRect(); zoomAt(1.5, r.width/2, r.height/2); });
+document.getElementById('zout').addEventListener('click', function(e){ e.stopPropagation(); var r = mapEl.getBoundingClientRect(); zoomAt(1/1.5, r.width/2, r.height/2); });
+mapEl.addEventListener('wheel', function(e) {
+  e.preventDefault();
+  var r = mapEl.getBoundingClientRect();
+  zoomAt(e.deltaY < 0 ? 1.15 : 1/1.15, e.clientX - r.left, e.clientY - r.top);
+}, { passive: false });
+
+var pointers = {};
+var lastPinch = null, dragStart = null, moved = false;
+mapEl.addEventListener('pointerdown', function(e) {
+  pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
+  if (Object.keys(pointers).length === 1) { dragStart = { x: e.clientX - tx, y: e.clientY - ty }; moved = false; }
+  mapEl.setPointerCapture(e.pointerId);
+});
+mapEl.addEventListener('pointermove', function(e) {
+  if (!pointers[e.pointerId]) return;
+  pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
+  var ids = Object.keys(pointers);
+  if (ids.length === 2) {
+    var a = pointers[ids[0]], b = pointers[ids[1]];
+    var d = Math.hypot(a.x - b.x, a.y - b.y);
+    var cx = (a.x + b.x) / 2, cy = (a.y + b.y) / 2;
+    var r = mapEl.getBoundingClientRect();
+    if (lastPinch) zoomAt(d / lastPinch, cx - r.left, cy - r.top);
+    lastPinch = d;
+  } else if (ids.length === 1 && dragStart) {
+    var nx = e.clientX - dragStart.x, ny = e.clientY - dragStart.y;
+    if (Math.abs(nx - tx) + Math.abs(ny - ty) > 3) moved = true;
+    tx = nx; ty = ny; clamp(); applyT();
+    mapEl.classList.add('dragging');
+  }
+});
+function endPointer(e) {
+  delete pointers[e.pointerId];
+  if (Object.keys(pointers).length < 2) lastPinch = null;
+  if (Object.keys(pointers).length === 0) { dragStart = null; mapEl.classList.remove('dragging'); }
+}
+mapEl.addEventListener('pointerup', endPointer);
+mapEl.addEventListener('pointercancel', endPointer);
+
+// ── Paneler ──────────────────────────────────────────────────────────
+document.getElementById('navMenu').addEventListener('click', function(){ document.getElementById('menuPanel').classList.add('open'); });
+document.getElementById('navFav').addEventListener('click', function(){ renderFavs(); document.getElementById('favPanel').classList.add('open'); });
+document.getElementById('navHome').addEventListener('click', function(){
+  document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('open'); });
+});
+document.querySelectorAll('.p-close').forEach(function(b) {
+  b.addEventListener('click', function(){ document.getElementById(b.dataset.close).classList.remove('open'); });
+});
+
+function renderFavs() {
+  var favs = getFavs();
+  var wrap = document.getElementById('favList');
+  if (!favs.length) {
+    wrap.innerHTML = '<div class="fav-empty">Ingen favoritter ennå.<br>Trykk på en pinne på kartet og deretter stjerna — så samler vannene dine seg her.</div>';
+    return;
+  }
+  wrap.innerHTML = favs.map(function(id) {
+    var p = LOCS.find(function(x){ return x.id === id; });
+    if (!p) return '';
+    var s = states[id] || { st: 'unknown' };
+    var pill = pillFor(s);
+    return '<a class="mrow" href="/dashboard.html?loc=' + id + '">' +
+      '<span><span class="mt">' + p.name + '</span><br><span class="ms fav-status">' + pill[1].replace('<i></i>','') + '</span></span>' +
+      '<span class="chev">›</span></a>';
+  }).join('');
+}
+
+// ── Status fra Redis ─────────────────────────────────────────────────
+// NB: prediksjoner lagres når noen besøker lokasjonens dashbord — sjelden
+// besøkte lokasjoner kan mangle. Da vises "Ingen prognose" (ærlig fallback).
+function refreshChip() {
+  var today = new Date();
+  var active = LOCS.filter(function(p){ var s = states[p.id]; return s && s.st === 'now'; }).length;
+  var dstr = today.getDate() + '. ' + ['JAN','FEB','MAR','APR','MAI','JUN','JUL','AUG','SEP','OKT','NOV','DES'][today.getMonth()];
+  var chip = document.getElementById('chip');
+  if (today < new Date(today.getFullYear(), 3, 1)) chip.textContent = dstr + ' · ÅPNER 1. APRIL';
+  else chip.textContent = dstr + ' · ' + active + ' AKTIVE';
+}
+function refreshLegend() {
+  document.getElementById('legend').innerHTML =
+    '<span class="lg"><i style="background:#4fb4e6"></i>Pågår</span>' +
+    '<span class="lg"><i style="background:#e8b25e"></i>&lt; 14 dager</span>';
+}
+
+fetch('/api/predictions')
+  .then(function(r){ return r.ok ? r.json() : {}; })
+  .catch(function(){ return {}; })
+  .then(function(data) {
+    LOCS.forEach(function(p) {
+      var rec = data[p.id];
+      states[p.id] = seasonState(rec && rec.predDate);
+    });
+    buildPins(); refreshChip(); refreshLegend();
+  });
+
+buildPins(); refreshLegend(); applyT();
+</script>
+</body>
+</html>
