@@ -29,11 +29,10 @@
     cursor: grab;
   }
   #map.dragging { cursor: grabbing; }
-  #world { position: absolute; inset: 0; transform-origin: 0 0; will-change: transform; }
+  #world { position: absolute; inset: 0; }
   #world svg { width: 100%; height: 100%; display: block; }
   .land {
     fill: url(#landgrad); stroke: #3a4144; stroke-width: 0.8; vector-effect: non-scaling-stroke;
-    filter: drop-shadow(0 6px 18px rgba(15,18,19,0.30));
   }
 
   /* Pinner (SVG) */
@@ -50,7 +49,7 @@
   .pin text {
     font-family: 'JetBrains Mono', monospace; font-size: 7.4px; letter-spacing: 0.4px;
     fill: #333a37; text-anchor: middle; pointer-events: none;
-    paint-order: stroke; stroke: #f6f7f5; stroke-width: 2.4px; stroke-linejoin: round;
+    paint-order: stroke; stroke: #f6f7f5; stroke-width: 1.8px; stroke-linejoin: round;
   }
   .pin.st-now text { fill: #1f6591; font-weight: 600; }
   .pin.st-closed text, .pin.st-pre text { fill: #7f8781; }
@@ -73,7 +72,7 @@
     padding: 5px 11px; border-radius: 20px; backdrop-filter: blur(6px);
   }
   .zoomctl {
-    position: absolute; right: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 96px);
+    position: absolute; right: 12px; bottom: 16px;
     z-index: 20; display: flex; flex-direction: column; gap: 6px;
   }
   .zoomctl button {
@@ -82,7 +81,7 @@
     cursor: pointer; backdrop-filter: blur(6px);
   }
   .legend {
-    position: absolute; left: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 96px);
+    position: absolute; left: 12px; bottom: 16px;
     z-index: 18; display: flex; flex-direction: column; gap: 5px; pointer-events: none;
   }
   .lg { display: flex; align-items: center; gap: 7px; font-size: 0.6rem; font-weight: 600; color: #4a534e;
@@ -92,7 +91,7 @@
   /* ── BUNNARK ── */
   #sheet {
     position: absolute; left: 10px; right: 10px;
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 78px);
+    bottom: 12px;
     z-index: 25; background: rgba(18,20,19,0.97); border: 1px solid #2e3230;
     border-radius: 18px; padding: 13px 16px 13px; backdrop-filter: blur(10px);
     box-shadow: 0 -8px 34px rgba(0,0,0,0.5);
@@ -123,10 +122,10 @@
   /* ── SPOTIFY-BAR ── */
   #bar {
     flex-shrink: 0; z-index: 30; position: relative;
-    background: linear-gradient(180deg, rgba(10,12,11,0.0) 0%, rgba(10,12,11,0.9) 34%, #0a0c0b 70%);
-    margin-top: -26px;
-    display: grid; grid-template-columns: repeat(4, 1fr); align-items: end;
-    padding: 30px 6px calc(env(safe-area-inset-bottom, 0px) + 10px);
+    background: #0a0c0b;
+    border-top: 1px solid #4fb4e6;
+    display: grid; grid-template-columns: repeat(4, 1fr); align-items: center;
+    padding: 9px 6px calc(env(safe-area-inset-bottom, 0px) + 10px);
   }
   .bi { text-align: center; background: none; border: 0; cursor: pointer; padding: 4px 0 0; font-family: inherit; }
   .bi svg { width: 23px; height: 23px; margin: 0 auto 3px; display: block; stroke: #7d8a80; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
@@ -295,6 +294,14 @@ function seasonState(rec) {
   if (today < open) return { st: 'pre' };
   if (!predDateStr) return { st: 'unknown' };
   var pd = new Date(predDateStr); pd.setHours(0,0,0,0);
+  // BIOLOGISK RIMELIGHETSVAKT (2026-08-19): ingen norsk vulgata-klekkestart
+  // begynner i august. En dato etter ~3. aug er et modell-artefakt — enten en
+  // rømt bug-verdi med ferskt tidsstempel (Bergen/Hardangervidda), eller et
+  // vann som aldri krysser terskelen og der modellen fortsatt jager framover
+  // (Røros). Ferskhetssjekk hjelper ikke mot ferskt søppel — dette gjør.
+  var pdDoy = Math.floor((Date.UTC(pd.getFullYear(), pd.getMonth(), pd.getDate())
+    - Date.UTC(pd.getFullYear(), 0, 1)) / 86400000) + 1;
+  if (pdDoy > 215) return { st: 'unknown' };
   // En dato er PROGNOSE hvis den lå i framtiden da den ble lagret (pd > ts),
   // og OBSERVASJON hvis krysningen alt hadde skjedd (pd <= ts). Observasjoner
   // er bakoverskuende og eldes ikke. Prognoser dør etter STALE_DAYS — hadde
@@ -364,9 +371,9 @@ function el(tag, attrs) {
 function buildPins() {
   pinlayer.innerHTML = '';
   var s = scale;
-  // Alle størrelser deles på zoom-nivået slik at pinner og tekst holder
-  // KONSTANT skjermstørrelse — som i ordentlige kart-apper. Uten dette ble
-  // etikettene gigantiske ved zoom (Stians punkt 2, 2026-08-19).
+  // Alle mål deles på zoomnivået → konstant skjermstørrelse. Ingen click-
+  // lyttere her: pointer-capture sluker click-hendelser, så trykk håndteres
+  // som tap-deteksjon i pointerup i stedet.
   var clusterOpen = s >= 3.0;
 
   LOCS.forEach(function(p) {
@@ -374,50 +381,43 @@ function buildPins() {
     var st = (states[p.id] || { st: 'unknown' }).st;
     var g = el('g', { 'class': 'pin st-' + st, 'data-id': p.id });
     if (st === 'now') {
-      var halo = el('circle', { 'class': 'halo', cx: p.x, cy: p.y, r: 8 / s });
-      halo.style.strokeWidth = (1.2 / s) + 'px';
+      var halo = el('circle', { 'class': 'halo', cx: p.x, cy: p.y, r: 7 / s });
+      halo.style.strokeWidth = (1.1 / s) + 'px';
       g.appendChild(halo);
     }
     if (selected === p.id) {
-      var ring = el('circle', { cx: p.x, cy: p.y, r: 8.4 / s, fill: 'none', stroke: '#1f83bd' });
-      ring.style.strokeWidth = (1.6 / s) + 'px';
+      var ring = el('circle', { cx: p.x, cy: p.y, r: 7.4 / s, fill: 'none', stroke: '#1f83bd' });
+      ring.style.strokeWidth = (1.3 / s) + 'px';
       g.appendChild(ring);
     }
-    var core = el('circle', { 'class': 'core', cx: p.x, cy: p.y, r: 5.2 / s });
-    core.style.strokeWidth = (2 / s) + 'px';
+    var core = el('circle', { 'class': 'core', cx: p.x, cy: p.y, r: 4.6 / s });
+    core.style.strokeWidth = (1.4 / s) + 'px';
     g.appendChild(core);
 
-    // Etikettanker per lokasjon (p.la): above/left/right — løser kollisjonene
-    // Alta↔Porsanger, Bergen↔Hardangervidda, Trondheim↔Røros og Oslo-firkløveren.
-    var lx = p.x, ly = p.y + 13.5 / s, anchor = 'middle';
-    if (p.la === 'above')      { ly = p.y - 8 / s; }
-    else if (p.la === 'left')  { lx = p.x - 8.5 / s; ly = p.y + 2.8 / s; anchor = 'end'; }
-    else if (p.la === 'right') { lx = p.x + 8.5 / s; ly = p.y + 2.8 / s; anchor = 'start'; }
+    var lx = p.x, ly = p.y + 12 / s, anchor = 'middle';
+    if (p.la === 'above')      { ly = p.y - 7 / s; }
+    else if (p.la === 'left')  { lx = p.x - 7.5 / s; ly = p.y + 2.6 / s; anchor = 'end'; }
+    else if (p.la === 'right') { lx = p.x + 7.5 / s; ly = p.y + 2.6 / s; anchor = 'start'; }
     var t = el('text', { x: lx, y: ly });
-    t.style.fontSize = (7.4 / s) + 'px';
-    t.style.strokeWidth = (2.4 / s) + 'px';
+    t.style.fontSize = (7.2 / s) + 'px';
+    t.style.strokeWidth = (1.8 / s) + 'px';
     t.style.textAnchor = anchor;
     t.textContent = p.name.toUpperCase();
     g.appendChild(t);
-    g.addEventListener('click', function(ev) { ev.stopPropagation(); selectLoc(p.id); });
     pinlayer.appendChild(g);
   });
 
   if (!clusterOpen) {
     var anyNow = LOCS.some(function(p){ return p.cluster && states[p.id] && states[p.id].st === 'now'; });
     var g = el('g', { 'class': 'clusterpin' });
-    var c = el('circle', { cx: CLUSTER_C.x, cy: CLUSTER_C.y, r: 10 / s,
+    var c = el('circle', { cx: CLUSTER_C.x, cy: CLUSTER_C.y, r: 9.5 / s,
       style: anyNow ? 'stroke:#4fb4e6' : '' });
-    c.style.strokeWidth = (1.4 / s) + 'px';
+    c.style.strokeWidth = (1.2 / s) + 'px';
     g.appendChild(c);
     var t = el('text', { x: CLUSTER_C.x, y: CLUSTER_C.y });
-    t.style.fontSize = (8.6 / s) + 'px';
+    t.style.fontSize = (8.4 / s) + 'px';
     t.textContent = '4';
     g.appendChild(t);
-    g.addEventListener('click', function(ev) {
-      ev.stopPropagation();
-      zoomTo(3.4, CLUSTER_C.x, CLUSTER_C.y);
-    });
     pinlayer.appendChild(g);
   }
 }
@@ -439,11 +439,10 @@ function selectLoc(id) {
   document.getElementById('sheet').classList.add('open');
   buildPins();
 }
-document.getElementById('map').addEventListener('click', function() {
-  document.getElementById('sheet').classList.remove('open');
-  selected = null; buildPins();
-});
-document.getElementById('sheet').addEventListener('click', function(e){ e.stopPropagation(); });
+// Trykk på kart/pinner håndteres i pointerup (tap-deteksjon) — vanlige
+// click-lyttere fungerer ikke her fordi setPointerCapture omdirigerer
+// hendelsene til kartelementet. Det var derfor verken pinner eller meny
+// lot seg trykke på (Stians punkt 3 og 5, 2026-08-19).
 document.getElementById('favToggle').addEventListener('click', function() {
   if (!selected) return;
   var f = getFavs(); var i = f.indexOf(selected);
@@ -452,54 +451,73 @@ document.getElementById('favToggle').addEventListener('click', function() {
   this.className = 'favbtn' + (f.indexOf(selected) !== -1 ? ' faved' : '');
 });
 
-// ── Zoom & pan (pointer events, pinch) ───────────────────────────────
-var scale = 1, tx = 0, ty = 0;
-var world = document.getElementById('world');
+// ── Zoom & pan via viewBox (2026-08-19) ─────────────────────────────
+// v1 zoomet med CSS transform: scale() — da rasterizerer nettleseren SVG-en
+// på 1x og forstørrer BITMAPET, som blir grøtete (Stians punkt 1 og 6).
+// viewBox-zoom får SVG-motoren til å rendre vektorene på nytt for hvert
+// zoomnivå: knivskarpt uansett hvor langt inn du går.
+var scale = 1;
+var VB = { x: 0, y: 0, w: W, h: H };
 var mapEl = document.getElementById('map');
-function applyT() {
-  world.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + scale + ')';
+var svgEl = document.getElementById('mapsvg');
+
+function applyVB() {
+  svgEl.setAttribute('viewBox', VB.x + ' ' + VB.y + ' ' + VB.w + ' ' + VB.h);
 }
-function clamp() {
-  scale = Math.min(4, Math.max(1, scale));
+function svgPt(clientX, clientY) {
+  var p = svgEl.createSVGPoint(); p.x = clientX; p.y = clientY;
+  return p.matrixTransform(svgEl.getScreenCTM().inverse());
+}
+function clampVB() {
+  var m = 40;   // slingring utenfor kysten
+  VB.x = Math.min(W + m - VB.w, Math.max(-m, VB.x));
+  VB.y = Math.min(H + m - VB.h, Math.max(-m, VB.y));
+}
+function setZoom(z, fx, fy) {   // fx/fy = SVG-punktet som skal stå stille
+  z = Math.min(8, Math.max(1, z));
+  var nw = W / z, nh = H / z;
+  VB.x = fx - (fx - VB.x) * (nw / VB.w);
+  VB.y = fy - (fy - VB.y) * (nh / VB.h);
+  VB.w = nw; VB.h = nh; scale = z;
+  clampVB(); applyVB(); buildPins();
+}
+function zoomAt(factor, clientX, clientY) {
+  var p = svgPt(clientX, clientY);
+  setZoom(scale * factor, p.x, p.y);
+}
+function zoomTo(z, wx, wy) {
+  z = Math.min(8, Math.max(1, z));
+  VB.w = W / z; VB.h = H / z;
+  VB.x = wx - VB.w / 2; VB.y = wy - VB.h / 2; scale = z;
+  clampVB(); applyVB(); buildPins();
+}
+document.getElementById('zin').addEventListener('click', function() {
   var r = mapEl.getBoundingClientRect();
-  var maxPan = 0.6 * Math.max(r.width, r.height) * (scale - 1);
-  tx = Math.min(maxPan, Math.max(-maxPan, tx));
-  ty = Math.min(maxPan, Math.max(-maxPan, ty));
-}
-function zoomAt(factor, px, py) {
-  var old = scale;
-  scale = Math.min(4, Math.max(1, scale * factor));
-  var f = scale / old;
-  tx = px - f * (px - tx);
-  ty = py - f * (py - ty);
-  clamp(); applyT(); buildPins();
-}
-function zoomTo(target, wx, wy) {
-  // wx/wy i SVG-koordinater → sentrer dem
+  zoomAt(1.5, r.left + r.width / 2, r.top + r.height / 2);
+});
+document.getElementById('zout').addEventListener('click', function() {
   var r = mapEl.getBoundingClientRect();
-  var svgR = document.getElementById('mapsvg').getBoundingClientRect();
-  var sx = svgR.width / W, sy = svgR.height / H, s = Math.min(sx, sy);
-  var ox = (svgR.left - r.left) + (svgR.width - W * s) / 2;
-  var oy = (svgR.top - r.top) + (svgR.height - H * s) / 2;
-  var px = ox + wx * s, py = oy + wy * s;   // skjermpos ved scale=1, t=0
-  scale = target;
-  tx = r.width / 2 - px * scale;
-  ty = r.height / 2 - py * scale;
-  clamp(); applyT(); buildPins();
-}
-document.getElementById('zin').addEventListener('click', function(e){ e.stopPropagation(); var r = mapEl.getBoundingClientRect(); zoomAt(1.5, r.width/2, r.height/2); });
-document.getElementById('zout').addEventListener('click', function(e){ e.stopPropagation(); var r = mapEl.getBoundingClientRect(); zoomAt(1/1.5, r.width/2, r.height/2); });
+  zoomAt(1 / 1.5, r.left + r.width / 2, r.top + r.height / 2);
+});
 mapEl.addEventListener('wheel', function(e) {
   e.preventDefault();
-  var r = mapEl.getBoundingClientRect();
-  zoomAt(e.deltaY < 0 ? 1.15 : 1/1.15, e.clientX - r.left, e.clientY - r.top);
+  zoomAt(e.deltaY < 0 ? 1.15 : 1 / 1.15, e.clientX, e.clientY);
 }, { passive: false });
 
-var pointers = {};
-var lastPinch = null, dragStart = null, moved = false;
+// Overlegg (bunnark, paneler, knapper, bar) skal ha vanlige klikk — kartets
+// pekerlogikk skal ikke røre dem.
+function inOverlay(t) {
+  return t && t.closest && t.closest('#sheet, .panel, .zoomctl, .topbar, #bar');
+}
+
+var pointers = {}, lastPinch = null, panStart = null, moved = false;
 mapEl.addEventListener('pointerdown', function(e) {
+  if (inOverlay(e.target)) return;
   pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
-  if (Object.keys(pointers).length === 1) { dragStart = { x: e.clientX - tx, y: e.clientY - ty }; moved = false; }
+  if (Object.keys(pointers).length === 1) {
+    panStart = { cx: e.clientX, cy: e.clientY, vx: VB.x, vy: VB.y };
+    moved = false;
+  }
   mapEl.setPointerCapture(e.pointerId);
 });
 mapEl.addEventListener('pointermove', function(e) {
@@ -509,21 +527,37 @@ mapEl.addEventListener('pointermove', function(e) {
   if (ids.length === 2) {
     var a = pointers[ids[0]], b = pointers[ids[1]];
     var d = Math.hypot(a.x - b.x, a.y - b.y);
-    var cx = (a.x + b.x) / 2, cy = (a.y + b.y) / 2;
-    var r = mapEl.getBoundingClientRect();
-    if (lastPinch) zoomAt(d / lastPinch, cx - r.left, cy - r.top);
-    lastPinch = d;
-  } else if (ids.length === 1 && dragStart) {
-    var nx = e.clientX - dragStart.x, ny = e.clientY - dragStart.y;
-    if (Math.abs(nx - tx) + Math.abs(ny - ty) > 3) moved = true;
-    tx = nx; ty = ny; clamp(); applyT();
+    if (lastPinch) zoomAt(d / lastPinch, (a.x + b.x) / 2, (a.y + b.y) / 2);
+    lastPinch = d; moved = true;
+  } else if (ids.length === 1 && panStart) {
+    var ctm = svgEl.getScreenCTM();          // px per SVG-enhet
+    VB.x = panStart.vx - (e.clientX - panStart.cx) / ctm.a;
+    VB.y = panStart.vy - (e.clientY - panStart.cy) / ctm.d;
+    if (Math.abs(e.clientX - panStart.cx) + Math.abs(e.clientY - panStart.cy) > 5) moved = true;
+    clampVB(); applyVB();
     mapEl.classList.add('dragging');
   }
 });
 function endPointer(e) {
+  var wasTracked = !!pointers[e.pointerId];
   delete pointers[e.pointerId];
   if (Object.keys(pointers).length < 2) lastPinch = null;
-  if (Object.keys(pointers).length === 0) { dragStart = null; mapEl.classList.remove('dragging'); }
+  if (Object.keys(pointers).length === 0) {
+    mapEl.classList.remove('dragging');
+    // Tap: kort trykk uten bevegelse → treff-test der fingeren slapp
+    if (wasTracked && !moved && e.type === 'pointerup') {
+      var t = document.elementFromPoint(e.clientX, e.clientY);
+      var pin = t && t.closest ? t.closest('.pin') : null;
+      var cl  = t && t.closest ? t.closest('.clusterpin') : null;
+      if (pin) selectLoc(pin.getAttribute('data-id'));
+      else if (cl) zoomTo(3.4, CLUSTER_C.x, CLUSTER_C.y);
+      else {
+        document.getElementById('sheet').classList.remove('open');
+        selected = null; buildPins();
+      }
+    }
+    panStart = null;
+  }
 }
 mapEl.addEventListener('pointerup', endPointer);
 mapEl.addEventListener('pointercancel', endPointer);
@@ -583,7 +617,7 @@ fetch('/api/predictions')
     buildPins(); refreshChip(); refreshLegend();
   });
 
-buildPins(); refreshLegend(); applyT();
+buildPins(); refreshLegend(); applyVB();
 </script>
 </body>
 </html>
