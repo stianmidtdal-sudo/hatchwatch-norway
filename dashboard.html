@@ -146,7 +146,7 @@
             border-radius: 10px;
             padding: 14px 16px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            border-top: 3px solid #74C69D;
+            border-top: 3px solid #7fc9e8;
             text-align: center;
         }
         .hist-gdd-stat.hist-gdd-median { border-top-color: #1B4332; }
@@ -180,7 +180,7 @@
             border-radius: 12px;
             padding: 18px 18px 14px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-            border-top: 3px solid #52B788;
+            border-top: 3px solid #7fc9e8;
         }
         .kpi-card.na { border-top-color: #ccc; }
         .kpi-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: #888; }
@@ -203,19 +203,19 @@
         .card-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #888; margin-bottom: 8px; }
         .card-value { font-size: 1.75rem; font-weight: 700; color: #1B4332; line-height: 1.1; }
         .card-note { font-size: 0.72rem; color: #999; margin-top: 5px; }
-        .card-highlight { color: #2D6A4F; }
+        .card-highlight { color: #1f83bd; }
 
         .progress-wrap { background: #e8e8e8; border-radius: 5px; height: 9px; margin-top: 14px; position: relative; }
-        .progress-bar { height: 100%; background: linear-gradient(90deg, #74C69D, #1B4332); border-radius: 5px; transition: width 0.6s ease; }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, #7fc9e8, #1f83bd); border-radius: 5px; transition: width 0.6s ease; }
         .progress-label { font-size: 0.72rem; color: #888; margin-top: 5px; }
 
         .model-info-band {
-            background: #edf7f2;
-            border: 1px solid #74C69D;
+            background: #eef4f9;
+            border: 1px solid #a9d4ec;
             border-radius: 8px;
             padding: 9px 14px;
             font-size: 0.76rem;
-            color: #2D6A4F;
+            color: #1f6591;
             margin-top: 10px;
         }
 
@@ -233,7 +233,7 @@
         /* ── TABLE ── */
         .table-wrap { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
         table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
-        th { background: #edf7f2; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #2D6A4F; padding: 10px 14px; text-align: left; border-bottom: 2px solid #74C69D; }
+        th { background: #eef4f9; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #1f6591; padding: 10px 14px; text-align: left; border-bottom: 2px solid #7fc9e8; }
         td { padding: 10px 14px; border-bottom: 1px solid #f0f5f2; color: #333; vertical-align: middle; }
         tr:last-child td { border-bottom: none; }
         tr:hover td { background: #f6fdf8; }
@@ -257,7 +257,7 @@
             color: #555;
             line-height: 1.45;
             background: #f7faf8;
-            border-left: 3px solid #2D6A4F;
+            border-left: 3px solid #4fb4e6;
             padding: 10px 14px;
             border-radius: 6px;
             margin-bottom: 14px;
@@ -274,13 +274,17 @@
         }
         .conv-summary strong { color: #1B4332; }
         .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; margin-top: 8px; }
-        .badge-active { background: #d1f5e1; color: #1B4332; }
+        .badge-active { background: #d9edf8; color: #14425c; }
         .badge-cold { background: #d9eeff; color: #1a4a6a; }
         .badge-always { background: #e1f0d8; color: #3a5a1a; }
         .badge-prior { background: #fff3cd; color: #856404; }
 
+        /* Hero-boksen — samme mørke flate som kartets bunnark, isblå aksent.
+           Den gamle grønne gradienten (#1B4332→#2D6A4F) var det siste store
+           «gammelt design»-elementet. (Fargevask 2026-08-19) */
         .best-wrap {
-            background: linear-gradient(135deg, #1B4332, #2D6A4F);
+            background: #101a14;
+            border: 1px solid #223828;
             color: white;
             border-radius: 12px;
             padding: 20px 24px;
@@ -297,7 +301,7 @@
             flex-wrap: wrap;
             gap: 8px;
         }
-        .best-label { font-size: 0.72rem; opacity: 0.75; text-transform: uppercase; letter-spacing: 1.2px; }
+        .best-label { font-size: 0.72rem; color: #4fb4e6; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 700; }
         .best-note { font-size: 0.8rem; opacity: 0.7; max-width: 380px; text-align: right; }
 
         /* ── SPECIES CALENDAR ── */
@@ -354,7 +358,7 @@
             margin-top: -14px;  /* trekker den tett inntil best-wrap */
             margin-bottom: 24px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-            border-top: 4px solid #2D6A4F;
+            border-top: 4px solid #4fb4e6;
         }
         .explain-header {
             display: flex;
@@ -476,7 +480,7 @@
             padding: 16px 22px;
             margin: 18px 0 24px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-            border-top: 4px solid #74C69D;
+            border-top: 4px solid #4fb4e6;
         }
         .settefisk-toggle {
             display: flex;
@@ -492,7 +496,7 @@
             text-align: left;
             color: #1B4332;
         }
-        .settefisk-toggle:focus-visible { outline: 2px solid #74C69D; outline-offset: 4px; border-radius: 4px; }
+        .settefisk-toggle:focus-visible { outline: 2px solid #4fb4e6; outline-offset: 4px; border-radius: 4px; }
         .settefisk-label {
             font-size: 0.72rem;
             opacity: 0.7;
@@ -503,7 +507,7 @@
         }
         .settefisk-summary {
             font-size: 0.82rem;
-            color: #2D6A4F;
+            color: #1f83bd;
             font-weight: 600;
         }
         .settefisk-summary .nofish { color: #888; font-weight: 500; }
@@ -557,7 +561,7 @@
             position: absolute;
             left: 0; right: 0; bottom: 0;
             height: 3px;
-            background: #74C69D;
+            background: #4fb4e6;
             border-radius: 0 0 8px 8px;
             transform-origin: left;
         }
@@ -583,7 +587,7 @@
             display: inline-block;
             margin-top: 10px;
             font-size: 0.78rem;
-            color: #2D6A4F;
+            color: #1f83bd;
             text-decoration: none;
             font-weight: 600;
         }
@@ -747,7 +751,7 @@
 
         /* ── LOADING / ERROR ── */
         .loading-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 20px; gap: 16px; color: #555; }
-        .spinner { width: 42px; height: 42px; border: 3px solid #d0e8da; border-top-color: #2D6A4F; border-radius: 50%; animation: spin 0.7s linear infinite; }
+        .spinner { width: 42px; height: 42px; border: 3px solid #1f3a2b; border-top-color: #4fb4e6; border-radius: 50%; animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes welcome-fade {
             from { opacity: 0; transform: translateY(-10px); }

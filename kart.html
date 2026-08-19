@@ -272,13 +272,27 @@ var W = 340, H = 620;
 // ── Sesongregler — SPEILER dashboard.html (computeSeasonStatus) ──────
 // Åpner 1. april. Pågår = 0–21 dager etter anslått klekkestart (samme
 // grense som spinnerfall-vakta). "Snart" = under 14 dager fram.
-function seasonState(predDateStr) {
+//
+// FERSKHETSSJEKK (2026-08-19): prediksjoner lagres i Redis når noen besøker
+// lokasjonens dashbord — og under WT-gate-buggen (fikset 2026-08-18) ble det
+// lagret rømte framtidsdatoer. En FRAMTIDSDATO fra et øyeblikksbilde eldre
+// enn 10 dager er derfor ikke til å stole på: hadde noen besøkt dashbordet
+// nylig, ville den vært re-lagret med riktig verdi. Datoer i FORTID rammes
+// ikke — de er bakoverskuende og endrer seg ikke.
+var STALE_DAYS = 10;
+function seasonState(rec) {
+  var predDateStr = rec && rec.predDate;
+  var ts = rec && rec.ts;
   var today = new Date(); today.setHours(0,0,0,0);
   var yr = today.getFullYear();
   var open = new Date(yr, 3, 1);
   if (today < open) return { st: 'pre' };
   if (!predDateStr) return { st: 'unknown' };
   var pd = new Date(predDateStr); pd.setHours(0,0,0,0);
+  if (pd > today && ts) {
+    var ageDays = (Date.now() - new Date(ts).getTime()) / 86400000;
+    if (ageDays > STALE_DAYS) return { st: 'unknown' };
+  }
   var diff = Math.round((pd - today) / 86400000);
   if (diff > 14) return { st: 'later', days: diff, date: pd };
   if (diff > 0)  return { st: 'soon',  days: diff, date: pd };
@@ -520,8 +534,7 @@ fetch('/api/predictions')
   .catch(function(){ return {}; })
   .then(function(data) {
     LOCS.forEach(function(p) {
-      var rec = data[p.id];
-      states[p.id] = seasonState(rec && rec.predDate);
+      states[p.id] = seasonState(data[p.id]);
     });
     buildPins(); refreshChip(); refreshLegend();
   });
