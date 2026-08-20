@@ -16,7 +16,6 @@ const SHELL_URLS = [
     '/',
     '/index.html',
     '/dashboard.html',
-    '/liste.html',
     '/artikler.html',
     '/om.html',
     '/varsler.html',

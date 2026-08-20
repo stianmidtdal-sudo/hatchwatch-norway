@@ -138,14 +138,16 @@
 <main>
     <div class="hero-section">
         <h1>Om HatchWatch</h1>
-        <div class="tagline">Klekkeprognose for fluefiskere</div>
+        <div class="tagline">Klekkeprognoser for fluefiskere</div>
     </div>
 
     <div class="body-grid">
         <div>
             <p>HatchWatch er en åpen prediksjonsmodell for klekking av døgnfluer i norske vassdrag og stillevann. Modellen kombinerer luft- og vanntemperatur-historikk, isgang-observasjoner, snødybde og kalibrerte terskler per lokasjon for å estimere når klekkingen for vulgata, marginata, vespertina og andre sentrale arter starter.</p>
 
-            <p>Sentralt i modellen står <em>varmesum-prinsippet</em> (Growing Degree Days): nymfens utviklingstempo styres direkte av temperatur, og når akkumulert varme siden 1. januar overstiger en arts- og lokasjonspesifikk terskel, er nymfen klar for overflateoppstigning. Som supplering brukes en <em>dual-trigger</em>-betingelse på vanntemperatur (typisk 12°C), som fanger opp år der lufta er varm før vannet rekker å varmes opp.</p>
+            <p>Sentralt i modellen står <em>varmesum-prinsippet</em> (Growing Degree Days): nymfens utviklingstempo styres direkte av temperatur, og når akkumulert varme siden 1. januar overstiger en arts- og lokasjonspesifikk terskel, er nymfen klar for overflateoppstigning. Som supplering brukes en <em>dual-trigger</em>-betingelse på vanntemperatur (typisk 12°C), som fanger opp år der lufta er varm før vannet rekker å varmes opp. Klekkedatoen anslås som den første dagen begge krav er oppfylt samtidig.</p>
+
+            <p>For dager fram i tid blandes faktiske målinger med MET sitt 10-dagers langtidsvarsel, og deretter 10-årssnittet for resten av sesongen. Etter hvert som faktiske målinger kommer inn dag for dag, erstatter de antagelsene — og prognosen konvergerer mot en stadig sikrere dato.</p>
 
             <h2>Forbedring over tid</h2>
             <p>Modellen er ikke statisk. Hver gang en kalibrert lokasjon får inn en ny verifisert klekkeobservasjon, justeres terskelverdiene. Dette gjør at HatchWatch blir mer presis for hvert år som går — særlig for lokasjoner som blir aktivt rapportert til. Det er også grunnen til at innsendte observasjoner er så verdifulle.</p>
@@ -154,12 +156,16 @@
         <div>
             <h2>Datakilder</h2>
             <ul>
-                <li><b>MET Norge (Frost API)</b> — historiske og prognoserte luft- og snødata</li>
+                <li><b>MET Norge (Frost API)</b> — historiske luft- og snødata, pluss 10-dagers værvarsel</li>
                 <li><b>NVE (HydAPI)</b> — vanntemperatur og vannføring fra hydrologiske stasjoner</li>
                 <li><b>Sentinel Hub</b> — isgang-observasjoner via satellittbilder</li>
                 <li><b>OFA</b> — Oslomarka Fiskeadministrasjons referansedata for Nordmarka-vann</li>
-                <li><b>Brukerobservasjoner</b> — innsendte klekkeobservasjoner via tilbakemeldings-skjemaet</li>
+                <li><b>Brukerobservasjoner</b> — klekkeobservasjoner fra fluefiskere rundt om i landet (<a href="/observasjon.html">bidra med dine her</a>)</li>
             </ul>
+            <p>Værdata oppdateres daglig.</p>
+
+            <h2>Usikkerhet</h2>
+            <p>Tenk på klekkeprognosen som en værmelding: tidlig i sesongen er usikkerheten større, fordi mer av vær- og vannutviklingen ligger fram i tid. Etter hvert som faktiske målinger kommer inn, krymper estimatet og treffsikkerheten øker. For godt dokumenterte lokasjoner treffer modellen typisk innenfor noen få dager. Men naturen er uforutsigbar — bruk verktøyet som veiledning, ikke fasit.</p>
 
             <h2>Bygget av</h2>
             <p>Stian Midtdal. Tilbakemeldinger, observasjoner og forslag mottas med stor takk — det er reelle observasjoner som forbedrer modellen mest. Bruk lenken nederst i menyen.</p>
@@ -271,10 +277,6 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').cat
     <a class="hwp-row" href="/om.html">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>
       <span><span class="mt">Om HatchWatch</span></span><span class="chev">›</span>
-    </a>
-    <a class="hwp-row" href="/liste.html">
-      <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7"/></svg>
-      <span><span class="mt">Lokasjonsliste</span></span><span class="chev">›</span>
     </a>
     <a class="hwp-row" href="https://tally.so/r/EkBErN" target="_blank" rel="noopener">
       <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9"/><path d="M21 3l-9 9"/><path d="M15 3h6v6"/></svg>

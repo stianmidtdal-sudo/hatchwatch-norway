@@ -84,8 +84,9 @@
   @keyframes wcIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
   #welcome h2 {
     font-family: 'Space Grotesk'; font-size: 1.02rem; font-weight: 700;
-    color: #121413; margin: 0 0 10px; letter-spacing: -0.2px;
+    color: #121413; margin: 0 0 7px; letter-spacing: -0.2px;
   }
+  .wc-intro { font-size: 0.8rem; color: #4a504c; line-height: 1.55; margin: 0 0 13px; }
   .wc-row { display: flex; gap: 11px; align-items: flex-start; margin-bottom: 9px; }
   .wc-row .ic { font-size: 1rem; line-height: 1.4; flex-shrink: 0; }
   .wc-row p { margin: 0; font-size: 0.8rem; color: #4a504c; line-height: 1.5; }
@@ -94,6 +95,29 @@
     display: block; width: 100%; margin-top: 12px; padding: 10px;
     background: #121413; color: #fff; border: 0; border-radius: 9px;
     font-family: inherit; font-size: 0.86rem; font-weight: 700; cursor: pointer;
+  }
+  /* ── Info-boks ved pinnetrykk (2026-08-20) — erstatter Lokasjonsliste-siden ── */
+  #infobox {
+    position: absolute; left: 14px; right: 14px; bottom: 16px; z-index: 24;
+    max-width: 340px; margin: 0 auto;
+    background: rgba(255,255,255,0.97); border-radius: 14px;
+    box-shadow: 0 0 0 1px #e6eae7, 0 12px 36px rgba(15,20,17,0.16);
+    padding: 16px 16px 14px; display: none;
+  }
+  #infobox.show { display: block; animation: wcIn 0.25s ease; }
+  .ib-head { display: flex; justify-content: space-between; align-items: flex-start; }
+  .ib-name { font-family: 'Space Grotesk'; font-size: 1.05rem; font-weight: 700; color: #121413; letter-spacing: -0.2px; }
+  .ib-sub { font-size: 0.7rem; color: #8a918c; margin-top: 1px; }
+  .ib-close { background: none; border: 0; color: #9aa19c; font-size: 1.2rem; cursor: pointer; padding: 0 2px; line-height: 1; }
+  .ib-st { margin: 11px 0 10px; border-top: 1px solid #eef1ee; padding-top: 9px; }
+  .ib-st div { font-size: 0.72rem; color: #5c6661; line-height: 1.8; }
+  .ib-cal { font-size: 0.64rem; font-weight: 700; letter-spacing: 1px; margin-bottom: 11px; }
+  .ib-cal.yes { color: #9a7b1e; }
+  .ib-cal.no { color: #8a918c; }
+  #ibGo {
+    display: block; width: 100%; padding: 11px; background: #121413; color: #fff;
+    border: 0; border-radius: 9px; font-family: inherit; font-size: 0.88rem;
+    font-weight: 700; cursor: pointer;
   }
   .zoomctl {
     position: absolute; right: 12px; bottom: 16px;
@@ -185,8 +209,23 @@
     <span class="datechip" id="chip">LASTER…</span>
   </div>
   <div class="legend" id="legend"></div>
+  <div id="infobox">
+    <div class="ib-head">
+      <div>
+        <div class="ib-name" id="ibName"></div>
+        <div class="ib-sub" id="ibSub"></div>
+      </div>
+      <button class="ib-close" id="ibClose" aria-label="Lukk">×</button>
+    </div>
+    <div class="ib-st" id="ibSt"></div>
+    <div class="ib-cal" id="ibCal"></div>
+    <button id="ibGo">Se prognose →</button>
+  </div>
   <div id="welcome">
-    <h2>Vet når det klekker.</h2>
+    <h2>Klekkeprognoser for fluefiskere</h2>
+    <p class="wc-intro">HatchWatch følger vær-, vann- og snødata for fiskevann i hele
+    Norge, og anslår når de store klekkingene starter — så du kan stå klar ved
+    vannet når det skjer.</p>
     <div class="wc-row"><span class="ic">🗺</span><p><b>Velg et vann på kartet</b> — fargen viser hvor klekkesesongen står akkurat nå.</p></div>
     <div class="wc-row"><span class="ic">📈</span><p><b>Se prognosen</b> — modellen anslår klekkestart ut fra varmesum, vanntemp, isgang og snø.</p></div>
     <div class="wc-row"><span class="ic">🔔</span><p><b>Få varsel</b> — abonner, så sier vi fra når det nærmer seg på dine vann.</p></div>
@@ -228,11 +267,6 @@
       <a class="mrow" href="https://tally.so/r/EkBErN" target="_blank" rel="noopener">
         <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9"/><path d="M21 3l-9 9"/><path d="M15 3h6v6"/></svg>
         <span><span class="mt">Send tilbakemelding</span></span>
-        <span class="chev">›</span>
-      </a>
-      <a class="mrow" href="/liste.html">
-        <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7"/></svg>
-        <span><span class="mt">Lokasjonsliste</span><br><span class="ms">Alle steder som liste</span></span>
         <span class="chev">›</span>
       </a>
       <div class="mfoot">HATCHWATCH.NO · BETA · DATA: MET · NVE · SENTINEL</div>
@@ -408,6 +442,63 @@ function openLoc(id) {
   location.href = '/dashboard.html?loc=' + encodeURIComponent(id);
 }
 
+// Stasjons- og kalibreringsinfo per pinne (fra gamle lokasjonslisten).
+// air = luftstasjon, wt = vannstasjon, sn = snøstasjon.
+var LOCINFO = {
+  kautokeino:    { region: 'Finnmark',   lat: 69.0, air: 'Kautokeino', wt: 'Suohpatjohka', sn: 'Kautokeino', cal: 3, unc: '±2 d' },
+  alta:          { region: 'Finnmark',   lat: 70.0, air: 'Sihccajavri', wt: 'Kista (Altaelva)', sn: 'Sihccajavri', cal: 0, unc: '±10 d' },
+  porsanger:     { region: 'Finnmark',   lat: 70.1, air: 'Karasjok', wt: 'Lombola (Lakselva)', sn: 'Karasjok', cal: 0, unc: '±10 d' },
+  bardu:         { region: 'Troms',      lat: 69.0, air: 'Bardufoss', wt: 'Skogly', sn: 'Bardufoss', cal: 0, unc: '±14 d' },
+  mo_i_rana:     { region: 'Nordland',   lat: 66.4, air: 'Storforshei', wt: 'Leiråga', sn: 'Storforshei', cal: 0, unc: '±14 d' },
+  borgefjell:    { region: 'Nordland',   lat: 65.1, air: 'Namsvatn II', wt: 'Landbru', sn: 'Namsvatn', cal: 0, unc: '±14 d' },
+  roros:         { region: 'Trøndelag',  lat: 62.6, air: 'Røros lufthavn', wt: 'Orva (Glåma)', sn: 'Røros lufthavn', cal: 0, unc: '±12 d' },
+  trondheim:     { region: 'Trøndelag',  lat: 63.5, air: 'Kvithamar', wt: 'Kobberdammen (Nidelva)', sn: 'Skistua', cal: 0, unc: '±14 d' },
+  rena:          { region: 'Innlandet',  lat: 61.1, air: 'Rena - Ørnhaugen', wt: 'Femundselva', sn: 'Plassen, Trysil', cal: 0, unc: '±14 d' },
+  nordmarka_dyn: { region: 'Østlandet',  lat: 59.9, air: 'Bjørnholt', wt: 'Sinnerdammen', sn: 'Bjørnholt', cal: 1, unc: '±10 d' },
+  finnemarka:    { region: 'Østlandet',  lat: 59.9, air: 'Geithus', wt: 'Elgtjern', sn: 'Sande – Lauvkollmyr', cal: 0, unc: '±14 d' },
+  ostmarka:      { region: 'Østlandet',  lat: 59.7, air: 'Råken', wt: 'Mønevann, Enebakk', sn: 'Enebakk – Barbøl', cal: 1, unc: '±4 d' },
+  vestfjella:    { region: 'Østlandet',  lat: 59.3, air: 'Rakkestad', wt: 'Løkkeborg', sn: 'Ørje', cal: 0, unc: '±6 d' },
+  hardangervidda:{ region: 'Telemark',   lat: 60.1, air: 'Uvdal', wt: 'Kvenna', sn: 'Tessungdalen-Bakkhus', cal: 0, unc: '±14 d' },
+  bergen:        { region: 'Vestlandet', lat: 60.5, air: 'Bergen - Florida', wt: 'Dyrdalsvatn', sn: 'Bergen - Florida', cal: 0, unc: '±14 d' }
+};
+
+var _ibId = null;
+function openInfo(id) {
+  var info = LOCINFO[id];
+  if (!info) { openLoc(id); return; }   // ukjent pinne → rett til prognosen
+  _ibId = id;
+  var loc = null;
+  for (var i = 0; i < LOCS.length; i++) if (LOCS[i].id === id) loc = LOCS[i];
+  document.getElementById('ibName').textContent = loc ? loc.name : id;
+  document.getElementById('ibSub').textContent = info.region + ' · ' + info.lat.toFixed(1) + '°N';
+  document.getElementById('ibSt').innerHTML =
+    '<div>🌡 ' + info.air + '</div><div>💧 ' + info.wt + '</div><div>❄ ' + info.sn + '</div>';
+  var cal = document.getElementById('ibCal');
+  if (info.cal > 0) {
+    var stars = ''; for (var s = 0; s < info.cal; s++) stars += '⭐';
+    cal.className = 'ib-cal yes';
+    cal.textContent = stars + ' KALIBRERT · ' + info.unc;
+  } else {
+    cal.className = 'ib-cal no';
+    cal.textContent = 'UKALIBRERT · ' + info.unc;
+  }
+  // Velkomstkortet viker — den som trykker pinner har skjønt kartet
+  var wc = document.getElementById('welcome');
+  if (wc.classList.contains('show')) {
+    try { localStorage.setItem('hw_welcomed', '1'); } catch (e) {}
+    wc.classList.remove('show');
+  }
+  document.getElementById('infobox').classList.add('show');
+}
+function closeInfo() {
+  _ibId = null;
+  document.getElementById('infobox').classList.remove('show');
+}
+document.getElementById('ibClose').addEventListener('click', closeInfo);
+document.getElementById('ibGo').addEventListener('click', function () {
+  if (_ibId) openLoc(_ibId);
+});
+
 // ── Zoom & pan via viewBox (2026-08-19) ─────────────────────────────
 // v1 zoomet med CSS transform: scale() — da rasterizerer nettleseren SVG-en
 // på 1x og forstørrer BITMAPET, som blir grøtete (Stians punkt 1 og 6).
@@ -464,7 +555,7 @@ mapEl.addEventListener('wheel', function(e) {
 // Overlegg (bunnark, paneler, knapper, bar) skal ha vanlige klikk — kartets
 // pekerlogikk skal ikke røre dem.
 function inOverlay(t) {
-  return t && t.closest && t.closest('#sheet, .panel, .zoomctl, .topbar, #bar, #welcome');
+  return t && t.closest && t.closest('#sheet, .panel, .zoomctl, .topbar, #bar, #welcome, #infobox');
 }
 
 // Velkomstkort — kun første besøk
@@ -519,8 +610,9 @@ function endPointer(e) {
       var t = document.elementFromPoint(e.clientX, e.clientY);
       var pin = t && t.closest ? t.closest('.pin') : null;
       var cl  = t && t.closest ? t.closest('.clusterpin') : null;
-      if (pin) openLoc(pin.getAttribute('data-id'));
-      else if (cl) zoomTo(3.4, CLUSTER_C.x, CLUSTER_C.y);
+      if (pin) openInfo(pin.getAttribute('data-id'));
+      else if (cl) { closeInfo(); zoomTo(3.4, CLUSTER_C.x, CLUSTER_C.y); }
+      else closeInfo();
     }
     panStart = null;
   }
