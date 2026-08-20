@@ -66,10 +66,34 @@
   }
   .brand { font-family: 'Space Grotesk'; font-weight: 700; font-size: 1rem; color: #171b19; letter-spacing: 0.4px; }
   .brand b { color: #2496cd; }
+  .tagline { font-size: 0.62rem; font-weight: 500; color: #6a736e; letter-spacing: 0.3px; margin-top: 1px; }
   .datechip {
     font-family: 'JetBrains Mono'; font-size: 0.6rem; letter-spacing: 1px;
     color: #5c6661; background: rgba(255,255,255,0.9); border: 1px solid #dde1de;
     padding: 5px 11px; border-radius: 20px; backdrop-filter: blur(6px);
+  }
+  /* ── Velkomstkort — vises kun ved første besøk (hw_welcomed) ── */
+  #welcome {
+    position: absolute; left: 14px; right: 14px; bottom: 16px; z-index: 25;
+    max-width: 380px; margin: 0 auto;
+    background: rgba(255,255,255,0.97); border-radius: 14px;
+    box-shadow: 0 0 0 1px #e6eae7, 0 12px 36px rgba(15,20,17,0.16);
+    padding: 18px 18px 16px; display: none;
+  }
+  #welcome.show { display: block; animation: wcIn 0.35s ease; }
+  @keyframes wcIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  #welcome h2 {
+    font-family: 'Space Grotesk'; font-size: 1.02rem; font-weight: 700;
+    color: #121413; margin: 0 0 10px; letter-spacing: -0.2px;
+  }
+  .wc-row { display: flex; gap: 11px; align-items: flex-start; margin-bottom: 9px; }
+  .wc-row .ic { font-size: 1rem; line-height: 1.4; flex-shrink: 0; }
+  .wc-row p { margin: 0; font-size: 0.8rem; color: #4a504c; line-height: 1.5; }
+  .wc-row p b { color: #121413; }
+  #wcOk {
+    display: block; width: 100%; margin-top: 12px; padding: 10px;
+    background: #121413; color: #fff; border: 0; border-radius: 9px;
+    font-family: inherit; font-size: 0.86rem; font-weight: 700; cursor: pointer;
   }
   .zoomctl {
     position: absolute; right: 12px; bottom: 16px;
@@ -154,10 +178,20 @@
     </svg>
   </div>
   <div class="topbar">
-    <span class="brand">HATCH<b>WATCH</b></span>
+    <div>
+      <div class="brand">HATCH<b>WATCH</b></div>
+      <div class="tagline">Klekkeprognoser for fluefiskere</div>
+    </div>
     <span class="datechip" id="chip">LASTER…</span>
   </div>
   <div class="legend" id="legend"></div>
+  <div id="welcome">
+    <h2>Vet når det klekker.</h2>
+    <div class="wc-row"><span class="ic">🗺</span><p><b>Velg et vann på kartet</b> — fargen viser hvor klekkesesongen står akkurat nå.</p></div>
+    <div class="wc-row"><span class="ic">📈</span><p><b>Se prognosen</b> — modellen anslår klekkestart ut fra varmesum, vanntemp, isgang og snø.</p></div>
+    <div class="wc-row"><span class="ic">🔔</span><p><b>Få varsel</b> — abonner, så sier vi fra når det nærmer seg på dine vann.</p></div>
+    <button id="wcOk">Skjønner — vis kartet</button>
+  </div>
   <div class="zoomctl">
     <button id="zin" aria-label="Zoom inn">+</button>
     <button id="zout" aria-label="Zoom ut">−</button>
@@ -215,7 +249,7 @@
     <svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.7-9.3-9A5.2 5.2 0 0 1 12 6.6a5.2 5.2 0 0 1 9.3 4.9c-1.8 4.3-9.3 9-9.3 9z"/></svg>
     <span class="t">Favoritter</span>
   </button>
-  <a class="bi" href="https://tally.so/r/VLvGQE" target="_blank" rel="noopener" style="text-decoration:none">
+  <a class="bi" href="/observasjon.html" style="text-decoration:none">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
     <span class="t">Observasjon</span>
   </a>
@@ -430,8 +464,21 @@ mapEl.addEventListener('wheel', function(e) {
 // Overlegg (bunnark, paneler, knapper, bar) skal ha vanlige klikk — kartets
 // pekerlogikk skal ikke røre dem.
 function inOverlay(t) {
-  return t && t.closest && t.closest('#sheet, .panel, .zoomctl, .topbar, #bar');
+  return t && t.closest && t.closest('#sheet, .panel, .zoomctl, .topbar, #bar, #welcome');
 }
+
+// Velkomstkort — kun første besøk
+(function () {
+  var seen = false;
+  try { seen = localStorage.getItem('hw_welcomed') === '1'; } catch (e) {}
+  if (seen) return;
+  var wc = document.getElementById('welcome');
+  wc.classList.add('show');
+  document.getElementById('wcOk').addEventListener('click', function () {
+    try { localStorage.setItem('hw_welcomed', '1'); } catch (e) {}
+    wc.classList.remove('show');
+  });
+})();
 
 var pointers = {}, lastPinch = null, panStart = null, moved = false;
 mapEl.addEventListener('pointerdown', function(e) {

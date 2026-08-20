@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0d0f0e">
+    <title>Send observasjon — HatchWatch</title>
+    <link rel="icon" type="image/png" sizes="64x64" href="/logos/logo-inverted-64.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #f6f7f5; color: #222925;
+            min-height: 100vh; min-height: 100dvh;
+            -webkit-font-smoothing: antialiased;
+        }
+        nav {
+            background: linear-gradient(135deg, #0d0f0e, #161918); color: white;
+            padding: calc(env(safe-area-inset-top, 0px) + 16px) 18px 14px;
+            display: flex; align-items: center; gap: 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        nav .back { color: #8a918c; text-decoration: none; font-size: 1rem; padding: 4px 6px; }
+        .logo-text {
+            font-family: 'Space Grotesk', sans-serif; font-weight: 700;
+            letter-spacing: 1.5px; font-size: 0.95rem; color: white; text-decoration: none;
+        }
+        .logo-text b { color: #4fb4e6; }
+        main { max-width: 640px; margin: 0 auto; padding: 26px 16px 80px; }
+        h1 {
+            font-family: 'Space Grotesk', sans-serif; font-size: 1.6rem;
+            font-weight: 700; color: #121413; margin-bottom: 8px; letter-spacing: -0.5px;
+        }
+        .intro { font-size: 0.88rem; color: #4a504c; line-height: 1.6; margin-bottom: 22px; }
+        .card {
+            background: #fff; border-radius: 14px; padding: 22px 20px 26px;
+            box-shadow: 0 0 0 1px #e6eae7;
+        }
+        label {
+            display: block; font-size: 0.7rem; font-weight: 700; letter-spacing: 1.2px;
+            text-transform: uppercase; color: #6a736e; margin: 18px 0 7px;
+        }
+        label:first-child { margin-top: 0; }
+        label .opt { font-weight: 500; text-transform: none; letter-spacing: 0; color: #9aa19c; }
+        input[type=text], input[type=email], input[type=number], input[type=date], select, textarea {
+            width: 100%; padding: 11px 12px; font-size: 1rem; font-family: inherit;
+            border: 1px solid #d7dcd7; border-radius: 9px; background: #fbfcfa; color: #222925;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none; border-color: #4fb4e6; box-shadow: 0 0 0 3px rgba(79,180,230,0.15);
+        }
+        textarea { min-height: 90px; resize: vertical; }
+        .seg { display: flex; gap: 6px; }
+        .seg button {
+            flex: 1; padding: 11px 8px; font-size: 0.9rem; font-weight: 600; font-family: inherit;
+            border: 1px solid #d7dcd7; border-radius: 9px; background: #fbfcfa; color: #6a736e; cursor: pointer;
+        }
+        .seg button.on { background: #121413; color: #fff; border-color: #121413; }
+        .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        @media (max-width: 480px) { .row2 { grid-template-columns: 1fr; } }
+        .submit-btn {
+            display: block; width: 100%; margin-top: 24px; padding: 14px;
+            background: #121413; color: white; border: none; border-radius: 10px;
+            font-size: 1rem; font-weight: 700; font-family: inherit; cursor: pointer;
+        }
+        .submit-btn:disabled { opacity: 0.6; cursor: default; }
+        .err { color: #a03020; font-size: 0.84rem; margin-top: 12px; display: none; }
+        .hp { position: absolute; left: -9999px; opacity: 0; height: 0; overflow: hidden; }
+
+        .thanks { text-align: center; padding: 30px 10px; display: none; }
+        .thanks .big { font-size: 2.6rem; margin-bottom: 12px; }
+        .thanks h2 { font-family: 'Space Grotesk', sans-serif; color: #121413; margin-bottom: 10px; }
+        .thanks p { font-size: 0.9rem; color: #4a504c; line-height: 1.6; }
+        .thanks button {
+            margin-top: 18px; padding: 10px 22px; background: transparent; color: #121413;
+            border: 1px solid #c8cec8; border-radius: 9px; font-family: inherit;
+            font-weight: 600; cursor: pointer; font-size: 0.9rem;
+        }
+
+        /* ── Admin ── */
+        #adminWrap { display: none; }
+        .admin-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+        .admin-bar button, .admin-bar a {
+            padding: 9px 14px; font-size: 0.84rem; font-weight: 600; font-family: inherit;
+            border-radius: 9px; border: 1px solid #c8cec8; background: #fff; color: #121413;
+            cursor: pointer; text-decoration: none;
+        }
+        .obs-count { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #6a736e; }
+        .obs-item {
+            background: #fff; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
+            box-shadow: 0 0 0 1px #e6eae7; font-size: 0.86rem; line-height: 1.55;
+        }
+        .obs-item .head { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+        .obs-item .what { font-weight: 700; color: #121413; }
+        .obs-item .when { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: #8a918c; }
+        .obs-item .meta { color: #4a504c; margin-top: 3px; }
+        .obs-item .cmt { color: #4a504c; margin-top: 6px; font-style: italic; }
+        .obs-item .who { margin-top: 6px; font-size: 0.76rem; color: #6a736e; }
+        .badge {
+            display: inline-block; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.8px;
+            text-transform: uppercase; padding: 2px 8px; border-radius: 20px; margin-right: 6px;
+        }
+        .badge.klekking { background: #e8f4fb; color: #1f6591; }
+        .badge.spinnerfall { background: #fdf1e3; color: #9a6a20; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a class="back" href="/" aria-label="Til forsiden">←</a>
+    <a class="logo-text" href="/">HATCH<b>WATCH</b></a>
+</nav>
+
+<main>
+    <!-- ── SKJEMA ── -->
+    <div id="formWrap">
+        <h1>Send observasjon</h1>
+        <p class="intro">Bidra med en observasjon — klekking eller spinnerfall — det styrker
+        modellen og gir bedre prediksjoner for alle. Tusen takk!</p>
+
+        <form class="card" id="obsForm" novalidate>
+            <label>Type observasjon</label>
+            <div class="seg" id="typeSeg">
+                <button type="button" data-v="klekking" class="on">Klekking</button>
+                <button type="button" data-v="spinnerfall">Spinnerfall</button>
+            </div>
+
+            <div class="row2">
+                <div>
+                    <label for="fDate">Dato</label>
+                    <input type="date" id="fDate" required>
+                </div>
+                <div>
+                    <label for="fInsect">Insekt</label>
+                    <select id="fInsect" required>
+                        <option value="">Velg …</option>
+                        <option>Marginata</option>
+                        <option>Vespertina</option>
+                        <option>Vulgata</option>
+                        <option>Grandis</option>
+                    </select>
+                </div>
+            </div>
+
+            <label for="fArea">Lokasjonsområde</label>
+            <select id="fArea" required>
+                <option value="">Velg …</option>
+                <option>Kautokeino</option><option>Alta</option><option>Porsanger</option>
+                <option>Ifjordfjellet</option><option>Dividalen</option><option>Bardu</option>
+                <option>Narvik</option><option>Mo i Rana</option><option>Børgefjell</option>
+                <option>Lierne</option><option>Trondheim</option><option>Rena</option>
+                <option>Finnemarka</option><option>Hardangervidda</option><option>Bergen</option>
+                <option>Røros</option><option>Nordmarka</option><option>Østmarka</option>
+                <option>Vestfjella</option><option>Annet (oppgi i kommentar)</option>
+            </select>
+
+            <div class="row2">
+                <div>
+                    <label for="fLake">Vann <span class="opt">(valgfritt)</span></label>
+                    <input type="text" id="fLake" maxlength="80">
+                </div>
+                <div>
+                    <label for="fAlt">Høyde over havet <span class="opt">(valgfritt, meter)</span></label>
+                    <input type="number" id="fAlt" min="0" max="2500">
+                </div>
+            </div>
+
+            <div class="row2">
+                <div>
+                    <label for="fObserved">Hva ble observert? <span class="opt">(valgfritt)</span></label>
+                    <select id="fObserved">
+                        <option value="">Velg …</option>
+                        <option>Første klekking sett</option>
+                        <option>Pågående klekkebølge</option>
+                        <option>Slutt på klekking</option>
+                        <option>Sporadisk</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="fAmount">Anslag på mengde <span class="opt">(valgfritt)</span></label>
+                    <select id="fAmount">
+                        <option value="">Velg …</option>
+                        <option>Få enkelt-stykker</option>
+                        <option>Tydelig klekking</option>
+                        <option>Eksplosjon (massiv klekking)</option>
+                    </select>
+                </div>
+            </div>
+
+            <label for="fComment">Kommentar / feltbemerkning <span class="opt">(valgfritt)</span></label>
+            <textarea id="fComment" maxlength="2000"></textarea>
+
+            <div class="row2">
+                <div>
+                    <label for="fName">Navn</label>
+                    <input type="text" id="fName" required maxlength="80" autocomplete="name">
+                </div>
+                <div>
+                    <label for="fEmail">E-post</label>
+                    <input type="email" id="fEmail" required maxlength="120" autocomplete="email">
+                </div>
+            </div>
+
+            <!-- Honeypot — usynlig for mennesker, fristende for boter -->
+            <div class="hp" aria-hidden="true">
+                <label for="fWebsite">Nettside</label>
+                <input type="text" id="fWebsite" tabindex="-1" autocomplete="off">
+            </div>
+
+            <div class="err" id="formErr"></div>
+            <button type="submit" class="submit-btn" id="submitBtn">Send inn</button>
+        </form>
+
+        <div class="card thanks" id="thanksCard">
+            <div class="big">🎣</div>
+            <h2>Tusen takk!</h2>
+            <p>Observasjonen er mottatt og går rett inn i kalibreringsgrunnlaget.
+            Hver eneste observasjon gjør prognosene bedre — for alle.</p>
+            <button id="oneMoreBtn">Send en til</button>
+        </div>
+    </div>
+
+    <!-- ── ADMIN ── -->
+    <div id="adminWrap">
+        <h1>Observasjoner</h1>
+        <div class="card" id="keyCard">
+            <label for="fKey">Admin-nøkkel</label>
+            <input type="text" id="fKey" autocomplete="off">
+            <button class="submit-btn" id="keyBtn">Åpne</button>
+            <div class="err" id="keyErr"></div>
+        </div>
+        <div id="adminList" style="display:none">
+            <div class="admin-bar">
+                <span class="obs-count" id="obsCount"></span>
+                <a id="csvLink" href="#">Last ned CSV</a>
+                <button id="pushBtn">🔔 Varsle meg ved nye</button>
+            </div>
+            <div id="obsItems"></div>
+        </div>
+    </div>
+</main>
+
+<script>
+(function () {
+    var qs = new URLSearchParams(location.search);
+
+    // ── ADMIN-MODUS ──────────────────────────────────────────────────────
+    if (qs.get('admin') === '1') {
+        document.getElementById('formWrap').style.display = 'none';
+        document.getElementById('adminWrap').style.display = 'block';
+        initAdmin();
+        return;
+    }
+
+    // ── SKJEMA ───────────────────────────────────────────────────────────
+    var obsType = 'klekking';
+    document.getElementById('typeSeg').addEventListener('click', function (e) {
+        var b = e.target.closest('button'); if (!b) return;
+        obsType = b.dataset.v;
+        this.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
+    });
+
+    // Dato = i dag som default
+    var d = new Date();
+    document.getElementById('fDate').value = d.getFullYear() + '-' +
+        String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+
+    // Forhåndsutfylling: område fra ?area= (dashboard sender med), navn/e-post husket
+    var area = qs.get('area');
+    if (area) {
+        var sel = document.getElementById('fArea');
+        for (var i = 0; i < sel.options.length; i++) {
+            if (sel.options[i].value === area) { sel.value = area; break; }
+        }
+    }
+    try {
+        document.getElementById('fName').value = localStorage.getItem('hw_obs_name') || '';
+        document.getElementById('fEmail').value = localStorage.getItem('hw_obs_email') || '';
+    } catch (e) {}
+
+    document.getElementById('obsForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        var err = document.getElementById('formErr');
+        err.style.display = 'none';
+
+        var payload = {
+            type: obsType,
+            date: document.getElementById('fDate').value,
+            insect: document.getElementById('fInsect').value,
+            area: document.getElementById('fArea').value,
+            lake: document.getElementById('fLake').value,
+            altitude: document.getElementById('fAlt').value,
+            observed: document.getElementById('fObserved').value,
+            amount: document.getElementById('fAmount').value,
+            comment: document.getElementById('fComment').value,
+            name: document.getElementById('fName').value.trim(),
+            email: document.getElementById('fEmail').value.trim(),
+            website: document.getElementById('fWebsite').value
+        };
+
+        if (!payload.date || !payload.insect || !payload.area || !payload.name || !payload.email) {
+            err.textContent = 'Fyll ut dato, insekt, lokasjonsområde, navn og e-post.';
+            err.style.display = 'block';
+            return;
+        }
+
+        var btn = document.getElementById('submitBtn');
+        btn.disabled = true; btn.textContent = 'Sender …';
+
+        fetch('/api/observation', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }).then(function (r) {
+            if (!r.ok) return r.json().then(function (j) { throw new Error(j.error || 'Noe gikk galt'); });
+            try {
+                localStorage.setItem('hw_obs_name', payload.name);
+                localStorage.setItem('hw_obs_email', payload.email);
+            } catch (e) {}
+            document.getElementById('obsForm').style.display = 'none';
+            document.getElementById('thanksCard').style.display = 'block';
+            window.scrollTo(0, 0);
+        }).catch(function (e2) {
+            err.textContent = e2.message + ' — prøv igjen.';
+            err.style.display = 'block';
+        }).finally(function () {
+            btn.disabled = false; btn.textContent = 'Send inn';
+        });
+    });
+
+    document.getElementById('oneMoreBtn').addEventListener('click', function () {
+        document.getElementById('thanksCard').style.display = 'none';
+        var f = document.getElementById('obsForm');
+        f.style.display = 'block';
+        document.getElementById('fLake').value = '';
+        document.getElementById('fAlt').value = '';
+        document.getElementById('fObserved').value = '';
+        document.getElementById('fAmount').value = '';
+        document.getElementById('fComment').value = '';
+    });
+
+    // ── ADMIN-FUNKSJONER ─────────────────────────────────────────────────
+    function initAdmin() {
+        var stored = '';
+        try { stored = localStorage.getItem('hw_obs_key') || ''; } catch (e) {}
+        if (stored) {
+            document.getElementById('fKey').value = stored;
+            loadObs(stored);
+        }
+        document.getElementById('keyBtn').addEventListener('click', function () {
+            loadObs(document.getElementById('fKey').value.trim());
+        });
+        document.getElementById('fKey').addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') loadObs(this.value.trim());
+        });
+    }
+
+    function loadObs(key) {
+        if (!key) return;
+        var keyErr = document.getElementById('keyErr');
+        keyErr.style.display = 'none';
+        fetch('/api/observation?key=' + encodeURIComponent(key))
+            .then(function (r) {
+                if (r.status === 401) throw new Error('Feil nøkkel.');
+                if (!r.ok) throw new Error('Kunne ikke hente observasjoner.');
+                return r.json();
+            })
+            .then(function (j) {
+                try { localStorage.setItem('hw_obs_key', key); } catch (e) {}
+                document.getElementById('keyCard').style.display = 'none';
+                document.getElementById('adminList').style.display = 'block';
+                document.getElementById('obsCount').textContent = j.count + ' observasjon' + (j.count === 1 ? '' : 'er');
+                document.getElementById('csvLink').href =
+                    '/api/observation?key=' + encodeURIComponent(key) + '&format=csv';
+                renderObs(j.observations);
+                wirePush(key);
+            })
+            .catch(function (e2) {
+                keyErr.textContent = e2.message;
+                keyErr.style.display = 'block';
+            });
+    }
+
+    function esc(s) {
+        return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+        });
+    }
+
+    function renderObs(list) {
+        var el = document.getElementById('obsItems');
+        if (!list.length) {
+            el.innerHTML = '<div class="obs-item">Ingen observasjoner ennå.</div>';
+            return;
+        }
+        el.innerHTML = list.map(function (o) {
+            var meta = [o.lake, o.altitude != null ? o.altitude + ' moh' : '', o.observed, o.amount]
+                .filter(Boolean).join(' · ');
+            return '<div class="obs-item">' +
+                '<div class="head"><span class="what">' +
+                    '<span class="badge ' + esc(o.type) + '">' + esc(o.type) + '</span>' +
+                    esc(o.insect) + ' — ' + esc(o.area) + ' · ' + esc(o.date) + '</span>' +
+                '<span class="when">' + esc((o.ts || '').slice(0, 16).replace('T', ' ')) + '</span></div>' +
+                (meta ? '<div class="meta">' + esc(meta) + '</div>' : '') +
+                (o.comment ? '<div class="cmt">«' + esc(o.comment) + '»</div>' : '') +
+                '<div class="who">' + esc(o.name) + ' · ' + esc(o.email) + '</div>' +
+            '</div>';
+        }).join('');
+    }
+
+    // Push-abonnement for admin: gjenbruker sidens SW + VAPID-nøkkel.
+    var VAPID_PUBLIC = 'BDuIQlsFE48rDc_wEer_M6X4HyQd3CD2-4YWcLhKC0cqM9sAYU6fx70nR4PVaueA3T3sfG_c2AEFxn7ETpoLhus';
+    function urlBase64ToUint8Array(base64String) {
+        var padding = '='.repeat((4 - base64String.length % 4) % 4);
+        var base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+        var rawData = atob(base64);
+        var out = new Uint8Array(rawData.length);
+        for (var i = 0; i < rawData.length; ++i) out[i] = rawData.charCodeAt(i);
+        return out;
+    }
+
+    function wirePush(key) {
+        var btn = document.getElementById('pushBtn');
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            btn.style.display = 'none';
+            return;
+        }
+        btn.addEventListener('click', function () {
+            btn.disabled = true;
+            Notification.requestPermission().then(function (perm) {
+                if (perm !== 'granted') throw new Error('Varsler ble ikke tillatt.');
+                return navigator.serviceWorker.register('/sw.js');
+            }).then(function () {
+                return navigator.serviceWorker.ready;
+            }).then(function (reg) {
+                return reg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC)
+                });
+            }).then(function (sub) {
+                return fetch('/api/observation?action=admin-subscribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key: key, subscription: sub.toJSON() })
+                });
+            }).then(function (r) {
+                if (!r.ok) throw new Error('Abonnering feilet.');
+                btn.textContent = '✓ Du varsles ved nye observasjoner';
+            }).catch(function (e2) {
+                btn.textContent = '⚠ ' + e2.message;
+                btn.disabled = false;
+            });
+        });
+    }
+})();
+</script>
+
+</body>
+</html>

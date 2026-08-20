@@ -7,7 +7,7 @@
 //
 // Innført 2026-05-19.
 
-const CACHE_VERSION = 'hw-v7';  // v7: bunn-bar på dashboard + redesignede undersider (2026-08-19)
+const CACHE_VERSION = 'hw-v8';  // v8: eget observasjonsskjema + tidshorisont-velger (2026-08-20)
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const API_CACHE = `${CACHE_VERSION}-api`;
 const VENDOR_CACHE = `${CACHE_VERSION}-vendor`;
@@ -20,6 +20,7 @@ const SHELL_URLS = [
     '/artikler.html',
     '/om.html',
     '/varsler.html',
+    '/observasjon.html',
     '/manifest.json',
     '/logos/logo-inverted-192.png',
     '/logos/logo-inverted-256.png',

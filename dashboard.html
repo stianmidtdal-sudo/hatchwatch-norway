@@ -8812,7 +8812,7 @@ main();
      er fortsatt tilgjengelig som lenke i footer. Klekkeobs-FAB beholdes
      med diskret outline-styling for å ta minst mulig plass. -->
 <button id="observationFAB"
-        onclick="openHatchForm('VLvGQE')"
+        onclick="location.href='/observasjon.html?area='+encodeURIComponent((typeof LOC==='object'&&LOC&&LOC.area)||'')"
         aria-label="Bidra med observasjon"
         style="display:none; position:fixed; bottom:20px; right:20px; padding:8px 16px;
                background:#121413; color:white; border:1.5px solid white; border-radius:24px;
@@ -9365,7 +9365,7 @@ if ('serviceWorker' in navigator) {
             <svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.7-9.3-9A5.2 5.2 0 0 1 12 6.6a5.2 5.2 0 0 1 9.3 4.9c-1.8 4.3-9.3 9-9.3 9z"/></svg>
             <span>Favoritter</span>
         </button>
-        <button class="hwb" onclick="if(typeof openHatchForm==='function')openHatchForm('VLvGQE')">
+        <button class="hwb" onclick="location.href='/observasjon.html?area='+encodeURIComponent((typeof LOC==='object'&&LOC&&LOC.area)||'')">
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
             <span>Observasjon</span>
         </button>
