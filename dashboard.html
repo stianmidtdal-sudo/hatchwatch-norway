@@ -705,6 +705,12 @@
         .wx-hr .i { margin: 6px auto 4px; }
         .wx-hr .deg { font-size: 0.82rem; font-weight: 700; }
         .wx-hr .w { font-size: 0.65rem; margin-top: 2px; }
+        /* Vindpil: stor og tydelig — vind er viktig i fluefiske (Stian 2026-08-20).
+           Glyfen arver .w-fargen (rolig/frisk/sterk) så retning + styrke leses samlet. */
+        .wx-hr .w .wa {
+            display: inline-block; font-size: 1.15rem; font-weight: 700;
+            line-height: 1; vertical-align: -3px; margin-right: 3px;
+        }
         .wx-facts {
             display: flex; background: rgba(255,255,255,0.82);
             border-top: 1px solid rgba(120,150,170,0.15);
@@ -5146,7 +5152,7 @@ function wxHoursHtml(hours, isToday) {
             <div class="t">${String(h.h).padStart(2, '0')}</div>
             <svg class="wx-ico i" width="25" height="20"><use href="#${wxIcon(h.symbol, h.h)}"/></svg>
             <div class="deg ${tc}">${Math.round(h.temp)}°</div>
-            <div class="w ${wc}">${wxArrow(h.dir)} ${Math.round(h.wind)}</div>
+            <div class="w ${wc}"><span class="wa">${wxArrow(h.dir)}</span>${Math.round(h.wind)}</div>
         </div>`;
     }).join('') + `</div>`;
 }
