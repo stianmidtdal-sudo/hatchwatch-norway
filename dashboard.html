@@ -3221,7 +3221,10 @@ function histAvgADG(airData, fromDoy, toDoy) {
 
 function buildDoyAvgTemp(airData) {
     const sums = {}, cnts = {};
-    const histYears = [2016,2017,2018,2019,2020,2021,2022,2023,2024,2025];
+    // Kun HELE år (yr < YEAR) — inneværende år ville doble-telt dagens
+    // forhold inn i «klimanormalen» som brukes til framskrivning.
+    const histYears = [];
+    for (let yr = 2016; yr < YEAR; yr++) histYears.push(yr);
     for (const [d, v] of Object.entries(airData)) {
         const yr = parseInt(d.slice(0, 4));
         if (!histYears.includes(yr)) continue;
@@ -3414,7 +3417,9 @@ function computeHistoricalStats(airData, threshold, wtData) {
     const isExtended = new URLSearchParams(location.search).get('extended') === '1';
     const startYear = isExtended ? 2016 : (LOC.histYearsStart ?? 2019);
     const histYears = [];
-    for (let yr = startYear; yr <= 2025; yr++) histYears.push(yr);
+    // 2026-08-20: dynamisk grense — fjorårene ruller automatisk inn i
+    // statistikken hvert nyttår (2026 blir del av medianen i 2027 osv.).
+    for (let yr = startYear; yr < YEAR; yr++) histYears.push(yr);
     const wtThresh = getWtThreshold(LOC);
     const useDualTrigger = LOC.nveStation && wtData && Object.keys(wtData).length > 0;
 
@@ -3463,6 +3468,19 @@ function computeHistoricalStats(airData, threshold, wtData) {
             crossings.push({ year: yr, doy: normalizedDoy(gddResult.dateStr), dateStr: gddResult.dateStr });
         }
     }
+    // Inneværende års krysning vises som EGEN rad i tabellen, men holdes
+    // UTENFOR median/tidligst/senest/σ — sesongbarometeret og «vs. median»
+    // skal sammenligne mot TIDLIGERE år, ikke mot seg selv. (Stian 2026-08-20:
+    // «legg inn siste dato så historikken blir komplett».)
+    let currentYear = null;
+    if (useDualTrigger) {
+        const r = findDualTriggerCrossing(airData, wtData, YEAR, threshold, wtThresh);
+        if (r) currentYear = { year: YEAR, doy: normalizedDoy(r.dateStr), dateStr: r.dateStr };
+    } else {
+        const r = calcGDDCrossingYear(airData, YEAR, threshold);
+        if (r) currentYear = { year: YEAR, doy: normalizedDoy(r.dateStr), dateStr: r.dateStr };
+    }
+
     if (crossings.length < 2) return null;
     const doys = crossings.map(c => c.doy).sort((a, b) => a - b);
     const n = doys.length;
@@ -3471,7 +3489,7 @@ function computeHistoricalStats(airData, threshold, wtData) {
     const median = n % 2 === 0
         ? (doys[Math.floor(n / 2) - 1] + doys[Math.floor(n / 2)]) / 2
         : doys[Math.floor(n / 2)];
-    return { crossings, earliest: doys[0], latest: doys[n - 1],
+    return { crossings, currentYear, earliest: doys[0], latest: doys[n - 1],
              median: Math.round(median), mean: Math.round(mean),
              std: Math.round(std * 10) / 10, n };
 }
@@ -3551,7 +3569,13 @@ function renderHistoricalGDDSection(stats, correctionDelta, snowData, airData) {
     if (LOC.showIce) html += `<th>${t('histIceThickness')}</th>`;
     html += `</tr></thead><tbody>`;
 
-    for (const c of [...stats.crossings].sort((a, b) => b.year - a.year)) {
+    const allRows = [...stats.crossings];
+    if (stats.currentYear) allRows.push(stats.currentYear);
+    for (const c of allRows.sort((a, b) => b.year - a.year)) {
+        const isCur = stats.currentYear && c.year === stats.currentYear.year;
+        const curTag = isCur
+            ? ` <span style="font-size:0.68rem;color:#888;font-weight:400">· ${LANG === 'no' ? 'i år' : 'this year'}</span>`
+            : '';
         const diff = c.doy - stats.median;
         const sign = diff >= 0 ? '+' : '';
         const cls  = diff <= -5 ? 'yr-early' : diff >= 5 ? 'yr-late' : '';
@@ -3566,7 +3590,7 @@ function renderHistoricalGDDSection(stats, correctionDelta, snowData, airData) {
         const iceCm = calcMaxIce(c.year);
 
         html += `<tr>
-            <td><strong>${c.year}</strong></td>
+            <td><strong>${c.year}</strong>${curTag}</td>
             <td class="${cls}">${fmt(parseDate(c.dateStr))}</td>
             <td style="color:${col}">${sign}${diff} ${t('daysLabel')}</td>
             <td>${isgang}</td>
@@ -5884,8 +5908,10 @@ function renderWaterTempChart(wtData) {
         2020:{ color:'#6ab187', w:1.2 }, 2021:{ color:'#a8c97a', w:1.2 },
         2022:{ color:'#d4b44a', w:1.5 }, 2023:{ color:'#e08c3a', w:1.5 },
         2024:{ color:'#c0607a', w:2 }, 2025:{ color:'#8e44ad', w:2 },
+        2026:{ color:'#3b7fa8', w:2 },
     };
-    const histYears = [2016,2017,2018,2019,2020,2021,2022,2023,2024,2025];
+    const histYears = [];
+    for (let yr = 2016; yr < YEAR; yr++) histYears.push(yr);
     const datasets = histYears.map(yr => {
         const s = YEAR_STYLE[yr] || { color:'#aaa', w:1 };
         return { label: String(yr), data: doys.map(d => byYear[yr]?.[d] ?? null),
@@ -8226,7 +8252,7 @@ function runCalibration(airData, wtData) {
         if (wtT === null) return null;
         const startYear = LOC.histYearsStart ?? 2019;
         const gaps = [];
-        for (let yr = startYear; yr <= 2025; yr++) {
+        for (let yr = startYear; yr < YEAR; yr++) {
             const gddDoy = findGddOnlyCrossingDoy(yr, gddT);
             if (gddDoy == null) continue;
             const wtDateStr = findWTCrossing(yr, wtT);
