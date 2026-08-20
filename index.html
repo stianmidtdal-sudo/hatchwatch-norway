@@ -88,37 +88,6 @@
     background: rgba(255,255,255,0.9); border: 1px solid #dde1de; padding: 4px 10px; border-radius: 16px; width: fit-content; backdrop-filter: blur(6px); }
   .lg i { width: 7px; height: 7px; border-radius: 50%; }
 
-  /* ── BUNNARK ── */
-  #sheet {
-    position: absolute; left: 10px; right: 10px;
-    bottom: 12px;
-    z-index: 25; background: rgba(18,20,19,0.97); border: 1px solid #2e3230;
-    border-radius: 18px; padding: 13px 16px 13px; backdrop-filter: blur(10px);
-    box-shadow: 0 -8px 34px rgba(0,0,0,0.5);
-    transform: translateY(calc(100% + 100px)); transition: transform 0.28s cubic-bezier(.3,.9,.3,1);
-  }
-  #sheet.open { transform: translateY(0); }
-  .grip { width: 32px; height: 4px; background: #3b403d; border-radius: 2px; margin: 0 auto 10px; }
-  .sh-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; gap: 10px; }
-  .sh-nm { font-family: 'Space Grotesk'; font-weight: 700; font-size: 1.02rem; color: #f0f6f1; display: flex; align-items: center; gap: 9px; min-width: 0; }
-  .favbtn { background: none; border: 0; cursor: pointer; padding: 2px; line-height: 0; }
-  .favbtn svg { width: 17px; height: 17px; stroke: #6f7873; fill: none; stroke-width: 2; }
-  .favbtn.faved svg { stroke: #e8b25e; fill: #e8b25e; }
-  .sh-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 0.58rem; font-weight: 700; letter-spacing: 0.5px; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
-  .sh-pill.now { background: rgba(79,180,230,0.15); color: #4fb4e6; }
-  .sh-pill.now i { width: 6px; height: 6px; border-radius: 50%; background: #4fb4e6; }
-  .sh-pill.soon { background: rgba(232,178,94,0.14); color: #e8b25e; }
-  .sh-pill.later { background: rgba(170,178,173,0.12); color: #aab2ad; }
-  .sh-pill.closed, .sh-pill.pre, .sh-pill.unknown { background: rgba(255,255,255,0.06); color: #9aa29d; }
-  .sh-line { font-size: 0.74rem; color: #a9b1ac; line-height: 1.55; }
-  .sh-line b { color: #eef1ee; font-weight: 600; }
-  .sh-cta { display: flex; gap: 8px; margin-top: 11px; }
-  .sh-btn {
-    flex: 1; text-align: center; font-size: 0.74rem; font-weight: 700; padding: 10px 0;
-    border-radius: 10px; border: 0; cursor: pointer; text-decoration: none; font-family: inherit;
-  }
-  .sh-btn.pri { background: #4fb4e6; color: #061018; }
-
   /* ── SPOTIFY-BAR ── */
   #bar {
     flex-shrink: 0; z-index: 30; position: relative;
@@ -141,6 +110,15 @@
     padding: calc(env(safe-area-inset-top, 0px) + 16px) 16px 0;
   }
   .panel.open { display: flex; }
+  /* Desktop: fullskjerm-panel er en mobil-antagelse. Høyre-drawer i stedet
+     (Stian 2026-08-19) — kartet forblir synlig bak. */
+  @media (min-width: 700px) {
+    .panel {
+      left: auto; width: 400px;
+      border-left: 1px solid #262a28;
+      box-shadow: -16px 0 48px rgba(0,0,0,0.45);
+    }
+  }
   .p-title { font-family: 'Space Grotesk'; font-weight: 700; font-size: 1.3rem; color: #f0f6f1; margin: 6px 2px 14px; display: flex; justify-content: space-between; align-items: center; }
   .p-close { background: none; border: 0; color: #7b847e; font-size: 1.4rem; cursor: pointer; padding: 4px 10px; }
   .p-scroll { flex: 1; overflow-y: auto; padding-bottom: 100px; }
@@ -184,22 +162,6 @@
     <button id="zin" aria-label="Zoom inn">+</button>
     <button id="zout" aria-label="Zoom ut">−</button>
   </div>
-  <div id="sheet">
-    <div class="grip"></div>
-    <div class="sh-top">
-      <span class="sh-nm"><span id="shName">–</span>
-        <button class="favbtn" id="favToggle" aria-label="Favoritt">
-          <svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.7-9.3-9A5.2 5.2 0 0 1 12 6.6a5.2 5.2 0 0 1 9.3 4.9c-1.8 4.3-9.3 9-9.3 9z"/></svg>
-        </button>
-      </span>
-      <span id="shPill" class="sh-pill closed">–</span>
-    </div>
-    <div class="sh-line" id="shLine">–</div>
-    <div class="sh-cta">
-      <a class="sh-btn pri" id="shOpen" href="#">Åpne dashbord</a>
-    </div>
-  </div>
-
   <div class="panel" id="favPanel">
     <div class="p-title">Favoritter <button class="p-close" data-close="favPanel">×</button></div>
     <div class="p-scroll" id="favList"></div>
@@ -328,17 +290,6 @@ function fmtDate(d) {
   return d.getDate() + '. ' + ['jan','feb','mars','april','mai','juni','juli','aug','sep','okt','nov','des'][d.getMonth()];
 }
 
-// Epistemisk ordlyd: "modellen anslo/anslår" — aldri "det klekket".
-function sheetLine(s) {
-  switch (s.st) {
-    case 'now':    return 'Anslått klekkestart <b>' + fmtDate(s.date) + '</b> — dag ' + s.days + ' av sesongen.';
-    case 'soon':   return 'Anslått klekkestart <b>' + fmtDate(s.date) + '</b> — om ' + s.days + ' dager.';
-    case 'later':  return 'Anslått klekkestart <b>' + fmtDate(s.date) + '</b> — om ~' + Math.round(s.days/7) + ' uker.';
-    case 'closed': return 'Sesongen er over for i år. Modellen anslo klekkestart <b>' + fmtDate(s.date) + '</b>.';
-    case 'pre':    return 'Prognosen åpner <b>1. april</b>. Historikk og vintersignaler er tilgjengelig i dashbordet.';
-    default:       return 'Ingen lagret prognose ennå — åpne dashbordet, så beregnes den.';
-  }
-}
 function pillFor(s) {
   switch (s.st) {
     case 'now':    return ['now',    '<i></i>KLEKKING · DAG ' + s.days];
@@ -359,7 +310,6 @@ function setFavs(f) { try { localStorage.setItem('hw_favs', JSON.stringify(f)); 
 // ── Bygg pinner i SVG ────────────────────────────────────────────────
 var pinlayer = document.getElementById('pinlayer');
 var states = {};   // id → seasonState
-var selected = null;
 var SVGNS = 'http://www.w3.org/2000/svg';
 
 function el(tag, attrs) {
@@ -384,11 +334,6 @@ function buildPins() {
       var halo = el('circle', { 'class': 'halo', cx: p.x, cy: p.y, r: 7 / s });
       halo.style.strokeWidth = (1.1 / s) + 'px';
       g.appendChild(halo);
-    }
-    if (selected === p.id) {
-      var ring = el('circle', { cx: p.x, cy: p.y, r: 7.4 / s, fill: 'none', stroke: '#1f83bd' });
-      ring.style.strokeWidth = (1.3 / s) + 'px';
-      g.appendChild(ring);
     }
     var core = el('circle', { 'class': 'core', cx: p.x, cy: p.y, r: 4.6 / s });
     core.style.strokeWidth = (1.4 / s) + 'px';
@@ -422,34 +367,12 @@ function buildPins() {
   }
 }
 
-// ── Bunnark ──────────────────────────────────────────────────────────
-function selectLoc(id) {
-  selected = id;
-  var p = LOCS.find(function(x){ return x.id === id; });
-  var s = states[id] || { st: 'unknown' };
-  document.getElementById('shName').textContent = p.name;
-  var pill = pillFor(s);
-  var pillEl = document.getElementById('shPill');
-  pillEl.className = 'sh-pill ' + pill[0];
-  pillEl.innerHTML = pill[1];
-  document.getElementById('shLine').innerHTML = sheetLine(s);
-  document.getElementById('shOpen').href = '/dashboard.html?loc=' + encodeURIComponent(id);
-  var favB = document.getElementById('favToggle');
-  favB.className = 'favbtn' + (getFavs().indexOf(id) !== -1 ? ' faved' : '');
-  document.getElementById('sheet').classList.add('open');
-  buildPins();
+// ── Pinnetrykk → rett til lokasjonen (2026-08-19) ────────────────────
+// Bunnarket er fjernet: statusfargen forteller alt FØR klikket, og heroen
+// på lokasjonssiden forteller resten. Ett trykk mindre.
+function openLoc(id) {
+  location.href = '/dashboard.html?loc=' + encodeURIComponent(id);
 }
-// Trykk på kart/pinner håndteres i pointerup (tap-deteksjon) — vanlige
-// click-lyttere fungerer ikke her fordi setPointerCapture omdirigerer
-// hendelsene til kartelementet. Det var derfor verken pinner eller meny
-// lot seg trykke på (Stians punkt 3 og 5, 2026-08-19).
-document.getElementById('favToggle').addEventListener('click', function() {
-  if (!selected) return;
-  var f = getFavs(); var i = f.indexOf(selected);
-  if (i === -1) f.push(selected); else f.splice(i, 1);
-  setFavs(f);
-  this.className = 'favbtn' + (f.indexOf(selected) !== -1 ? ' faved' : '');
-});
 
 // ── Zoom & pan via viewBox (2026-08-19) ─────────────────────────────
 // v1 zoomet med CSS transform: scale() — da rasterizerer nettleseren SVG-en
@@ -549,12 +472,8 @@ function endPointer(e) {
       var t = document.elementFromPoint(e.clientX, e.clientY);
       var pin = t && t.closest ? t.closest('.pin') : null;
       var cl  = t && t.closest ? t.closest('.clusterpin') : null;
-      if (pin) selectLoc(pin.getAttribute('data-id'));
+      if (pin) openLoc(pin.getAttribute('data-id'));
       else if (cl) zoomTo(3.4, CLUSTER_C.x, CLUSTER_C.y);
-      else {
-        document.getElementById('sheet').classList.remove('open');
-        selected = null; buildPins();
-      }
     }
     panStart = null;
   }
@@ -563,13 +482,33 @@ mapEl.addEventListener('pointerup', endPointer);
 mapEl.addEventListener('pointercancel', endPointer);
 
 // ── Paneler ──────────────────────────────────────────────────────────
-document.getElementById('navMenu').addEventListener('click', function(){ document.getElementById('menuPanel').classList.add('open'); });
-document.getElementById('navFav').addEventListener('click', function(){ renderFavs(); document.getElementById('favPanel').classList.add('open'); });
-document.getElementById('navHome').addEventListener('click', function(){
+// Aktiv fane i baren følger det åpne panelet (Stian 2026-08-19).
+// Observasjon er en utgående handling (Tally) og får ingen varig tilstand.
+function setNav(which) {
+  ['navHome', 'navFav', 'navMenu'].forEach(function(id) {
+    document.getElementById(id).classList.toggle('on', id === which);
+  });
+}
+document.getElementById('navMenu').addEventListener('click', function() {
+  document.getElementById('favPanel').classList.remove('open');
+  document.getElementById('menuPanel').classList.add('open');
+  setNav('navMenu');
+});
+document.getElementById('navFav').addEventListener('click', function() {
+  document.getElementById('menuPanel').classList.remove('open');
+  renderFavs();
+  document.getElementById('favPanel').classList.add('open');
+  setNav('navFav');
+});
+document.getElementById('navHome').addEventListener('click', function() {
   document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('open'); });
+  setNav('navHome');
 });
 document.querySelectorAll('.p-close').forEach(function(b) {
-  b.addEventListener('click', function(){ document.getElementById(b.dataset.close).classList.remove('open'); });
+  b.addEventListener('click', function() {
+    document.getElementById(b.dataset.close).classList.remove('open');
+    setNav('navHome');
+  });
 });
 
 function renderFavs() {

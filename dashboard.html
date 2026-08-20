@@ -6,7 +6,7 @@
     <title>Hatch Watch</title>
     <!-- PWA-metadata (innført 2026-05-19) -->
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#1B4332">
+    <meta name="theme-color" content="#0d0f0e">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="HatchWatch">
@@ -70,7 +70,7 @@
             /* iOS PWA safe-area: legg statusbar-høyden ON TOP av standard 16px padding.
                Pluss ekstra right-padding for å lage plass til absolutt-plasserte kontroller. */
             padding-top: calc(env(safe-area-inset-top, 0px) + 10px);
-            padding-right: calc(env(safe-area-inset-right, 0px) + 112px); /* plass til ♥ + ☰ */
+            padding-right: calc(env(safe-area-inset-right, 0px) + 64px); /* plass til ♥ */
             padding-bottom: 10px;
             padding-left: calc(env(safe-area-inset-left, 0px) + 28px);
             display: flex;
@@ -163,10 +163,10 @@
             border-top: 3px solid #7fc9e8;
             text-align: center;
         }
-        .hist-gdd-stat.hist-gdd-median { border-top-color: #1B4332; }
+        .hist-gdd-stat.hist-gdd-median { border-top-color: #121413; }
         .hist-gdd-label { font-size: 0.68rem; font-weight: 600; text-transform: uppercase;
                           letter-spacing: 0.6px; color: #888; margin-bottom: 6px; }
-        .hist-gdd-val { font-size: 1.4rem; font-weight: 700; color: #1B4332; }
+        .hist-gdd-val { font-size: 1.4rem; font-weight: 700; color: #121413; }
         .hist-gdd-stat.hist-gdd-median .hist-gdd-val { font-size: 1.6rem; }
         .yr-early { color: #2D6A4F; font-weight: 600; }
         .yr-late  { color: #a03020; font-weight: 600; }
@@ -198,7 +198,7 @@
         }
         .kpi-card.na { border-top-color: #ccc; }
         .kpi-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: #888; }
-        .kpi-value { font-size: 2.4rem; font-weight: 700; color: #1B4332; line-height: 1; margin: 7px 0 4px; }
+        .kpi-value { font-size: 2.4rem; font-weight: 700; color: #121413; line-height: 1; margin: 7px 0 4px; }
         .kpi-value.na-val { font-size: 1.2rem; color: #aaa; }
         .kpi-unit { font-size: 0.82rem; color: #777; }
 
@@ -215,7 +215,7 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.07);
         }
         .card-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #888; margin-bottom: 8px; }
-        .card-value { font-size: 1.75rem; font-weight: 700; color: #1B4332; line-height: 1.1; }
+        .card-value { font-size: 1.75rem; font-weight: 700; color: #121413; line-height: 1.1; }
         .card-note { font-size: 0.72rem; color: #999; margin-top: 5px; }
         .card-highlight { color: #1f83bd; }
 
@@ -286,7 +286,7 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.05);
             line-height: 1.5;
         }
-        .conv-summary strong { color: #1B4332; }
+        .conv-summary strong { color: #121413; }
         .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; margin-top: 8px; }
         .badge-active { background: #d9edf8; color: #14425c; }
         .badge-cold { background: #d9eeff; color: #1a4a6a; }
@@ -294,7 +294,7 @@
         .badge-prior { background: #fff3cd; color: #856404; }
 
         /* Hero-boksen — samme mørke flate som kartets bunnark, isblå aksent.
-           Den gamle grønne gradienten (#1B4332→#2D6A4F) var det siste store
+           Den gamle grønne gradienten (#121413→#2D6A4F) var det siste store
            «gammelt design»-elementet. (Fargevask 2026-08-19) */
         .best-wrap {
             background: #121413;
@@ -507,7 +507,7 @@
             width: 100%;
             padding: 0;
             text-align: left;
-            color: #1B4332;
+            color: #121413;
         }
         .settefisk-toggle:focus-visible { outline: 2px solid #4fb4e6; outline-offset: 4px; border-radius: 4px; }
         .settefisk-label {
@@ -515,7 +515,7 @@
             opacity: 0.7;
             text-transform: uppercase;
             letter-spacing: 1.2px;
-            color: #1B4332;
+            color: #121413;
             font-weight: 700;
         }
         .settefisk-summary {
@@ -526,7 +526,7 @@
         .settefisk-summary .nofish { color: #888; font-weight: 500; }
         .settefisk-body {
             margin-top: 14px;
-            border-top: 1px solid rgba(27,67,50,0.08);
+            border-top: 1px solid rgba(18,20,19,0.08);
             padding-top: 14px;
             display: none;
         }
@@ -535,7 +535,7 @@
         .settefisk-chev {
             display: inline-block;
             font-size: 0.7rem;
-            color: #1B4332;
+            color: #121413;
             transition: transform 0.18s ease;
             margin-right: 6px;
         }
@@ -558,13 +558,13 @@
             font-size: 0.66rem;
             font-weight: 700;
             letter-spacing: 0.5px;
-            color: rgba(27,67,50,0.6);
+            color: rgba(18,20,19,0.6);
             text-transform: uppercase;
         }
         .settefisk-bar .num {
             font-size: 1.05rem;
             font-weight: 700;
-            color: #1B4332;
+            color: #121413;
             line-height: 1.2;
             margin-top: 4px;
             font-variant-numeric: tabular-nums;
@@ -585,7 +585,7 @@
             line-height: 1.5;
             margin-top: 4px;
         }
-        .settefisk-meta strong { color: #1B4332; }
+        .settefisk-meta strong { color: #121413; }
         .settefisk-meta .comment {
             display: block;
             margin-top: 6px;
@@ -762,7 +762,7 @@
         }
         .loc-item { display: flex; flex-direction: column; }
         .loc-key { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #888; }
-        .loc-val { font-weight: 600; color: #1B4332; margin-top: 2px; }
+        .loc-val { font-weight: 600; color: #121413; margin-top: 2px; }
 
         /* ── LOADING / ERROR ── */
         .loading-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 20px; gap: 16px; color: #555; }
@@ -779,7 +779,7 @@
         #gddHistSection {
             margin-top: 40px;
             padding-top: 32px;
-            border-top: 1px solid rgba(27,67,50,0.12);
+            border-top: 1px solid rgba(18,20,19,0.12);
         }
 
         .error-box { background: #fff3f0; border: 1px solid #f5a090; border-radius: 10px; padding: 20px; color: #a03020; font-size: 0.86rem; line-height: 1.6; }
@@ -835,6 +835,63 @@
             letter-spacing: -0.5px;
         }
         header h1 { font-family: 'Space Grotesk', 'Inter', sans-serif; }
+
+        /* ── BUNN-BAR + PANELER (2026-08-19) — speiler forsiden ── */
+        body { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 76px); }
+        #hwBar {
+            position: fixed; left: 0; right: 0; bottom: 0; z-index: 900;
+            background: #0a0c0b;
+            border-top: 1px solid #4fb4e6;
+            display: grid; grid-template-columns: repeat(4, 1fr); align-items: center;
+            padding: 9px 6px calc(env(safe-area-inset-bottom, 0px) + 10px);
+        }
+        .hwb {
+            text-align: center; background: none; border: 0; cursor: pointer;
+            padding: 4px 0 0; font-family: inherit; text-decoration: none; display: block;
+        }
+        .hwb svg {
+            width: 23px; height: 23px; margin: 0 auto 3px; display: block;
+            stroke: #7d8a80; fill: none; stroke-width: 1.7;
+            stroke-linecap: round; stroke-linejoin: round;
+        }
+        .hwb span { font-size: 0.58rem; font-weight: 600; color: #7d8a80; }
+        .hwb.on svg { stroke: #fff; }
+        .hwb.on span { color: #fff; font-weight: 700; }
+        .hwpanel {
+            position: fixed; inset: 0; bottom: 0; z-index: 950; background: #101211;
+            display: none; flex-direction: column;
+            padding: calc(env(safe-area-inset-top, 0px) + 16px) 16px 90px;
+        }
+        .hwpanel.open { display: flex; }
+        @media (min-width: 700px) {
+            .hwpanel {
+                left: auto; width: 400px;
+                border-left: 1px solid #262a28;
+                box-shadow: -16px 0 48px rgba(0,0,0,0.45);
+            }
+        }
+        .hwp-title {
+            font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.3rem;
+            color: #f0f4f1; margin: 6px 2px 14px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .hwp-close { background: none; border: 0; color: #7b847e; font-size: 1.4rem; cursor: pointer; padding: 4px 10px; }
+        .hwp-scroll { flex: 1; overflow-y: auto; }
+        .hwp-row {
+            display: flex; align-items: center; gap: 14px; padding: 13px 10px;
+            border-radius: 12px; color: #dde2df; text-decoration: none; cursor: pointer;
+            background: none; border: 0; width: 100%; text-align: left;
+            font-family: inherit; font-size: 1rem;
+        }
+        .hwp-row:hover { background: rgba(255,255,255,0.05); }
+        .hwp-row svg {
+            width: 21px; height: 21px; stroke: #99a29d; fill: none; stroke-width: 1.7;
+            stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0;
+        }
+        .hwp-row .mt { font-size: 0.9rem; font-weight: 600; }
+        .hwp-row .ms { font-size: 0.67rem; color: #7b847e; }
+        .hwp-row .chev { margin-left: auto; color: #4f5551; font-size: 0.8rem; }
+        .hwp-empty { text-align: center; color: #7b847e; font-size: 0.8rem; line-height: 1.7; padding: 40px 30px; }
     </style>
 </head>
 <body>
@@ -858,25 +915,25 @@
         <button id="favHeart" type="button" aria-label="Favoritt" title="Favoritt">
             <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 20.5s-7.5-4.7-9.3-9A5.2 5.2 0 0 1 12 6.6a5.2 5.2 0 0 1 9.3 4.9c-1.8 4.3-9.3 9-9.3 9z"/></svg>
         </button>
-        <button id="hwMenuBtn" type="button" aria-label="Meny" title="Meny" style="background:rgba(255,255,255,0.12);color:white;border:none;width:52px;height:52px;border-radius:8px;cursor:pointer;font-size:1.8rem;display:flex;align-items:center;justify-content:center;transition:background 0.15s;line-height:1">☰</button>
+        <button id="hwMenuBtn" hidden type="button" aria-label="Meny" title="Meny" style="background:rgba(255,255,255,0.12);color:white;border:none;width:52px;height:52px;border-radius:8px;cursor:pointer;font-size:1.8rem;display:flex;align-items:center;justify-content:center;transition:background 0.15s;line-height:1">☰</button>
         <!-- Dropdown vises ved klikk på hamburger -->
-        <div id="hwMenuDropdown" style="display:none;position:absolute;top:100%;right:0;margin-top:8px;background:white;color:#1B4332;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,0.25);min-width:220px;z-index:9998;overflow:hidden">
-            <button class="hw-menu-item" data-action="notif" style="display:block;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#1B4332;border-bottom:1px solid #eee">
+        <div id="hwMenuDropdown" style="display:none;position:absolute;top:100%;right:0;margin-top:8px;background:white;color:#121413;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,0.25);min-width:220px;z-index:9998;overflow:hidden">
+            <button class="hw-menu-item" data-action="notif" style="display:block;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#121413;border-bottom:1px solid #eee">
                 <span id="hwMenuNotif">Varsler</span>
             </button>
-            <a href="/artikler.html" class="hw-menu-item" style="display:block;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#1B4332;border-bottom:1px solid #eee;text-decoration:none">
+            <a href="/artikler.html" class="hw-menu-item" style="display:block;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#121413;border-bottom:1px solid #eee;text-decoration:none">
                 <span id="hwMenuArticles">Artikler</span>
             </a>
-            <a href="/ofa-settefisk.html" id="hwMenuOfaLink" class="hw-menu-item" style="display:none;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#1B4332;border-bottom:1px solid #eee;text-decoration:none">
+            <a href="/ofa-settefisk.html" id="hwMenuOfaLink" class="hw-menu-item" style="display:none;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#121413;border-bottom:1px solid #eee;text-decoration:none">
                 <span id="hwMenuOfa">OFA settefisk historikk</span>
             </a>
-            <a href="/om.html" class="hw-menu-item" style="display:block;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#1B4332;border-bottom:1px solid #eee;text-decoration:none">
+            <a href="/om.html" class="hw-menu-item" style="display:block;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#121413;border-bottom:1px solid #eee;text-decoration:none">
                 <span id="hwMenuAbout">Om HatchWatch</span>
             </a>
-            <button class="hw-menu-item" data-action="feedback" style="display:block;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#1B4332;border-bottom:1px solid #eee">
+            <button class="hw-menu-item" data-action="feedback" style="display:block;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#121413;border-bottom:1px solid #eee">
                 <span id="hwMenuFeedback">Send tilbakemelding</span>
             </button>
-            <button class="hw-menu-item" onclick="toggleLang()" style="display:block;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#1B4332">
+            <button class="hw-menu-item" onclick="toggleLang()" style="display:block;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#121413">
                 <span>English / Norsk</span>
             </button>
         </div>
@@ -1013,11 +1070,11 @@
         <div id="forecastTestOverlay" onclick="if(event.target===this){this.classList.remove('open');try{localStorage.setItem('hw_forecast_popup_seen_global','1')}catch(e){}}" style="display:none; position:fixed; inset:0; background:rgba(13,31,23,0.78); z-index:1000; align-items:center; justify-content:center; padding:40px 20px; overflow-y:auto;">
             <div style="background:white; border-radius:14px; padding:36px 32px 30px; max-width:560px; width:100%; box-shadow:0 12px 48px rgba(0,0,0,0.25); position:relative; animation:welcome-fade 0.25s ease;">
                 <button id="forecastPopupCloseX" aria-label="Lukk" style="position:absolute; top:12px; right:16px; background:none; border:none; font-size:26px; color:#999; cursor:pointer; line-height:1; padding:4px 8px;">×</button>
-                <h2 id="forecastPopupTitle" style="font-size:1.35rem; color:#1B4332; margin-bottom:14px; font-weight:800;">Ny funksjonalitet testes</h2>
+                <h2 id="forecastPopupTitle" style="font-size:1.35rem; color:#121413; margin-bottom:14px; font-weight:800;">Ny funksjonalitet testes</h2>
                 <p id="forecastPopupBody" style="font-size:0.94rem; line-height:1.55; color:#2d3a35; margin-bottom:18px;">
                     Ny funksjonalitet testes på denne lokasjonen — integrasjon av MET sitt langtidsvarsel direkte i klekkeprediksjonen. Dette gjør prognosen mer presis i tiden frem til klekking, men er fortsatt under testing. Hvis noe ser rart ut, er det nyttig å rapportere via tilbakemelding-knappen nederst.
                 </p>
-                <button id="forecastPopupDismiss" style="display:inline-block; background:#1B4332; color:white; padding:10px 26px; border:none; border-radius:8px; font-size:0.92rem; font-weight:700; cursor:pointer; margin-top:6px;">Skjønner!</button>
+                <button id="forecastPopupDismiss" style="display:inline-block; background:#121413; color:white; padding:10px 26px; border:none; border-radius:8px; font-size:0.92rem; font-weight:700; cursor:pointer; margin-top:6px;">Skjønner!</button>
             </div>
         </div>
 
@@ -1026,10 +1083,10 @@
 
         <!-- ═══ DYNAMIC ALTITUDE PICKER (kun for nordmarka_dyn / LOC.altitudeAdjustable) ═══ -->
         <div id="lakePickerWrap" style="display:none; margin: 16px 0 24px; padding: 16px 18px; background: #f6faf7; border: 1px solid #d4e3d6; border-radius: 8px;">
-            <label for="lakePicker" style="display:block; font-size: 0.78rem; color: #1B4332; font-weight: 600; margin-bottom: 6px; letter-spacing: 0.04em; text-transform: uppercase;" data-i18n="lakePickerLabel">
+            <label for="lakePicker" style="display:block; font-size: 0.78rem; color: #121413; font-weight: 600; margin-bottom: 6px; letter-spacing: 0.04em; text-transform: uppercase;" data-i18n="lakePickerLabel">
                 Velg vann i Nordmarka
             </label>
-            <select id="lakePicker" style="width: 100%; max-width: 480px; padding: 8px 10px; font-size: 0.95rem; border: 1px solid #b8cbb9; border-radius: 6px; background: #fff; color: #1B4332;"></select>
+            <select id="lakePicker" style="width: 100%; max-width: 480px; padding: 8px 10px; font-size: 0.95rem; border: 1px solid #c8cec8; border-radius: 6px; background: #fff; color: #121413;"></select>
             <div id="lakePickerNote" style="font-size: 0.72rem; color: #666; margin-top: 8px;" data-i18n="lakePickerNote">
                 Alle vannene i listen har dokumentert vulgata-klekking. Kilde: OFA (Oslomarka Fiskeadministrasjon). Modellen justerer prediksjonen basert på valgt høyde.
             </div>
@@ -6028,8 +6085,8 @@ function renderIceChart(airData, snowData) {
                 {
                     label: t('iceLegendSeasonPeak'),
                     data: peakVals,
-                    backgroundColor: '#52B788',
-                    borderColor: '#2D6A4F',
+                    backgroundColor: '#4fb4e6',
+                    borderColor: '#1f6591',
                     borderWidth: 2, borderRadius: 4, borderSkipped: false
                 }
             ]
@@ -7139,7 +7196,7 @@ function renderSouthSignal() {
             ` : ''}
 
             <details style="margin-top:14px;">
-                <summary style="cursor:pointer; font-size:0.85rem; color:#1B4332; font-weight:500; padding:6px 0;">
+                <summary style="cursor:pointer; font-size:0.85rem; color:#121413; font-weight:500; padding:6px 0;">
                     ▾ Hvorfor henger sør og nord motsatt sammen?
                 </summary>
                 <div style="font-size:0.85rem; color:#444; line-height:1.55; padding:10px 0 4px;">
@@ -8285,7 +8342,7 @@ function runCalibration(airData, wtData) {
             <div style="overflow-x:auto">
                 <table style="border-collapse:collapse;font-size:0.85rem;width:100%;min-width:600px">
                     <thead>
-                        <tr style="background:#1B4332;color:white">
+                        <tr style="background:#121413;color:white">
                             <th style="padding:6px 10px;text-align:left">Terskel</th>
                             <th style="padding:6px 10px;text-align:right">MAE (d)</th>
                             <th style="padding:6px 10px;text-align:right">Bias (d)</th>
@@ -8331,7 +8388,7 @@ function runCalibration(airData, wtData) {
         const minMae = Math.min(...valid2D.map(r => r.mae));
         const maxMae = Math.min(15, Math.max(...valid2D.map(r => r.mae)));
         const wtHeader = wtRange.map(wt =>
-            `<th style="padding:4px 6px;text-align:center;font-size:0.78rem;background:#1B4332;color:white">${wt.toFixed(1)}</th>`
+            `<th style="padding:4px 6px;text-align:center;font-size:0.78rem;background:#121413;color:white">${wt.toFixed(1)}</th>`
         ).join('');
         const rows = gddRange.map(gdd => {
             const cells = wtRange.map(wt => {
@@ -8340,7 +8397,7 @@ function runCalibration(airData, wtData) {
                 const isBest = (r.gdd === best2D.gdd && r.wt === best2D.wt);
                 const bg = maeColor(r.mae, minMae, maxMae);
                 const star = isBest ? ' ★' : '';
-                const border = isBest ? 'border:2px solid #1B4332;' : '';
+                const border = isBest ? 'border:2px solid #121413;' : '';
                 return `<td title="GDD ${gdd}, WT ${wt}°C: MAE ${r.mae.toFixed(2)} d, bias ${r.bias > 0 ? '+' : ''}${r.bias.toFixed(2)} d" style="padding:4px 6px;text-align:center;background:${bg};color:#000;font-size:0.75rem;${border}">${r.mae.toFixed(1)}${star}</td>`;
             }).join('');
             return `<tr><th style="padding:4px 8px;text-align:right;background:#f0f5f0;font-size:0.78rem">${gdd}</th>${cells}</tr>`;
@@ -8350,7 +8407,7 @@ function runCalibration(airData, wtData) {
             <p style="font-size:0.85rem;color:#666;margin:0 0 10px">Cellverdi = MAE (dager). Farge fra grønn (lav MAE = god) til rød (høy MAE = dårlig). ★ = optimal kombinasjon. Hover for detaljer.</p>
             <div style="overflow-x:auto;margin-bottom:14px">
                 <table style="border-collapse:collapse;font-family:inherit">
-                    <thead><tr><th style="padding:4px 8px;background:#1B4332;color:white;font-size:0.78rem">GDD ↓ \\ WT °C →</th>${wtHeader}</tr></thead>
+                    <thead><tr><th style="padding:4px 8px;background:#121413;color:white;font-size:0.78rem">GDD ↓ \\ WT °C →</th>${wtHeader}</tr></thead>
                     <tbody>${rows}</tbody>
                 </table>
             </div>`;
@@ -8384,7 +8441,7 @@ function runCalibration(airData, wtData) {
             <div style="overflow-x:auto">
                 <table style="border-collapse:collapse;font-size:0.85rem;width:100%;min-width:700px">
                     <thead>
-                        <tr style="background:#1B4332;color:white">
+                        <tr style="background:#121413;color:white">
                             <th style="padding:6px 10px;text-align:left">GDD</th>
                             <th style="padding:6px 10px;text-align:left">WT°C</th>
                             <th style="padding:6px 10px;text-align:right">MAE</th>
@@ -8402,9 +8459,9 @@ function runCalibration(airData, wtData) {
 
     const panel = document.createElement('div');
     panel.id = 'calibPanel';
-    panel.style.cssText = 'margin:32px auto;padding:24px;max-width:1100px;background:#fff;border:2px solid #1B4332;border-radius:8px;font-family:inherit;box-shadow:0 4px 16px rgba(0,0,0,0.08)';
+    panel.style.cssText = 'margin:32px auto;padding:24px;max-width:1100px;background:#fff;border:2px solid #121413;border-radius:8px;font-family:inherit;box-shadow:0 4px 16px rgba(0,0,0,0.08)';
     panel.innerHTML = `
-        <div style="background:#1B4332;color:white;padding:14px 20px;margin:-24px -24px 18px;border-radius:6px 6px 0 0">
+        <div style="background:#121413;color:white;padding:14px 20px;margin:-24px -24px 18px;border-radius:6px 6px 0 0">
             <h2 style="margin:0;font-size:1.3rem">🔬 Kalibreringsmodus — ${calibData.name}</h2>
             <div style="font-size:0.85rem;opacity:0.9;margin-top:4px">Optimal GDD-terskel for ${calibData.species}-observasjoner mot luftstasjon ${LOC.airStationName} (${LOC.frostStation})</div>
         </div>
@@ -8652,7 +8709,7 @@ main();
 </script>
 
 <div style="text-align:center; padding: 32px 0 24px; font-size: 0.75rem; color: #aaa;">
-    Built by <strong style="color:#1B4332;">Stian Midtdal</strong> &nbsp;·&nbsp; © 2026 Hatch Watch Norway
+    Built by <strong style="color:#121413;">Stian Midtdal</strong> &nbsp;·&nbsp; © 2026 Hatch Watch Norway
 </div>
 
 <!-- ═══ FLOATING KLEKKEOBS-FAB (alltid synlig nederst til høyre) ═══ -->
@@ -8663,7 +8720,7 @@ main();
         onclick="openHatchForm('VLvGQE')"
         aria-label="Bidra med observasjon"
         style="position:fixed; bottom:20px; right:20px; padding:8px 16px;
-               background:#1B4332; color:white; border:1.5px solid white; border-radius:24px;
+               background:#121413; color:white; border:1.5px solid white; border-radius:24px;
                box-shadow:0 2px 8px rgba(0,0,0,0.18); cursor:pointer;
                font-size:0.78rem; font-weight:500; z-index:9998;
                font-family:inherit;
@@ -8809,16 +8866,16 @@ if ('serviceWorker' in navigator) {
             var checked = locTriggers.indexOf(trig) !== -1 ? 'checked' : '';
             return ''
               + '<label style="display:flex;gap:14px;padding:14px 20px;border-bottom:1px solid #eee;cursor:pointer;align-items:flex-start">'
-              + '  <input type="checkbox" data-trigger="' + trig + '" ' + checked + ' style="width:22px;height:22px;margin-top:2px;accent-color:#1B4332;cursor:pointer">'
+              + '  <input type="checkbox" data-trigger="' + trig + '" ' + checked + ' style="width:22px;height:22px;margin-top:2px;accent-color:#1f83bd;cursor:pointer">'
               + '  <div style="flex:1">'
-              + '    <div style="font-weight:600;color:#1B4332;font-size:0.96rem">' + label + '</div>'
+              + '    <div style="font-weight:600;color:#121413;font-size:0.96rem">' + label + '</div>'
               + '    <div style="font-size:0.82rem;color:#666;margin-top:2px;line-height:1.4">' + desc + '</div>'
               + '  </div>'
               + '</label>';
         }
 
         modal.innerHTML =
-            '<div style="background:#1B4332;color:white;padding:18px 22px;border-radius:16px 16px 0 0">' +
+            '<div style="background:#121413;color:white;padding:18px 22px;border-radius:16px 16px 0 0">' +
               '<div style="font-size:1.15rem;font-weight:700">' + T.title + '</div>' +
               '<div style="font-size:0.86rem;opacity:0.78;margin-top:2px">' + T.sub + '</div>' +
             '</div>' +
@@ -8831,10 +8888,10 @@ if ('serviceWorker' in navigator) {
             '</div>' +
             '<div id="notifModalStatus" style="font-size:0.82rem;color:#666;padding:8px 22px;min-height:1.4em"></div>' +
             '<div style="padding:14px 20px;border-top:1px solid #eee;display:flex;gap:10px;flex-wrap:wrap;align-items:center">' +
-              '<button id="notifTestAll" style="background:transparent;color:#1B4332;border:1px solid #1B4332;padding:9px 14px;border-radius:8px;cursor:pointer;font-size:0.88rem;font-weight:500">' + T.testAll + '</button>' +
+              '<button id="notifTestAll" style="background:transparent;color:#121413;border:1px solid #121413;padding:9px 14px;border-radius:8px;cursor:pointer;font-size:0.88rem;font-weight:500">' + T.testAll + '</button>' +
               '<div style="flex:1"></div>' +
               '<button id="notifCancel" style="background:transparent;color:#666;border:none;padding:9px 14px;cursor:pointer;font-size:0.92rem">' + T.cancel + '</button>' +
-              '<button id="notifSave" style="background:#1B4332;color:white;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.92rem">' + T.save + '</button>' +
+              '<button id="notifSave" style="background:#121413;color:white;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.92rem">' + T.save + '</button>' +
             '</div>' +
             '<div style="padding:0 20px 18px;font-size:0.76rem;color:#888;line-height:1.5">' + T.footer + '</div>';
         overlay.appendChild(modal);
@@ -9084,7 +9141,7 @@ if ('serviceWorker' in navigator) {
             close: 'Close',
         };
         function renderStepBlock(title, steps) {
-            return '<div style="font-weight:700;color:#1B4332;font-size:0.92rem;margin:14px 0 8px">' + title + '</div>'
+            return '<div style="font-weight:700;color:#121413;font-size:0.92rem;margin:14px 0 8px">' + title + '</div>'
                 + '<ol style="margin:0 0 4px;padding-left:22px;color:#333;line-height:1.6;font-size:0.9rem">'
                 + steps.map(function(s) { return '<li style="margin-bottom:6px">' + s + '</li>'; }).join('')
                 + '</ol>';
@@ -9096,7 +9153,7 @@ if ('serviceWorker' in navigator) {
         }
         function renderSection(sectionTitle, blocks) {
             return '<div style="margin-top:18px;padding:14px 16px;background:#f5f3ec;border-radius:10px">'
-                + '<div style="font-weight:700;color:#1B4332;font-size:1rem;margin-bottom:4px">' + sectionTitle + '</div>'
+                + '<div style="font-weight:700;color:#121413;font-size:1rem;margin-bottom:4px">' + sectionTitle + '</div>'
                 + blocks
                 + '</div>';
         }
@@ -9109,7 +9166,7 @@ if ('serviceWorker' in navigator) {
         var modal = document.createElement('div');
         modal.style.cssText = 'background:white;border-radius:16px;max-width:560px;width:100%;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:notifSlideUp 0.22s ease';
         modal.innerHTML =
-            '<div style="background:#1B4332;color:white;padding:20px 22px;border-radius:16px 16px 0 0;position:sticky;top:0;z-index:1">' +
+            '<div style="background:#121413;color:white;padding:20px 22px;border-radius:16px 16px 0 0;position:sticky;top:0;z-index:1">' +
               '<div style="font-size:1.13rem;font-weight:700">' + T.title + '</div>' +
             '</div>' +
             '<div style="padding:18px 22px;font-size:0.92rem;line-height:1.55;color:#222">' +
@@ -9118,7 +9175,7 @@ if ('serviceWorker' in navigator) {
               '<p style="margin:18px 0 0;font-size:0.82rem;color:#666;padding:12px 14px;background:#fff8e1;border-left:3px solid #d4a52a;border-radius:6px;line-height:1.55">' + T.note + '</p>' +
             '</div>' +
             '<div style="padding:14px 20px;border-top:1px solid #eee;display:flex;justify-content:flex-end;position:sticky;bottom:0;background:white;border-radius:0 0 16px 16px">' +
-              '<button id="hwInstallClose" style="background:#1B4332;color:white;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.92rem">' + T.close + '</button>' +
+              '<button id="hwInstallClose" style="background:#121413;color:white;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.92rem">' + T.close + '</button>' +
             '</div>';
         overlay.appendChild(modal);
         document.body.appendChild(overlay);
@@ -9167,25 +9224,25 @@ if ('serviceWorker' in navigator) {
         var modal = document.createElement('div');
         modal.style.cssText = 'background:white;border-radius:16px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:notifSlideUp 0.22s ease';
         modal.innerHTML =
-            '<div style="background:#1B4332;color:white;padding:20px 22px;border-radius:16px 16px 0 0">' +
+            '<div style="background:#121413;color:white;padding:20px 22px;border-radius:16px 16px 0 0">' +
               '<div style="font-size:1.18rem;font-weight:700">' + T.title + '</div>' +
               '<div style="font-size:0.88rem;opacity:0.78;margin-top:3px">' + T.tagline + '</div>' +
             '</div>' +
             '<div style="padding:18px 22px;font-size:0.92rem;line-height:1.55;color:#222">' +
               '<p style="margin:0 0 16px">' + T.body + '</p>' +
-              '<div style="font-weight:700;color:#1B4332;font-size:0.84rem;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:8px">' + T.sources + '</div>' +
+              '<div style="font-weight:700;color:#121413;font-size:0.84rem;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:8px">' + T.sources + '</div>' +
               '<ul style="margin:0 0 16px;padding-left:20px;color:#444">' +
                 '<li style="margin-bottom:4px">' + T.sourceMet + '</li>' +
                 '<li style="margin-bottom:4px">' + T.sourceNve + '</li>' +
                 '<li style="margin-bottom:4px">' + T.sourceSentinel + '</li>' +
                 '<li style="margin-bottom:4px">' + T.sourceOfa + '</li>' +
               '</ul>' +
-              '<div style="font-weight:700;color:#1B4332;font-size:0.84rem;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:6px">' + T.credits + '</div>' +
+              '<div style="font-weight:700;color:#121413;font-size:0.84rem;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:6px">' + T.credits + '</div>' +
               '<p style="margin:0 0 16px;color:#444">' + T.creditsBy + '</p>' +
               '<p style="margin:0;font-size:0.85rem;color:#666;padding:12px 14px;background:#f5f3ec;border-radius:8px;line-height:1.55">' + T.disclaimer + '</p>' +
             '</div>' +
             '<div style="padding:14px 20px;border-top:1px solid #eee;display:flex;justify-content:flex-end">' +
-              '<button id="hwAboutClose" style="background:#1B4332;color:white;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.92rem">' + T.close + '</button>' +
+              '<button id="hwAboutClose" style="background:#121413;color:white;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.92rem">' + T.close + '</button>' +
             '</div>';
         overlay.appendChild(modal);
         document.body.appendChild(overlay);
@@ -9199,5 +9256,119 @@ if ('serviceWorker' in navigator) {
 })();
 </script>
 
+
+    <!-- ═══ BUNN-BAR (2026-08-19) — samme navigasjon som forsiden ═══
+         Burgeren øverst er pensjonert (skjult, handlere intakte). Meny- og
+         favorittpanelene her gjenbruker de globale funksjonene:
+         hwOpenNotifModal (varsler), openHatchForm (Tally), toggleLang. -->
+    <div id="hwBar">
+        <a class="hwb" href="/">
+            <svg viewBox="0 0 24 24"><path d="M3 11.2 12 3l9 8.2v9.3a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 20.5z"/></svg>
+            <span>Forside</span>
+        </a>
+        <button class="hwb" id="hwbFav">
+            <svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.7-9.3-9A5.2 5.2 0 0 1 12 6.6a5.2 5.2 0 0 1 9.3 4.9c-1.8 4.3-9.3 9-9.3 9z"/></svg>
+            <span>Favoritter</span>
+        </button>
+        <button class="hwb" onclick="if(typeof openHatchForm==='function')openHatchForm('VLvGQE')">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+            <span>Observasjon</span>
+        </button>
+        <button class="hwb" id="hwbMenu">
+            <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+            <span>Meny</span>
+        </button>
+    </div>
+
+    <div class="hwpanel" id="hwbFavPanel">
+        <div class="hwp-title">Favoritter <button class="hwp-close" data-close="hwbFavPanel">×</button></div>
+        <div class="hwp-scroll" id="hwbFavList"></div>
+    </div>
+
+    <div class="hwpanel" id="hwbMenuPanel">
+        <div class="hwp-title">Meny <button class="hwp-close" data-close="hwbMenuPanel">×</button></div>
+        <div class="hwp-scroll">
+            <button class="hwp-row" id="hwbNotif">
+                <svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>
+                <span><span class="mt">Varsler &amp; push</span><br><span class="ms">Klekking · spinnerfall · stokkmaur</span></span>
+                <span class="chev">›</span>
+            </button>
+            <a class="hwp-row" href="/artikler.html">
+                <svg viewBox="0 0 24 24"><path d="M4 19V5a2 2 0 0 1 2-2h13v18H6a2 2 0 0 1-2-2z"/><path d="M8 7h7M8 11h7"/></svg>
+                <span><span class="mt">Artikler</span></span><span class="chev">›</span>
+            </a>
+            <a class="hwp-row" id="hwbOfa" href="/ofa-settefisk.html" style="display:none">
+                <svg viewBox="0 0 24 24"><path d="M12 3c3 4.5 6 7.5 6 11a6 6 0 1 1-12 0c0-3.5 3-6.5 6-11z"/></svg>
+                <span><span class="mt">OFA settefisk-historikk</span></span><span class="chev">›</span>
+            </a>
+            <a class="hwp-row" href="/om.html">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>
+                <span><span class="mt">Om HatchWatch</span></span><span class="chev">›</span>
+            </a>
+            <a class="hwp-row" href="/liste.html">
+                <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7"/></svg>
+                <span><span class="mt">Lokasjonsliste</span></span><span class="chev">›</span>
+            </a>
+            <button class="hwp-row" onclick="if(typeof openHatchForm==='function')openHatchForm('EkBErN')">
+                <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9"/><path d="M21 3l-9 9"/><path d="M15 3h6v6"/></svg>
+                <span><span class="mt">Send tilbakemelding</span></span><span class="chev">›</span>
+            </button>
+            <button class="hwp-row" onclick="toggleLang()">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3.5 12h17M12 3c2.5 2.4 4 5.4 4 9s-1.5 6.6-4 9c-2.5-2.4-4-5.4-4-9s1.5-6.6 4-9z"/></svg>
+                <span><span class="mt">English / Norsk</span></span><span class="chev">›</span>
+            </button>
+        </div>
+    </div>
+
+
+<script>
+// ── Bunn-bar (2026-08-19). Gjenbruker hw_favs + globale handlere. ────
+(function () {
+    function favs() {
+        try { return JSON.parse(localStorage.getItem('hw_favs') || '[]'); } catch (e) { return []; }
+    }
+    function closeAll() {
+        document.querySelectorAll('.hwpanel').forEach(function (p) { p.classList.remove('open'); });
+        document.querySelectorAll('.hwb').forEach(function (b) { b.classList.remove('on'); });
+    }
+    function open(panelId, btn) {
+        var p = document.getElementById(panelId);
+        var wasOpen = p.classList.contains('open');
+        closeAll();
+        if (!wasOpen) { p.classList.add('open'); btn.classList.add('on'); }
+    }
+    document.getElementById('hwbFav').addEventListener('click', function () {
+        var list = document.getElementById('hwbFavList');
+        var f = favs();
+        if (!f.length) {
+            list.innerHTML = '<div class="hwp-empty">Ingen favoritter ennå.<br>Trykk på hjertet øverst på en lokasjon, så samler vannene dine seg her.</div>';
+        } else {
+            list.innerHTML = f.map(function (id) {
+                var name = (typeof LOCATIONS === 'object' && LOCATIONS[id] && (LOCATIONS[id].area || LOCATIONS[id].name)) || id;
+                return '<a class="hwp-row" href="/dashboard.html?loc=' + encodeURIComponent(id) + '">' +
+                    '<span><span class="mt">' + name + '</span></span><span class="chev">›</span></a>';
+            }).join('');
+        }
+        open('hwbFavPanel', this);
+    });
+    document.getElementById('hwbMenu').addEventListener('click', function () {
+        // OFA-lenken vises kun der den finnes (samme vilkår som gammel burger)
+        var ofa = document.getElementById('hwbOfa');
+        if (ofa && typeof LOC === 'object' && LOC.altitudeAdjustable && LOC.ofaLakes) ofa.style.display = '';
+        open('hwbMenuPanel', this);
+    });
+    document.querySelectorAll('.hwp-close').forEach(function (b) {
+        b.addEventListener('click', closeAll);
+    });
+    // Varsler: samme logikk som gammel burger — modal i PWA, veileder i nettleser
+    document.getElementById('hwbNotif').addEventListener('click', function () {
+        closeAll();
+        var standalone = window.matchMedia('(display-mode: standalone)').matches
+            || window.navigator.standalone === true;
+        if (standalone && typeof window.hwOpenNotifModal === 'function') window.hwOpenNotifModal();
+        else location.href = '/varsler.html';
+    });
+})();
+</script>
 </body>
 </html>

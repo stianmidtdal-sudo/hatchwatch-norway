@@ -6,7 +6,7 @@
     <title>Hatch Watch Norway · Velg lokasjon</title>
     <!-- PWA-metadata (innført 2026-05-19) -->
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#1B4332">
+    <meta name="theme-color" content="#0d0f0e">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="HatchWatch">
@@ -65,10 +65,11 @@
             justify-content: space-between;
             align-items: center;
         }
+        nav .logo b { color: #2496cd; }
         nav .logo {
             font-weight: 800;
             font-size: 14px;
-            color: #1B4332;
+            color: #121413;
             letter-spacing: 1px;
         }
         nav .sub {
@@ -89,8 +90,8 @@
         }
         .hero .tag {
             display: inline-block;
-            background: #e8f5e0;
-            color: #1B4332;
+            background: #e8f4fb;
+            color: #121413;
             font-size: 10px;
             font-weight: 700;
             letter-spacing: 2px;
@@ -107,7 +108,7 @@
             color: #0d1f17;
             margin-bottom: 18px;
         }
-        .hero h1 span { color: #1B4332; }
+        .hero h1 span { color: #121413; }
         .hero h1 span[data-i18n="heroLine1"] { color: #0d1f17; }
         .hero p {
             font-size: 16px;
@@ -132,13 +133,13 @@
         .region-row span {
             font-size: 12px;
             font-weight: 700;
-            color: #1B4332;
+            color: #121413;
             white-space: nowrap;
         }
         .region-row .line {
             flex: 1;
             height: 1px;
-            background: #dde8dd;
+            background: #dfe3de;
         }
 
         .river-grid {
@@ -162,8 +163,8 @@
             transition: box-shadow 0.15s, transform 0.1s, border-color 0.15s;
         }
         .card:hover {
-            box-shadow: 0 4px 16px rgba(27,67,50,0.12);
-            border-color: #b0cfb8;
+            box-shadow: 0 4px 16px rgba(18,20,19,0.12);
+            border-color: #a9d3ea;
             transform: translateY(-2px);
         }
         .card.calibrated .top-bar { display: block; }
@@ -172,13 +173,13 @@
             position: absolute;
             top: 0; left: 0; right: 0;
             height: 3px;
-            background: linear-gradient(90deg, #1B4332, #4caf7d);
+            background: linear-gradient(90deg, #1f83bd, #4fb4e6);
         }
 
         .card-river { font-size: 15px; font-weight: 700; color: #1a2e1a; margin-bottom: 3px; }
         .card-place { font-size: 11px; color: #8aaa8a; }
         .card-meta  { font-size: 11px; color: #aab8aa; margin-top: 8px; line-height: 1.6; }
-        .card-stations { font-size: 11px; color: #7a9a7a; margin-top: 10px; line-height: 1.7; border-top: 1px solid #f0f5f0; padding-top: 8px; }
+        .card-stations { font-size: 11px; color: #8a918c; margin-top: 10px; line-height: 1.7; border-top: 1px solid #eef1ee; padding-top: 8px; }
 
         .badge {
             display: inline-block;
@@ -187,7 +188,7 @@
             letter-spacing: 1px;
             text-transform: uppercase;
             margin-top: 11px;
-            color: #1B4332;
+            color: #121413;
             padding: 0;
             background: none;
         }
@@ -220,7 +221,7 @@
 
         /* ── How it works ────────────────────────────── */
         .how {
-            background: #1B4332;
+            background: #121413;
             padding: 48px 48px 44px;
         }
         .how .eyebrow {
@@ -267,7 +268,7 @@
             font-size: 0.75rem;
             color: #aaa;
         }
-        .page-footer strong { color: #1B4332; }
+        .page-footer strong { color: #121413; }
 
         /* ── Responsive ──────────────────────────────── */
         @media (max-width: 600px) {
@@ -281,17 +282,17 @@
         /* ── Language button ─────────────────────────── */
         .lang-btn {
             background: none;
-            border: 1px solid #dde8dd;
+            border: 1px solid #dfe3de;
             border-radius: 6px;
             padding: 5px 13px;
             font-size: 11px;
             font-weight: 700;
             letter-spacing: 1.5px;
-            color: #1B4332;
+            color: #121413;
             cursor: pointer;
             transition: background 0.15s, border-color 0.15s;
         }
-        .lang-btn:hover { background: #e8f5e0; border-color: #b0cfb8; }
+        .lang-btn:hover { background: #e8f4fb; border-color: #a9d3ea; }
 
         /* ═══ Velkomst-popup ═══ */
         .welcome-overlay {
@@ -330,10 +331,10 @@
             line-height: 1;
             padding: 4px 8px;
         }
-        .welcome-close:hover { color: #1B4332; }
+        .welcome-close:hover { color: #121413; }
         .welcome-box h2 {
             font-size: 1.35rem;
-            color: #1B4332;
+            color: #121413;
             margin-bottom: 14px;
             font-weight: 800;
         }
@@ -344,10 +345,10 @@
             margin-bottom: 14px;
         }
         .welcome-box p:last-of-type { margin-bottom: 18px; }
-        .welcome-box strong { color: #1B4332; }
+        .welcome-box strong { color: #121413; }
         .welcome-btn {
             display: inline-block;
-            background: #1B4332;
+            background: #121413;
             color: white;
             padding: 10px 26px;
             border: none;
@@ -358,40 +359,39 @@
             margin-top: 6px;
             transition: background 0.15s;
         }
-        .welcome-btn:hover { background: #2D6A4F; }
+        .welcome-btn:hover { background: #1f6591; }
         .footer-about-link {
             color: inherit;
             text-decoration: underline;
             cursor: pointer;
             margin-left: 12px;
         }
-        .footer-about-link:hover { color: #1B4332; }
+        .footer-about-link:hover { color: #121413; }
     </style>
 </head>
 <body>
 
 <nav>
     <div style="display:flex;align-items:center">
-    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAK1ElEQVR4nN2bf4hU1xXHP/e9N2NcZ1fXcd11h+76I6lx1Spul6RKYim1UIkx1kIgSGlDUCKh+SchpOSPQsBSDdS21BoRYpMgJAVbC7ax/SNdKxRhIg021aYaXU1TN+q6Lrs7O+/dH/3jzd15+5xxd2dn/JEDh2Hej3vP99xzzzn3vnsEtSEBOIVfBZgptOUV3tdTbKckiSq35xRYxq63AouBLwMLgRZgFjC9cH8EuAH8D7gA/Bv4GLgUa8cjVISulsDVUkB0tAGSwBrg28DXgQ5gxiTbzAGngWPAn4C/Fa4BuBSt4o6SIBTG0iLgx8AZQgGjrIAgwjLG0XuqxPtngR3Ag5H+XKpvxROmKPDFwH5gkJsBK4rzdzKsY23Y6yPAW8BXyshyW8h2OBP4KTBEUcByIzhVtsqw//PAL4A5EZlqbg0i0sl64D+MBV7JSFdiGTLyvwfYHJHPqQFuiDX8E24/8FKKiFrEzwmjBNRgStgGZwFHKJpkLUy9kqlhLeKvwNyYzFUDnwFOFjry7wLgcbYynSaMRlVRgjX7VsLkxJr8nQZbjq1sF6uhBJvcNAD/uAfAx5XwMcXpMGnHKAgdiiDMwu4V8HElHAcSVBAirTe13v5unPPjsZV5TwzTuGTnzLcoavNOhLlqWsJ3Y9jKkk0k6glXZTYdrbmwjuMYz/OM53nVbNeG6s8JM0a7Wi1LVkM7YxqsGQshjOu6t8MK9sUwAmMdg1N4cCHwT8IlraCG+bUQAmMMgFm6dKl67LHHzPXr19m/f79njBGFe1MlQ3HZvAo4RYhVxR+0mnmD2zD6juMYwEyfPl2+/vrr+SAIlAlJP/300z5QzelgsfwuhnWU7LxoB4Yp7rrUDLwQwsyePVtms1nfGGO01iaXyxkppTl06FAA6CpPDbua7IhidqJ/gB8QblMpamT6QgiEEDiOow8dOqQ7OzsTvu8jhMDzPFzXZWBgoPBodUQoKFIThsKthcujCrBbWUlgS/RmLchxHJRSZs+ePXLt2rWJIAhIJpNjnrl69eqU+7HKmzt3rt/Y2Bg4juMUrj0JpAgXUMKGBQN8jTB/1tRIAa7ropRiy5YtwdatWxNSShKJxE3P5XK5Em9PjowxJJNJnUqlVD6fF/X19dIYo4UQLcA3rEjWAgA2MNZjVpWsx29sbFS7d+92tNbCcUrreWhoaEru345+Op32e3t7k77vi4GBgSSgTRhaNthno+Hg69Qw7DmOg9aal19+WaXTaU9rTTkF9Pf3V9yPVXRdXZ10HEe7risjIdUO+FrCSCCt+bcQ847VJMdxMMbQ0tIin332WVdrjevenJUWFKLPnTsHwFTygObm5pFp06aJGTNmaKWUxWQHdyGwAIpglxB6f00NLKAw+uall17SqVTK1VoT9/DGGBzHob+/32Sz2VATenKz0Y5+e3v7kOd5ztDQkDM8POwppWxn1uG7wFIoKmBx4bfq8991XaSULF++XG7fvt0rN/oW7IcffmiuX78urNVMph9jDA888MBwU1OTHhgY8BKJBDdu3EjElG0bXQJFBSyoANu4ZDv2PE+//fbbJJNJJ3p9jFQFsN3d3QZwyvmHUlQIrbS1tY00NzfLS5cu3Tdz5kz96aefTouk23GaH/3zG2qQ/iYSCQPonTt35o0xJggCU4601sYYozo7O31gwgskm1KvXr16ZMOGDTdmzpzpL1y4MCeEMEKIUu/YDdTfRxVwOHZzymwBbN68OW+MUbcCL6U0WmvT3d3tA8qCuhVHAT766KP5559/PtfU1DTS2tqaG+fd6A7yKP25mgqwALq6uvxcLieVUnaEyyrAGKM3bdo0oUWQbV8IYVatWjWyfv364Tlz5gw3NDTkJyCfxfj3qAL+Ui0F2JGpr6+XFy5cCCIAS5K1jA8++MD3PO+Wo28XUYBJpVJq5cqVQ6tWrRqcN29eLpVKSdv/ZBRg98mmnnsWyPM8tNZs2bJFtbe3J6WUeF7p7TillL2ntm3bhpTSsRGisGACwghhjBmNFF1dXSMdHR35np4e96OPPprW19eXUEpxC4dXinwoKqC/8Dvht6Pkui5CCLTWBEEAYB5//PFbbmgopXBdl1wup5555hmVzWaTnudhjBldMyilrEymvr6eJUuWqM7OzvzAwIA6fvz49J6enoSUcjSkTDJx6o/+2VXoaFJRwHEcU1dXF90z1I2NjfKpp57KX716VWmtS8593/eNMcacP38+WLp0qQ+YZDIZbVvPmjVLrlu3zn/33Xf9U6dO5V999dWhdevWjbS2to6ZphMw+TjHt8gA2D4ZBQghRh1VJpMZeu6553IvvvhicPToUb+3t1caY8p7vAKdOXMmmD9/frQ/PXv2bPnEE0/477zzjn/58mXbjnrttdfynuepaP8VAI8r4EdRBXyzcPGWO8BRJwSYhx56SO7Zsyc3ODgYxEErpYyU0kgpjY0CWmvT19cnd+3alWtoaPBTqZTs6uoKtm7d6h84cMC/fPlytB393nvv+V1dXT6F3SnXdacCPO4EvxNVQIbw5IVhAlthmUxG7tixY+Dw4cPD58+fD/bt2zd05cqV/IkTJ4JXXnklf+3aNRUbcKO1NkEQmL6+Pnns2LEgm83Ka9euSWNM/Fnd3d3tb9q0KW8HpIpbYxabopD+289fnxGe61lReEBAcXGRTqdlW1tbkE6nWbBggZ4/f74cHBz0Nm7ceJ8Qwmzbti1x8uRJsXfvXhfwcrlc/oUXXuD06dOu7/tmxYoVTktLi/A8z2lsbHQfeeSRqPLRWpve3l71/vvvm4MHD3LkyBEXcOz2WcEZVoMstgvAOSh+A5TAbuCHBe3cFLdmzJihHn744RHf98XFixcTPT09CbvGB3QmkwmamppEOp1Wc+fO5cSJE4lPPvnEAUQqldLLli3Ta9asoa2tDQh3fRYvXhycPXuWbDbrHD16NNHf3z+6QWMjQZVJEq4E3wS+b3HapdmE/IBl64iEEKaurk4tWrTIz2QyQSqVGn3fcRwzTmIjOzo6RjKZzGgGWKV5Pt78t0dqvOgO0DTCadBOmX1Bu0S1Mb8cRRMYKCY18VWglMXzlJNMYioha/5XgfsJD2aOCmRNfgeTCIdRriQ0CSFuiiw1ZIvp1zHMQHG07yc8flbTDyN3iO2H0pUxzKNkfcHBmMa+CGzn/h/LgbcKEIRbRT6Vn/C8G1kWsHRFsJYke+OXfHGswGJ4azzwUDwg0UiYHN22AxI1YjvvrwPzmMABiaiGNsY0eC+ylf17MWzjkg0Rdirci4ekLPg3Y5gmRLYOwCMsWLjXLMHKepLwg09FJ8ltXt7EvXFK1LINeZeAL0WwVER2ziwkPH56tyvByvY5sCyGoWKyDdxPsRTmbvQJVqYeYHm1wMeV0EzRJ0jujhAZrRvIEi7mqgrekm0wCfwqIsCdnBLRvg9QrEyrWQ1R1Jk8Cfw3IkDVPqtNgG1qa4ArhIe7SslYE4qWyjUDexkLvlZni+MlMnbUrae/7SV0UTPrBH7LWAFtLWA1yuZk7PofgNVlZLmtFC+cXAH8jDAGlzLbckWT8eLJUtPpM0Lf89VIf3e0cDJK8UVGA+FaYh9hDU8l/kETVn28QXjcvfEW/VVMtSiejtYQ22uLCA9hPUh4GqWFsOjyvsIzecI9ul7gPGHm+S/CctloIXbVa4ZrZT7R8vl4JflkyS5iplqGX5L+D7zBiVT+ThTgAAAAAElFTkSuQmCC" alt="HatchWatch" style="height:40px;width:40px;margin-right:10px;vertical-align:middle;">
-        <div>
-            <div class="logo">HATCH WATCH</div>
+    <div>
+            <div class="logo">HATCH<b>WATCH</b></div>
             <div class="sub">Norway</div>
         </div>
     </div>
     <div style="display:flex;align-items:center;gap:14px;position:relative">
         <button id="langBtn" class="lang-btn" onclick="toggleLang()">EN</button>
-        <button id="hwMenuBtn" type="button" aria-label="Meny" title="Meny" style="background:rgba(27,67,50,0.08);color:#1B4332;border:none;width:52px;height:52px;border-radius:8px;cursor:pointer;font-size:1.8rem;display:flex;align-items:center;justify-content:center;line-height:1">☰</button>
-        <div id="hwMenuDropdown" style="display:none;position:absolute;top:100%;right:0;margin-top:8px;background:white;color:#1B4332;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,0.18);min-width:220px;z-index:9998;overflow:hidden;border:1px solid rgba(0,0,0,0.06)">
-            <a href="/varsler.html" class="hw-menu-item" style="display:block;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#1B4332;border-bottom:1px solid #eee;text-decoration:none">
+        <button id="hwMenuBtn" type="button" aria-label="Meny" title="Meny" style="background:rgba(18,20,19,0.08);color:#121413;border:none;width:52px;height:52px;border-radius:8px;cursor:pointer;font-size:1.8rem;display:flex;align-items:center;justify-content:center;line-height:1">☰</button>
+        <div id="hwMenuDropdown" style="display:none;position:absolute;top:100%;right:0;margin-top:8px;background:white;color:#121413;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,0.18);min-width:220px;z-index:9998;overflow:hidden;border:1px solid rgba(0,0,0,0.06)">
+            <a href="/varsler.html" class="hw-menu-item" style="display:block;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#121413;border-bottom:1px solid #eee;text-decoration:none">
                 <span id="hwMenuNotif">Varsler</span>
             </a>
-            <a href="/artikler.html" class="hw-menu-item" style="display:block;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#1B4332;border-bottom:1px solid #eee;text-decoration:none">
+            <a href="/artikler.html" class="hw-menu-item" style="display:block;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#121413;border-bottom:1px solid #eee;text-decoration:none">
                 <span id="hwMenuArticles">Artikler</span>
             </a>
-            <a href="/om.html" class="hw-menu-item" style="display:block;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#1B4332;border-bottom:1px solid #eee;text-decoration:none">
+            <a href="/om.html" class="hw-menu-item" style="display:block;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#121413;border-bottom:1px solid #eee;text-decoration:none">
                 <span id="hwMenuAbout">Om HatchWatch</span>
             </a>
-            <button class="hw-menu-item" data-action="feedback" style="display:block;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#1B4332">
+            <button class="hw-menu-item" data-action="feedback" style="display:block;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#121413">
                 <span id="hwMenuFeedback">Send tilbakemelding</span>
             </button>
         </div>
@@ -762,7 +762,7 @@ buildCards();
         onclick="openHatchForm('VLvGQE')"
         aria-label="Bidra med observasjon"
         style="position:fixed; bottom:20px; right:20px; padding:8px 16px;
-               background:#1B4332; color:white; border:1.5px solid white; border-radius:24px;
+               background:#121413; color:white; border:1.5px solid white; border-radius:24px;
                box-shadow:0 2px 8px rgba(0,0,0,0.18); cursor:pointer;
                font-size:0.78rem; font-weight:500; z-index:9998;
                font-family:inherit;
@@ -809,7 +809,7 @@ if ('serviceWorker' in navigator) {
         if (!deferredPrompt) return;
         var banner = document.createElement('div');
         banner.id = 'hwInstallBanner';
-        banner.style.cssText = 'position:fixed;bottom:16px;left:16px;right:16px;max-width:480px;margin:0 auto;padding:14px 18px;background:#1B4332;color:white;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,0.25);display:flex;align-items:center;gap:14px;z-index:9999;font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:0.92rem;line-height:1.4;animation:hwSlideUp 0.35s ease;';
+        banner.style.cssText = 'position:fixed;bottom:16px;left:16px;right:16px;max-width:480px;margin:0 auto;padding:14px 18px;background:#121413;color:white;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,0.25);display:flex;align-items:center;gap:14px;z-index:9999;font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:0.92rem;line-height:1.4;animation:hwSlideUp 0.35s ease;';
         var lang = localStorage.getItem('lang') || 'no';
         var text = lang === 'no'
             ? '<strong>Få HatchWatch som app</strong><br><span style="opacity:0.85;font-size:0.85rem">Legg til på hjemskjerm for rask tilgang.</span>'
@@ -818,7 +818,7 @@ if ('serviceWorker' in navigator) {
         var dismissLabel = lang === 'no' ? 'Nei takk' : 'Not now';
         banner.innerHTML =
             '<div style="flex:1">' + text + '</div>' +
-            '<button id="hwInstallBtn" style="background:white;color:#1B4332;border:none;padding:8px 14px;border-radius:8px;font-weight:600;cursor:pointer;font-size:0.88rem">' + installLabel + '</button>' +
+            '<button id="hwInstallBtn" style="background:white;color:#121413;border:none;padding:8px 14px;border-radius:8px;font-weight:600;cursor:pointer;font-size:0.88rem">' + installLabel + '</button>' +
             '<button id="hwInstallDismiss" style="background:transparent;color:rgba(255,255,255,0.7);border:none;padding:8px;cursor:pointer;font-size:1.4rem;line-height:1" aria-label="' + dismissLabel + '">×</button>';
         document.body.appendChild(banner);
         var style = document.createElement('style');
@@ -925,10 +925,10 @@ if ('serviceWorker' in navigator) {
         var modal = document.createElement('div');
         modal.style.cssText = 'background:white;border-radius:16px;max-width:440px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:hwAboutSlideUp 0.22s ease';
         modal.innerHTML =
-            '<div style="background:#1B4332;color:white;padding:20px 22px;border-radius:16px 16px 0 0;font-size:1.15rem;font-weight:700">' + T.title + '</div>' +
+            '<div style="background:#121413;color:white;padding:20px 22px;border-radius:16px 16px 0 0;font-size:1.15rem;font-weight:700">' + T.title + '</div>' +
             '<div style="padding:18px 22px;font-size:0.94rem;line-height:1.6;color:#222">' + T.body + '</div>' +
             '<div style="padding:14px 20px;border-top:1px solid #eee;display:flex;justify-content:flex-end">' +
-              '<button id="hwSelectClose" style="background:#1B4332;color:white;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.92rem">' + T.close + '</button>' +
+              '<button id="hwSelectClose" style="background:#121413;color:white;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.92rem">' + T.close + '</button>' +
             '</div>';
         overlay.appendChild(modal);
         document.body.appendChild(overlay);
@@ -1003,14 +1003,14 @@ if ('serviceWorker' in navigator) {
             close: 'Close',
         };
         function renderStepBlock(title, steps) {
-            return '<div style="font-weight:700;color:#1B4332;font-size:0.92rem;margin:14px 0 8px">' + title + '</div>'
+            return '<div style="font-weight:700;color:#121413;font-size:0.92rem;margin:14px 0 8px">' + title + '</div>'
                 + '<ol style="margin:0 0 4px;padding-left:22px;color:#333;line-height:1.6;font-size:0.9rem">'
                 + steps.map(function(s) { return '<li style="margin-bottom:6px">' + s + '</li>'; }).join('')
                 + '</ol>';
         }
         function renderSection(sectionTitle, blocks) {
             return '<div style="margin-top:18px;padding:14px 16px;background:#f5f3ec;border-radius:10px">'
-                + '<div style="font-weight:700;color:#1B4332;font-size:1rem;margin-bottom:4px">' + sectionTitle + '</div>'
+                + '<div style="font-weight:700;color:#121413;font-size:1rem;margin-bottom:4px">' + sectionTitle + '</div>'
                 + blocks
                 + '</div>';
         }
@@ -1027,14 +1027,14 @@ if ('serviceWorker' in navigator) {
         var modal = document.createElement('div');
         modal.style.cssText = 'background:white;border-radius:16px;max-width:560px;width:100%;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:hwAboutSlideUp 0.22s ease';
         modal.innerHTML =
-            '<div style="background:#1B4332;color:white;padding:20px 22px;border-radius:16px 16px 0 0;font-size:1.13rem;font-weight:700;position:sticky;top:0;z-index:1">' + T.title + '</div>' +
+            '<div style="background:#121413;color:white;padding:20px 22px;border-radius:16px 16px 0 0;font-size:1.13rem;font-weight:700;position:sticky;top:0;z-index:1">' + T.title + '</div>' +
             '<div style="padding:18px 22px;font-size:0.92rem;line-height:1.55;color:#222">' +
               '<p style="margin:0 0 4px">' + T.intro + '</p>' +
               body +
               '<p style="margin:18px 0 0;font-size:0.82rem;color:#666;padding:12px 14px;background:#fff8e1;border-left:3px solid #d4a52a;border-radius:6px;line-height:1.55">' + T.note + '</p>' +
             '</div>' +
             '<div style="padding:14px 20px;border-top:1px solid #eee;display:flex;justify-content:flex-end;position:sticky;bottom:0;background:white;border-radius:0 0 16px 16px">' +
-              '<button id="hwInstallClose" style="background:#1B4332;color:white;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.92rem">' + T.close + '</button>' +
+              '<button id="hwInstallClose" style="background:#121413;color:white;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.92rem">' + T.close + '</button>' +
             '</div>';
         overlay.appendChild(modal);
         document.body.appendChild(overlay);
@@ -1044,8 +1044,8 @@ if ('serviceWorker' in navigator) {
     }
     // Hover-effekt på meny-items
     var hoverStyle = document.createElement('style');
-    hoverStyle.textContent = '.hw-menu-item:hover, .hw-menu-item:active { background: #f0f5f0 !important; }'
-        + '#hwMenuBtn:hover { background: rgba(27,67,50,0.16) !important; }';
+    hoverStyle.textContent = '.hw-menu-item:hover, .hw-menu-item:active { background: #eef1ee !important; }'
+        + '#hwMenuBtn:hover { background: rgba(18,20,19,0.16) !important; }';
     document.head.appendChild(hoverStyle);
 
     function openAboutModal() {
@@ -1085,25 +1085,25 @@ if ('serviceWorker' in navigator) {
         var modal = document.createElement('div');
         modal.style.cssText = 'background:white;border-radius:16px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:hwAboutSlideUp 0.22s ease';
         modal.innerHTML =
-            '<div style="background:#1B4332;color:white;padding:20px 22px;border-radius:16px 16px 0 0">' +
+            '<div style="background:#121413;color:white;padding:20px 22px;border-radius:16px 16px 0 0">' +
               '<div style="font-size:1.18rem;font-weight:700">' + T.title + '</div>' +
               '<div style="font-size:0.88rem;opacity:0.78;margin-top:3px">' + T.tagline + '</div>' +
             '</div>' +
             '<div style="padding:18px 22px;font-size:0.92rem;line-height:1.55;color:#222">' +
               '<p style="margin:0 0 16px">' + T.body + '</p>' +
-              '<div style="font-weight:700;color:#1B4332;font-size:0.84rem;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:8px">' + T.sources + '</div>' +
+              '<div style="font-weight:700;color:#121413;font-size:0.84rem;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:8px">' + T.sources + '</div>' +
               '<ul style="margin:0 0 16px;padding-left:20px;color:#444">' +
                 '<li style="margin-bottom:4px">' + T.sourceMet + '</li>' +
                 '<li style="margin-bottom:4px">' + T.sourceNve + '</li>' +
                 '<li style="margin-bottom:4px">' + T.sourceSentinel + '</li>' +
                 '<li style="margin-bottom:4px">' + T.sourceOfa + '</li>' +
               '</ul>' +
-              '<div style="font-weight:700;color:#1B4332;font-size:0.84rem;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:6px">' + T.credits + '</div>' +
+              '<div style="font-weight:700;color:#121413;font-size:0.84rem;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:6px">' + T.credits + '</div>' +
               '<p style="margin:0 0 16px;color:#444">' + T.creditsBy + '</p>' +
               '<p style="margin:0;font-size:0.85rem;color:#666;padding:12px 14px;background:#f5f3ec;border-radius:8px;line-height:1.55">' + T.disclaimer + '</p>' +
             '</div>' +
             '<div style="padding:14px 20px;border-top:1px solid #eee;display:flex;justify-content:flex-end">' +
-              '<button id="hwAboutClose" style="background:#1B4332;color:white;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.92rem">' + T.close + '</button>' +
+              '<button id="hwAboutClose" style="background:#121413;color:white;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.92rem">' + T.close + '</button>' +
             '</div>';
         overlay.appendChild(modal);
         document.body.appendChild(overlay);

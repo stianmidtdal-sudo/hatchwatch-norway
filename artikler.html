@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Artikler · HatchWatch</title>
-    <meta name="theme-color" content="#1B4332">
+    <meta name="theme-color" content="#0d0f0e">
     <meta name="description" content="Artikler om døgnfluer, spinnerfall, stokkmaur og fluefiske-biologi for den ivrige fluefiskeren.">
     <link rel="icon" type="image/png" sizes="32x32" href="/logos/logo-inverted-32.png">
     <link rel="icon" type="image/png" sizes="64x64" href="/logos/logo-inverted-64.png">
@@ -24,7 +24,7 @@
         body { min-height: 100vh; min-height: 100dvh; }
 
         nav {
-            background: #1B4332; color: white;
+            background: linear-gradient(135deg, #0d0f0e, #161918); color: white;
             padding-top: calc(env(safe-area-inset-top, 0px) + 16px);
             padding-bottom: 14px;
             padding-left: calc(env(safe-area-inset-left, 0px) + 18px);
@@ -34,7 +34,8 @@
         }
         .nav-left { display: flex; align-items: center; }
         .logo-img { height: 36px; width: 36px; margin-right: 10px; }
-        .logo-text { font-weight: 700; letter-spacing: 1.5px; font-size: 0.92rem; }
+        .logo-text { font-weight: 700; letter-spacing: 1.5px; font-size: 0.95rem; }
+        .logo-text b { color: #4fb4e6; }
         .logo-sub { font-size: 0.7rem; opacity: 0.7; letter-spacing: 0.5px; }
         .header-controls {
             position: absolute; top: 50%; transform: translateY(-50%);
@@ -50,17 +51,17 @@
         #hwMenuBtn:hover { background: rgba(255,255,255,0.22); }
         #hwMenuDropdown {
             display: none; position: absolute; top: 100%; right: 0; margin-top: 8px;
-            background: white; color: #1B4332;
+            background: white; color: #121413;
             box-shadow: 0 8px 32px rgba(0,0,0,0.18); min-width: 220px; z-index: 9998;
             overflow: hidden; border: 1px solid rgba(0,0,0,0.06);
         }
         .hw-menu-item {
             display: block; width: 100%; text-align: left; background: none; border: none;
-            padding: 14px 18px; cursor: pointer; font-size: 0.94rem; color: #1B4332;
+            padding: 14px 18px; cursor: pointer; font-size: 0.94rem; color: #121413;
             border-bottom: 1px solid #eee; text-decoration: none;
         }
         .hw-menu-item:last-child { border-bottom: none; }
-        .hw-menu-item:hover { background: #f0f5f0; }
+        .hw-menu-item:hover { background: #eef1ee; }
 
         main {
             max-width: 1180px; margin: 0 auto;
@@ -70,7 +71,7 @@
 
         /* INTRO */
         .intro-title {
-            font-size: 2.2rem; font-weight: 700; color: #1B4332; margin: 0 0 6px;
+            font-size: 2.2rem; font-weight: 700; color: #121413; margin: 0 0 6px;
             letter-spacing: -0.5px;
         }
         .intro-tagline {
@@ -102,7 +103,7 @@
             width: 100%; height: 100%; object-fit: cover; display: block;
         }
         .article-card .topic {
-            font-size: 0.7rem; color: #1B4332; text-transform: uppercase; letter-spacing: 1.5px;
+            font-size: 0.7rem; color: #1f83bd; text-transform: uppercase; letter-spacing: 1.5px;
             font-weight: 700; margin-bottom: 8px;
         }
         .article-card h3 {
@@ -122,7 +123,7 @@
             font-size: 0.98rem; line-height: 1.6; color: #444;
         }
         .article-card .read-link {
-            font-size: 0.78rem; color: #1B4332; font-weight: 600;
+            font-size: 0.78rem; color: #121413; font-weight: 600;
             text-transform: uppercase; letter-spacing: 1px;
             border-top: 1px solid #ddd; padding-top: 10px; margin-top: 4px;
         }
@@ -142,12 +143,12 @@
         /* PULL QUOTE */
         .pullquote-block {
             margin: 24px 0 48px; padding: 32px 8px;
-            border-top: 1px solid #1B4332; border-bottom: 1px solid #1B4332;
+            border-top: 1px solid #121413; border-bottom: 1px solid #121413;
             text-align: center;
         }
         .pullquote-block .quote {
             font-family: Georgia, 'Times New Roman', serif;
-            font-style: italic; font-size: 1.65rem; color: #1B4332;
+            font-style: italic; font-size: 1.65rem; color: #121413;
             line-height: 1.4; max-width: 760px; margin: 0 auto 10px;
             letter-spacing: -0.2px;
         }
@@ -155,7 +156,7 @@
             .pullquote-block .quote { font-size: 1.3rem; }
         }
         .pullquote-block .attribution {
-            font-size: 0.78rem; color: #1B4332; text-transform: uppercase;
+            font-size: 0.78rem; color: #1f83bd; text-transform: uppercase;
             letter-spacing: 1.5px; font-weight: 600;
         }
 
@@ -166,12 +167,12 @@
         .article-list-wrap.hidden { display: none; }
 
         .back-to-list {
-            background: transparent; color: #1B4332; border: 1px solid #1B4332;
+            background: transparent; color: #121413; border: 1px solid #121413;
             padding: 10px 18px; cursor: pointer; font-size: 0.84rem;
             font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
             margin-bottom: 24px; display: inline-flex; align-items: center; gap: 8px;
         }
-        .back-to-list:hover { background: #f0f5f0; }
+        .back-to-list:hover { background: #eef1ee; }
 
         article.reading {
             max-width: 720px; margin: 0 auto;
@@ -185,11 +186,11 @@
             width: 100%; height: 100%; object-fit: cover; display: block;
         }
         article.reading .topic {
-            font-size: 0.72rem; color: #1B4332; text-transform: uppercase; letter-spacing: 1.5px;
+            font-size: 0.72rem; color: #1f83bd; text-transform: uppercase; letter-spacing: 1.5px;
             font-weight: 700; margin-bottom: 12px;
         }
         article.reading h1 {
-            margin: 0 0 12px; font-size: 2rem; color: #1B4332; font-weight: 700;
+            margin: 0 0 12px; font-size: 2rem; color: #121413; font-weight: 700;
             line-height: 1.2; letter-spacing: -0.3px;
         }
         @media (max-width: 600px) {
@@ -200,30 +201,30 @@
             padding-bottom: 24px; border-bottom: 1px solid #ddd; line-height: 1.55;
         }
         article.reading h2 {
-            margin: 32px 0 12px; font-size: 1.25rem; color: #1B4332; font-weight: 700;
+            margin: 32px 0 12px; font-size: 1.25rem; color: #121413; font-weight: 700;
             letter-spacing: -0.2px;
         }
         article.reading h3 {
-            margin: 22px 0 8px; font-size: 1rem; color: #1B4332; font-weight: 600;
+            margin: 22px 0 8px; font-size: 1rem; color: #121413; font-weight: 600;
         }
         article.reading p { margin: 0 0 16px; color: #2a2a2a; font-size: 1rem; }
-        article.reading b, article.reading strong { color: #1B4332; }
+        article.reading b, article.reading strong { color: #121413; }
         article.reading em { font-style: italic; }
         article.reading ul, article.reading ol { margin: 0 0 16px; padding-left: 24px; color: #2a2a2a; line-height: 1.65; }
         article.reading li { margin-bottom: 8px; }
         article.reading .factbox {
-            background: #f5f3ec; border-left: 4px solid #1B4332;
+            background: #eef6fb; border-left: 4px solid #4fb4e6;
             padding: 16px 18px; margin: 22px 0;
             font-size: 0.96rem; line-height: 1.65;
         }
         article.reading .factbox b {
-            display: block; margin-bottom: 6px; color: #1B4332;
+            display: block; margin-bottom: 6px; color: #121413;
             font-size: 0.74rem; text-transform: uppercase; letter-spacing: 1px;
         }
         article.reading .pullquote {
             font-family: Georgia, serif; font-style: italic; font-size: 1.25rem;
-            color: #1B4332; margin: 28px 0; padding: 0 24px;
-            border-left: 3px solid #1B4332; line-height: 1.5;
+            color: #121413; margin: 28px 0; padding: 0 24px;
+            border-left: 3px solid #4fb4e6; line-height: 1.5;
         }
         article.reading .mid-img {
             margin: 28px 0; width: 100%;
@@ -252,11 +253,7 @@
 <nav>
     <div class="nav-left">
         <a href="/" style="text-decoration:none;color:white;display:flex;align-items:center;">
-            <img src="/logos/logo-inverted-64.png" class="logo-img" alt="HatchWatch">
-            <div>
-                <div class="logo-text">HATCH WATCH</div>
-                <div class="logo-sub">Norway</div>
-            </div>
+            <span class="logo-text">HATCH<b>WATCH</b></span>
         </a>
     </div>
     <div class="header-controls">
