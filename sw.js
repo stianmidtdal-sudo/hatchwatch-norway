@@ -7,7 +7,7 @@
 //
 // Innført 2026-05-19.
 
-const CACHE_VERSION = 'hw-v5';
+const CACHE_VERSION = 'hw-v6';  // v6: kartet ble forsiden (2026-08-19)
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const API_CACHE = `${CACHE_VERSION}-api`;
 const VENDOR_CACHE = `${CACHE_VERSION}-vendor`;
@@ -16,6 +16,7 @@ const SHELL_URLS = [
     '/',
     '/index.html',
     '/dashboard.html',
+    '/liste.html',
     '/artikler.html',
     '/om.html',
     '/varsler.html',
