@@ -1433,6 +1433,12 @@ const T = {
     flowChartHeading: 'Vannføring',
     rangeWeek: 'Siste uke', range2w: 'Siste 2 uker',
     rangeMonth: 'Siste måned', rangeSeason: 'Sesongen',
+    hwbHome: 'Forside', hwbFav: 'Favoritter', hwbObs: 'Observasjon', hwbMenu: 'Meny',
+    hwbNotifT: 'Varsler & push', hwbNotifS: 'Klekking · spinnerfall · stokkmaur',
+    hwbArticles: 'Artikler', hwbOfa: 'OFA settefisk-historikk',
+    hwbAbout: 'Om HatchWatch', hwbList: 'Lokasjonsliste',
+    hwbFeedback: 'Send tilbakemelding',
+    hwbFavEmpty: 'Ingen favoritter ennå.<br>Trykk på hjertet øverst på en lokasjon, så samler vannene dine seg her.',
     wtNormalHeading: 'Vanntemperatur',
     southSignalHeading: 'Sør-Norge-signal',
     convToday: 'I dag',
@@ -1658,6 +1664,12 @@ const T = {
     flowChartHeading: 'Water flow',
     rangeWeek: 'Last week', range2w: 'Last 2 weeks',
     rangeMonth: 'Last month', rangeSeason: 'Season',
+    hwbHome: 'Home', hwbFav: 'Favorites', hwbObs: 'Report', hwbMenu: 'Menu',
+    hwbNotifT: 'Alerts & push', hwbNotifS: 'Hatch · spinner fall · carpenter ants',
+    hwbArticles: 'Articles', hwbOfa: 'OFA stocking history',
+    hwbAbout: 'About HatchWatch', hwbList: 'Location list',
+    hwbFeedback: 'Send feedback',
+    hwbFavEmpty: 'No favorites yet.<br>Tap the heart at the top of a location and your waters will gather here.',
     wtNormalHeading: 'Water temperature',
     southSignalHeading: 'Southern Norway signal',
     convToday: 'Today',
@@ -1883,6 +1895,13 @@ function applyLang() {
     if (bestLabel) bestLabel.textContent = t('seasonCalendar');
 }
 applyLang();
+// Re-kjør når hele DOM-en er parset: bunn-baren og panelene ligger HELT
+// nederst i dokumentet og finnes ikke ennå når dette skriptet evalueres.
+// applyLang er idempotent, så dobbelkjøring er trygt. (Bug: engelsk modus
+// viste norsk bar/meny — Stian 2026-08-20.)
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyLang);
+}
 
 //  Shared with index.html — if you update one, update both.
 // ═══════════════════════════════════════════════════════════════════
@@ -9359,54 +9378,54 @@ if ('serviceWorker' in navigator) {
     <div id="hwBar">
         <a class="hwb" href="/">
             <svg viewBox="0 0 24 24"><path d="M3 11.2 12 3l9 8.2v9.3a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 20.5z"/></svg>
-            <span>Forside</span>
+            <span data-i18n="hwbHome">Forside</span>
         </a>
         <button class="hwb" id="hwbFav">
             <svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.7-9.3-9A5.2 5.2 0 0 1 12 6.6a5.2 5.2 0 0 1 9.3 4.9c-1.8 4.3-9.3 9-9.3 9z"/></svg>
-            <span>Favoritter</span>
+            <span data-i18n="hwbFav">Favoritter</span>
         </button>
         <button class="hwb" onclick="location.href='/observasjon.html?area='+encodeURIComponent((typeof LOC==='object'&&LOC&&LOC.area)||'')">
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
-            <span>Observasjon</span>
+            <span data-i18n="hwbObs">Observasjon</span>
         </button>
         <button class="hwb" id="hwbMenu">
             <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-            <span>Meny</span>
+            <span data-i18n="hwbMenu">Meny</span>
         </button>
     </div>
 
     <div class="hwpanel" id="hwbFavPanel">
-        <div class="hwp-title">Favoritter <button class="hwp-close" data-close="hwbFavPanel">×</button></div>
+        <div class="hwp-title"><span data-i18n="hwbFav">Favoritter</span> <button class="hwp-close" data-close="hwbFavPanel">×</button></div>
         <div class="hwp-scroll" id="hwbFavList"></div>
     </div>
 
     <div class="hwpanel" id="hwbMenuPanel">
-        <div class="hwp-title">Meny <button class="hwp-close" data-close="hwbMenuPanel">×</button></div>
+        <div class="hwp-title"><span data-i18n="hwbMenu">Meny</span> <button class="hwp-close" data-close="hwbMenuPanel">×</button></div>
         <div class="hwp-scroll">
             <button class="hwp-row" id="hwbNotif">
                 <svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>
-                <span><span class="mt">Varsler &amp; push</span><br><span class="ms">Klekking · spinnerfall · stokkmaur</span></span>
+                <span><span class="mt" data-i18n="hwbNotifT">Varsler &amp; push</span><br><span class="ms" data-i18n="hwbNotifS">Klekking · spinnerfall · stokkmaur</span></span>
                 <span class="chev">›</span>
             </button>
             <a class="hwp-row" href="/artikler.html">
                 <svg viewBox="0 0 24 24"><path d="M4 19V5a2 2 0 0 1 2-2h13v18H6a2 2 0 0 1-2-2z"/><path d="M8 7h7M8 11h7"/></svg>
-                <span><span class="mt">Artikler</span></span><span class="chev">›</span>
+                <span><span class="mt" data-i18n="hwbArticles">Artikler</span></span><span class="chev">›</span>
             </a>
             <a class="hwp-row" id="hwbOfa" href="/ofa-settefisk.html" style="display:none">
                 <svg viewBox="0 0 24 24"><path d="M12 3c3 4.5 6 7.5 6 11a6 6 0 1 1-12 0c0-3.5 3-6.5 6-11z"/></svg>
-                <span><span class="mt">OFA settefisk-historikk</span></span><span class="chev">›</span>
+                <span><span class="mt" data-i18n="hwbOfa">OFA settefisk-historikk</span></span><span class="chev">›</span>
             </a>
             <a class="hwp-row" href="/om.html">
                 <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>
-                <span><span class="mt">Om HatchWatch</span></span><span class="chev">›</span>
+                <span><span class="mt" data-i18n="hwbAbout">Om HatchWatch</span></span><span class="chev">›</span>
             </a>
             <a class="hwp-row" href="/liste.html">
                 <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7"/></svg>
-                <span><span class="mt">Lokasjonsliste</span></span><span class="chev">›</span>
+                <span><span class="mt" data-i18n="hwbList">Lokasjonsliste</span></span><span class="chev">›</span>
             </a>
             <button class="hwp-row" onclick="if(typeof openHatchForm==='function')openHatchForm('EkBErN')">
                 <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9"/><path d="M21 3l-9 9"/><path d="M15 3h6v6"/></svg>
-                <span><span class="mt">Send tilbakemelding</span></span><span class="chev">›</span>
+                <span><span class="mt" data-i18n="hwbFeedback">Send tilbakemelding</span></span><span class="chev">›</span>
             </button>
             <button class="hwp-row" onclick="toggleLang()">
                 <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3.5 12h17M12 3c2.5 2.4 4 5.4 4 9s-1.5 6.6-4 9c-2.5-2.4-4-5.4-4-9s1.5-6.6 4-9z"/></svg>
@@ -9436,7 +9455,9 @@ if ('serviceWorker' in navigator) {
         var list = document.getElementById('hwbFavList');
         var f = favs();
         if (!f.length) {
-            list.innerHTML = '<div class="hwp-empty">Ingen favoritter ennå.<br>Trykk på hjertet øverst på en lokasjon, så samler vannene dine seg her.</div>';
+            var emptyMsg = (typeof t === 'function' && t('hwbFavEmpty'))
+                || 'Ingen favoritter ennå.<br>Trykk på hjertet øverst på en lokasjon, så samler vannene dine seg her.';
+            list.innerHTML = '<div class="hwp-empty">' + emptyMsg + '</div>';
         } else {
             list.innerHTML = f.map(function (id) {
                 var name = (typeof LOCATIONS === 'object' && LOCATIONS[id] && (LOCATIONS[id].area || LOCATIONS[id].name)) || id;

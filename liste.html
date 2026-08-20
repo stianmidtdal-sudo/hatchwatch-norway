@@ -1120,5 +1120,139 @@ if ('serviceWorker' in navigator) {
     }
 })();
 </script>
+
+<!-- ══ BUNN-BAR (delt på tvers av undersider, 2026-08-20) ══
+     Erstatter burger-menyen øverst. Samme fire felt som kart + dashboard. -->
+<style>
+  #hwMenuBtn, #hwMenuDropdown { display: none !important; }
+  body { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 76px); }
+  #hwBar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 900;
+    background: #0a0c0b; border-top: 1px solid #4fb4e6;
+    display: grid; grid-template-columns: repeat(4, 1fr); align-items: center;
+    padding: 9px 6px calc(env(safe-area-inset-bottom, 0px) + 10px);
+  }
+  .hwb { text-align: center; background: none; border: 0; cursor: pointer; padding: 4px 0 0; font-family: inherit; text-decoration: none; display: block; }
+  .hwb svg { width: 23px; height: 23px; margin: 0 auto 3px; display: block; stroke: #7d8a80; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .hwb span { font-size: 0.58rem; font-weight: 600; color: #7d8a80; }
+  .hwb.on svg { stroke: #fff; }
+  .hwb.on span { color: #fff; font-weight: 700; }
+  .hwpanel { position: fixed; inset: 0; z-index: 950; background: #101211; display: none; flex-direction: column; padding: calc(env(safe-area-inset-top, 0px) + 16px) 16px 90px; }
+  .hwpanel.open { display: flex; }
+  @media (min-width: 700px) {
+    .hwpanel { left: auto; width: 400px; border-left: 1px solid #262a28; box-shadow: -16px 0 48px rgba(0,0,0,0.45); }
+  }
+  .hwp-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.3rem; color: #f0f4f1; margin: 6px 2px 14px; display: flex; justify-content: space-between; align-items: center; }
+  .hwp-close { background: none; border: 0; color: #7b847e; font-size: 1.4rem; cursor: pointer; padding: 4px 10px; }
+  .hwp-scroll { flex: 1; overflow-y: auto; }
+  .hwp-row { display: flex; align-items: center; gap: 14px; padding: 13px 10px; border-radius: 12px; color: #dde2df; text-decoration: none; cursor: pointer; background: none; border: 0; width: 100%; text-align: left; font-family: inherit; font-size: 1rem; }
+  .hwp-row:hover { background: rgba(255,255,255,0.05); }
+  .hwp-row svg { width: 21px; height: 21px; stroke: #99a29d; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+  .hwp-row .mt { font-size: 0.9rem; font-weight: 600; }
+  .hwp-row .ms { font-size: 0.67rem; color: #7b847e; }
+  .hwp-row .chev { margin-left: auto; color: #4f5551; font-size: 0.8rem; }
+  .hwp-empty { text-align: center; color: #7b847e; font-size: 0.8rem; line-height: 1.7; padding: 40px 30px; }
+</style>
+
+<div id="hwBar">
+  <a class="hwb" href="/">
+    <svg viewBox="0 0 24 24"><path d="M3 11.2 12 3l9 8.2v9.3a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 20.5z"/></svg>
+    <span>Forside</span>
+  </a>
+  <button class="hwb" id="hwbFav">
+    <svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.7-9.3-9A5.2 5.2 0 0 1 12 6.6a5.2 5.2 0 0 1 9.3 4.9c-1.8 4.3-9.3 9-9.3 9z"/></svg>
+    <span>Favoritter</span>
+  </button>
+  <a class="hwb" href="/observasjon.html">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+    <span>Observasjon</span>
+  </a>
+  <button class="hwb" id="hwbMenu">
+    <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    <span>Meny</span>
+  </button>
+</div>
+
+<div class="hwpanel" id="hwbFavPanel">
+  <div class="hwp-title"><span>Favoritter</span> <button class="hwp-close" data-close="hwbFavPanel">×</button></div>
+  <div class="hwp-scroll" id="hwbFavList"></div>
+</div>
+
+<div class="hwpanel" id="hwbMenuPanel">
+  <div class="hwp-title"><span>Meny</span> <button class="hwp-close" data-close="hwbMenuPanel">×</button></div>
+  <div class="hwp-scroll">
+    <a class="hwp-row" href="/varsler.html">
+      <svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>
+      <span><span class="mt">Varsler &amp; push</span><br><span class="ms">Klekking · spinnerfall · stokkmaur</span></span>
+      <span class="chev">›</span>
+    </a>
+    <a class="hwp-row" href="/artikler.html">
+      <svg viewBox="0 0 24 24"><path d="M4 19V5a2 2 0 0 1 2-2h13v18H6a2 2 0 0 1-2-2z"/><path d="M8 7h7M8 11h7"/></svg>
+      <span><span class="mt">Artikler</span></span><span class="chev">›</span>
+    </a>
+    <a class="hwp-row" href="/ofa-settefisk.html">
+      <svg viewBox="0 0 24 24"><path d="M12 3c3 4.5 6 7.5 6 11a6 6 0 1 1-12 0c0-3.5 3-6.5 6-11z"/></svg>
+      <span><span class="mt">OFA settefisk-historikk</span></span><span class="chev">›</span>
+    </a>
+    <a class="hwp-row" href="/om.html">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>
+      <span><span class="mt">Om HatchWatch</span></span><span class="chev">›</span>
+    </a>
+    <a class="hwp-row" href="/liste.html">
+      <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7"/></svg>
+      <span><span class="mt">Lokasjonsliste</span></span><span class="chev">›</span>
+    </a>
+    <a class="hwp-row" href="https://tally.so/r/EkBErN" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9"/><path d="M21 3l-9 9"/><path d="M15 3h6v6"/></svg>
+      <span><span class="mt">Send tilbakemelding</span></span><span class="chev">›</span>
+    </a>
+  </div>
+</div>
+
+<script>
+// Delt bunn-bar-logikk (selvstendig — ingen avhengigheter til sidens kode)
+(function () {
+  var NAMES = { kautokeino: 'Kautokeino', alta: 'Alta', porsanger: 'Porsanger',
+    ifjordfjellet: 'Ifjordfjellet', dividalen: 'Dividalen', bardu: 'Bardu',
+    narvik: 'Narvik', mo_i_rana: 'Mo i Rana', borgefjell: 'Børgefjell',
+    lierne: 'Lierne', trondheim: 'Trondheim', rena: 'Rena',
+    finnemarka: 'Finnemarka', hardangervidda: 'Hardangervidda', bergen: 'Bergen',
+    roros: 'Røros', oslo: 'Nordmarka', nordmarka_dyn: 'Nordmarka',
+    ostmarka: 'Østmarka', vestfjella: 'Vestfjella' };
+  function favs() {
+    try { return JSON.parse(localStorage.getItem('hw_favs') || '[]'); } catch (e) { return []; }
+  }
+  function closeAll() {
+    document.querySelectorAll('.hwpanel').forEach(function (p) { p.classList.remove('open'); });
+    document.querySelectorAll('.hwb').forEach(function (b) { b.classList.remove('on'); });
+  }
+  function open(panelId, btn) {
+    var p = document.getElementById(panelId);
+    var wasOpen = p.classList.contains('open');
+    closeAll();
+    if (!wasOpen) { p.classList.add('open'); btn.classList.add('on'); }
+  }
+  document.getElementById('hwbFav').addEventListener('click', function () {
+    var list = document.getElementById('hwbFavList');
+    var f = favs();
+    if (!f.length) {
+      list.innerHTML = '<div class="hwp-empty">Ingen favoritter ennå.<br>Trykk på hjertet øverst på en lokasjon, så samler vannene dine seg her.</div>';
+    } else {
+      list.innerHTML = f.map(function (id) {
+        var name = NAMES[id] || id;
+        return '<a class="hwp-row" href="/dashboard.html?loc=' + encodeURIComponent(id) + '">' +
+          '<span><span class="mt">' + name + '</span></span><span class="chev">›</span></a>';
+      }).join('');
+    }
+    open('hwbFavPanel', this);
+  });
+  document.getElementById('hwbMenu').addEventListener('click', function () {
+    open('hwbMenuPanel', this);
+  });
+  document.querySelectorAll('.hwp-close').forEach(function (b) {
+    b.addEventListener('click', closeAll);
+  });
+})();
+</script>
 </body>
 </html>
