@@ -46,23 +46,26 @@
         }, 300);
     };
     </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        /* ── MØRKT SKALL (redesign 2027, innført 2026-08-19) ──
-           Prinsipp: mørkt skall, lyse datakort. Siden deler nå flate med
-           kartforsiden (kart.html) så overgangen er sømløs — men alt
-           informasjonstungt (grafer, tabeller, værkort) beholder lys
-           bakgrunn, som leses best i sollys ved elva. Ikke én Chart.js-
-           konfigurasjon er endret. Full svart ble vurdert og forkastet. */
+        /* ── LYST SKALL (redesign 2027 v2, 2026-08-19) ──
+           Kartforsiden ble hvit med glinsende sort silhuett — lokasjonssiden
+           følger: nesten hvit flate, mørke ankerelementer (header, hero,
+           toggle) og hårfine kort-kanter i stedet for myke skygger. Det
+           mørke skallet fra tidligere samme dag ble reversert da Stian
+           valgte hvitt som kartets grunnfarge. */
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0c1310;
-            color: #1a3a2a;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f6f7f5;
+            color: #222925;
             min-height: 100vh;
         }
         header {
-            background: linear-gradient(135deg, #0d1f16 0%, #123024 100%);
+            background: linear-gradient(135deg, #0d0f0e 0%, #161918 100%);
             color: white;
             /* iOS PWA safe-area: legg statusbar-høyden ON TOP av standard 16px padding.
                Pluss ekstra right-padding for å lage plass til absolutt-plasserte kontroller. */
@@ -121,17 +124,17 @@
             font-weight: 700;
             letter-spacing: 1.8px;
             text-transform: uppercase;
-            color: #8fb3a0;
+            color: #6a736e;
             margin-bottom: 10px;
             padding-bottom: 5px;
-            border-bottom: 1px solid #1f3a2b;
+            border-bottom: 1px solid #e0e4e1;
         }
 
         /* Tekst som ligger DIREKTE på det mørke skallet (utenfor kortene).
            Inline-styler med #888 må overstyres med !important. */
-        #wtNote, #snowNote, #iceSection [data-i18n="iceShortNote"] { color: #7d8a80 !important; }
-        .flow-note, .wx-foot { color: #7d8a80; }
-        .loading-wrap { color: #8fb3a0 !important; }
+        #wtNote, #snowNote, #iceSection [data-i18n="iceShortNote"] { color: #8a918c !important; }
+        .flow-note, .wx-foot { color: #8a918c; }
+        .loading-wrap { color: #6a736e !important; }
 
         /* ── PRIOR MODEL NOTICE ── */
         /* ── HISTORICAL GDD WINDOW ── */
@@ -283,8 +286,8 @@
            Den gamle grønne gradienten (#1B4332→#2D6A4F) var det siste store
            «gammelt design»-elementet. (Fargevask 2026-08-19) */
         .best-wrap {
-            background: #101a14;
-            border: 1px solid #223828;
+            background: #121413;
+            border: 1px solid #262927;
             color: white;
             border-radius: 12px;
             padding: 20px 24px;
@@ -596,8 +599,8 @@
         /* ── MODUS-TOGGLE (Prognose / Forhold) — mørkt skall-variant ── */
         .mode-toggle {
             display: inline-flex;
-            background: #121b15;
-            border: 1px solid #223028;
+            background: #131514;
+            border: 1px solid #2a2d2b;
             border-radius: 10px;
             padding: 4px;
             gap: 4px;
@@ -606,7 +609,7 @@
         .mode-btn {
             border: 0;
             background: transparent;
-            color: #6d8577;
+            color: #7b847e;
             font-size: 0.88rem;
             font-weight: 600;
             padding: 9px 20px;
@@ -615,10 +618,10 @@
             transition: background 0.15s, color 0.15s;
             font-family: inherit;
         }
-        .mode-btn:hover { color: #cfe8d8; }
+        .mode-btn:hover { color: #d8dcd9; }
         .mode-btn.active {
             background: #ffffff;
-            color: #0d1f16;
+            color: #121413;
         }
         .mode-btn .mode-dot {
             display: inline-block;
@@ -751,7 +754,7 @@
 
         /* ── LOADING / ERROR ── */
         .loading-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 20px; gap: 16px; color: #555; }
-        .spinner { width: 42px; height: 42px; border: 3px solid #1f3a2b; border-top-color: #4fb4e6; border-radius: 50%; animation: spin 0.7s linear infinite; }
+        .spinner { width: 42px; height: 42px; border: 3px solid #e0e4e1; border-top-color: #4fb4e6; border-radius: 50%; animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes welcome-fade {
             from { opacity: 0; transform: translateY(-10px); }
@@ -807,6 +810,19 @@
             white-space: nowrap;
         }
         .lang-btn:hover { background: rgba(255,255,255,0.1); }
+
+        /* ── Redesign-språket: hårfine kanter i stedet for skygger, mono-tall ──
+           box-shadow-ringen overstyrer de gamle myke skyggene uten å røre
+           border-top-aksentene på kortene. */
+        .kpi-card, .card, .chart-wrap, .table-wrap, .explain-wrap,
+        .settefisk-wrap, .conv-summary, .loc-strip {
+            box-shadow: 0 0 0 1px #e6eae7;
+        }
+        .kpi-value, .card-value, .hist-gdd-val {
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: -0.5px;
+        }
+        header h1 { font-family: 'Space Grotesk', 'Inter', sans-serif; }
     </style>
 </head>
 <body>
