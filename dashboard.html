@@ -355,13 +355,14 @@
 
         /* ── SESONGFORKLARING (?explain=1) ── */
         .explain-wrap {
-            background: white;
-            border-radius: 12px;
-            padding: 18px 22px;
-            margin-top: -14px;  /* trekker den tett inntil best-wrap */
+            background: #121413;
+            border: 1px solid #262927;
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+            padding: 30px 22px 18px;
+            margin-top: -36px;  /* overlapper heroens bunnhjørner — samme
+                                   bakgrunn gjør sømmen usynlig, én hero */
             margin-bottom: 24px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-            border-top: 4px solid #4fb4e6;
         }
         .explain-header {
             display: flex;
@@ -373,21 +374,19 @@
         }
         .explain-label {
             font-size: 0.72rem;
-            opacity: 0.7;
             text-transform: uppercase;
             letter-spacing: 1.2px;
-            color: #1B4332;
+            color: #4fb4e6;
             font-weight: 700;
         }
         .explain-meta {
             font-size: 0.72rem;
-            opacity: 0.55;
-            color: #1B4332;
+            color: #7b847e;
         }
         .explain-tempo {
             position: relative;
             height: 8px;
-            background: linear-gradient(90deg, #2D6A4F 0%, #74C69D 25%, #d0d0c8 50%, #f4a261 75%, #c1431f 100%);
+            background: linear-gradient(90deg, #2D6A4F 0%, #7fc9a4 30%, #3a3d3b 50%, #b98a4a 72%, #c1431f 100%);
             border-radius: 999px;
             margin: 16px 8px 6px;
             opacity: 0.85;
@@ -397,7 +396,7 @@
             top: -3px;
             bottom: -3px;
             width: 1px;
-            background: rgba(0,0,0,0.15);
+            background: rgba(255,255,255,0.18);
         }
         .explain-tempo-marker {
             position: absolute;
@@ -405,8 +404,8 @@
             width: 18px;
             height: 18px;
             border-radius: 50%;
-            background: #1B4332;
-            border: 3px solid white;
+            background: #ffffff;
+            border: 3px solid #4fb4e6;
             box-shadow: 0 1px 4px rgba(0,0,0,0.25);
             transform: translateX(-50%);
             transition: left 0.4s ease;
@@ -415,7 +414,7 @@
             display: flex;
             justify-content: space-between;
             font-size: 0.65rem;
-            color: rgba(27,67,50,0.55);
+            color: #7b847e;
             margin: 0 4px 16px;
             font-weight: 600;
         }
@@ -426,55 +425,55 @@
             margin-bottom: 14px;
         }
         .drv-cell {
-            background: #f5f3ec;
+            background: #1c1f1d;
             border-radius: 8px;
             padding: 10px 12px;
         }
-        .drv-cell.drv-anom-mild  { background: #eaf3de; }
-        .drv-cell.drv-anom-strong{ background: #d8ecbf; }
-        .drv-cell.drv-anom-late-mild   { background: #fdecd9; }
-        .drv-cell.drv-anom-late-strong { background: #f9d6b5; }
+        .drv-cell.drv-anom-mild  { background: #1a2a1f; }
+        .drv-cell.drv-anom-strong{ background: #173123; }
+        .drv-cell.drv-anom-late-mild   { background: #2c2217; }
+        .drv-cell.drv-anom-late-strong { background: #342517; }
         .drv-head {
             display: flex;
             align-items: center;
             gap: 5px;
             font-size: 0.68rem;
             font-weight: 700;
-            color: rgba(27,67,50,0.7);
+            color: #8a918c;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin-bottom: 4px;
         }
         .drv-icon { font-size: 0.85rem; opacity: 0.85; }
         .drv-value {
+            font-family: 'JetBrains Mono', monospace;
             font-size: 1.05rem;
-            font-weight: 700;
-            color: #1B4332;
+            font-weight: 600;
+            color: #f2f4f2;
             line-height: 1.2;
         }
         .drv-cell.drv-anom-mild .drv-value,
-        .drv-cell.drv-anom-strong .drv-value { color: #2D6A4F; }
+        .drv-cell.drv-anom-strong .drv-value { color: #7fc9a4; }
         .drv-cell.drv-anom-late-mild .drv-value,
-        .drv-cell.drv-anom-late-strong .drv-value { color: #8a3b13; }
+        .drv-cell.drv-anom-late-strong .drv-value { color: #e8a55e; }
         .drv-status {
             font-size: 0.66rem;
-            opacity: 0.65;
             margin-top: 2px;
-            color: #1B4332;
+            color: #8a918c;
         }
         .explain-text {
             font-size: 0.92rem;
             line-height: 1.55;
-            color: #2a2a2a;
-            border-top: 1px solid rgba(27,67,50,0.1);
+            color: #c6ccc8;
+            border-top: 1px solid #262927;
             padding-top: 12px;
         }
-        .explain-text strong { color: #1B4332; }
-        .explain-text .verdict-early-strong { color: #2D6A4F; font-weight: 700; }
-        .explain-text .verdict-early-mild   { color: #2D6A4F; font-weight: 600; }
-        .explain-text .verdict-normal       { color: #555;    font-weight: 600; }
-        .explain-text .verdict-late-mild    { color: #8a3b13; font-weight: 600; }
-        .explain-text .verdict-late-strong  { color: #8a3b13; font-weight: 700; }
+        .explain-text strong { color: #ffffff; }
+        .explain-text .verdict-early-strong { color: #7fc9a4; font-weight: 700; }
+        .explain-text .verdict-early-mild   { color: #7fc9a4; font-weight: 600; }
+        .explain-text .verdict-normal       { color: #b9c0bb; font-weight: 600; }
+        .explain-text .verdict-late-mild    { color: #e8a55e; font-weight: 600; }
+        .explain-text .verdict-late-strong  { color: #e8a55e; font-weight: 700; }
 
         /* ── SETTEFISK-KORT (kun nordmarka_dyn) ── */
         .settefisk-wrap {
@@ -637,22 +636,24 @@
         }
 
         /* ── SESONGSTATUS-BANNER ── */
+        /* Sesongstatus som undertekst i heroen (2026-08-19) — var lyseblå
+           boks øverst på siden. Nå: dempet linje under datoen, skilt med
+           hårfin strek, samme mørke flate. */
         .season-banner {
-            background: #eef3f7;
-            border-left: 4px solid #5b8db8;
-            border-radius: 0;
-            padding: 14px 18px;
-            margin: 0 0 22px;
-            font-size: 0.9rem;
+            background: transparent;
+            border-top: 1px solid #262927;
+            padding: 12px 0 2px;
+            margin: 14px 0 0;
+            font-size: 0.84rem;
             line-height: 1.6;
-            color: #34506a;
+            color: #9aa39d;
         }
-        .season-banner strong { color: #1f3c56; font-weight: 700; }
+        .season-banner strong { color: #d8dcd9; font-weight: 600; }
         .season-banner .sb-sub {
             display: block;
-            margin-top: 5px;
-            font-size: 0.82rem;
-            color: #6b8299;
+            margin-top: 4px;
+            font-size: 0.78rem;
+            color: #7b847e;
         }
 
         /* ── VÆRVISNING (Forhold-modus) ──
@@ -814,7 +815,7 @@
         /* ── Redesign-språket: hårfine kanter i stedet for skygger, mono-tall ──
            box-shadow-ringen overstyrer de gamle myke skyggene uten å røre
            border-top-aksentene på kortene. */
-        .kpi-card, .card, .chart-wrap, .table-wrap, .explain-wrap,
+        .kpi-card, .card, .chart-wrap, .table-wrap,
         .settefisk-wrap, .conv-summary, .loc-strip {
             box-shadow: 0 0 0 1px #e6eae7;
         }
@@ -1031,7 +1032,8 @@
              verdi i november, og enda mindre i januar — da er varmesummen
              nullstilt og modellen viser i praksis klimatologi forkledd som
              prediksjon. Banneret sier det rett ut i stedet. -->
-        <div id="seasonStatusBanner" class="season-banner" style="display:none"></div>
+        <!-- seasonStatusBanner flyttet inn i hero-kortet (best-wrap) 2026-08-19:
+             sesongstatus er en del av SVARET, ikke et banner over alt annet. -->
 
         <!-- ═══ TODAY'S STATUS ═══ -->
         <section id="todayStatusSection">
@@ -1067,6 +1069,7 @@
                 <div class="best-note" id="bestNote">Loading…</div>
             </div>
             <div id="speciesCalendar" class="species-grid"></div>
+            <div id="seasonStatusBanner" class="season-banner" style="display:none"></div>
             <span id="bestDate" style="display:none"></span>
         </div>
 
@@ -5430,10 +5433,19 @@ function renderSeasonStatus(status) {
     // Seksjoner som bare gir mening når prognosen er levende. Vintersignaler,
     // historiske klekkedatoer, varmesum-kortet og alle grafene holdes utenfor —
     // de er faktiske observasjoner og skal vises hele året.
+    // seasonCalendarSection står IKKE i lista: banneret bor inne i den, så
+    // seksjonen må leve i closedBefore. I stedet skjules dens indre
+    // (artskalender + note) slik at heroen bare viser etiketten + banneret.
     const PREDICTION_SECTIONS = [
-        'seasonCalendarSection', 'seasonExplainSection',
+        'seasonExplainSection',
         'forecastEffectSection', 'convergenceSection',
     ];
+    function setHeroInner(show) {
+        const cal = document.getElementById('speciesCalendar');
+        const note = document.querySelector('#seasonCalendarSection .best-note');
+        if (cal)  cal.style.display  = show ? '' : 'none';
+        if (note) note.style.display = show ? '' : 'none';
+    }
 
     if (status.state === 'open') {
         // Ingen opprydding nødvendig: renderne over har allerede satt riktig
@@ -5442,6 +5454,7 @@ function renderSeasonStatus(status) {
         // grunner — f.eks. forecast-effekt-banneret når utslaget er under
         // terskelen. Vi rører dem derfor ikke.
         banner.style.display = 'none';
+        setHeroInner(true);
         return;
     }
 
@@ -5464,6 +5477,7 @@ function renderSeasonStatus(status) {
               + `<span class="sb-sub">The ${YEAR + 1} forecast opens on 1 April. `
               + `Water temperature, flow and historical hatch dates keep updating.</span>`;
         banner.style.display = '';
+        setHeroInner(true);
         return;
     }
 
@@ -5476,6 +5490,7 @@ function renderSeasonStatus(status) {
           + `Growing degree days reset on 1 January and have not yet accumulated enough to be informative.`
           + `<span class="sb-sub">Snow depth, ice-off and historical hatch dates keep updating through the winter.</span>`;
     banner.style.display = '';
+    setHeroInner(false);
 
     for (const id of PREDICTION_SECTIONS) {
         markSelfHidden(document.getElementById(id), true);
@@ -5488,27 +5503,26 @@ function renderSeasonStatus(status) {
 // Seksjoner rutes til én av modusene. Alt som ikke står i listene under
 // er alltid synlig (header, lokasjonsvelger, settefiskkort, footer).
 //
-// KPI-kortene (todayStatusSection) og Klekkeprognosen (seasonCalendarSection,
-// den som bytter til "Klekking pågår" i sesongen) hører kun til Prognose. Begge
-// sto opprinnelig i begge modi, men da ble Forhold-fanen innledet med nøyaktig
-// samme to blokker som Prognose — og fanen skal føles som et annet verktøy,
-// ikke samme side på nytt. Forhold starter derfor rett på Været.
-// (Stian 2026-08-18)
+// KPI-kortene (todayStatusSection, «Dagens status») hører til FORHOLD —
+// dagens målinger ER forhold, ikke prognose (Stian 2026-08-19). De ligger
+// øverst der. Prognose-fanen mister ingenting: vanntemp- og snø-AVVIKENE
+// lever som drivere i heroen, og det er avvikene som forklarer prediksjonen.
+// Klekkeprognosen (seasonCalendarSection) er Prognose-fanens hero.
 // Ingen seksjon skal stå i BEGGE lister — da vises den samme grafen i begge
 // modi, og modusbyttet mister mening. De to vanntemp-grafene er bevisst delt:
 //   wtSection       — år-for-år-spaghetti, en analysegraf → Prognose
 //   wtNormalSection — normalbånd + i år, en beslutningsgraf → Forhold
 const MODE_SECTIONS = {
     forecast: [
-        'priorNotice', 'todayStatusSection', 'seasonCalendarSection',
+        'priorNotice', 'seasonCalendarSection',
         'seasonExplainSection', 'forecastEffectSection',
         'convergenceSection', 'gddModelSection', 'gddHistSection',
         'wtSection', 'snowSection', 'iceSection',
         'seasonIndicatorsSection', 'southSignalSection',
     ],
     conditions: [
-        'weatherSection', 'wtNormalSection', 'flowChartSection',
-        'spinnerfallSection',
+        'todayStatusSection', 'weatherSection', 'wtNormalSection',
+        'flowChartSection', 'spinnerfallSection',
     ],
 };
 
