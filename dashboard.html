@@ -747,6 +747,12 @@
             .wx-fact { flex: 1 1 33%; }
         }
 
+        .range-pills { display: flex; gap: 6px; margin: 4px 0 2px; flex-wrap: wrap; }
+        .range-pill {
+            font-size: 0.72rem; font-weight: 600; padding: 6px 12px; border-radius: 8px;
+            background: #eceeeb; color: #6a736e; border: 0; cursor: pointer; font-family: inherit;
+        }
+        .range-pill.on { background: #121413; color: #fff; }
         .flow-note {
             font-size: 0.75rem;
             color: #77857c;
@@ -1210,6 +1216,16 @@
         <!-- Samme visuelle språk som vannføringsgrafen: grønt bånd = normalspenn
              for årstiden, blå linje = i år. Den gamle år-for-år-grafen (wtSection)
              er en analysegraf og hører hjemme i Prognose-modus. -->
+        <!-- Tidshorisont for normalbånd-grafene (2026-08-20). Ett valg
+             styrer BEGGE grafene; huskes i localStorage på tvers av lokasjoner. -->
+        <section id="bandRangeSection" style="display:none" data-hw-self-hidden="1">
+            <div class="range-pills" id="bandRangePills">
+                <button type="button" class="range-pill" data-days="7" data-i18n="rangeWeek">Siste uke</button>
+                <button type="button" class="range-pill on" data-days="14" data-i18n="range2w">Siste 2 uker</button>
+                <button type="button" class="range-pill" data-days="30" data-i18n="rangeMonth">Siste måned</button>
+                <button type="button" class="range-pill" data-days="season" data-i18n="rangeSeason">Sesongen</button>
+            </div>
+        </section>
         <section id="wtNormalSection" style="display:none">
             <h2 id="wtNormalHeading" data-i18n="wtNormalHeading">Vanntemperatur mot normalen</h2>
             <div class="chart-wrap" style="height:300px">
@@ -1415,6 +1431,8 @@ const T = {
     modeConditions: 'Forhold',
     weatherHeading: 'Været',
     flowChartHeading: 'Vannføring',
+    rangeWeek: 'Siste uke', range2w: 'Siste 2 uker',
+    rangeMonth: 'Siste måned', rangeSeason: 'Sesongen',
     wtNormalHeading: 'Vanntemperatur',
     southSignalHeading: 'Sør-Norge-signal',
     convToday: 'I dag',
@@ -1638,6 +1656,8 @@ const T = {
     modeConditions: 'Conditions',
     weatherHeading: 'Weather',
     flowChartHeading: 'Water flow',
+    rangeWeek: 'Last week', range2w: 'Last 2 weeks',
+    rangeMonth: 'Last month', rangeSeason: 'Season',
     wtNormalHeading: 'Water temperature',
     southSignalHeading: 'Southern Norway signal',
     convToday: 'Today',
@@ -5264,6 +5284,9 @@ function renderWeatherSection(dayData, hourlyData) {
 function renderBandChart(cfg) {
     const section = document.getElementById(cfg.sectionId);
     if (!section) return;
+    // Registrer cfg så tidshorisont-velgeren kan re-rendre grafen.
+    window._bandCfgs = window._bandCfgs || {};
+    window._bandCfgs[cfg.chartKey] = cfg;
 
     const canvas = document.getElementById(cfg.canvasId);
     if (!canvas || !cfg.data || !cfg.normal) {
@@ -5275,7 +5298,7 @@ function renderBandChart(cfg) {
     if (!last.date) { markSelfHidden(section, true); return; }
 
     const endDate = parseDate(last.date);
-    const DAYS = cfg.days || 14;
+    const DAYS = _bandRangeDays();
     const dates = [];
     for (let i = DAYS - 1; i >= 0; i--) {
         const d = new Date(endDate);
@@ -5358,7 +5381,47 @@ function renderBandChart(cfg) {
     }
 
     markSelfHidden(section, false);
+    const brs = document.getElementById('bandRangeSection');
+    if (brs) { markSelfHidden(brs, false); brs.style.display = section.style.display; }
 }
+
+// ── Tidshorisont for normalbånd-grafene (2026-08-20, Stians ønske) ──────
+// 7 / 14 (default) / 30 dager eller hele sesongen (fra 1. april).
+function _bandRangeDays() {
+    let r = window._bandRange;
+    if (r == null) {
+        const s = localStorage.getItem('hw_bandrange');
+        r = s === 'season' ? 'season' : (parseInt(s, 10) || 14);
+        if (r !== 'season' && ![7, 14, 30].includes(r)) r = 14;
+        window._bandRange = r;
+    }
+    if (r === 'season') {
+        const start = new Date(YEAR, 3, 1);   // 1. april — sesongåpningen
+        const days = Math.round((Date.now() - start.getTime()) / 86400000) + 1;
+        return Math.max(14, Math.min(days, 250));
+    }
+    return r;
+}
+function setBandRange(r) {
+    window._bandRange = r;
+    try { localStorage.setItem('hw_bandrange', String(r)); } catch (e) {}
+    document.querySelectorAll('#bandRangePills .range-pill').forEach(b =>
+        b.classList.toggle('on', b.dataset.days === String(r)));
+    const cfgs = window._bandCfgs || {};
+    for (const k of Object.keys(cfgs)) renderBandChart(cfgs[k]);
+}
+document.addEventListener('DOMContentLoaded', function () {
+    const pills = document.getElementById('bandRangePills');
+    if (!pills) return;
+    pills.addEventListener('click', function (e) {
+        const b = e.target.closest('.range-pill');
+        if (!b) return;
+        setBandRange(b.dataset.days === 'season' ? 'season' : parseInt(b.dataset.days, 10));
+    });
+    _bandRangeDays();  // initialiser fra localStorage
+    pills.querySelectorAll('.range-pill').forEach(b =>
+        b.classList.toggle('on', b.dataset.days === String(window._bandRange)));
+});
 
 // Felles setning: "Siste måling X — Y% av medianen, over/innenfor/under normalspennet."
 function _bandStatusSentence(status, no, unit, dec) {
@@ -5655,7 +5718,7 @@ const MODE_SECTIONS = {
         'seasonIndicatorsSection', 'southSignalSection',
     ],
     conditions: [
-        'todayStatusSection', 'weatherSection', 'wtNormalSection',
+        'todayStatusSection', 'weatherSection', 'bandRangeSection', 'wtNormalSection',
         'flowChartSection', 'spinnerfallSection',
     ],
 };
