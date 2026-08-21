@@ -445,21 +445,21 @@ function openLoc(id) {
 // Stasjons- og kalibreringsinfo per pinne (fra gamle lokasjonslisten).
 // air = luftstasjon, wt = vannstasjon, sn = snøstasjon.
 var LOCINFO = {
-  kautokeino:    { region: 'Finnmark',   lat: 69.0, air: 'Kautokeino', wt: 'Suohpatjohka', sn: 'Kautokeino', cal: 3, unc: '±2 d' },
-  alta:          { region: 'Finnmark',   lat: 70.0, air: 'Sihccajavri', wt: 'Kista (Altaelva)', sn: 'Sihccajavri', cal: 0, unc: '±10 d' },
-  porsanger:     { region: 'Finnmark',   lat: 70.1, air: 'Karasjok', wt: 'Lombola (Lakselva)', sn: 'Karasjok', cal: 0, unc: '±10 d' },
-  bardu:         { region: 'Troms',      lat: 69.0, air: 'Bardufoss', wt: 'Skogly', sn: 'Bardufoss', cal: 0, unc: '±14 d' },
-  mo_i_rana:     { region: 'Nordland',   lat: 66.4, air: 'Storforshei', wt: 'Leiråga', sn: 'Storforshei', cal: 0, unc: '±14 d' },
-  borgefjell:    { region: 'Nordland',   lat: 65.1, air: 'Namsvatn II', wt: 'Landbru', sn: 'Namsvatn', cal: 0, unc: '±14 d' },
-  roros:         { region: 'Trøndelag',  lat: 62.6, air: 'Røros lufthavn', wt: 'Orva (Glåma)', sn: 'Røros lufthavn', cal: 0, unc: '±12 d' },
-  trondheim:     { region: 'Trøndelag',  lat: 63.5, air: 'Kvithamar', wt: 'Kobberdammen (Nidelva)', sn: 'Skistua', cal: 0, unc: '±14 d' },
-  rena:          { region: 'Innlandet',  lat: 61.1, air: 'Rena - Ørnhaugen', wt: 'Femundselva', sn: 'Plassen, Trysil', cal: 0, unc: '±14 d' },
+  kautokeino:    { region: 'Finnmark',   lat: 69.0, air: 'Kautokeino', wt: 'Suohpatjohka', sn: 'Kautokeino', cal: 3, unc: '±3 d' },
+  alta:          { region: 'Finnmark',   lat: 70.0, air: 'Sihccajavri', wt: 'Kista (Altaelva)', sn: 'Sihccajavri', cal: 0 },
+  porsanger:     { region: 'Finnmark',   lat: 70.1, air: 'Karasjok', wt: 'Lombola (Lakselva)', sn: 'Karasjok', cal: 0 },
+  bardu:         { region: 'Troms',      lat: 69.0, air: 'Bardufoss', wt: 'Skogly', sn: 'Bardufoss', cal: 0 },
+  mo_i_rana:     { region: 'Nordland',   lat: 66.4, air: 'Storforshei', wt: 'Leiråga', sn: 'Storforshei', cal: 0 },
+  borgefjell:    { region: 'Nordland',   lat: 65.1, air: 'Namsvatn II', wt: 'Landbru', sn: 'Namsvatn', cal: 0 },
+  roros:         { region: 'Trøndelag',  lat: 62.6, air: 'Røros lufthavn', wt: 'Orva (Glåma)', sn: 'Røros lufthavn', cal: 0 },
+  trondheim:     { region: 'Trøndelag',  lat: 63.5, air: 'Kvithamar', wt: 'Kobberdammen (Nidelva)', sn: 'Skistua', cal: 0 },
+  rena:          { region: 'Innlandet',  lat: 61.1, air: 'Rena - Ørnhaugen', wt: 'Femundselva', sn: 'Plassen, Trysil', cal: 0 },
   nordmarka_dyn: { region: 'Østlandet',  lat: 59.9, air: 'Bjørnholt', wt: 'Sinnerdammen', sn: 'Bjørnholt', cal: 1, unc: '±10 d' },
-  finnemarka:    { region: 'Østlandet',  lat: 59.9, air: 'Geithus', wt: 'Elgtjern', sn: 'Sande – Lauvkollmyr', cal: 0, unc: '±14 d' },
+  finnemarka:    { region: 'Østlandet',  lat: 59.9, air: 'Geithus', wt: 'Elgtjern', sn: 'Sande – Lauvkollmyr', cal: 0 },
   ostmarka:      { region: 'Østlandet',  lat: 59.7, air: 'Råken', wt: 'Mønevann, Enebakk', sn: 'Enebakk – Barbøl', cal: 1, unc: '±4 d' },
-  vestfjella:    { region: 'Østlandet',  lat: 59.3, air: 'Rakkestad', wt: 'Løkkeborg', sn: 'Ørje', cal: 0, unc: '±6 d' },
-  hardangervidda:{ region: 'Telemark',   lat: 60.1, air: 'Uvdal', wt: 'Kvenna', sn: 'Tessungdalen-Bakkhus', cal: 0, unc: '±14 d' },
-  bergen:        { region: 'Vestlandet', lat: 60.5, air: 'Bergen - Florida', wt: 'Dyrdalsvatn', sn: 'Bergen - Florida', cal: 0, unc: '±14 d' }
+  vestfjella:    { region: 'Østlandet',  lat: 59.3, air: 'Rakkestad', wt: 'Løkkeborg', sn: 'Ørje', cal: 0 },
+  hardangervidda:{ region: 'Telemark',   lat: 60.1, air: 'Uvdal', wt: 'Kvenna', sn: 'Tessungdalen-Bakkhus', cal: 0 },
+  bergen:        { region: 'Vestlandet', lat: 60.5, air: 'Bergen - Florida', wt: 'Dyrdalsvatn', sn: 'Bergen - Florida', cal: 0 }
 };
 
 var _ibId = null;
@@ -480,7 +480,7 @@ function openInfo(id) {
     cal.textContent = stars + ' KALIBRERT · ' + info.unc;
   } else {
     cal.className = 'ib-cal no';
-    cal.textContent = 'UKALIBRERT · ' + info.unc;
+    cal.textContent = 'UKALIBRERT · INDIKATIV PROGNOSE';
   }
   // Velkomstkortet viker — den som trykker pinner har skjønt kartet
   var wc = document.getElementById('welcome');

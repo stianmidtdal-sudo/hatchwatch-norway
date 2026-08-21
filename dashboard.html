@@ -1506,7 +1506,7 @@ const T = {
     locModel: 'Modell',
     masl: 'm o.h.',
     calibratedModel: '✅ Kalibrert',
-    stdShort: 'standardavvik',
+    stdShort: 'typisk avvik',
     daysLabel: 'dager',
     fromJan1: 'fra 1. jan',
     priorLabel: 'Prior',
@@ -1737,7 +1737,7 @@ const T = {
     locModel: 'Model',
     masl: 'm a.s.l.',
     calibratedModel: '✅ Calibrated',
-    stdShort: 'std. dev.',
+    stdShort: 'typical error',
     daysLabel: 'days',
     fromJan1: 'from 1 Jan',
     priorLabel: 'Prior',
@@ -1937,14 +1937,14 @@ const LOCATIONS = {
         //
         // Stian foretrekker bias-balanse → GDD 530 valgt over MAE-min 555.
         gddThreshold: 530,
-        uncertaintyDays: 2.1,
+        uncertaintyDays: 3.1,  // LOOCV MAE (modellrevisjon 2026-08-21) — ærlig out-of-sample-tall. In-sample var 1,89/2,13.
         // ── TEST-FLAG: langtidsvarsel fra MET (innført 2026-05-04) ─────────────
         // Aktiverer 9-dagers værprognose i konvergensgrafen og hovedprediksjonen.
         // Banner "Ny funksjonalitet testes" vises på lokasjoner med dette flagget.
         // Sammenlign før/etter med ?forecast=0 i URL.
         useLongTermForecast: true,
-        calibNoteNo:  'n=8, 2016–2025 ekskl. 2020 (Excel-reproduksjon 2026-05-03: GDD 530 + WT 12°C, dual-trigger "begge oppfylt", MAE 2.13 d, bias +0.13)',
-        calibNoteEn:  'n=8, 2016–2025 excl. 2020 (Excel reproduction 2026-05-03: GDD 530 + WT 12°C, dual-trigger "both met", MAE 2.13 d, bias +0.13)',
+        calibNoteNo:  'n=9, 2016–2026 ekskl. 2020 (GDD 530 + WT 12°C, dual-trigger "begge oppfylt"; in-sample MAE 1,89 d — ærlig LOOCV ±3,1 d, modellrevisjon 2026-08-21)',
+        calibNoteEn:  'n=9, 2016–2026 excl. 2020 (GDD 530 + WT 12°C, dual-trigger "both met"; in-sample MAE 1.89 d — honest LOOCV ±3.1 d, model audit 2026-08-21)',
         calibShortNo: 'n=8 · GDD 530 + WT 12°C',
         calibShortEn: 'n=8 · GDD 530 + WT 12°C',
         // Utvidet historikk tilbake til 2016 — modellen treffer veldokumentert tilbake
@@ -4221,8 +4221,8 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
     const uncDays = getDynamicUncertainty(uncDaysBaseline, currentADG, effThr);
     const uncSource = LOC.calibrated
         ? (LANG === 'no'
-            ? `standardavvik, ${LOC.calibNoteNo || 'validert mot observerte klekkedatoer'}`
-            : `std. dev., ${LOC.calibNoteEn || 'validated against observed hatch dates'}`)
+            ? `typisk avvik, ${LOC.calibNoteNo || 'validert mot observerte klekkedatoer'}`
+            : `typical error, ${LOC.calibNoteEn || 'validated against observed hatch dates'}`)
         : t('priorEstimateText');
     const unc = document.getElementById('uncertaintyBand');
     if (LOC.calibrated) {
