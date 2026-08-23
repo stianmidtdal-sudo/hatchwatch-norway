@@ -15,6 +15,10 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+  /* Mobil: 100% løses mot "lite viewport" og henger ikke med når adressefeltet
+     kollapser — baren la seg et stykke opp på skjermen. dvh følger den faktiske
+     synlige høyden. (Stian 2026-08-23) */
+  body { height: 100vh; height: 100dvh; }
   body {
     font-family: 'Inter', -apple-system, sans-serif;
     background: #f6f7f5; color: #1f2422;
@@ -403,6 +407,10 @@ function buildPins() {
       halo.style.strokeWidth = (1.1 / s) + 'px';
       g.appendChild(halo);
     }
+    // Treff-flate: prikken er ~10 px på mobil — langt under 40 px-normen for
+    // tommelfingre. Usynlig sirkel gir ~30 px treffsone uten visuell endring.
+    var hit = el('circle', { cx: p.x, cy: p.y, r: 13 / s, fill: 'transparent', stroke: 'none' });
+    g.appendChild(hit);
     var core = el('circle', { 'class': 'core', cx: p.x, cy: p.y, r: 4.6 / s });
     core.style.strokeWidth = (1.4 / s) + 'px';
     g.appendChild(core);
@@ -423,9 +431,12 @@ function buildPins() {
   if (!clusterOpen) {
     var anyNow = LOCS.some(function(p){ return p.cluster && states[p.id] && states[p.id].st === 'now'; });
     var g = el('g', { 'class': 'clusterpin' });
+    var chit = el('circle', { cx: CLUSTER_C.x, cy: CLUSTER_C.y, r: 16 / s, fill: 'transparent', stroke: 'none' });
+    // (legges til gruppen under, etter at den er opprettet)
     var c = el('circle', { cx: CLUSTER_C.x, cy: CLUSTER_C.y, r: 9.5 / s,
       style: anyNow ? 'stroke:#4fb4e6' : '' });
     c.style.strokeWidth = (1.2 / s) + 'px';
+    g.appendChild(chit);
     g.appendChild(c);
     var t = el('text', { x: CLUSTER_C.x, y: CLUSTER_C.y });
     t.style.fontSize = (8.4 / s) + 'px';
@@ -594,7 +605,7 @@ mapEl.addEventListener('pointermove', function(e) {
     var ctm = svgEl.getScreenCTM();          // px per SVG-enhet
     VB.x = panStart.vx - (e.clientX - panStart.cx) / ctm.a;
     VB.y = panStart.vy - (e.clientY - panStart.cy) / ctm.d;
-    if (Math.abs(e.clientX - panStart.cx) + Math.abs(e.clientY - panStart.cy) > 5) moved = true;
+    if (Math.abs(e.clientX - panStart.cx) + Math.abs(e.clientY - panStart.cy) > 9) moved = true;
     clampVB(); applyVB();
     mapEl.classList.add('dragging');
   }
@@ -602,8 +613,18 @@ mapEl.addEventListener('pointermove', function(e) {
 function endPointer(e) {
   var wasTracked = !!pointers[e.pointerId];
   delete pointers[e.pointerId];
-  if (Object.keys(pointers).length < 2) lastPinch = null;
-  if (Object.keys(pointers).length === 0) {
+  var rem = Object.keys(pointers);
+  if (rem.length < 2) lastPinch = null;
+  // KNIP-SLIPP-BUG (2026-08-23): når én av to fingre slippes, fortsatte
+  // panneringen med panStart fra FØR zoomen (viewBox-origo fra scale 1 ≈ 0,0)
+  // → kartet hoppet til øvre venstre hjørne. Re-baseline mot gjenværende
+  // finger og NÅVÆRENDE viewBox, og marker gesten som bevegelse (ikke tap).
+  if (rem.length === 1) {
+    var rp = pointers[rem[0]];
+    panStart = { cx: rp.x, cy: rp.y, vx: VB.x, vy: VB.y };
+    moved = true;
+  }
+  if (rem.length === 0) {
     mapEl.classList.remove('dragging');
     // Tap: kort trykk uten bevegelse → treff-test der fingeren slapp
     if (wasTracked && !moved && e.type === 'pointerup') {
