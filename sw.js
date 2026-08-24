@@ -7,7 +7,7 @@
 //
 // Innført 2026-05-19.
 
-const CACHE_VERSION = 'hw-v9';  // v9: mobilfikser kart (dvh-høyde, knip-slipp-hopp, treff-flater) (2026-08-23)
+const CACHE_VERSION = 'hw-v10';  // v10: Røros kalibrert 450/12 ±7 (indikativ, n=3) (2026-08-23)
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const API_CACHE = `${CACHE_VERSION}-api`;
 const VENDOR_CACHE = `${CACHE_VERSION}-vendor`;

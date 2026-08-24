@@ -2054,10 +2054,27 @@ const LOCATIONS = {
         nveStation:   '2.61.0',     // Orva — sideelv til Glåma ved Røros, aktiv siden 1995
         airStationName:   'Røros lufthavn',
         waterStationName: 'Orva (tributary of Glåma)',
-        calibrated: false,
+        // ── KALIBRERING 2026-08-23 (indikativ, én stjerne) ────────────────────
+        // Fasit: 3 forumår fra masterdatabasen (2007 vulgata «sverming»=klekke-
+        // aktivitet 16.6; 2014 danica topp 21.-22.6 + i gang, Femund-/Røros-
+        // området; 2023 danica+vulgata i gang ~27.6 ±5d). Alle er ØVRE grenser
+        // (intervallsensur) → analysen gir et TAK: største G forenlig med alle
+        // tre år = 450 (robust for konservativ og streng faselesning; dagens
+        // 520 brøt 2 av 3 år med 6-11 d). Vanntemp-porten uendret (12°C) —
+        // ikke bindende ved G=450; NB 2014-obs så danica klekke i ~8°C elvevann,
+        // så WT-kravet er tvilsomt for elvedanica, men harmløst her.
+        // FORBEHOLD: danica-tung elvefasit → ankeret er «stor døgnflue-klekking
+        // omkring Røros», ikke ren stillvanns-vulgata. uncertaintyDays 7 er
+        // SKJØNN (n=3 sensurerte obs tillater ikke LOOCV). Full analyse:
+        // Projects/Fiske/valideringsrapport_2026.md.
+        calibrated: true,
+        calibNoteNo:  'n=3 år (2007/2014/2023), forumobservasjoner, danica-tung elvefasit — indikativ kalibrering (tak-analyse 2026-08-23)',
+        calibNoteEn:  'n=3 years (2007/2014/2023), forum observations, danica-heavy river reference — indicative calibration (ceiling analysis 2026-08-23)',
+        calibShortNo: 'n=3 · GDD 450 + WT 12°C · indikativ',
+        calibShortEn: 'n=3 · GDD 450 + WT 12°C · indicative',
         showIce: true,
-        gddThreshold: 520,
-        uncertaintyDays: 12,
+        gddThreshold: 450,
+        uncertaintyDays: 7,
         isgangWater: 'Sætersjøen, Røros (vest)',
         isgangHistory: {
             2025: '2025-05-12', 2024: '2024-05-18', 2023: '2023-06-05',
