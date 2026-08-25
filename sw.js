@@ -7,7 +7,7 @@
 //
 // Innført 2026-05-19.
 
-const CACHE_VERSION = 'hw-v10';  // v10: Røros kalibrert 450/12 ±7 (indikativ, n=3) (2026-08-23)
+const CACHE_VERSION = 'hw-v11';  // v11: Romeriksåsen ny lokasjon + sentrert infoboks + større logo + fixed kart-bar (2026-08-25)
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const API_CACHE = `${CACHE_VERSION}-api`;
 const VENDOR_CACHE = `${CACHE_VERSION}-vendor`;

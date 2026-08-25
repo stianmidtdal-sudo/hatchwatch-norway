@@ -2082,6 +2082,32 @@ const LOCATIONS = {
             2019: '2019-05-24', 2018: '2018-05-15', 2017: '2017-06-01',
         },
     },
+    romeriksasen: {
+        id: 'romeriksasen',
+        area: 'Romeriksåsen',
+        name: 'Storøyungen',
+        place: 'Nannestad/Nittedal',
+        region: 'Akershus',
+        // ── NY LOKASJON 2026-08-25 (fra obs-jakten) ──────────────────────────
+        // Ankervann Storøyungen 330 moh (Stians vann + 2009-kontrollpunkt fra
+        // forumet: vulgata «i gang» senest 9.6.2009, identifisert som Storøyungen
+        // av Stian). Terskel 560 er MØNSTER-INFORMERT prior — ikke default 520:
+        // kalibrerte stillvanns-lokasjoner viser G ≈ stigende med moh (400@170,
+        // 530@307, 620@370) → ~560@330. Kontrollpunktet er forenlig (Gardermoen
+        // 2009: kryssing 7.6 ≤ 9.6; 600 ville brutt). Første terskel satt fra
+        // mønsteret — de facto en test av høydetrend-hypotesen.
+        lat: 60.156, lon: 10.892, altitude: 330, stationAltitude: 202, waterStationAltitude: 165,  // Gardermoen 202m luft (-0.77°C korr). Leira v/Kringlerdal ~165m (+0.35°C/100m på vann).
+        frostStation: 'SN4780',      // Gardermoen — døgnmiddel tilbake til 2009+
+        snowStation:  'SN4780',      // Gardermoen måler snødybde; seksjonen self-hider hvis ikke
+        nveStation:   '2.280.0',     // Leira v/Kringlerdal — drenerer Romeriksåsen. Vanntemp fra aug 2024 (sensorhull sommer 2025 fanges av filtre)
+        airStationName:   'Gardermoen',
+        waterStationName: 'Leira v/Kringlerdal',
+        calibrated: false,
+        gddThreshold: 560,
+        uncertaintyDays: 10,
+        isgangWater: 'Storøyungen',
+        isgangHistory: {},           // Stian fyller fra EO Browser — da våkner marginata/vespertina-ankrene; til da Stefan-fallback
+    },
     oslo: {
         id: 'oslo',
         area: 'Nordmarka',

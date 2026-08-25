@@ -68,9 +68,9 @@
     left: 14px; right: 14px; z-index: 20;
     display: flex; justify-content: space-between; align-items: center; pointer-events: none;
   }
-  .brand { font-family: 'Space Grotesk'; font-weight: 700; font-size: 1rem; color: #171b19; letter-spacing: 0.4px; }
+  .brand { font-family: 'Space Grotesk'; font-weight: 700; font-size: clamp(1.45rem, 5.5vw, 1.9rem); color: #121413; letter-spacing: 0.8px; line-height: 1.05; }
   .brand b { color: #2496cd; }
-  .tagline { font-size: 0.62rem; font-weight: 500; color: #6a736e; letter-spacing: 0.3px; margin-top: 1px; }
+  .tagline { font-size: 0.78rem; font-weight: 500; color: #5c6661; letter-spacing: 0.4px; margin-top: 3px; }
   .datechip {
     font-family: 'JetBrains Mono'; font-size: 0.6rem; letter-spacing: 1px;
     color: #5c6661; background: rgba(255,255,255,0.9); border: 1px solid #dde1de;
@@ -78,7 +78,7 @@
   }
   /* ── Velkomstkort — vises kun ved første besøk (hw_welcomed) ── */
   #welcome {
-    position: absolute; left: 14px; right: 14px; bottom: 16px; z-index: 25;
+    position: absolute; left: 14px; right: 14px; bottom: calc(calc(env(safe-area-inset-bottom, 0px) + 76px) + 14px); z-index: 25;
     max-width: 380px; margin: 0 auto;
     background: rgba(255,255,255,0.97); border-radius: 14px;
     box-shadow: 0 0 0 1px #e6eae7, 0 12px 36px rgba(15,20,17,0.16);
@@ -102,13 +102,14 @@
   }
   /* ── Info-boks ved pinnetrykk (2026-08-20) — erstatter Lokasjonsliste-siden ── */
   #infobox {
-    position: absolute; left: 14px; right: 14px; bottom: 16px; z-index: 24;
+    position: absolute; left: 14px; right: 14px; top: 50%; transform: translateY(-50%); z-index: 24;
     max-width: 340px; margin: 0 auto;
     background: rgba(255,255,255,0.97); border-radius: 14px;
     box-shadow: 0 0 0 1px #e6eae7, 0 12px 36px rgba(15,20,17,0.16);
     padding: 16px 16px 14px; display: none;
   }
-  #infobox.show { display: block; animation: wcIn 0.25s ease; }
+  #infobox.show { display: block; animation: ibIn 0.25s ease; }
+  @keyframes ibIn { from { opacity: 0; transform: translateY(calc(-50% + 12px)); } to { opacity: 1; transform: translateY(-50%); } }
   .ib-head { display: flex; justify-content: space-between; align-items: flex-start; }
   .ib-name { font-family: 'Space Grotesk'; font-size: 1.05rem; font-weight: 700; color: #121413; letter-spacing: -0.2px; }
   .ib-sub { font-size: 0.7rem; color: #8a918c; margin-top: 1px; }
@@ -124,7 +125,7 @@
     font-weight: 700; cursor: pointer;
   }
   .zoomctl {
-    position: absolute; right: 12px; bottom: 16px;
+    position: absolute; right: 12px; bottom: calc(calc(env(safe-area-inset-bottom, 0px) + 76px) + 14px);
     z-index: 20; display: flex; flex-direction: column; gap: 6px;
   }
   .zoomctl button {
@@ -133,7 +134,7 @@
     cursor: pointer; backdrop-filter: blur(6px);
   }
   .legend {
-    position: absolute; left: 12px; bottom: 16px;
+    position: absolute; left: 12px; bottom: calc(calc(env(safe-area-inset-bottom, 0px) + 76px) + 14px);
     z-index: 18; display: flex; flex-direction: column; gap: 5px; pointer-events: none;
   }
   .lg { display: flex; align-items: center; gap: 7px; font-size: 0.6rem; font-weight: 600; color: #4a534e;
@@ -142,7 +143,11 @@
 
   /* ── SPOTIFY-BAR ── */
   #bar {
-    flex-shrink: 0; z-index: 30; position: relative;
+    /* FIXED i stedet for flex-flow (2026-08-25): i installert PWA kunne
+       viewport-høyden løses feil og etterlate dødplass under baren.
+       position:fixed bottom:0 klistrer den til synlig bunn uansett —
+       samme oppførsel som dashboardets bar (og Spotify). */
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
     background: #0a0c0b;
     border-top: 1px solid #4fb4e6;
     display: grid; grid-template-columns: repeat(4, 1fr); align-items: center;
@@ -304,8 +309,8 @@
 //  Gammel forside (index.html) er urørt og lenket fra menyen.
 // ═══════════════════════════════════════════════════════════════════
 
-var LOCS = [{"id": "kautokeino", "name": "Kautokeino", "x": 247.1, "y": 184}, {"id": "alta", "name": "Alta", "x": 245.7, "y": 155.8, "la": "left"}, {"id": "porsanger", "name": "Porsanger", "x": 262.3, "y": 150.3, "la": "right"}, {"id": "bardu", "name": "Bardu", "x": 203, "y": 187.4}, {"id": "mo_i_rana", "name": "Mo i Rana", "x": 159.4, "y": 267.1}, {"id": "borgefjell", "name": "Børgefjell", "x": 151.8, "y": 303.6}, {"id": "roros", "name": "Røros", "x": 114.3, "y": 376.6}, {"id": "trondheim", "name": "Trondheim", "x": 108.3, "y": 349.6, "la": "above"}, {"id": "rena", "name": "Rena", "x": 115.7, "y": 418.6}, {"id": "nordmarka_dyn", "name": "Nordmarka", "x": 100.3, "y": 452.9, "cluster": true, "la": "above"}, {"id": "finnemarka", "name": "Finnemarka", "x": 94, "y": 454.8, "cluster": true, "la": "left"}, {"id": "ostmarka", "name": "Østmarka", "x": 106.5, "y": 460.3, "cluster": true, "la": "right"}, {"id": "vestfjella", "name": "Vestfjella", "x": 113.1, "y": 472.4, "cluster": true}, {"id": "hardangervidda", "name": "Hardangervidda", "x": 69.1, "y": 444.5, "la": "above"}, {"id": "bergen", "name": "Bergen", "x": 29.3, "y": 429.1}];
-var CLUSTER_C = { x: 103.5, y: 460.1 };
+var LOCS = [{"id": "kautokeino", "name": "Kautokeino", "x": 247.1, "y": 184}, {"id": "alta", "name": "Alta", "x": 245.7, "y": 155.8, "la": "left"}, {"id": "porsanger", "name": "Porsanger", "x": 262.3, "y": 150.3, "la": "right"}, {"id": "bardu", "name": "Bardu", "x": 203, "y": 187.4}, {"id": "mo_i_rana", "name": "Mo i Rana", "x": 159.4, "y": 267.1}, {"id": "borgefjell", "name": "Børgefjell", "x": 151.8, "y": 303.6}, {"id": "roros", "name": "Røros", "x": 114.3, "y": 376.6}, {"id": "trondheim", "name": "Trondheim", "x": 108.3, "y": 349.6, "la": "above"}, {"id": "rena", "name": "Rena", "x": 115.7, "y": 418.6}, {"id": "romeriksasen", "name": "Romeriksåsen", "x": 103.2, "y": 446.6, "cluster": true, "la": "above"}, {"id": "nordmarka_dyn", "name": "Nordmarka", "x": 100.3, "y": 452.9, "cluster": true, "la": "left"}, {"id": "finnemarka", "name": "Finnemarka", "x": 94, "y": 454.8, "cluster": true, "la": "left"}, {"id": "ostmarka", "name": "Østmarka", "x": 106.5, "y": 460.3, "cluster": true, "la": "right"}, {"id": "vestfjella", "name": "Vestfjella", "x": 113.1, "y": 472.4, "cluster": true}, {"id": "hardangervidda", "name": "Hardangervidda", "x": 69.1, "y": 444.5, "la": "above"}, {"id": "bergen", "name": "Bergen", "x": 29.3, "y": 429.1}];
+var CLUSTER_C = { x: 103.4, y: 457.4 };  // sentroid av 5 (Romeriksåsen med, 2026-08-25)
 var W = 340, H = 620;
 
 // ── Sesongregler — SPEILER dashboard.html (computeSeasonStatus) ──────
@@ -440,7 +445,7 @@ function buildPins() {
     g.appendChild(c);
     var t = el('text', { x: CLUSTER_C.x, y: CLUSTER_C.y });
     t.style.fontSize = (8.4 / s) + 'px';
-    t.textContent = '4';
+    t.textContent = '5';
     g.appendChild(t);
     pinlayer.appendChild(g);
   }
@@ -466,6 +471,7 @@ var LOCINFO = {
   trondheim:     { region: 'Trøndelag',  lat: 63.5, air: 'Kvithamar', wt: 'Kobberdammen (Nidelva)', sn: 'Skistua', cal: 0 },
   rena:          { region: 'Innlandet',  lat: 61.1, air: 'Rena - Ørnhaugen', wt: 'Femundselva', sn: 'Plassen, Trysil', cal: 0 },
   nordmarka_dyn: { region: 'Østlandet',  lat: 59.9, air: 'Bjørnholt', wt: 'Sinnerdammen', sn: 'Bjørnholt', cal: 1, unc: '±10 d' },
+  romeriksasen:  { region: 'Akershus',   lat: 60.2, air: 'Gardermoen', wt: 'Leira v/Kringlerdal', sn: 'Gardermoen', cal: 0 },
   finnemarka:    { region: 'Østlandet',  lat: 59.9, air: 'Geithus', wt: 'Elgtjern', sn: 'Sande – Lauvkollmyr', cal: 0 },
   ostmarka:      { region: 'Østlandet',  lat: 59.7, air: 'Råken', wt: 'Mønevann, Enebakk', sn: 'Enebakk – Barbøl', cal: 1, unc: '±4 d' },
   vestfjella:    { region: 'Østlandet',  lat: 59.3, air: 'Rakkestad', wt: 'Løkkeborg', sn: 'Ørje', cal: 0 },
