@@ -6101,7 +6101,7 @@ function renderSeasonStatus(status) {
         if (cal && cal.parentNode === banner.parentNode) banner.parentNode.insertBefore(banner, cal);
         const nb = document.getElementById('offNotif');
         if (nb) nb.addEventListener('click', function () {
-            const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+            const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true || window.hwIsNativeApp === true;
             if (standalone && typeof window.hwOpenNotifModal === 'function') window.hwOpenNotifModal();
             else location.href = '/varsler.html';
         });
@@ -9429,11 +9429,82 @@ if ('serviceWorker' in navigator) {
      /api/push?action=test-trigger så bruker ser hvordan hver type ser ut. -->
 <script>
 (function setupNotifSettings() {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    // iPhone-appen (Capacitor, innført 2026-10-01): WKWebView har ikke Web Push,
+    // så appen bruker Apples eget varselsystem (APNs) via pluginen
+    // @capacitor/push-notifications. Serveren (api/push.js) tar imot
+    // { platform:'ios', token } i stedet for en Web Push-subscription.
+    var NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform
+        && window.Capacitor.isNativePlatform() && window.Capacitor.Plugins
+        && window.Capacitor.Plugins.PushNotifications);
+    window.hwIsNativeApp = NATIVE;
+
+    if (!NATIVE && (!('serviceWorker' in navigator) || !('PushManager' in window))) {
         // Skjul bjelle-knappen helt på nettlesere uten støtte (gammel iOS, desktop Safari)
         var btn = document.getElementById('notifBellBtn');
         if (btn) btn.style.display = 'none';
         return;
+    }
+
+    // ── Native (iOS-app) ────────────────────────────────────────────────
+    var _nativeToken = null;
+    var _nativeWaiters = [];
+    var _nativeListenersReady = false;
+    function setupNativeListeners() {
+        if (_nativeListenersReady) return;
+        _nativeListenersReady = true;
+        var PN = window.Capacitor.Plugins.PushNotifications;
+        PN.addListener('registration', function(t) {
+            _nativeToken = t.value;
+            try { localStorage.setItem('hw_apns_token', t.value); } catch (e) {}
+            var w = _nativeWaiters; _nativeWaiters = [];
+            w.forEach(function(x) { x.resolve(t.value); });
+        });
+        PN.addListener('registrationError', function() {
+            var w = _nativeWaiters; _nativeWaiters = [];
+            w.forEach(function(x) { x.reject(new Error('APNs-registrering feilet')); });
+        });
+        // Trykk på et varsel: åpne lenken varselet peker til (data.url fra serveren)
+        PN.addListener('pushNotificationActionPerformed', function(a) {
+            var d = a && a.notification && a.notification.data;
+            if (d && d.url) location.href = d.url;
+        });
+    }
+    async function getNativeToken() {
+        var PN = window.Capacitor.Plugins.PushNotifications;
+        setupNativeListeners();
+        var perm = await PN.checkPermissions();
+        if (perm.receive !== 'granted') {
+            perm = await PN.requestPermissions();
+            if (perm.receive !== 'granted') throw new Error('PERMISSION_DENIED');
+        }
+        return new Promise(function(resolve, reject) {
+            var w = {};
+            var timer = setTimeout(function() {
+                _nativeWaiters = _nativeWaiters.filter(function(x) { return x !== w; });
+                if (_nativeToken) resolve(_nativeToken);
+                else reject(new Error('Fikk ikke svar fra Apple – prøv igjen'));
+            }, 15000);
+            w.resolve = function(v) { clearTimeout(timer); resolve(v); };
+            w.reject = function(e) { clearTimeout(timer); reject(e); };
+            _nativeWaiters.push(w);
+            PN.register();
+        });
+    }
+
+    // Felles for web og app: det serveren trenger for å kjenne igjen denne enheten.
+    async function getSubPayload() {
+        if (NATIVE) return { platform: 'ios', token: await getNativeToken() };
+        var sub = await getOrCreateSubscription();
+        return { subscription: sub.toJSON() };
+    }
+    async function getUnsubPayload() {
+        if (NATIVE) {
+            var t = _nativeToken || localStorage.getItem('hw_apns_token');
+            return t ? { platform: 'ios', token: t } : null;
+        }
+        var reg = await navigator.serviceWorker.ready;
+        var sub = await reg.pushManager.getSubscription();
+        return sub ? { endpoint: sub.endpoint } : null;
     }
 
     var VAPID_PUBLIC = 'BDuIQlsFE48rDc_wEer_M6X4HyQd3CD2-4YWcLhKC0cqM9sAYU6fx70nR4PVaueA3T3sfG_c2AEFxn7ETpoLhus';
@@ -9597,36 +9668,35 @@ if ('serviceWorker' in navigator) {
                     // Hvis ingen lokasjoner har triggers, kall unsubscribe på backend
                     var anyActive = Object.keys(prefs.triggers).some(function(k) { return prefs.triggers[k].length > 0; });
                     if (!anyActive) {
-                        var reg = await navigator.serviceWorker.ready;
-                        var sub = await reg.pushManager.getSubscription();
-                        if (sub) {
+                        var unsub = await getUnsubPayload();
+                        if (unsub) {
                             await fetch('/api/push?action=unsubscribe', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ endpoint: sub.endpoint }),
+                                body: JSON.stringify(unsub),
                             });
                         }
                     } else {
                         // Oppdater backend med oppdatert lokasjonsliste
-                        var sub2 = await getOrCreateSubscription();
+                        var p2 = await getSubPayload();
                         await fetch('/api/push?action=subscribe', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ subscription: sub2.toJSON(), locations: prefs.triggers, lang: lang }),
+                            body: JSON.stringify(Object.assign({}, p2, { locations: prefs.triggers, lang: lang })),
                         });
                     }
                     status(T.saved);
                     setTimeout(close, 800);
                     return;
                 }
-                // Få (eller opprett) subscription
-                var sub = await getOrCreateSubscription();
+                // Få (eller opprett) subscription / app-token
+                var p = await getSubPayload();
                 prefs.triggers[locId] = triggers;
                 savePrefs(prefs);
                 var resp = await fetch('/api/push?action=subscribe', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ subscription: sub.toJSON(), locations: prefs.triggers, lang: lang }),
+                    body: JSON.stringify(Object.assign({}, p, { locations: prefs.triggers, lang: lang })),
                 });
                 if (!resp.ok) throw new Error('Server-feil: ' + resp.status);
                 status(T.saved);
@@ -9640,18 +9710,17 @@ if ('serviceWorker' in navigator) {
         document.getElementById('notifTestAll').onclick = async function() {
             try {
                 status(T.testing);
-                var sub = await getOrCreateSubscription();
+                var tp = await getSubPayload();
                 var triggers = selectedTriggers();
                 if (triggers.length === 0) triggers = TRIGGERS;  // hvis ingen valgt, test alle
                 for (var i = 0; i < triggers.length; i++) {
                     await fetch('/api/push?action=test-trigger', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            subscription: sub.toJSON(),
+                        body: JSON.stringify(Object.assign({}, tp, {
                             triggerType: triggers[i],
                             locArea: locArea, locId: locId, lang: lang,
-                        }),
+                        })),
                     });
                     await new Promise(function(r) { setTimeout(r, 800); });  // spre ut
                 }
@@ -9729,7 +9798,8 @@ if ('serviceWorker' in navigator) {
                 // I installert PWA: åpne varsler-modal for current location.
                 // I nettleser-modus: åpne install-veileder ("Last ned appen for varsler").
                 var isStandalone = window.matchMedia('(display-mode: standalone)').matches
-                    || window.navigator.standalone === true;
+                    || window.navigator.standalone === true
+                    || window.hwIsNativeApp === true;   // iPhone-appen
                 if (isStandalone && typeof window.hwOpenNotifModal === 'function') {
                     window.hwOpenNotifModal();
                 } else {
@@ -9950,7 +10020,7 @@ if ('serviceWorker' in navigator) {
     // Varsel: samme regel som menyen — modal i installert app, varsler-sida i nettleser
     var notif = document.getElementById('actNotif');
     if (notif) notif.addEventListener('click', function () {
-        var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+        var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true || window.hwIsNativeApp === true;
         if (standalone && typeof window.hwOpenNotifModal === 'function') window.hwOpenNotifModal();
         else location.href = '/varsler.html';
     });
@@ -10013,8 +10083,8 @@ window.HW_SHELL = {
     lang: (typeof LANG !== 'undefined' ? LANG : (localStorage.getItem('lang') || 'no')),
     obsHref: '/observasjon.html?area=' + encodeURIComponent((typeof LOC === 'object' && LOC && LOC.area) || ''),
     onNotif: function () {
-        // Samme logikk som før: modal i installert PWA, varsler-sida i nettleser
-        var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+        // Samme logikk som før: modal i installert PWA/iPhone-app, varsler-sida i nettleser
+        var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true || window.hwIsNativeApp === true;
         if (standalone && typeof window.hwOpenNotifModal === 'function') { window.hwOpenNotifModal(); return true; }
         return false;
     },

@@ -326,7 +326,8 @@
 // Vis riktig seksjon basert på om brukeren er i PWA-modus eller nettleser
 (function() {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches
-        || window.navigator.standalone === true;
+        || window.navigator.standalone === true
+        || !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());  // iPhone-appen
     const installCard = document.getElementById('installCard');
     const setupCard = document.getElementById('setupCard');
     if (isStandalone) {
