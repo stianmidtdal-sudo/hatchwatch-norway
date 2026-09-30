@@ -7,7 +7,7 @@
 //
 // Innført 2026-05-19.
 
-const CACHE_VERSION = 'hw-v11';  // v11: Romeriksåsen ny lokasjon + sentrert infoboks + større logo + fixed kart-bar (2026-08-25)
+const CACHE_VERSION = 'hw-v12';  // v12: designsystem hw.css + delt bunnbar hw-shell.js + nye ikoner fra logoflua (2026-10-01)
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const API_CACHE = `${CACHE_VERSION}-api`;
 const VENDOR_CACHE = `${CACHE_VERSION}-vendor`;
@@ -21,6 +21,14 @@ const SHELL_URLS = [
     '/varsler.html',
     '/observasjon.html',
     '/manifest.json',
+    '/hw.css',
+    '/hw-shell.js',
+    '/logos/fly-mask.png',
+    '/logos/icon-192.png',
+    '/logos/icon-512.png',
+    '/logos/apple-touch-icon-180.png',
+    '/logos/favicon-64.png',
+    '/logos/favicon-32.png',
     '/logos/logo-inverted-192.png',
     '/logos/logo-inverted-256.png',
     '/logos/logo-inverted-512.png',
@@ -152,8 +160,8 @@ self.addEventListener('push', (event) => {
     const title = data.title || 'HatchWatch';
     const options = {
         body: data.body || '',
-        icon: '/logos/logo-inverted-192.png',
-        badge: '/logos/logo-inverted-64.png',
+        icon: '/logos/icon-192.png',
+        badge: '/logos/favicon-64.png',
         data: data.url ? { url: data.url } : undefined,
         tag: data.tag || 'hatchwatch',
         // Hørbart + vibrerende varsel

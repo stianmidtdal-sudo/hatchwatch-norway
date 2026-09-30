@@ -1,0 +1,178 @@
+/* ═══════════════════════════════════════════════════════════════════
+   HatchWatch designsystem v1 — innført 2026-10-01 (redesign 2027 v3)
+
+   Én kilde for farger, skrifter og delte komponenter. Alle nye flater
+   (kart, Sesongen, I dag, undersider) bygges på disse tokens. Gamle
+   sider kan laste fila trygt: alt her har prefiks «hw-» eller er
+   scopet til bunnbaren, så eksisterende CSS påvirkes ikke.
+
+   Palett (mørk som standard — appen brukes ved vannet i skumringen):
+     bunn   #0b1418   dypt vann, blågrønn bias
+     gull   #f2b84b   «klekking nå» — kveldslys, insekt
+     vann   #5cc6e8   data, «nærmer seg»
+     grå    #3d5259   «langt unna»
+   Semantikk (godt/krevende) er egne tokens, ikke aksentfargen.
+
+   Skrifter: Bricolage Grotesque (titler, tall i hero), IBM Plex Sans
+   (brødtekst), JetBrains Mono (måleverdier, etiketter).
+   ═══════════════════════════════════════════════════════════════════ */
+
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap");
+
+:root {
+  --hw-bg: #0b1418;
+  --hw-bg-2: #111e24;
+  --hw-bg-3: #182a31;
+  --hw-bg-4: #21363e;
+  --hw-line: #24393f;
+  --hw-fg: #e9f1ef;
+  --hw-fg-2: #9db0b0;
+  --hw-fg-3: #63787a;
+  --hw-water: #5cc6e8;
+  --hw-water-soft: rgba(92, 198, 232, .16);
+  --hw-hatch: #f2b84b;
+  --hw-hatch-soft: rgba(242, 184, 75, .18);
+  --hw-hatch-ink: #1a1205;
+  --hw-far: #3d5259;
+  --hw-coming: #2f6f86;
+  --hw-good: #6fcf97;
+  --hw-bad: #e8735c;
+  --hw-land: #1b2d34;
+  --hw-land-line: #2c4650;
+  --hw-shadow: 0 18px 40px rgba(0, 0, 0, .45);
+  --hw-display: "Bricolage Grotesque", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+  --hw-body: "IBM Plex Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --hw-mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+  --hw-radius: 16px;
+  --hw-radius-sm: 12px;
+}
+
+/* Lys variant — slås på med data-theme="light" på <html>. */
+:root[data-theme="light"] {
+  --hw-bg: #f2f6f5;
+  --hw-bg-2: #ffffff;
+  --hw-bg-3: #e6eeec;
+  --hw-bg-4: #d9e4e1;
+  --hw-line: #d3dedb;
+  --hw-fg: #11201f;
+  --hw-fg-2: #56696a;
+  --hw-fg-3: #8a9c9c;
+  --hw-water: #1a8cc0;
+  --hw-water-soft: rgba(26, 140, 192, .14);
+  --hw-hatch: #c98a12;
+  --hw-hatch-soft: rgba(201, 138, 18, .16);
+  --hw-hatch-ink: #ffffff;
+  --hw-far: #b8c6c4;
+  --hw-coming: #7fb9d3;
+  --hw-good: #2f9d63;
+  --hw-bad: #cf5238;
+  --hw-land: #dde7e4;
+  --hw-land-line: #b9c9c5;
+  --hw-shadow: 0 18px 40px rgba(20, 40, 40, .18);
+}
+
+/* ── Sideskall. Legges på <body> når en side er bygget på systemet. ── */
+body.hw-dark {
+  margin: 0;
+  background: var(--hw-bg);
+  color: var(--hw-fg);
+  font-family: var(--hw-body);
+  font-size: 15px;
+  line-height: 1.45;
+  color-scheme: dark;
+  -webkit-font-smoothing: antialiased;
+}
+:root[data-theme="light"] body.hw-dark { color-scheme: light; }
+.hw-dark h1, .hw-dark h2, .hw-dark h3 { margin: 0; text-wrap: balance; font-family: var(--hw-display); }
+.hw-dark button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+.hw-dark :is(button, input, a, summary):focus-visible { outline: 2px solid var(--hw-hatch); outline-offset: 2px; }
+
+/* ── Typografi-hjelpere ── */
+.hw-num { font-family: var(--hw-mono); font-variant-numeric: tabular-nums; }
+.hw-eyebrow { font-family: var(--hw-mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--hw-fg-3); }
+.hw-eyebrow.gold { color: var(--hw-hatch); }
+.hw-muted { color: var(--hw-fg-2); }
+.hw-small { font-size: 13px; }
+.hw-display { font-family: var(--hw-display); font-weight: 700; letter-spacing: -.02em; }
+
+/* ── Merket: døgnflua fra logoen som maske, farges med currentColor ── */
+.hw-fly {
+  display: inline-block; aspect-ratio: 377 / 203; background: currentColor; flex: none;
+  -webkit-mask: url("/logos/fly-mask.png") center / contain no-repeat;
+  mask: url("/logos/fly-mask.png") center / contain no-repeat;
+}
+
+/* ── Kort og fliser ── */
+.hw-card { background: var(--hw-bg-2); border: 1px solid var(--hw-line); border-radius: var(--hw-radius); padding: 14px 16px; }
+.hw-card + .hw-card { margin-top: 10px; }
+.hw-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.hw-tile { background: var(--hw-bg-3); border-radius: var(--hw-radius-sm); padding: 10px 12px; min-width: 0; }
+.hw-tile .v { font-family: var(--hw-mono); font-weight: 600; font-size: 18px; margin: 2px 0; }
+.hw-tile .t { font-size: 11.5px; color: var(--hw-fg-2); }
+
+/* ── Statuschip: én semantisk skala for hele appen ── */
+.hw-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 999px; font-family: var(--hw-mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; border: 1px solid var(--hw-line); color: var(--hw-fg-2); white-space: nowrap; }
+.hw-chip i { width: 7px; height: 7px; border-radius: 50%; background: var(--hw-far); }
+.hw-chip.now { color: var(--hw-hatch); border-color: color-mix(in srgb, var(--hw-hatch) 50%, transparent); background: var(--hw-hatch-soft); }
+.hw-chip.now i { background: var(--hw-hatch); }
+.hw-chip.soon { color: var(--hw-water); border-color: color-mix(in srgb, var(--hw-water) 45%, transparent); background: var(--hw-water-soft); }
+.hw-chip.soon i { background: var(--hw-water); }
+.hw-chip.coming i { background: var(--hw-coming); }
+.hw-indic { display: inline-flex; gap: 6px; align-items: center; font-family: var(--hw-mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--hw-fg-3); border: 1px dashed var(--hw-line); border-radius: 999px; padding: 3px 9px; }
+
+/* ── Knapper ── */
+.hw-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: var(--hw-radius-sm); padding: 12px 16px; font-size: 14.5px; font-weight: 500; white-space: nowrap; text-decoration: none; cursor: pointer; font-family: inherit; }
+.hw-btn.primary { background: var(--hw-hatch); color: var(--hw-hatch-ink); font-weight: 600; border: 0; }
+.hw-btn.ghost { border: 1px solid var(--hw-line); color: var(--hw-fg); background: none; }
+.hw-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.hw-iconbtn { width: 40px; height: 40px; border-radius: 50%; background: var(--hw-bg-2); border: 1px solid var(--hw-line); display: grid; place-items: center; color: var(--hw-fg-2); cursor: pointer; }
+.hw-iconbtn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; }
+.hw-iconbtn.fav.on { color: var(--hw-hatch); }
+.hw-iconbtn.fav.on svg { fill: var(--hw-hatch); }
+
+/* ── Segmentkontroll (Sesongen | I dag) ── */
+.hw-seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--hw-bg-3); border-radius: var(--hw-radius-sm); padding: 3px; }
+.hw-seg button { padding: 9px 0; border-radius: 9px; font-weight: 500; font-size: 14px; color: var(--hw-fg-2); background: none; border: 0; cursor: pointer; font-family: inherit; }
+.hw-seg button.on { background: var(--hw-bg-2); color: var(--hw-fg); box-shadow: 0 1px 2px rgba(0, 0, 0, .2); }
+
+/* ── Trekkspill for bevis ── */
+.hw-acc { border-top: 1px solid var(--hw-line); }
+.hw-acc summary { list-style: none; display: flex; justify-content: space-between; align-items: center; padding: 14px 0; cursor: pointer; font-weight: 500; }
+.hw-acc summary::-webkit-details-marker { display: none; }
+.hw-acc summary svg { width: 16px; height: 16px; stroke: var(--hw-fg-3); fill: none; stroke-width: 2; transition: transform .2s; }
+.hw-acc[open] summary svg { transform: rotate(180deg); }
+.hw-acc .body { padding: 0 0 14px; color: var(--hw-fg-2); font-size: 13.5px; }
+
+/* ═══ BUNNBAR (delt, injisert av hw-shell.js) ═══
+   Klassenavnene er de samme som den gamle kopierte blokken (hwb, hwpanel,
+   hwp-*), så dashboard og kart kan flyttes over uten å bytte navn. */
+#hwMenuBtn, #hwMenuDropdown { display: none !important; }   /* pensjonert burger på undersidene */
+body.hw-has-bar { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 78px); }
+#hwBar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 900;
+  background: var(--hw-bg-2); border-top: 1px solid var(--hw-line);
+  display: grid; grid-template-columns: repeat(4, 1fr); align-items: center;
+  padding: 6px 4px calc(env(safe-area-inset-bottom, 0px) + 8px);
+  font-family: var(--hw-body);
+}
+.hwb { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0; background: none; border: 0; cursor: pointer; text-decoration: none; border-radius: 10px; color: var(--hw-fg-3); font-family: var(--hw-mono); font-size: 10px; letter-spacing: .05em; text-transform: uppercase; }
+.hwb svg { width: 22px; height: 22px; display: block; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.hwb span { font-size: inherit; font-weight: 500; color: inherit; }
+.hwb.on { color: var(--hw-fg); }
+.hwb.on svg { stroke: var(--hw-hatch); }
+.hwpanel { position: fixed; inset: 0; z-index: 890;   /* under baren (900), så fanene kan trykkes mens panelet er åpent */ background: var(--hw-bg); color: var(--hw-fg); display: none; flex-direction: column; padding: calc(env(safe-area-inset-top, 0px) + 16px) 16px 96px; font-family: var(--hw-body); }
+.hwpanel.open { display: flex; }
+@media (min-width: 700px) {
+  .hwpanel { left: auto; width: 400px; border-left: 1px solid var(--hw-line); box-shadow: -16px 0 48px rgba(0, 0, 0, .45); }
+}
+.hwp-title { font-family: var(--hw-display); font-weight: 800; font-size: 26px; letter-spacing: -.03em; color: var(--hw-fg); margin: 6px 0 12px; display: flex; justify-content: space-between; align-items: center; }
+.hwp-close { background: none; border: 0; color: var(--hw-fg-3); font-size: 1.5rem; cursor: pointer; padding: 4px 10px; font-family: inherit; }
+.hwp-scroll { flex: 1; overflow-y: auto; }
+.hwp-row { display: grid; grid-template-columns: 24px 1fr auto; gap: 12px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--hw-line); color: var(--hw-fg); text-decoration: none; cursor: pointer; background: none; border-left: 0; border-right: 0; border-top: 0; width: 100%; text-align: left; font-family: inherit; font-size: 15px; }
+.hwp-row svg { width: 22px; height: 22px; stroke: var(--hw-water); fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.hwp-row .mt { display: block; font-weight: 500; font-size: 15px; }
+.hwp-row .ms { display: block; font-size: 12px; color: var(--hw-fg-2); }
+.hwp-row .chev { color: var(--hw-fg-3); }
+.hwp-empty { margin: 8px 0; padding: 20px 16px; border: 1px dashed var(--hw-line); border-radius: var(--hw-radius); color: var(--hw-fg-2); font-size: 14px; line-height: 1.6; }
+.hwp-empty b { color: var(--hw-fg); }
+.hwp-foot { margin-top: 18px; font-family: var(--hw-mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--hw-fg-3); }
