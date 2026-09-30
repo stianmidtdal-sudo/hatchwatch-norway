@@ -1,5 +1,7 @@
 {
   "rewrites": [
+    { "source": "/api/store-prediction",      "destination": "/api/predictions?mode=store" },
+    { "source": "/api/frost-sources",         "destination": "/api/frost?mode=sources" },
     { "source": "/norway",                    "destination": "/index.html" },
     { "source": "/norway/",                   "destination": "/index.html" },
     { "source": "/norway/dashboard.html",     "destination": "/dashboard.html" },

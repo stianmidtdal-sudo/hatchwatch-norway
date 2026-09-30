@@ -5,13 +5,18 @@
 //  artikler, observasjon og ofa-settefisk. Sida trenger bare:
 //      <link rel="stylesheet" href="/hw.css">   (i <head>)
 //      <script src="/hw-shell.js" defer></script>
-//  Kart (index) og dashboard har fortsatt egne varianter med side-
-//  spesifikke kroker; de flyttes hit når de bygges om (steg 3 og 4).
+//  Dashboard har fortsatt egen variant med side-spesifikke kroker; den
+//  flyttes hit når Sesongen bygges (steg 4).
 //
-//  Faner nå: Kart · Mine vann · Observasjon · Meny.
-//  Når sesong-lista finnes (steg 3) byttes Observasjon ut med Sesong,
-//  og observasjon blir en handling inne på vannet. Én endring her,
-//  alle sider følger med.
+//  Faner (godkjent 1. okt 2026): Kart · Sesong · Mine vann · Meny.
+//  Observasjon er en handling: rad i menyen + knapp inne på vannet.
+//
+//  Kroker (valgfrie) via window.HW_SHELL før skriptet kjører:
+//    onTab(id)   → return true for å håndtere fanen selv (kart bruker
+//                  dette for «home» og «sesong» så panelet åpnes uten
+//                  sideskifte).
+//    favSub(id)  → HTML-streng under navnet i Mine vann (status).
+//  Sida kan styre baren via window.hwShell.setActive(id) / closeAll().
 //
 //  Selvstendig: ingen avhengigheter til sidens kode. Favoritter leses
 //  fra localStorage-nøkkelen hw_favs (samme som kart og dashboard).
@@ -19,6 +24,7 @@
 (function () {
   'use strict';
   if (document.getElementById('hwBar')) return;   // sida har egen bar
+  var cfg = window.HW_SHELL || {};
 
   var NAMES = {
     kautokeino: 'Kautokeino', alta: 'Alta', porsanger: 'Porsanger',
@@ -32,6 +38,7 @@
 
   var ICON = {
     map: '<svg viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>',
+    season: '<svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 4 4-7 5 5"/><path d="M3 21h18"/></svg>',
     heart: '<svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.7-9.3-9A5.2 5.2 0 0 1 12 6.6a5.2 5.2 0 0 1 9.3 4.9c-1.8 4.3-9.3 9-9.3 9z"/></svg>',
     plus: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>',
     menu: '<svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>',
@@ -43,7 +50,7 @@
   };
 
   var path = location.pathname.replace(/\/index\.html$/, '/');
-  var active = path === '/' ? 'home' : /observasjon/.test(path) ? 'obs' : '';
+  var pageTab = path === '/' ? (location.hash === '#sesong' ? 'sesong' : 'home') : '';
 
   function row(href, icon, title, sub, extra) {
     return '<a class="hwp-row" href="' + href + '"' + (extra || '') + '>' + icon +
@@ -53,10 +60,10 @@
 
   var html =
     '<nav id="hwBar" aria-label="Hovednavigasjon">' +
-      '<a class="hwb' + (active === 'home' ? ' on' : '') + '" href="/">' + ICON.map + '<span>Kart</span></a>' +
-      '<button class="hwb" id="hwbFav" type="button">' + ICON.heart + '<span>Mine vann</span></button>' +
-      '<a class="hwb' + (active === 'obs' ? ' on' : '') + '" href="/observasjon.html">' + ICON.plus + '<span>Observasjon</span></a>' +
-      '<button class="hwb" id="hwbMenu" type="button">' + ICON.menu + '<span>Meny</span></button>' +
+      '<a class="hwb" data-tab="home" href="/">' + ICON.map + '<span>Kart</span></a>' +
+      '<a class="hwb" data-tab="sesong" href="/#sesong">' + ICON.season + '<span>Sesong</span></a>' +
+      '<button class="hwb" data-tab="fav" id="hwbFav" type="button">' + ICON.heart + '<span>Mine vann</span></button>' +
+      '<button class="hwb" data-tab="menu" id="hwbMenu" type="button">' + ICON.menu + '<span>Meny</span></button>' +
     '</nav>' +
     '<div class="hwpanel" id="hwbFavPanel" role="dialog" aria-label="Mine vann">' +
       '<div class="hwp-title"><span>Mine vann</span><button class="hwp-close" type="button" data-close="hwbFavPanel" aria-label="Lukk">×</button></div>' +
@@ -65,6 +72,7 @@
     '<div class="hwpanel" id="hwbMenuPanel" role="dialog" aria-label="Meny">' +
       '<div class="hwp-title"><span>Meny</span><button class="hwp-close" type="button" data-close="hwbMenuPanel" aria-label="Lukk">×</button></div>' +
       '<div class="hwp-scroll">' +
+        row('/observasjon.html', ICON.plus, 'Meld observasjon', 'Så du klekking? Det gjør modellen bedre.') +
         row('/varsler.html', ICON.bell, 'Varsler', 'Klekking, spinnerfall, stokkmaur · push') +
         row('/artikler.html', ICON.book, 'Artikler', 'Døgnfluer, spinnerfall, stokkmaur') +
         row('/ofa-settefisk.html', ICON.drop, 'OFA settefisk', 'Utsett i Nordmarka 2021–2025') +
@@ -83,35 +91,43 @@
   function favs() {
     try { return JSON.parse(localStorage.getItem('hw_favs') || '[]'); } catch (e) { return []; }
   }
+  function setActive(id) {
+    mount.querySelectorAll('.hwb').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === id); });
+  }
   function closeAll() {
     mount.querySelectorAll('.hwpanel').forEach(function (p) { p.classList.remove('open'); });
-    mount.querySelectorAll('.hwb').forEach(function (b) {
-      var isPage = (b.getAttribute('href') === '/' && active === 'home') || (/observasjon/.test(b.getAttribute('href') || '') && active === 'obs');
-      b.classList.toggle('on', isPage);
-    });
+    setActive(pageTab);
   }
-  function open(panelId, btn) {
+  function open(panelId, tab) {
     var p = document.getElementById(panelId);
     var wasOpen = p.classList.contains('open');
     closeAll();
-    if (!wasOpen) {
-      mount.querySelectorAll('.hwb').forEach(function (b) { b.classList.remove('on'); });
-      p.classList.add('open'); btn.classList.add('on');
-    }
+    if (!wasOpen) { p.classList.add('open'); setActive(tab); }
   }
-  document.getElementById('hwbFav').addEventListener('click', function () {
+  function renderFavs() {
     var list = document.getElementById('hwbFavList');
     var f = favs();
     if (!f.length) {
       list.innerHTML = '<div class="hwp-empty"><b>Ingen vann ennå.</b><br>Trykk hjertet på et vann i kartet eller øverst på prognosen, så samler vannene dine seg her. Varslene dine følger denne lista.</div>';
-    } else {
-      list.innerHTML = f.map(function (id) {
-        return row('/dashboard.html?loc=' + encodeURIComponent(id), ICON.drop, NAMES[id] || id, '');
-      }).join('');
+      return;
     }
-    open('hwbFavPanel', this);
+    list.innerHTML = f.map(function (id) {
+      var sub = typeof cfg.favSub === 'function' ? (cfg.favSub(id) || '') : '';
+      return row('/dashboard.html?loc=' + encodeURIComponent(id), ICON.drop, NAMES[id] || id, sub);
+    }).join('');
+  }
+
+  mount.querySelectorAll('a.hwb').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      var id = a.getAttribute('data-tab');
+      if (typeof cfg.onTab === 'function' && cfg.onTab(id)) { e.preventDefault(); closeAll(); setActive(id); }
+    });
   });
-  document.getElementById('hwbMenu').addEventListener('click', function () { open('hwbMenuPanel', this); });
+  document.getElementById('hwbFav').addEventListener('click', function () { renderFavs(); open('hwbFavPanel', 'fav'); });
+  document.getElementById('hwbMenu').addEventListener('click', function () { open('hwbMenuPanel', 'menu'); });
   mount.querySelectorAll('.hwp-close').forEach(function (b) { b.addEventListener('click', closeAll); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeAll(); });
+
+  setActive(pageTab);
+  window.hwShell = { setActive: setActive, closeAll: closeAll, renderFavs: renderFavs, NAMES: NAMES };
 })();
