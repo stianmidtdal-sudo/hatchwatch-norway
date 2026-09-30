@@ -978,6 +978,16 @@
         table.hw-src tr:hover td { background: none; }
         @media (max-width: 520px) { .hero-date { font-size: 38px; } }
 
+        /* ── Lavsesong ── */
+        .season-banner.hw-offwrap, #seasonStatusBanner { background: transparent; }
+        .hw-off { position: relative; padding-bottom: 14px; margin-bottom: 12px; border-bottom: 1px solid var(--hw-line); }
+        .hw-off-count { font-family: var(--hw-display); font-weight: 800; font-size: 40px; letter-spacing: -.03em; line-height: 1; margin: 6px 0 0; }
+        .hw-off-count small { font-family: var(--hw-mono); font-weight: 500; font-size: 13px; letter-spacing: 0; color: var(--hw-fg-2); margin-left: 8px; }
+        .hw-off .hero-line b { color: var(--hw-fg); font-weight: 600; }
+        .hw-off .hw-ctas { grid-template-columns: 1fr 1fr; }
+        .hw-off .hw-ctas .primary { grid-column: auto; }
+        @media (max-width: 420px) { .hw-off .hw-ctas { grid-template-columns: 1fr; } }
+
         /* ── Dagsscore (I dag) ── */
         #todayScoreCard .best-header { align-items: center; }
         .ts-score { display: grid; grid-template-columns: 96px 1fr; gap: 14px; align-items: center; margin-top: 10px; }
@@ -6065,6 +6075,43 @@ function renderSeasonStatus(status) {
         return;
     }
 
+    // ── LAVSESONG (v3, 2026-10-01) ──────────────────────────────────────
+    // Egen modus, ikke bare et banner: nedtelling til 1. april, ærlig tekst
+    // om hva modellen anslo, og to handlinger (varsel neste sesong, se
+    // vinteren). Blokken flyttes ØVERST i heroen; i closedAfter står
+    // klekkevinduet og artstidslinja igjen under som «slik gikk sesongen».
+    const _today = new Date(); _today.setHours(0, 0, 0, 0);
+    const _nextOpen = new Date(_today.getFullYear(), 3, 1);
+    if (_today >= _nextOpen) _nextOpen.setFullYear(_nextOpen.getFullYear() + 1);
+    const _daysToOpen = Math.round((_nextOpen - _today) / 86400000);
+    const _openYear = _nextOpen.getFullYear();
+    function offSeasonHtml(eyebrow, text, sub) {
+        return `<div class="hw-off">
+            <div class="hw-eyebrow gold">${eyebrow}</div>
+            <div class="hw-off-count">${_daysToOpen}<small>${no ? 'dager til 1. april' : 'days to 1 April'}</small></div>
+            <p class="hero-line" style="margin-top:6px">${text} <span class="hw-muted">${sub}</span></p>
+            <div class="hw-ctas" style="margin-top:12px">
+                <button type="button" class="hw-btn primary" id="offNotif"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10 21a2 2 0 0 0 4 0"/></svg><span>${no ? 'Varsle meg i ' + _openYear : 'Notify me in ' + _openYear}</span></button>
+                <button type="button" class="hw-btn ghost" id="offWinter"><span>${no ? 'Se vinteren' : 'See the winter'}</span></button>
+            </div>
+        </div>`;
+    }
+    function bindOffSeason() {
+        const cal = document.getElementById('speciesCalendar');
+        if (cal && cal.parentNode === banner.parentNode) banner.parentNode.insertBefore(banner, cal);
+        const nb = document.getElementById('offNotif');
+        if (nb) nb.addEventListener('click', function () {
+            const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+            if (standalone && typeof window.hwOpenNotifModal === 'function') window.hwOpenNotifModal();
+            else location.href = '/varsler.html';
+        });
+        const wb = document.getElementById('offWinter');
+        if (wb) wb.addEventListener('click', function () {
+            const d = document.getElementById('evData');
+            if (d) { d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+        });
+    }
+
     if (status.state === 'closedAfter') {
         // Datoen blir stående fordi den er bakoverskuende og ikke endrer seg mer.
         //
@@ -6075,29 +6122,29 @@ function renderSeasonStatus(status) {
         // skal si hva MODELLEN anslo, ikke hva naturen gjorde.
         const hd = fmt(status.hatchDate);
         banner.innerHTML = no
-            ? `<strong>Klekkesesongen er over for i år.</strong> Modellen anslo klekkestart `
-              + `rundt ${hd}, for ${status.daysSince} dager siden.`
-              + `<span class="sb-sub">Prognosen for ${YEAR + 1} åpner 1. april. `
-              + `Vanntemperatur, vannføring og historiske klekkedatoer oppdateres i mellomtiden.</span>`
-            : `<strong>The hatch season is over for this year.</strong> The model estimated `
-              + `hatch onset around ${hd}, ${status.daysSince} days ago.`
-              + `<span class="sb-sub">The ${YEAR + 1} forecast opens on 1 April. `
-              + `Water temperature, flow and historical hatch dates keep updating.</span>`;
+            ? offSeasonHtml(`Sesongen ${YEAR} er over`,
+                `<b>Modellen anslo klekkestart rundt ${hd}</b>, for ${status.daysSince} dager siden.`,
+                `Prognosen for ${_openYear} åpner 1. april. Vanntemperatur, vannføring og historiske klekkedatoer oppdateres i mellomtiden. Under ser du hvordan modellen så sesongen.`)
+            : offSeasonHtml(`The ${YEAR} season is over`,
+                `<b>The model estimated hatch onset around ${hd}</b>, ${status.daysSince} days ago.`,
+                `The ${_openYear} forecast opens on 1 April. Water temperature, flow and historical hatch dates keep updating. Below is how the model saw the season.`);
         banner.style.display = '';
         setHeroInner(true);
+        bindOffSeason();
         return;
     }
 
     // closedBefore — skjul prediksjonen, den bygger ikke på noe ennå
     banner.innerHTML = no
-        ? `<strong>Prognosen for ${YEAR} åpner 1. april.</strong> `
-          + `Varmesummen nullstilles 1. januar og har ennå ikke bygget seg nok til å si noe.`
-          + `<span class="sb-sub">Snødybde, isgang og historiske klekkedatoer oppdateres gjennom hele vinteren.</span>`
-        : `<strong>The ${YEAR} forecast opens on 1 April.</strong> `
-          + `Growing degree days reset on 1 January and have not yet accumulated enough to be informative.`
-          + `<span class="sb-sub">Snow depth, ice-off and historical hatch dates keep updating through the winter.</span>`;
+        ? offSeasonHtml(`Sesongen ${YEAR} åpner 1. april`,
+            `<b>Varmesummen nullstilles 1. januar</b> og har ennå ikke bygget seg nok til å si noe.`,
+            `Snødybde, isgang og historiske klekkedatoer oppdateres gjennom hele vinteren.`)
+        : offSeasonHtml(`The ${YEAR} season opens on 1 April`,
+            `<b>Growing degree days reset on 1 January</b> and have not yet accumulated enough to be informative.`,
+            `Snow depth, ice-off and historical hatch dates keep updating through the winter.`);
     banner.style.display = '';
     setHeroInner(false);
+    bindOffSeason();
 
     for (const id of PREDICTION_SECTIONS) {
         markSelfHidden(document.getElementById(id), true);
@@ -7473,6 +7520,9 @@ function renderSpeciesCalendar(isgangResult, vulgataDate, best) {
     const unc = (best && best.unc != null && isFinite(best.unc)) ? best.unc : (LOC.uncertaintyDays || 7);
     const uncTxt = (typeof fmtNum === 'function') ? fmtNum(unc) : String(unc);
     window._hwHeroDate = vulgataDate || null;
+    // Kalender-knappen gir bare mening for en dato som ikke har passert
+    const _calBtn = document.getElementById('actCal');
+    if (_calBtn) _calBtn.style.display = (vulgataDate && vulgataDate >= today) ? '' : 'none';
 
     // Tilstand + hovedlinje
     let st = 'unknown', line = no ? 'Ingen prognose ennå.' : 'No forecast yet.';

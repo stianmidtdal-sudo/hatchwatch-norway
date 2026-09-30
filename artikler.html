@@ -247,14 +247,48 @@
             main { padding: 28px 20px 60px; }
             article.reading .hero-img { aspect-ratio: 4/3; }
         }
-    </style>
+    
+        /* â•â•â• v3 mÃ¸rk skinn (2026-10-01) â€” tokens fra hw.css, ligger sist i kaskaden â•â•â• */
+        html, body { background: var(--hw-bg); color: var(--hw-fg); font-family: var(--hw-body); }
+        nav, nav.hw-nav { background: var(--hw-bg); box-shadow: none; border-bottom: 1px solid var(--hw-line); gap: 10px; }
+        .logo-text, nav.hw-nav .logo-text { font-family: var(--hw-display); font-weight: 700; font-size: 18px; letter-spacing: -.02em; text-transform: none; color: var(--hw-fg); }
+        .logo-text b, nav.hw-nav .logo-text b { color: var(--hw-hatch); }
+        h1 { font-family: var(--hw-display); color: var(--hw-fg); letter-spacing: -.03em; }
+        h2 { font-family: var(--hw-mono); font-weight: 500; font-size: 10.5px; letter-spacing: .12em; color: var(--hw-fg-3); }
+        h3 { color: var(--hw-fg); }
+        p, ul, ol, li { color: var(--hw-fg-2); }
+        b, strong { color: var(--hw-fg); }
+        a { color: var(--hw-water); }
+        .cta-btn { background: var(--hw-hatch); color: var(--hw-hatch-ink); border-radius: 12px; text-transform: none; letter-spacing: 0; font-weight: 600; }
+        .cta-btn:hover { background: var(--hw-hatch); opacity: .9; }
+        .cta-btn.secondary { background: transparent; color: var(--hw-fg); border: 1px solid var(--hw-line); }
+        .cta-btn.secondary:hover { background: var(--hw-bg-3); }        .intro-title { color: var(--hw-fg); font-family: var(--hw-display); letter-spacing: -.03em; }
+        .intro-tagline, .article-card p, .article-card.feature p { color: var(--hw-fg-2); }
+        .article-card .img-wrap, article.reading .hero-img { background: var(--hw-bg-3); border-radius: 12px; }
+        .article-card h3 { color: var(--hw-fg); font-family: var(--hw-display); letter-spacing: -.01em; }
+        .article-card .topic, article.reading .topic, .pullquote-block .attribution { color: var(--hw-hatch); font-family: var(--hw-mono); font-weight: 500; letter-spacing: .12em; }
+        .article-card .read-link { color: var(--hw-fg); border-top-color: var(--hw-line); }
+        .pullquote-block { border-color: var(--hw-line); }
+        .pullquote-block .quote, article.reading .pullquote { color: var(--hw-fg); }
+        article.reading .pullquote { border-left-color: var(--hw-water); }
+        .back-to-list { color: var(--hw-fg); border: 1px solid var(--hw-line); border-radius: 12px; text-transform: none; letter-spacing: 0; }
+        .back-to-list:hover { background: var(--hw-bg-3); }
+        article.reading h1, article.reading h2, article.reading h3, article.reading b, article.reading strong { color: var(--hw-fg); }
+        article.reading h2 { font-family: var(--hw-display); font-size: 1.3rem; letter-spacing: -.02em; text-transform: none; }
+        article.reading p, article.reading ul, article.reading ol, article.reading .lead { color: var(--hw-fg-2); }
+        article.reading .lead { border-bottom-color: var(--hw-line); }
+        article.reading .factbox { background: var(--hw-water-soft); border-left-color: var(--hw-water); border-radius: 0 12px 12px 0; }
+        article.reading .factbox b { color: var(--hw-water); }
+        article.reading .mid-img figcaption, article.reading .source-note { color: var(--hw-fg-3); }
+        article.reading .source-note { border-top-color: var(--hw-line); }
+        article.reading .source-note b { color: var(--hw-fg-2); }    </style>
 </head>
-<body>
+<body class="hw-dark">
 
 <nav>
     <div class="nav-left">
         <a href="/" style="text-decoration:none;color:white;display:flex;align-items:center;">
-            <span class="logo-text">HATCH<b>WATCH</b></span>
+            <span class="hw-fly" style="width:30px;color:var(--hw-hatch)" aria-hidden="true"></span><span class="logo-text">Hatch<b>Watch</b></span>
         </a>
     </div>
     <div class="header-controls">

@@ -7,7 +7,7 @@
 //
 // Innført 2026-05-19.
 
-const CACHE_VERSION = 'hw-v16';  // v16: I dag — dagsscore (50/30/20) med tre drivere og fiskevindu time for time (2026-10-01)
+const CACHE_VERSION = 'hw-v17';  // v17: lavsesong-modus i heroen + undersider og login på mørkt v3-skinn (2026-10-01)
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const API_CACHE = `${CACHE_VERSION}-api`;
 const VENDOR_CACHE = `${CACHE_VERSION}-vendor`;

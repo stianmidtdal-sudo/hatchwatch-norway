@@ -161,14 +161,33 @@
             main { padding: 28px 18px 60px; }
             h1 { font-size: 1.55rem; }
         }
-    </style>
+    
+        /* â•â•â• v3 mÃ¸rk skinn (2026-10-01) â€” tokens fra hw.css, ligger sist i kaskaden â•â•â• */
+        html, body { background: var(--hw-bg); color: var(--hw-fg); font-family: var(--hw-body); }
+        nav, nav.hw-nav { background: var(--hw-bg); box-shadow: none; border-bottom: 1px solid var(--hw-line); gap: 10px; }
+        .logo-text, nav.hw-nav .logo-text { font-family: var(--hw-display); font-weight: 700; font-size: 18px; letter-spacing: -.02em; text-transform: none; color: var(--hw-fg); }
+        .logo-text b, nav.hw-nav .logo-text b { color: var(--hw-hatch); }
+        h1 { font-family: var(--hw-display); color: var(--hw-fg); letter-spacing: -.03em; }
+        h2 { font-family: var(--hw-mono); font-weight: 500; font-size: 10.5px; letter-spacing: .12em; color: var(--hw-fg-3); }
+        h3 { color: var(--hw-fg); }
+        p, ul, ol, li { color: var(--hw-fg-2); }
+        b, strong { color: var(--hw-fg); }
+        a { color: var(--hw-water); }
+        .cta-btn { background: var(--hw-hatch); color: var(--hw-hatch-ink); border-radius: 12px; text-transform: none; letter-spacing: 0; font-weight: 600; }
+        .cta-btn:hover { background: var(--hw-hatch); opacity: .9; }
+        .cta-btn.secondary { background: transparent; color: var(--hw-fg); border: 1px solid var(--hw-line); }
+        .cta-btn.secondary:hover { background: var(--hw-bg-3); }        .lead { color: var(--hw-fg-2); border-bottom-color: var(--hw-line); }
+        .trigger-item, .install-section, .setup-block { background: var(--hw-bg-2); border: 1px solid var(--hw-line); border-radius: 16px; }
+        .trigger-item .name, .install-section .platform-title { color: var(--hw-fg); }
+        .trigger-item .desc { color: var(--hw-fg-2); }
+        .note { background: var(--hw-hatch-soft); border-left-color: var(--hw-hatch); color: var(--hw-fg); border-radius: 0 12px 12px 0; }    </style>
 </head>
-<body>
+<body class="hw-dark">
 
 <nav>
     <div class="nav-left">
         <a href="/" style="text-decoration:none;color:white;display:flex;align-items:center;">
-            <span class="logo-text">HATCH<b>WATCH</b></span>
+            <span class="hw-fly" style="width:30px;color:var(--hw-hatch)" aria-hidden="true"></span><span class="logo-text">Hatch<b>Watch</b></span>
         </a>
     </div>
     <div class="header-controls">

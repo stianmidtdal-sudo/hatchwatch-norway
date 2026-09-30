@@ -112,13 +112,49 @@
         }
         .badge.klekking { background: #e8f4fb; color: #1f6591; }
         .badge.spinnerfall { background: #fdf1e3; color: #9a6a20; }
-    </style>
+    
+        /* â•â•â• v3 mÃ¸rk skinn (2026-10-01) â€” tokens fra hw.css, ligger sist i kaskaden â•â•â• */
+        html, body { background: var(--hw-bg); color: var(--hw-fg); font-family: var(--hw-body); }
+        nav, nav.hw-nav { background: var(--hw-bg); box-shadow: none; border-bottom: 1px solid var(--hw-line); gap: 10px; }
+        .logo-text, nav.hw-nav .logo-text { font-family: var(--hw-display); font-weight: 700; font-size: 18px; letter-spacing: -.02em; text-transform: none; color: var(--hw-fg); }
+        .logo-text b, nav.hw-nav .logo-text b { color: var(--hw-hatch); }
+        h1 { font-family: var(--hw-display); color: var(--hw-fg); letter-spacing: -.03em; }
+        h2 { font-family: var(--hw-mono); font-weight: 500; font-size: 10.5px; letter-spacing: .12em; color: var(--hw-fg-3); }
+        h3 { color: var(--hw-fg); }
+        p, ul, ol, li { color: var(--hw-fg-2); }
+        b, strong { color: var(--hw-fg); }
+        a { color: var(--hw-water); }
+        .cta-btn { background: var(--hw-hatch); color: var(--hw-hatch-ink); border-radius: 12px; text-transform: none; letter-spacing: 0; font-weight: 600; }
+        .cta-btn:hover { background: var(--hw-hatch); opacity: .9; }
+        .cta-btn.secondary { background: transparent; color: var(--hw-fg); border: 1px solid var(--hw-line); }
+        .cta-btn.secondary:hover { background: var(--hw-bg-3); }        nav .back { color: var(--hw-fg-2); }
+        .intro { color: var(--hw-fg-2); }
+        .card { background: var(--hw-bg-2); box-shadow: none; border: 1px solid var(--hw-line); }
+        label { color: var(--hw-fg-3); font-family: var(--hw-mono); font-weight: 500; letter-spacing: .12em; }
+        label .opt { color: var(--hw-fg-3); }
+        input[type=text], input[type=email], input[type=number], input[type=date], select, textarea { background: var(--hw-bg-3); border-color: var(--hw-line); color: var(--hw-fg); color-scheme: dark; }
+        input:focus, select:focus, textarea:focus { border-color: var(--hw-hatch); box-shadow: 0 0 0 3px var(--hw-hatch-soft); }
+        .seg button { background: var(--hw-bg-3); border-color: var(--hw-line); color: var(--hw-fg-2); }
+        .seg button.on { background: var(--hw-hatch); color: var(--hw-hatch-ink); border-color: transparent; }
+        .submit-btn { background: var(--hw-hatch); color: var(--hw-hatch-ink); border-radius: 12px; }
+        .err { color: var(--hw-bad); }
+        .thanks h2 { color: var(--hw-fg); font-family: var(--hw-display); font-size: 22px; letter-spacing: -.02em; text-transform: none; }
+        .thanks p { color: var(--hw-fg-2); }
+        .thanks button { color: var(--hw-fg); border-color: var(--hw-line); }
+        .admin-bar button, .admin-bar a { background: var(--hw-bg-2); color: var(--hw-fg); border-color: var(--hw-line); }
+        .obs-count { color: var(--hw-fg-3); }
+        .obs-item { background: var(--hw-bg-2); box-shadow: none; border: 1px solid var(--hw-line); }
+        .obs-item .what { color: var(--hw-fg); }
+        .obs-item .when, .obs-item .who { color: var(--hw-fg-3); }
+        .obs-item .meta, .obs-item .cmt { color: var(--hw-fg-2); }
+        .badge.klekking { background: var(--hw-water-soft); color: var(--hw-water); }
+        .badge.spinnerfall { background: var(--hw-hatch-soft); color: var(--hw-hatch); }    </style>
 </head>
-<body>
+<body class="hw-dark">
 
 <nav>
     <a class="back" href="/" aria-label="Til forsiden">←</a>
-    <a class="logo-text" href="/">HATCH<b>WATCH</b></a>
+    <a class="logo-text" href="/" style="display:flex;align-items:center;gap:8px"><span class="hw-fly" style="width:30px;color:var(--hw-hatch)" aria-hidden="true"></span><span>Hatch<b>Watch</b></span></a>
 </nav>
 
 <main>

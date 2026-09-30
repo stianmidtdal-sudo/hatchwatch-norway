@@ -1,79 +1,37 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="no">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hatch Watch Norway · Login</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎣</text></svg>">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>HatchWatch · Innlogging</title>
+    <meta name="theme-color" content="#0b1418">
+    <link rel="icon" type="image/png" sizes="32x32" href="/logos/favicon-32.png">
+    <link rel="stylesheet" href="/hw.css">
     <style>
+        /* v3 (2026-10-01): samme skinn som resten. Kun beskyttede sider havner her. */
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f0f7f4;
-            color: #1a3a2a;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        .box {
-            background: white;
-            border-radius: 16px;
-            padding: 40px 36px;
-            box-shadow: 0 4px 24px rgba(27,67,50,0.12);
-            width: 100%;
-            max-width: 360px;
-            text-align: center;
-        }
-        .logo { font-size: 2.2rem; margin-bottom: 10px; }
-        h1 { font-size: 1.25rem; font-weight: 700; color: #1B4332; }
-        .sub { font-size: 0.8rem; color: #74C69D; margin-top: 4px; margin-bottom: 28px; }
-        input[type="password"] {
-            width: 100%;
-            padding: 11px 16px;
-            border: 2px solid #c8e6d8;
-            border-radius: 10px;
-            font-size: 1rem;
-            outline: none;
-            transition: border-color 0.15s;
-            text-align: center;
-            letter-spacing: 0.1em;
-        }
-        input[type="password"]:focus { border-color: #2D6A4F; }
-        button {
-            width: 100%;
-            margin-top: 14px;
-            padding: 12px;
-            background: #1B4332;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.15s;
-        }
-        button:hover { background: #2D6A4F; }
-        .error {
-            margin-top: 14px;
-            font-size: 0.85rem;
-            color: #c0392b;
-            display: none;
-        }
+        body.hw-dark { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 16px; }
+        .box { background: var(--hw-bg-2); border: 1px solid var(--hw-line); border-radius: var(--hw-radius); padding: 32px 28px; width: 100%; max-width: 360px; text-align: center; }
+        .mark { display: flex; justify-content: center; margin-bottom: 14px; }
+        h1 { font-family: var(--hw-display); font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
+        .sub { font-family: var(--hw-mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--hw-fg-3); margin: 6px 0 24px; }
+        input[type="password"] { width: 100%; padding: 12px 14px; border: 1px solid var(--hw-line); border-radius: var(--hw-radius-sm); background: var(--hw-bg-3); color: var(--hw-fg); font: inherit; font-size: 16px; text-align: center; letter-spacing: .1em; outline: none; }
+        input[type="password"]:focus { border-color: var(--hw-hatch); }
+        button { width: 100%; margin-top: 12px; }
+        .error { margin-top: 14px; font-size: 13.5px; color: var(--hw-bad); display: none; }
         .error.visible { display: block; }
     </style>
 </head>
-<body>
+<body class="hw-dark">
 <div class="box">
-    <div class="logo">🎣</div>
-    <h1>Hatch Watch Norway</h1>
-    <div class="sub">Aquatic insect emergence forecasting</div>
+    <div class="mark"><span class="hw-fly" style="width:64px;color:var(--hw-hatch)"></span></div>
+    <h1>HatchWatch</h1>
+    <div class="sub">Beskyttet side · logg inn</div>
     <form method="POST" action="/api/login" id="form">
-        <input type="password" name="pw" placeholder="Password" autocomplete="current-password" autofocus>
-        <button type="submit">Enter</button>
+        <input type="password" name="pw" placeholder="Passord" autocomplete="current-password" autofocus aria-label="Passord">
+        <button type="submit" class="hw-btn primary">Logg inn</button>
     </form>
-    <div class="error" id="err">Wrong password — try again.</div>
+    <div class="error" id="err">Feil passord. Prøv igjen.</div>
 </div>
 <script>
     const params = new URLSearchParams(location.search);

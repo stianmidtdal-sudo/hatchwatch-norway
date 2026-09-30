@@ -12,6 +12,7 @@
 <meta name="description" content="OFA settefisk-historikk 2021–2025 — Oslomarkas Fiskeadministrasjon.">
 <title>OFA settefisk historikk · HatchWatch</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>if (window.Chart) { Chart.defaults.color = '#9db0b0'; Chart.defaults.borderColor = 'rgba(157,176,176,0.14)'; }</script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f0f7f4; color: #1a3a2a; min-height: 100vh; }
@@ -164,14 +165,59 @@
     border-top: 1px solid #e8e8e8; margin-top: 40px;
   }
   .hw-footer a { color: #1f6591; text-decoration: none; }
-</style>
+
+        /* â•â•â• v3 mÃ¸rk skinn (2026-10-01) â€” tokens fra hw.css, ligger sist i kaskaden â•â•â• */
+        html, body { background: var(--hw-bg); color: var(--hw-fg); font-family: var(--hw-body); }
+        nav, nav.hw-nav { background: var(--hw-bg); box-shadow: none; border-bottom: 1px solid var(--hw-line); gap: 10px; }
+        .logo-text, nav.hw-nav .logo-text { font-family: var(--hw-display); font-weight: 700; font-size: 18px; letter-spacing: -.02em; text-transform: none; color: var(--hw-fg); }
+        .logo-text b, nav.hw-nav .logo-text b { color: var(--hw-hatch); }
+        h1 { font-family: var(--hw-display); color: var(--hw-fg); letter-spacing: -.03em; }
+        h2 { font-family: var(--hw-mono); font-weight: 500; font-size: 10.5px; letter-spacing: .12em; color: var(--hw-fg-3); }
+        h3 { color: var(--hw-fg); }
+        p, ul, ol, li { color: var(--hw-fg-2); }
+        b, strong { color: var(--hw-fg); }
+        a { color: var(--hw-water); }
+        .cta-btn { background: var(--hw-hatch); color: var(--hw-hatch-ink); border-radius: 12px; text-transform: none; letter-spacing: 0; font-weight: 600; }
+        .cta-btn:hover { background: var(--hw-hatch); opacity: .9; }
+        .cta-btn.secondary { background: transparent; color: var(--hw-fg); border: 1px solid var(--hw-line); }
+        .cta-btn.secondary:hover { background: var(--hw-bg-3); }        .header, .ofa-intro { background: var(--hw-bg-2); border-bottom: 1px solid var(--hw-line); }
+        .header h1, .ofa-intro h1 { color: var(--hw-fg); }
+        .header p, .ofa-intro p { color: var(--hw-fg-2); }
+        .kpi, .chart-card, .alert-card { background: var(--hw-bg-2); border-color: var(--hw-line); box-shadow: none; border-radius: 16px; }
+        .kpi:hover { transform: none; }
+        .kpi-value { color: var(--hw-water); font-family: var(--hw-mono); font-weight: 600; }
+        .kpi-label, .kpi-sub, .item-area, .row-count { color: var(--hw-fg-3); }
+        .section-title { color: var(--hw-fg-3); font-family: var(--hw-mono); font-weight: 500; font-size: 10.5px; letter-spacing: .12em; border-bottom: 1px solid var(--hw-line); }
+        .chart-title { color: var(--hw-fg); }
+        .item-name, tbody td, tbody td.vann-name { color: var(--hw-fg); }
+        .item-val, .item-val.green, tbody td.num.high { color: var(--hw-water); }
+        .item-val.red { color: var(--hw-bad); } .item-val.yellow { color: var(--hw-hatch); } tbody td.num.zero { color: var(--hw-fg-3); }
+        .item-list li, tbody tr { border-bottom-color: var(--hw-line); }
+        tbody tr:hover { background: var(--hw-bg-3); }
+        thead th { background: var(--hw-bg-3); color: var(--hw-fg-2); border-bottom: 1px solid var(--hw-line); }
+        thead th:hover { color: var(--hw-fg); }
+        .note-box { background: var(--hw-hatch-soft); border-color: transparent; color: var(--hw-fg); }
+        .bar-mini { background: var(--hw-bg-3); }
+        .bar-fill, .spark-bar { background: var(--hw-water); }
+        .spark-bar.zero { background: var(--hw-bg-4); }
+        .search-box input, .search-box select { background: var(--hw-bg-3); border-color: var(--hw-line); color: var(--hw-fg); }
+        .search-box input:focus { border-color: var(--hw-hatch); }
+        .tab-btn { border-color: var(--hw-line); color: var(--hw-fg-2); }
+        .tab-btn:hover, .tab-btn.active { background: var(--hw-bg-3); color: var(--hw-fg); border-color: var(--hw-line); }
+        .alert-card.dropped { border-left-color: var(--hw-bad); } .alert-card.growing, .alert-card.top { border-left-color: var(--hw-water); } .alert-card.new { border-left-color: var(--hw-hatch); }
+        .badge-red { background: rgba(232,115,92,.15); color: var(--hw-bad); }
+        .badge-green { background: var(--hw-water-soft); color: var(--hw-water); }
+        .badge-yellow { background: var(--hw-hatch-soft); color: var(--hw-hatch); }
+        .badge-blue { background: var(--hw-bg-3); color: var(--hw-fg-2); }
+        .hw-footer { color: var(--hw-fg-3); border-top-color: var(--hw-line); }
+        .hw-footer a { color: var(--hw-water); }    </style>
 </head>
-<body>
+<body class="hw-dark">
 
 <nav class="hw-nav">
   <div class="nav-left">
     <a href="/" aria-label="Til forsiden" style="text-decoration:none;color:inherit">
-      <span class="logo-text">HATCH<b>WATCH</b></span>
+      <span class="hw-fly" style="width:30px;color:var(--hw-hatch)" aria-hidden="true"></span><span class="logo-text">Hatch<b>Watch</b></span>
     </a>
     <span class="logo-sub">OFA SETTEFISK HISTORIKK</span>
   </div>
