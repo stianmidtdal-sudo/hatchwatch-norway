@@ -7,7 +7,7 @@
 //
 // Innført 2026-05-19.
 
-const CACHE_VERSION = 'hw-v12';  // v12: designsystem hw.css + delt bunnbar hw-shell.js + nye ikoner fra logoflua (2026-10-01)
+const CACHE_VERSION = 'hw-v13';  // v13: ny kartforside (tidsskyver, søk, nærmest meg, bunnark, sesongliste) + Sesong-fane i skallet (2026-10-01)
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const API_CACHE = `${CACHE_VERSION}-api`;
 const VENDOR_CACHE = `${CACHE_VERSION}-vendor`;

@@ -155,7 +155,7 @@ body.hw-has-bar { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 78px);
   padding: 6px 4px calc(env(safe-area-inset-bottom, 0px) + 8px);
   font-family: var(--hw-body);
 }
-.hwb { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0; background: none; border: 0; cursor: pointer; text-decoration: none; border-radius: 10px; color: var(--hw-fg-3); font-family: var(--hw-mono); font-size: 10px; letter-spacing: .05em; text-transform: uppercase; }
+#hwBar .hwb { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0; background: none; border: 0; cursor: pointer; text-decoration: none; border-radius: 10px; color: var(--hw-fg-3); font: 500 10px/1.2 var(--hw-mono); letter-spacing: .05em; text-transform: uppercase; }
 .hwb svg { width: 22px; height: 22px; display: block; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .hwb span { font-size: inherit; font-weight: 500; color: inherit; }
 .hwb.on { color: var(--hw-fg); }
