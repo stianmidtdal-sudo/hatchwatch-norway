@@ -77,7 +77,8 @@ export default async function handler(req, res) {
                         if (!decision.fire) continue;
 
                         // Send push
-                        const subscription = { endpoint: sub.endpoint, keys: sub.keys };
+                        // platform/token brukes av iOS-appen (APNs); web-abonnementer har dem ikke.
+                        const subscription = { endpoint: sub.endpoint, keys: sub.keys, platform: sub.platform, token: sub.token };
                         const locArea = LOC_AREAS[locId] || locId;
                         const payload = buildPayload(trigger, locArea, locId, decision.data, sub.lang);
                         const result = await sendPush(subscription, payload);

@@ -49,6 +49,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/hw.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -64,56 +65,34 @@
             color: #222925;
             min-height: 100vh;
         }
+        /* ── HEADER (redesign 2027 v3, runde 1, 2026-10-01) ──
+           Tokens fra hw.css. Stedsnavn i displayskrift, region · høyde under.
+           Stasjonskodene er ute av headeren (de bor i Datakilder). */
         header {
-            background: linear-gradient(135deg, #0d0f0e 0%, #161918 100%);
-            color: white;
-            /* iOS PWA safe-area: legg statusbar-høyden ON TOP av standard 16px padding.
-               Pluss ekstra right-padding for å lage plass til absolutt-plasserte kontroller. */
+            background: var(--hw-bg);
+            color: var(--hw-fg);
+            font-family: var(--hw-body);
             padding-top: calc(env(safe-area-inset-top, 0px) + 10px);
-            padding-right: calc(env(safe-area-inset-right, 0px) + 64px); /* plass til ♥ */
+            padding-right: calc(env(safe-area-inset-right, 0px) + 12px);
             padding-bottom: 10px;
-            padding-left: calc(env(safe-area-inset-left, 0px) + 28px);
+            padding-left: calc(env(safe-area-inset-left, 0px) + 12px);
             display: flex;
             justify-content: flex-start;
             align-items: center;
-            box-shadow: 0 3px 16px rgba(0,0,0,0.25);
-            flex-wrap: wrap;
-            gap: 8px;
+            gap: 10px;
+            border-bottom: 1px solid var(--hw-line);
             position: relative;
         }
-        /* Hamburger + språk-knapp pinnes til toppen høyre uansett hvordan resten av
-           header-en wrapper. Hamburger ER alltid det ytterste valget (rightmost).
-           Posisjon respekterer iOS safe-area. */
-        .header-controls {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            right: calc(env(safe-area-inset-right, 0px) + 16px);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            z-index: 20;
-        }
-        .header-left { display: flex; flex-direction: row; align-items: center; gap: 14px; }
-        .back-arrow {
-            color: #8a918c; text-decoration: none; font-size: 1.1rem;
-            padding: 6px 4px; line-height: 1; flex-shrink: 0;
-        }
-        .back-arrow:hover { color: #fff; }
-        .header-text { display: flex; flex-direction: row; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-        header h1 { font-family: 'Space Grotesk', 'Inter', sans-serif; font-size: 1.05rem; font-weight: 700; letter-spacing: 0.3px; }
-        header .sub {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.6rem; letter-spacing: 0.6px;
-            color: #8a918c; text-transform: uppercase;
-        }
-        #favHeart {
-            background: none; border: none; cursor: pointer; padding: 8px;
-            line-height: 0; display: flex; align-items: center;
-        }
-        #favHeart svg { stroke: #8a918c; fill: none; stroke-width: 1.8; transition: all 0.15s; }
-        #favHeart:hover svg { stroke: #e8b25e; }
-        #favHeart.faved svg { stroke: #e8b25e; fill: #e8b25e; }
+        .header-controls { display: flex; align-items: center; gap: 8px; margin-left: auto; position: relative; z-index: 20; }
+        .header-left { display: flex; flex-direction: row; align-items: center; gap: 10px; min-width: 0; flex: 1; }
+        .back-arrow { flex-shrink: 0; text-decoration: none; }
+        .header-text { display: flex; flex-direction: column; min-width: 0; }
+        header h1 { font-family: var(--hw-display); font-size: 20px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        header .sub { font-family: var(--hw-body); font-size: 12px; color: var(--hw-fg-2); margin-top: 2px; }
+        #favHeart { cursor: pointer; }
+        #favHeart svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; transition: all 0.15s; }
+        #favHeart.faved { color: var(--hw-hatch); }
+        #favHeart.faved svg { fill: var(--hw-hatch); }
         /* Oppdatert-linja bor nå i heroens høyreside */
         .best-right { text-align: right; }
         .best-wrap .updated {
@@ -606,44 +585,41 @@
         }
         .settefisk-link:hover { text-decoration: underline; }
 
-        /* ── MODUS-TOGGLE (Prognose / Forhold) — mørkt skall-variant ── */
+        /* ── MODUS-VELGER (Sesongen / I dag) — v3-segmentkontroll på tokens ── */
         .mode-toggle {
-            display: inline-flex;
-            background: #131514;
-            border: 1px solid #2a2d2b;
-            border-radius: 10px;
-            padding: 4px;
-            gap: 4px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            background: var(--hw-bg-3);
+            border-radius: 12px;
+            padding: 3px;
             margin: 4px 0 22px;
+            max-width: 520px;
         }
         .mode-btn {
             border: 0;
             background: transparent;
-            color: #7b847e;
-            font-size: 0.88rem;
-            font-weight: 600;
-            padding: 9px 20px;
-            border-radius: 7px;
+            color: var(--hw-fg-2);
+            font-family: var(--hw-body);
+            font-size: 14px;
+            font-weight: 500;
+            padding: 9px 12px;
+            border-radius: 9px;
             cursor: pointer;
             transition: background 0.15s, color 0.15s;
-            font-family: inherit;
         }
-        .mode-btn:hover { color: #d8dcd9; }
+        .mode-btn:hover { color: var(--hw-fg); }
         .mode-btn.active {
-            background: #ffffff;
-            color: #121413;
+            background: var(--hw-bg-2);
+            color: var(--hw-fg);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
         }
         .mode-btn .mode-dot {
             display: inline-block;
             width: 7px; height: 7px;
             border-radius: 50%;
-            background: #C0392B;
+            background: var(--hw-hatch);
             margin-left: 6px;
             vertical-align: 1px;
-        }
-        @media (max-width: 640px) {
-            .mode-toggle { display: flex; width: 100%; }
-            .mode-btn { flex: 1; padding: 10px 8px; }
         }
 
         /* ── SESONGSTATUS-BANNER ── */
@@ -810,7 +786,6 @@
             #spinnerfallGrid { grid-template-columns: repeat(2, 1fr) !important; }
         }
         @media (max-width: 520px) {
-            header { flex-direction: column; gap: 8px; }
             .updated { text-align: left; }
             .kpi-value { font-size: 2rem; }
             .container { padding: 14px 10px; }
@@ -846,64 +821,10 @@
             font-family: 'JetBrains Mono', monospace;
             letter-spacing: -0.5px;
         }
-        header h1 { font-family: 'Space Grotesk', 'Inter', sans-serif; }
+        header h1 { font-family: var(--hw-display); }
 
-        /* ── BUNN-BAR + PANELER (2026-08-19) — speiler forsiden ── */
-        body { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 76px); }
-        #hwBar {
-            position: fixed; left: 0; right: 0; bottom: 0; z-index: 900;
-            background: #0a0c0b;
-            border-top: 1px solid #4fb4e6;
-            display: grid; grid-template-columns: repeat(4, 1fr); align-items: center;
-            padding: 9px 6px calc(env(safe-area-inset-bottom, 0px) + 10px);
-        }
-        .hwb {
-            text-align: center; background: none; border: 0; cursor: pointer;
-            padding: 4px 0 0; font-family: inherit; text-decoration: none; display: block;
-        }
-        .hwb svg {
-            width: 23px; height: 23px; margin: 0 auto 3px; display: block;
-            stroke: #7d8a80; fill: none; stroke-width: 1.7;
-            stroke-linecap: round; stroke-linejoin: round;
-        }
-        .hwb span { font-size: 0.58rem; font-weight: 600; color: #7d8a80; }
-        .hwb.on svg { stroke: #fff; }
-        .hwb.on span { color: #fff; font-weight: 700; }
-        .hwpanel {
-            position: fixed; inset: 0; bottom: 0; z-index: 950; background: #101211;
-            display: none; flex-direction: column;
-            padding: calc(env(safe-area-inset-top, 0px) + 16px) 16px 90px;
-        }
-        .hwpanel.open { display: flex; }
-        @media (min-width: 700px) {
-            .hwpanel {
-                left: auto; width: 400px;
-                border-left: 1px solid #262a28;
-                box-shadow: -16px 0 48px rgba(0,0,0,0.45);
-            }
-        }
-        .hwp-title {
-            font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.3rem;
-            color: #f0f4f1; margin: 6px 2px 14px;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .hwp-close { background: none; border: 0; color: #7b847e; font-size: 1.4rem; cursor: pointer; padding: 4px 10px; }
-        .hwp-scroll { flex: 1; overflow-y: auto; }
-        .hwp-row {
-            display: flex; align-items: center; gap: 14px; padding: 13px 10px;
-            border-radius: 12px; color: #dde2df; text-decoration: none; cursor: pointer;
-            background: none; border: 0; width: 100%; text-align: left;
-            font-family: inherit; font-size: 1rem;
-        }
-        .hwp-row:hover { background: rgba(255,255,255,0.05); }
-        .hwp-row svg {
-            width: 21px; height: 21px; stroke: #99a29d; fill: none; stroke-width: 1.7;
-            stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0;
-        }
-        .hwp-row .mt { font-size: 0.9rem; font-weight: 600; }
-        .hwp-row .ms { font-size: 0.67rem; color: #7b847e; }
-        .hwp-row .chev { margin-left: auto; color: #4f5551; font-size: 0.8rem; }
-        .hwp-empty { text-align: center; color: #7b847e; font-size: 0.8rem; line-height: 1.7; padding: 40px 30px; }
+        /* ── BUNNBAR: kommer fra hw-shell.js + hw.css (v3, 2026-10-01).
+           Den gamle kopierte bar-CSS-en er fjernet herfra. ── */
     </style>
 </head>
 <body>
@@ -915,17 +836,17 @@
          I selve grensesnittet brukes ordmerket (kart.html) og stedsnavn.
          lastUpdated er flyttet inn i hero-kortet. -->
     <div class="header-left">
-        <a href="/" class="back-arrow" id="backLink" aria-label="Til forsiden">←</a>
+        <a href="/" class="back-arrow hw-iconbtn" id="backLink" aria-label="Til kartet"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></a>
         <div class="header-text">
             <h1 id="headerTitle">Hatch Watch</h1>
             <div class="sub" id="headerSub">…</div>
         </div>
     </div>
-    <!-- Kontroller pinnes alltid øverst til høyre (absolutt). Hamburger er
-         ytterst, EN-knappen rett til venstre for den. -->
+    <!-- Hjertet = Mine vann (samme liste som kartet). Den gamle burgeren under
+         er pensjonert og skjult, men beholdes fordi eldre JS refererer til den. -->
     <div class="header-controls">
-        <button id="favHeart" type="button" aria-label="Favoritt" title="Favoritt">
-            <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 20.5s-7.5-4.7-9.3-9A5.2 5.2 0 0 1 12 6.6a5.2 5.2 0 0 1 9.3 4.9c-1.8 4.3-9.3 9-9.3 9z"/></svg>
+        <button id="favHeart" class="hw-iconbtn fav" type="button" aria-label="Legg til i Mine vann" title="Mine vann">
+            <svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.7-9.3-9A5.2 5.2 0 0 1 12 6.6a5.2 5.2 0 0 1 9.3 4.9c-1.8 4.3-9.3 9-9.3 9z"/></svg>
         </button>
         <button id="hwMenuBtn" hidden type="button" aria-label="Meny" title="Meny" style="background:rgba(255,255,255,0.12);color:white;border:none;width:52px;height:52px;border-radius:8px;cursor:pointer;font-size:1.8rem;display:none;align-items:center;justify-content:center;transition:background 0.15s;line-height:1">☰</button>
         <!-- Dropdown vises ved klikk på hamburger -->
@@ -1110,8 +1031,8 @@
              manuelle valg lagres i localStorage og overstyrer til neste modusskifte. -->
         <div id="modeToggleWrap" style="display:none">
             <div class="mode-toggle" role="tablist" aria-label="Visningsmodus">
-                <button type="button" class="mode-btn active" id="modeBtnForecast" data-mode="forecast" role="tab" aria-selected="true">Prognose</button>
-                <button type="button" class="mode-btn" id="modeBtnConditions" data-mode="conditions" role="tab" aria-selected="false">Forhold</button>
+                <button type="button" class="mode-btn active" id="modeBtnForecast" data-mode="forecast" role="tab" aria-selected="true">Sesongen</button>
+                <button type="button" class="mode-btn" id="modeBtnConditions" data-mode="conditions" role="tab" aria-selected="false">I dag</button>
             </div>
         </div>
 
@@ -1427,8 +1348,8 @@ const T = {
     wStep2: 'Nivå 2 · Vanntemp. ekstrapolering',
     convergenceHeading: 'Prediksjonshistorikk',
     // Forhold-modus (innført 2026-08-18)
-    modeForecast: 'Prognose',
-    modeConditions: 'Forhold',
+    modeForecast: 'Sesongen',
+    modeConditions: 'I dag',
     weatherHeading: 'Været',
     flowChartHeading: 'Vannføring',
     rangeWeek: 'Siste uke', range2w: 'Siste 2 uker',
@@ -1658,8 +1579,8 @@ const T = {
     wStep2: 'Level 2 · Water temp extrapolation',
     convergenceHeading: 'Prediction history',
     // Conditions mode (added 2026-08-18)
-    modeForecast: 'Forecast',
-    modeConditions: 'Conditions',
+    modeForecast: 'Season',
+    modeConditions: 'Today',
     weatherHeading: 'Weather',
     flowChartHeading: 'Water flow',
     rangeWeek: 'Last week', range2w: 'Last 2 weeks',
@@ -2943,10 +2864,11 @@ if (LOC.altitudeAdjustable) {
 // Update page title
 document.title = `Hatch Watch · ${LOC.area}`;
 document.getElementById('headerTitle').textContent = LOC.area;
-// Mono-stasjonslinje i headeren: SN-stasjon · NVE-stasjon · høyde
+// Underlinje i headeren (v3, 2026-10-01): region · (valgt vann ·) høyde.
+// Stasjonskodene (SN/NVE) er tatt ut av headeren; de står i KPI-kortene og Datakilder.
 function headerStationLine() {
-    const nveId = LOC.nveWaterTempStation || LOC.nveStation;
-    const bits = [LOC.frostStation, nveId, `${getCurrentAltitude(LOC)} ${LANG === 'no' ? 'MOH' : 'MASL'}`];
+    const lake = (LOC.altitudeAdjustable && userSelectedLakeName) ? userSelectedLakeName : null;
+    const bits = [LOC.region, lake, `${getCurrentAltitude(LOC)} ${LANG === 'no' ? 'moh' : 'm a.s.l.'}`];
     return bits.filter(Boolean).join(' · ');
 }
 document.getElementById('headerSub').textContent = headerStationLine();
@@ -9414,116 +9336,28 @@ if ('serviceWorker' in navigator) {
 </script>
 
 
-    <!-- ═══ BUNN-BAR (2026-08-19) — samme navigasjon som forsiden ═══
-         Burgeren øverst er pensjonert (skjult, handlere intakte). Meny- og
-         favorittpanelene her gjenbruker de globale funksjonene:
-         hwOpenNotifModal (varsler), openHatchForm (Tally), toggleLang. -->
-    <div id="hwBar">
-        <a class="hwb" href="/">
-            <svg viewBox="0 0 24 24"><path d="M3 11.2 12 3l9 8.2v9.3a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 20.5z"/></svg>
-            <span data-i18n="hwbHome">Forside</span>
-        </a>
-        <button class="hwb" id="hwbFav">
-            <svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.7-9.3-9A5.2 5.2 0 0 1 12 6.6a5.2 5.2 0 0 1 9.3 4.9c-1.8 4.3-9.3 9-9.3 9z"/></svg>
-            <span data-i18n="hwbFav">Favoritter</span>
-        </button>
-        <button class="hwb" onclick="location.href='/observasjon.html?area='+encodeURIComponent((typeof LOC==='object'&&LOC&&LOC.area)||'')">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
-            <span data-i18n="hwbObs">Observasjon</span>
-        </button>
-        <button class="hwb" id="hwbMenu">
-            <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-            <span data-i18n="hwbMenu">Meny</span>
-        </button>
-    </div>
-
-    <div class="hwpanel" id="hwbFavPanel">
-        <div class="hwp-title"><span data-i18n="hwbFav">Favoritter</span> <button class="hwp-close" data-close="hwbFavPanel">×</button></div>
-        <div class="hwp-scroll" id="hwbFavList"></div>
-    </div>
-
-    <div class="hwpanel" id="hwbMenuPanel">
-        <div class="hwp-title"><span data-i18n="hwbMenu">Meny</span> <button class="hwp-close" data-close="hwbMenuPanel">×</button></div>
-        <div class="hwp-scroll">
-            <button class="hwp-row" id="hwbNotif">
-                <svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>
-                <span><span class="mt" data-i18n="hwbNotifT">Varsler &amp; push</span><br><span class="ms" data-i18n="hwbNotifS">Klekking · spinnerfall · stokkmaur</span></span>
-                <span class="chev">›</span>
-            </button>
-            <a class="hwp-row" href="/artikler.html">
-                <svg viewBox="0 0 24 24"><path d="M4 19V5a2 2 0 0 1 2-2h13v18H6a2 2 0 0 1-2-2z"/><path d="M8 7h7M8 11h7"/></svg>
-                <span><span class="mt" data-i18n="hwbArticles">Artikler</span></span><span class="chev">›</span>
-            </a>
-            <a class="hwp-row" id="hwbOfa" href="/ofa-settefisk.html" style="display:none">
-                <svg viewBox="0 0 24 24"><path d="M12 3c3 4.5 6 7.5 6 11a6 6 0 1 1-12 0c0-3.5 3-6.5 6-11z"/></svg>
-                <span><span class="mt" data-i18n="hwbOfa">OFA settefisk-historikk</span></span><span class="chev">›</span>
-            </a>
-            <a class="hwp-row" href="/om.html">
-                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>
-                <span><span class="mt" data-i18n="hwbAbout">Om HatchWatch</span></span><span class="chev">›</span>
-            </a>
-            <button class="hwp-row" onclick="if(typeof openHatchForm==='function')openHatchForm('EkBErN')">
-                <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9"/><path d="M21 3l-9 9"/><path d="M15 3h6v6"/></svg>
-                <span><span class="mt" data-i18n="hwbFeedback">Send tilbakemelding</span></span><span class="chev">›</span>
-            </button>
-            <button class="hwp-row" onclick="toggleLang()">
-                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3.5 12h17M12 3c2.5 2.4 4 5.4 4 9s-1.5 6.6-4 9c-2.5-2.4-4-5.4-4-9s1.5-6.6 4-9z"/></svg>
-                <span><span class="mt">English / Norsk</span></span><span class="chev">›</span>
-            </button>
-        </div>
-    </div>
-
-
+<!-- ═══ BUNNBAR (v3, 2026-10-01): delt skall fra hw-shell.js. ═══
+     Kroker: språk følger LANG, Varsler åpner modalen i installert PWA,
+     Meld observasjon tar med området, og språkbytte ligger i menyen. -->
 <script>
-// ── Bunn-bar (2026-08-19). Gjenbruker hw_favs + globale handlere. ────
-(function () {
-    function favs() {
-        try { return JSON.parse(localStorage.getItem('hw_favs') || '[]'); } catch (e) { return []; }
-    }
-    function closeAll() {
-        document.querySelectorAll('.hwpanel').forEach(function (p) { p.classList.remove('open'); });
-        document.querySelectorAll('.hwb').forEach(function (b) { b.classList.remove('on'); });
-    }
-    function open(panelId, btn) {
-        var p = document.getElementById(panelId);
-        var wasOpen = p.classList.contains('open');
-        closeAll();
-        if (!wasOpen) { p.classList.add('open'); btn.classList.add('on'); }
-    }
-    document.getElementById('hwbFav').addEventListener('click', function () {
-        var list = document.getElementById('hwbFavList');
-        var f = favs();
-        if (!f.length) {
-            var emptyMsg = (typeof t === 'function' && t('hwbFavEmpty'))
-                || 'Ingen favoritter ennå.<br>Trykk på hjertet øverst på en lokasjon, så samler vannene dine seg her.';
-            list.innerHTML = '<div class="hwp-empty">' + emptyMsg + '</div>';
-        } else {
-            list.innerHTML = f.map(function (id) {
-                var name = (typeof LOCATIONS === 'object' && LOCATIONS[id] && (LOCATIONS[id].area || LOCATIONS[id].name)) || id;
-                return '<a class="hwp-row" href="/dashboard.html?loc=' + encodeURIComponent(id) + '">' +
-                    '<span><span class="mt">' + name + '</span></span><span class="chev">›</span></a>';
-            }).join('');
-        }
-        open('hwbFavPanel', this);
-    });
-    document.getElementById('hwbMenu').addEventListener('click', function () {
-        // OFA-lenken vises kun der den finnes (samme vilkår som gammel burger)
-        var ofa = document.getElementById('hwbOfa');
-        if (ofa && typeof LOC === 'object' && LOC.altitudeAdjustable && LOC.ofaLakes) ofa.style.display = '';
-        open('hwbMenuPanel', this);
-    });
-    document.querySelectorAll('.hwp-close').forEach(function (b) {
-        b.addEventListener('click', closeAll);
-    });
-    // Varsler: samme logikk som gammel burger — modal i PWA, veileder i nettleser
-    document.getElementById('hwbNotif').addEventListener('click', function () {
-        closeAll();
-        var standalone = window.matchMedia('(display-mode: standalone)').matches
-            || window.navigator.standalone === true;
-        if (standalone && typeof window.hwOpenNotifModal === 'function') window.hwOpenNotifModal();
-        else location.href = '/varsler.html';
-    });
-})();
+window.HW_SHELL = {
+    lang: (typeof LANG !== 'undefined' ? LANG : (localStorage.getItem('lang') || 'no')),
+    obsHref: '/observasjon.html?area=' + encodeURIComponent((typeof LOC === 'object' && LOC && LOC.area) || ''),
+    onNotif: function () {
+        // Samme logikk som før: modal i installert PWA, varsler-sida i nettleser
+        var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+        if (standalone && typeof window.hwOpenNotifModal === 'function') { window.hwOpenNotifModal(); return true; }
+        return false;
+    },
+    favSub: function (id) {
+        var l = (typeof LOCATIONS === 'object' && LOCATIONS[id]) || null;
+        return l ? (l.region || '') : '';
+    },
+    menuExtra: [
+        { title: 'English / Norsk', sub: 'Bytt språk · switch language', onClick: function () { if (typeof toggleLang === 'function') toggleLang(); } }
+    ]
+};
 </script>
+<script src="/hw-shell.js"></script>
 </body>
 </html>

@@ -41,4 +41,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         config.delegateClass = SceneDelegate.self
         return config
     }
+
+    // MARK: - Push-varsler (APNs)
+    // Videresender enhetstokenet fra Apple til Capacitor-pluginen
+    // @capacitor/push-notifications, som igjen gir det til nettsiden
+    // (hatchwatch.no) via 'registration'-hendelsen. Lagt til 2026-10-01.
+
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        NotificationCenter.default.post(name: .capacitorDidRegisterForRemoteNotifications, object: deviceToken)
+    }
+
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        NotificationCenter.default.post(name: .capacitorDidFailToRegisterForRemoteNotifications, object: error)
+    }
 }

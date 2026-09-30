@@ -52,32 +52,61 @@
   var path = location.pathname.replace(/\/index\.html$/, '/');
   var pageTab = path === '/' ? (location.hash === '#sesong' ? 'sesong' : 'home') : '';
 
+  // Tekster: norsk er standard; dashboardet kan be om engelsk via cfg.lang.
+  var EN = cfg.lang === 'en';
+  var S = EN ? {
+    map: 'Map', season: 'Season', fav: 'My waters', menu: 'Menu', close: 'Close',
+    obs: 'Report a hatch', obsSub: 'Seen a hatch? It makes the model better.',
+    notif: 'Notifications', notifSub: 'Hatch, spinner fall, ants · push',
+    articles: 'Articles', articlesSub: 'Mayflies, spinner fall, ants',
+    ofa: 'OFA stocking', ofaSub: 'Nordmarka 2021–2025',
+    about: 'About HatchWatch', aboutSub: 'The model, data sources, stations',
+    feedback: 'Send feedback', feedbackSub: 'Beta · we read everything',
+    empty: '<b>No waters yet.</b><br>Tap the heart on a water in the map or at the top of a forecast, and your waters gather here. Your notifications follow this list.'
+  } : {
+    map: 'Kart', season: 'Sesong', fav: 'Mine vann', menu: 'Meny', close: 'Lukk',
+    obs: 'Meld observasjon', obsSub: 'Så du klekking? Det gjør modellen bedre.',
+    notif: 'Varsler', notifSub: 'Klekking, spinnerfall, stokkmaur · push',
+    articles: 'Artikler', articlesSub: 'Døgnfluer, spinnerfall, stokkmaur',
+    ofa: 'OFA settefisk', ofaSub: 'Utsett i Nordmarka 2021–2025',
+    about: 'Om HatchWatch', aboutSub: 'Modellen, datakildene, stasjonene',
+    feedback: 'Send tilbakemelding', feedbackSub: 'Beta · vi leser alt',
+    empty: '<b>Ingen vann ennå.</b><br>Trykk hjertet på et vann i kartet eller øverst på prognosen, så samler vannene dine seg her. Varslene dine følger denne lista.'
+  };
+
   function row(href, icon, title, sub, extra) {
     return '<a class="hwp-row" href="' + href + '"' + (extra || '') + '>' + icon +
       '<span><span class="mt">' + title + '</span>' + (sub ? '<span class="ms">' + sub + '</span>' : '') + '</span>' +
       '<span class="chev">›</span></a>';
   }
+  function btnRow(id, icon, title, sub) {
+    return '<button class="hwp-row" type="button" data-extra="' + id + '">' + icon +
+      '<span><span class="mt">' + title + '</span>' + (sub ? '<span class="ms">' + sub + '</span>' : '') + '</span>' +
+      '<span class="chev">›</span></button>';
+  }
+  var extras = Array.isArray(cfg.menuExtra) ? cfg.menuExtra : [];
 
   var html =
     '<nav id="hwBar" aria-label="Hovednavigasjon">' +
-      '<a class="hwb" data-tab="home" href="/">' + ICON.map + '<span>Kart</span></a>' +
-      '<a class="hwb" data-tab="sesong" href="/#sesong">' + ICON.season + '<span>Sesong</span></a>' +
-      '<button class="hwb" data-tab="fav" id="hwbFav" type="button">' + ICON.heart + '<span>Mine vann</span></button>' +
-      '<button class="hwb" data-tab="menu" id="hwbMenu" type="button">' + ICON.menu + '<span>Meny</span></button>' +
+      '<a class="hwb" data-tab="home" href="/">' + ICON.map + '<span>' + S.map + '</span></a>' +
+      '<a class="hwb" data-tab="sesong" href="/#sesong">' + ICON.season + '<span>' + S.season + '</span></a>' +
+      '<button class="hwb" data-tab="fav" id="hwbFav" type="button">' + ICON.heart + '<span>' + S.fav + '</span></button>' +
+      '<button class="hwb" data-tab="menu" id="hwbMenu" type="button">' + ICON.menu + '<span>' + S.menu + '</span></button>' +
     '</nav>' +
-    '<div class="hwpanel" id="hwbFavPanel" role="dialog" aria-label="Mine vann">' +
-      '<div class="hwp-title"><span>Mine vann</span><button class="hwp-close" type="button" data-close="hwbFavPanel" aria-label="Lukk">×</button></div>' +
+    '<div class="hwpanel" id="hwbFavPanel" role="dialog" aria-label="' + S.fav + '">' +
+      '<div class="hwp-title"><span>' + S.fav + '</span><button class="hwp-close" type="button" data-close="hwbFavPanel" aria-label="' + S.close + '">×</button></div>' +
       '<div class="hwp-scroll" id="hwbFavList"></div>' +
     '</div>' +
-    '<div class="hwpanel" id="hwbMenuPanel" role="dialog" aria-label="Meny">' +
-      '<div class="hwp-title"><span>Meny</span><button class="hwp-close" type="button" data-close="hwbMenuPanel" aria-label="Lukk">×</button></div>' +
+    '<div class="hwpanel" id="hwbMenuPanel" role="dialog" aria-label="' + S.menu + '">' +
+      '<div class="hwp-title"><span>' + S.menu + '</span><button class="hwp-close" type="button" data-close="hwbMenuPanel" aria-label="' + S.close + '">×</button></div>' +
       '<div class="hwp-scroll">' +
-        row('/observasjon.html', ICON.plus, 'Meld observasjon', 'Så du klekking? Det gjør modellen bedre.') +
-        row('/varsler.html', ICON.bell, 'Varsler', 'Klekking, spinnerfall, stokkmaur · push') +
-        row('/artikler.html', ICON.book, 'Artikler', 'Døgnfluer, spinnerfall, stokkmaur') +
-        row('/ofa-settefisk.html', ICON.drop, 'OFA settefisk', 'Utsett i Nordmarka 2021–2025') +
-        row('/om.html', ICON.info, 'Om HatchWatch', 'Modellen, datakildene, stasjonene') +
-        row('https://tally.so/r/EkBErN', ICON.out, 'Send tilbakemelding', 'Beta · vi leser alt', ' target="_blank" rel="noopener"') +
+        row(cfg.obsHref || '/observasjon.html', ICON.plus, S.obs, S.obsSub) +
+        row('/varsler.html', ICON.bell, S.notif, S.notifSub, ' id="hwbNotif"') +
+        row('/artikler.html', ICON.book, S.articles, S.articlesSub) +
+        row('/ofa-settefisk.html', ICON.drop, S.ofa, S.ofaSub) +
+        row('/om.html', ICON.info, S.about, S.aboutSub) +
+        row('https://tally.so/r/EkBErN', ICON.out, S.feedback, S.feedbackSub, ' target="_blank" rel="noopener"') +
+        extras.map(function (x, i) { return btnRow(i, x.icon || ICON.out, x.title, x.sub); }).join('') +
         '<div class="hwp-foot">hatchwatch.no · beta · data: MET · NVE · Sentinel</div>' +
       '</div>' +
     '</div>';
@@ -108,7 +137,7 @@
     var list = document.getElementById('hwbFavList');
     var f = favs();
     if (!f.length) {
-      list.innerHTML = '<div class="hwp-empty"><b>Ingen vann ennå.</b><br>Trykk hjertet på et vann i kartet eller øverst på prognosen, så samler vannene dine seg her. Varslene dine følger denne lista.</div>';
+      list.innerHTML = '<div class="hwp-empty">' + S.empty + '</div>';
       return;
     }
     list.innerHTML = f.map(function (id) {
@@ -125,6 +154,12 @@
   });
   document.getElementById('hwbFav').addEventListener('click', function () { renderFavs(); open('hwbFavPanel', 'fav'); });
   document.getElementById('hwbMenu').addEventListener('click', function () { open('hwbMenuPanel', 'menu'); });
+  document.getElementById('hwbNotif').addEventListener('click', function (e) {
+    if (typeof cfg.onNotif === 'function' && cfg.onNotif()) { e.preventDefault(); closeAll(); }
+  });
+  mount.querySelectorAll('[data-extra]').forEach(function (b) {
+    b.addEventListener('click', function () { var x = extras[+b.getAttribute('data-extra')]; closeAll(); if (x && typeof x.onClick === 'function') x.onClick(); });
+  });
   mount.querySelectorAll('.hwp-close').forEach(function (b) { b.addEventListener('click', closeAll); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeAll(); });
 

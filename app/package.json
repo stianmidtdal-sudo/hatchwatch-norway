@@ -13,6 +13,7 @@
   "dependencies": {
     "@capacitor/cli": "^8.5.2",
     "@capacitor/core": "^8.5.2",
-    "@capacitor/ios": "^8.5.2"
+    "@capacitor/ios": "^8.5.2",
+    "@capacitor/push-notifications": "^8.1.2"
   }
 }

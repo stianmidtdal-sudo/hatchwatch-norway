@@ -9,6 +9,11 @@
 //   POST /api/push?action=subscribe       — body: { subscription, locations, lang }
 //   POST /api/push?action=unsubscribe     — body: { endpoint } eller { subscription }
 //   POST /api/push?action=test-trigger    — body: { subscription, triggerType, locArea, locId, lang }
+//
+// 2026-10-01: iOS-appen (Capacitor) har ikke Web Push, og sender i stedet
+//   { platform: 'ios', token: '<APNs-enhetstoken>' } i alle tre actions
+//   (i stedet for subscription/endpoint). Lagres som endpoint 'apns:<token>'
+//   med platform:'ios', så cron og hashing fungerer likt for begge veier.
 
 import { redis, hashEndpoint, k } from '../lib/redis.js';
 import { sendPush, buildPayload, TRIGGER_TYPES } from '../lib/push.js';
@@ -37,23 +42,45 @@ export default async function handler(req, res) {
     }
 }
 
+// iOS-token: hex-streng fra APNs (64 tegn i dag, vi tillater 32–256).
+function iosToken(body) {
+    if (!body || body.platform !== 'ios') return null;
+    const t = (body.token || '').toString().trim();
+    return /^[0-9a-fA-F]{32,256}$/.test(t) ? t.toLowerCase() : null;
+}
+
 async function handleSubscribe(req, res) {
     const { subscription, locations, lang } = req.body || {};
-    if (!subscription || !subscription.endpoint || !subscription.keys) {
+    const token = iosToken(req.body);
+    if (req.body && req.body.platform === 'ios' && !token) {
+        return res.status(400).json({ error: 'Ugyldig iOS-token' });
+    }
+    if (!token && (!subscription || !subscription.endpoint || !subscription.keys)) {
         return res.status(400).json({ error: 'Ugyldig subscription' });
     }
     if (!locations || typeof locations !== 'object') {
         return res.status(400).json({ error: 'Mangler locations-objekt' });
     }
     const r = redis();
-    const hash = hashEndpoint(subscription.endpoint);
-    const record = {
-        endpoint: subscription.endpoint,
-        keys: subscription.keys,
-        locations,
-        lang: lang || 'no',
-        updatedAt: new Date().toISOString(),
-    };
+    const endpoint = token ? `apns:${token}` : subscription.endpoint;
+    const hash = hashEndpoint(endpoint);
+    const record = token
+        ? {
+            endpoint,
+            platform: 'ios',
+            token,
+            keys: null,
+            locations,
+            lang: lang || 'no',
+            updatedAt: new Date().toISOString(),
+        }
+        : {
+            endpoint,
+            keys: subscription.keys,
+            locations,
+            lang: lang || 'no',
+            updatedAt: new Date().toISOString(),
+        };
     const existing = await r.get(k.sub(hash));
     record.createdAt = (existing && existing.createdAt) ? existing.createdAt : record.updatedAt;
     await r.set(k.sub(hash), record);
@@ -63,6 +90,8 @@ async function handleSubscribe(req, res) {
 
 async function handleUnsubscribe(req, res) {
     let { endpoint, subscription } = req.body || {};
+    const token = iosToken(req.body);
+    if (token) endpoint = `apns:${token}`;
     if (!endpoint && subscription && subscription.endpoint) endpoint = subscription.endpoint;
     if (!endpoint) return res.status(400).json({ error: 'Mangler endpoint' });
     const r = redis();
@@ -73,8 +102,10 @@ async function handleUnsubscribe(req, res) {
 }
 
 async function handleTestTrigger(req, res) {
-    const { subscription, triggerType, locArea, locId, lang } = req.body || {};
-    if (!subscription || !subscription.endpoint) {
+    let { subscription, triggerType, locArea, locId, lang } = req.body || {};
+    const token = iosToken(req.body);
+    if (token) subscription = { platform: 'ios', token };
+    if (!subscription || (!subscription.endpoint && !subscription.token)) {
         return res.status(400).json({ error: 'Mangler subscription' });
     }
     if (!triggerType || !TRIGGER_TYPES.includes(triggerType)) {

@@ -7,7 +7,7 @@
 //
 // Innført 2026-05-19.
 
-const CACHE_VERSION = 'hw-v13';  // v13: ny kartforside (tidsskyver, søk, nærmest meg, bunnark, sesongliste) + Sesong-fane i skallet (2026-10-01)
+const CACHE_VERSION = 'hw-v14';  // v14: dashboard runde 1 — ny header, Sesongen | I dag, delt bunnbar med språk/varsel-kroker (2026-10-01)
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const API_CACHE = `${CACHE_VERSION}-api`;
 const VENDOR_CACHE = `${CACHE_VERSION}-vendor`;

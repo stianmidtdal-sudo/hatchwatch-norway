@@ -7,10 +7,21 @@
 		"cleartext": false
 	},
 	"backgroundColor": "#1B4332",
+	"plugins": {
+		"PushNotifications": {
+			"presentationOptions": [
+				"badge",
+				"sound",
+				"alert"
+			]
+		}
+	},
 	"ios": {
 		"contentInset": "automatic",
 		"scheme": "HatchWatch",
 		"limitsNavigationsToAppBoundDomains": false
 	},
-	"packageClassList": []
+	"packageClassList": [
+		"PushNotificationsPlugin"
+	]
 }
