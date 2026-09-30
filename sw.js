@@ -7,7 +7,7 @@
 //
 // Innført 2026-05-19.
 
-const CACHE_VERSION = 'hw-v15';  // v15: Sesongen runde 2 — hero med klekkevindu + artstidslinje, handlinger, bevis i trekkspill, mørk flate (2026-10-01)
+const CACHE_VERSION = 'hw-v16';  // v16: I dag — dagsscore (50/30/20) med tre drivere og fiskevindu time for time (2026-10-01)
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const API_CACHE = `${CACHE_VERSION}-api`;
 const VENDOR_CACHE = `${CACHE_VERSION}-vendor`;

@@ -977,6 +977,32 @@
         table.hw-src td { border: 0; padding: 6px 0; color: var(--hw-fg-2); }
         table.hw-src tr:hover td { background: none; }
         @media (max-width: 520px) { .hero-date { font-size: 38px; } }
+
+        /* ── Dagsscore (I dag) ── */
+        #todayScoreCard .best-header { align-items: center; }
+        .ts-score { display: grid; grid-template-columns: 96px 1fr; gap: 14px; align-items: center; margin-top: 10px; }
+        .ts-ring { width: 96px; height: 96px; }
+        .ts-ring circle { fill: none; stroke-width: 8; }
+        .ts-ring .track { stroke: var(--hw-bg-3); }
+        .ts-ring .val { stroke: var(--hw-hatch); stroke-linecap: round; transform: rotate(-90deg); transform-origin: center; }
+        .ts-ring text { font-family: var(--hw-display); font-weight: 800; font-size: 26px; fill: var(--hw-fg); text-anchor: middle; }
+        .ts-verdict { font-family: var(--hw-display); font-weight: 700; font-size: 26px; letter-spacing: -.02em; line-height: 1.05; }
+        .ts-drivers { display: grid; gap: 8px; margin-top: 12px; }
+        .ts-drv { display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center; background: var(--hw-bg-3); border-radius: var(--hw-radius-sm); padding: 10px 12px; }
+        .ts-drv > svg { width: 22px; height: 22px; stroke: var(--hw-water); fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+        .ts-drv b { display: block; font-weight: 600; font-size: 14px; }
+        .ts-drv span { font-size: 12px; color: var(--hw-fg-2); }
+        .ts-drv .pill { font-family: var(--hw-mono); font-size: 11px; padding: 3px 8px; border-radius: 999px; background: var(--hw-bg-2); white-space: nowrap; }
+        .ts-drv .pill.good { color: var(--hw-good); } .ts-drv .pill.mid { color: var(--hw-hatch); } .ts-drv .pill.bad { color: var(--hw-bad); }
+        .ts-window { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--hw-line); }
+        .ts-hours { display: grid; gap: 4px; margin-top: 8px; }
+        .ts-hr { text-align: center; font-family: var(--hw-mono); font-size: 10.5px; color: var(--hw-fg-2); border-radius: 8px; padding: 6px 0 4px; }
+        .ts-hr .b { height: 34px; display: flex; align-items: flex-end; justify-content: center; margin: 4px 0; }
+        .ts-hr .b i { display: block; width: 60%; border-radius: 3px 3px 1px 1px; background: var(--hw-far); }
+        .ts-hr.best { background: var(--hw-hatch-soft); color: var(--hw-fg); }
+        .ts-hr.best .b i { background: var(--hw-hatch); }
+        .ts-hr .t { font-weight: 600; }
+        @media (max-width: 420px) { .ts-verdict { font-size: 22px; } .ts-hr { font-size: 9.5px; } }
     </style>
 </head>
 <body class="hw-dark">
@@ -1195,6 +1221,20 @@
              prediksjon. Banneret sier det rett ut i stedet. -->
         <!-- seasonStatusBanner flyttet inn i hero-kortet (best-wrap) 2026-08-19:
              sesongstatus er en del av SVARET, ikke et banner over alt annet. -->
+
+        <!-- ═══ DAGSSCORE (I dag, v3 2026-10-01) ═══
+             Én score med tre drivere: klekkefase 50 %, vann 30 %, vær 20 %
+             (vekter godkjent av Stian 1. okt 2026). Ukalibrert — merkes
+             «indikativ». Fylles av renderTodayScore(). -->
+        <section id="todayScoreSection" style="display:none">
+            <div class="best-wrap hw-hero" id="todayScoreCard">
+                <div class="best-header">
+                    <div class="best-label" id="tsLabel">Er det verdt å dra i dag?</div>
+                    <span class="hw-indic" id="tsIndic">Indikativ · ukalibrert</span>
+                </div>
+                <div class="hero-body" id="todayScoreBody"></div>
+            </div>
+        </section>
 
         <!-- ═══ TODAY'S STATUS ═══ -->
         <section id="todayStatusSection">
@@ -5373,6 +5413,199 @@ function wxFactsHtml(d, no) {
     ).join('') + `</div>`;
 }
 
+// ═══════════════════════════════════════════════════════════════════
+//  DAGSSCORE — «Er det verdt å dra i dag?» (I dag-fanen, v3 2026-10-01)
+// ═══════════════════════════════════════════════════════════════════
+// Mønsteret er én score med tre drivere (Whoop/Oura). Vekter godkjent av
+// Stian 1. okt 2026: klekkefase 50 %, vann 30 %, vær 20 %.
+//
+// UKALIBRERT. Kurvene er skjønn i påvente av 2027-observasjoner, og fanen
+// merkes «indikativ». Klekkefasen bruker samme dual-trigger-dato som heroen
+// (_hatchOnset). Vann bruker siste NVE-måling mot klekketerskelen og
+// vannføring mot medianen. Vær bruker MET sitt kveldsvindu 19–22 (samme
+// payload som spinnerfall-vakta), med mykere kurver enn spinnerfall: en
+// klekking tåler mer vind og sky enn et spinnerfall gjør.
+const TODAY_WEIGHTS = { phase: 0.5, water: 0.3, weather: 0.2 };
+
+function todayHourScore(h) {
+    // 0–1 for én time: vind dominerer, så temp, nedbør, sky. Vektet snitt,
+    // ikke produkt — ett svakt ledd skal dempe, ikke nullstille.
+    const wind = h.wind == null ? 0.6 : h.wind <= 2 ? 1 : h.wind <= 4 ? 0.8 : h.wind <= 6 ? 0.5 : h.wind <= 8 ? 0.3 : 0.1;
+    const t = h.temp;
+    const temp = t == null ? 0.6 : (t >= 10 && t <= 20) ? 1 : ((t >= 7 && t < 10) || (t > 20 && t <= 24)) ? 0.75 : (t >= 4 && t < 7) ? 0.5 : 0.25;
+    const p = h.precip == null ? 0 : h.precip;
+    const precip = p < 0.1 ? 1 : p < 0.5 ? 0.8 : p < 2 ? 0.5 : 0.25;
+    const c = h.cloud;
+    const cloud = c == null ? 1 : (c >= 30 && c <= 90) ? 1 : 0.9;   // overskyet er fint for klekking
+    return 0.45 * wind + 0.30 * temp + 0.20 * precip + 0.05 * cloud;
+}
+
+function renderTodayScore(args) {
+    const section = document.getElementById('todayScoreSection');
+    const body = document.getElementById('todayScoreBody');
+    if (!section || !body) return;
+    const no = LANG !== 'en';
+    const T2 = no ? {
+        label: 'Er det verdt å dra i dag?', indic: 'Indikativ · ukalibrert',
+        phase: 'Klekkefase', water: 'Vannet', weather: 'Været', window: 'Fiskevinduet',
+        go: 'Dra i kveld.', maybe: 'Kanskje. Sjekk igjen i morgen.', no: 'Ikke ennå.', over: 'Vinduet er lukket.', closed: 'Sesongen har ikke åpnet.',
+        underway: 'i gang', soon: 'snart', notyet: 'ikke ennå', done: 'ferdig', nopred: 'ingen prognose',
+        warm: 'varmt nok', near: 'nesten', cold: 'kaldt', nomeas: 'ingen måling',
+        calm: 'rolig', ok: 'brukbart', rough: 'krevende', nowx: 'ingen prognose',
+        today: 'i dag', tomorrow: 'i morgen',
+        hoursNote: 'Søylene er antatt klekkeaktivitet per time, tallene er temperatur og vind i m/s. Kveldstimer med lite vind gir mest.',
+        foot: 'Data: MET Norway · NVE · modellens klekkedato. Scoren er ikke validert mot observasjoner ennå.'
+    } : {
+        label: 'Worth going today?', indic: 'Indicative · uncalibrated',
+        phase: 'Hatch phase', water: 'Water', weather: 'Weather', window: 'Fishing window',
+        go: 'Go tonight.', maybe: 'Maybe. Check again tomorrow.', no: 'Not yet.', over: 'The window has closed.', closed: 'The season has not opened.',
+        underway: 'underway', soon: 'soon', notyet: 'not yet', done: 'done', nopred: 'no forecast',
+        warm: 'warm enough', near: 'almost', cold: 'cold', nomeas: 'no reading',
+        calm: 'calm', ok: 'usable', rough: 'rough', nowx: 'no forecast',
+        today: 'today', tomorrow: 'tomorrow',
+        hoursNote: 'Bars are assumed hatch activity per hour, numbers are temperature and wind in m/s. Calm evening hours score highest.',
+        foot: 'Data: MET Norway · NVE · model hatch date. The score is not yet validated against observations.'
+    };
+    document.getElementById('tsLabel').textContent = T2.label;
+    document.getElementById('tsIndic').textContent = T2.indic;
+
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const keyOf = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const seasonOpen = doy(today) >= doy(new Date(today.getFullYear(), 3, 1));
+
+    // ── 1. Klekkefase (50 %) ──
+    let phaseScore, phaseTxt, phasePill, phaseCls, phaseKey;
+    const onset = args.hatchOnset ? new Date(args.hatchOnset) : null;
+    if (onset) onset.setHours(0, 0, 0, 0);
+    if (!seasonOpen) {
+        phaseScore = 5; phaseKey = 'closed'; phaseTxt = T2.closed; phasePill = T2.notyet; phaseCls = 'bad';
+    } else if (!onset) {
+        phaseScore = 20; phaseKey = 'unknown'; phaseTxt = T2.nopred; phasePill = T2.nopred; phaseCls = 'bad';
+    } else {
+        const ds = Math.round((today - onset) / 86400000);   // dager siden start
+        if (ds < 0) {
+            const to = -ds;
+            phaseScore = to <= 7 ? 35 : to <= 14 ? 25 : 10; phaseKey = to <= 14 ? 'soon' : 'coming';
+            phaseTxt = no ? `Om ${to} dager (${fmt(onset)})` : `In ${to} days (${fmt(onset)})`; phasePill = T2.soon; phaseCls = to <= 7 ? 'mid' : 'bad';
+        } else if (ds <= 3) {
+            phaseScore = 70; phaseKey = 'now'; phaseTxt = no ? `Dag ${ds + 1} av vinduet · bygger seg opp` : `Day ${ds + 1} of the window · building`; phasePill = T2.underway; phaseCls = 'good';
+        } else if (ds <= 14) {
+            phaseScore = 100; phaseKey = 'now'; phaseTxt = no ? `Dag ${ds + 1} av vinduet` : `Day ${ds + 1} of the window`; phasePill = T2.underway; phaseCls = 'good';
+        } else if (ds <= 21) {
+            phaseScore = 60; phaseKey = 'now'; phaseTxt = no ? `Dag ${ds + 1} · etterslep` : `Day ${ds + 1} · tail end`; phasePill = T2.underway; phaseCls = 'mid';
+        } else {
+            phaseScore = 15; phaseKey = 'done'; phaseTxt = no ? `Vinduet lukket for ${ds - 21} dager siden` : `Window closed ${ds - 21} days ago`; phasePill = T2.done; phaseCls = 'bad';
+        }
+    }
+
+    // ── 2. Vann (30 %) ──
+    const thr = getWtThreshold(LOC);
+    let wtNow = null, wtDate = null;
+    if (args.wtData) {
+        for (let i = 0; i < 30; i++) {
+            const d = new Date(today); d.setDate(d.getDate() - i);
+            const v = args.wtData[keyOf(d)];
+            if (v != null && isFinite(v)) { wtNow = v; wtDate = keyOf(d); break; }
+        }
+    }
+    let flowRatio = null;
+    if (args.flowData && args.flowNormal) {
+        for (let i = 0; i < 30; i++) {
+            const d = new Date(today); d.setDate(d.getDate() - i);
+            const k = keyOf(d);
+            if (args.flowData[k] != null) { const s = statusVsNormal(args.flowData, args.flowNormal, k); if (s) flowRatio = s.ratio; break; }
+        }
+    }
+    let waterScore, waterTxt, waterPill, waterCls;
+    if (wtNow == null) {
+        waterScore = 50; waterTxt = T2.nomeas; waterPill = T2.nomeas; waterCls = 'mid';
+    } else {
+        const diff = wtNow - thr;
+        waterScore = diff >= 0 ? 95 : diff >= -1 ? 65 : diff >= -2 ? 45 : diff >= -4 ? 25 : 10;
+        waterPill = diff >= 0 ? T2.warm : diff >= -2 ? T2.near : T2.cold;
+        waterCls = diff >= 0 ? 'good' : diff >= -2 ? 'mid' : 'bad';
+        waterTxt = no
+            ? `${fmtNum(wtNow, 1)} °C · ${diff >= 0 ? 'over terskelen ' + thr + ' °C' : fmtNum(-diff, 1) + ' °C til terskelen ' + thr + ' °C'}`
+            : `${wtNow.toFixed(1)} °C · ${diff >= 0 ? 'above the ' + thr + ' °C threshold' : (-diff).toFixed(1) + ' °C to the ' + thr + ' °C threshold'}`;
+    }
+    if (flowRatio != null) {
+        if (flowRatio > 1.6) waterScore -= 20; else if (flowRatio > 1.25) waterScore -= 8; else if (flowRatio < 0.6) waterScore -= 5;
+        waterTxt += no ? ` · vannføring ${Math.round(flowRatio * 100)} % av median` : ` · flow ${Math.round(flowRatio * 100)}% of median`;
+    }
+    waterScore = Math.max(0, Math.min(100, waterScore));
+
+    // ── 3. Vær (20 %) — kveldsvinduet i dag, ellers dagvinduet ──
+    const tk = keyOf(today);
+    const eve = args.eveningData && args.eveningData[tk];
+    const day = args.dayData && args.dayData[tk];
+    const w = eve || day || null;
+    let weatherScore, weatherTxt, weatherPill, weatherCls;
+    if (!w) {
+        weatherScore = 50; weatherTxt = T2.nowx; weatherPill = T2.nowx; weatherCls = 'mid';
+    } else {
+        weatherScore = Math.round(todayHourScore(w) * 100);
+        weatherPill = weatherScore >= 70 ? T2.calm : weatherScore >= 45 ? T2.ok : T2.rough;
+        weatherCls = weatherScore >= 70 ? 'good' : weatherScore >= 45 ? 'mid' : 'bad';
+        const cl = w.cloud == null ? '' : w.cloud >= 80 ? (no ? 'overskyet' : 'overcast') : w.cloud >= 40 ? (no ? 'delvis skyet' : 'partly cloudy') : (no ? 'klart' : 'clear');
+        weatherTxt = `${eve ? (no ? 'Kveld' : 'Evening') : (no ? 'Dag' : 'Day')}: ${Math.round(w.temp)}°, ${fmtNum(w.wind, 1)} m/s${cl ? ', ' + cl : ''}${w.precip > 0.1 ? (no ? ', nedbør' : ', rain') : ''}`;
+    }
+
+    // ── Sum + dom ──
+    let score = Math.round(TODAY_WEIGHTS.phase * phaseScore + TODAY_WEIGHTS.water * waterScore + TODAY_WEIGHTS.weather * weatherScore);
+    // Utenfor vinduet skal tallet og dommen si det samme: godt vær i oktober
+    // er ikke en god klekkekveld. Tak på 25 når fasen er ferdig/ikke åpnet.
+    if (phaseKey === 'done' || phaseKey === 'closed' || phaseKey === 'unknown') score = Math.min(score, 25);
+    let verdict, expl;
+    if (phaseKey === 'closed') { verdict = T2.closed; expl = no ? 'Prognosen åpner 1. april. Fram til da er scoren bare vann og vær.' : 'The forecast opens on 1 April. Until then the score is water and weather only.'; }
+    else if (phaseKey === 'done') { verdict = T2.over; expl = no ? 'Vulgata-vinduet er lukket. Se etter spinnerfall og vespertina i skumringen.' : 'The vulgata window has closed. Look for spinner falls and vespertina at dusk.'; }
+    else if (score >= 65) { verdict = T2.go; expl = no ? 'Klekkingen er i gang, vannet er varmt nok og kvelden ser brukbar ut.' : 'The hatch is underway, the water is warm enough and the evening looks usable.'; }
+    else if (score >= 40) {
+        verdict = T2.maybe;
+        expl = phaseKey === 'now'
+            ? (no ? `Klekkingen er i gang, men ${weatherCls === 'bad' ? 'kvelden blir krevende' : 'vannet holder igjen'}.` : `The hatch is underway, but ${weatherCls === 'bad' ? 'the evening looks rough' : 'the water is holding it back'}.`)
+            : (no ? 'Klekkingen har ikke startet, men vannet nærmer seg terskelen. Første rolige kveld kan åpne det.' : 'The hatch has not started, but the water is closing in on the threshold. The first calm evening may open it.');
+    } else { verdict = T2.no; expl = phaseKey === 'unknown' ? (no ? 'Ingen lagret prognose for dette vannet ennå.' : 'No stored forecast for this water yet.') : (no ? 'Vannet er for kaldt. Følg vanntemperaturen, ikke kalenderen.' : 'The water is too cold. Watch the water temperature, not the calendar.'); }
+
+    // ── Fiskevinduet: timer 14–23 i dag, ellers i morgen ──
+    let hoursHtml = '';
+    if (args.hourlyData) {
+        const nowH = new Date().getHours();
+        let dayKey = tk, dayLbl = T2.today;
+        let hrs = (args.hourlyData[tk] || []).filter(h => h.h >= 14 && h.h <= 23 && h.h >= nowH - 1);
+        if (hrs.length < 4) {
+            const tm = new Date(today); tm.setDate(tm.getDate() + 1);
+            const tmk = keyOf(tm);
+            const tmh = (args.hourlyData[tmk] || []).filter(h => h.h >= 14 && h.h <= 23);
+            if (tmh.length >= 4) { hrs = tmh; dayKey = tmk; dayLbl = T2.tomorrow; }
+        }
+        if (hrs.length >= 4) {
+            const mult = phaseKey === 'now' ? phaseScore / 100 : phaseKey === 'soon' ? 0.35 : 0.15;
+            const scored = hrs.map(h => ({ h, s: todayHourScore(h) * mult }));
+            const max = Math.max.apply(null, scored.map(x => x.s)) || 1;
+            hoursHtml = `<div class="ts-window"><div class="best-header"><span class="hw-eyebrow">${T2.window} · ${dayLbl}</span><span class="hero-method">${fmt(parseDate(dayKey))}</span></div>
+                <div class="ts-hours" style="grid-template-columns:repeat(${scored.length},1fr)">` +
+                scored.map(x => `<div class="ts-hr${(x.s >= 0.6 * max && x.s >= 0.3) ? ' best' : ''}"><div>${String(x.h.h).padStart(2, '0')}</div><div class="b"><i style="height:${Math.max(8, Math.round(x.s * 34))}px"></i></div><div class="t">${Math.round(x.h.temp)}°</div><div>${Math.round(x.h.wind)}</div></div>`).join('') +
+                `</div><div class="hero-method">${T2.hoursNote}</div></div>`;
+        }
+    }
+
+    const circ = 2 * Math.PI * 40, dash = circ * score / 100;
+    const drv = (icon, name, txt, pill, cls) => `<div class="ts-drv">${icon}<div><b>${name}</b><span>${txt}</span></div><span class="pill ${cls}">${pill}</span></div>`;
+    body.innerHTML = `
+        <div class="ts-score">
+            <svg class="ts-ring" viewBox="0 0 96 96" role="img" aria-label="${score} / 100"><circle class="track" cx="48" cy="48" r="40"/><circle class="val" cx="48" cy="48" r="40" stroke-dasharray="${dash.toFixed(1)} ${circ.toFixed(1)}"/><text x="48" y="57">${score}</text></svg>
+            <div><div class="ts-verdict">${verdict}</div><div class="hero-line" style="margin-top:6px">${expl}</div></div>
+        </div>
+        <div class="ts-drivers">
+            ${drv('<span class="hw-fly" style="width:32px;color:var(--hw-water)"></span>', T2.phase, phaseTxt, phasePill, phaseCls)}
+            ${drv('<svg viewBox="0 0 24 24"><path d="M12 3c3 4.5 6 7.5 6 11a6 6 0 1 1-12 0c0-3.5 3-6.5 6-11z"/></svg>', T2.water, waterTxt, waterPill, waterCls)}
+            ${drv('<svg viewBox="0 0 24 24"><path d="M17 18a4 4 0 0 0 0-8 6 6 0 0 0-11.5 1.5A3.5 3.5 0 0 0 6 18z"/></svg>', T2.weather, weatherTxt, weatherPill, weatherCls)}
+        </div>
+        ${hoursHtml}
+        <div class="hero-method" style="margin-top:10px">${T2.foot} ${no ? 'Vekter' : 'Weights'}: ${Math.round(TODAY_WEIGHTS.phase * 100)} / ${Math.round(TODAY_WEIGHTS.water * 100)} / ${Math.round(TODAY_WEIGHTS.weather * 100)}.</div>`;
+    markSelfHidden(section, false);
+}
+
 function renderWeatherSection(dayData, hourlyData) {
     const section = document.getElementById('weatherSection');
     const bigWrap = document.getElementById('weatherBig');
@@ -5896,6 +6129,7 @@ const MODE_SECTIONS = {
         'seasonIndicatorsSection', 'southSignalSection',
     ],
     conditions: [
+        'todayScoreSection',
         'todayStatusSection', 'weatherSection', 'bandRangeSection', 'wtNormalSection',
         'flowChartSection', 'spinnerfallSection',
     ],
@@ -8222,6 +8456,8 @@ function rebuildDashboard() {
     renderWeatherSection(dayData, hourlyData);
     renderWtNormalChart(wtData, wtNormal);
     renderFlowChart(flowData, flowNormal);
+    // Dagsscore (v3): samme onset som heroen og spinnerfall-vakta, rå vanndata
+    renderTodayScore({ hatchOnset: _hatchOnset, wtData, wtNormal, flowData, flowNormal, hourlyData, dayData, eveningData });
     renderWaterTempChart(wtData);                       // Graf: rå verdier fra stasjon
     renderSnowChart(snowData);
     renderIceChart(airDataCorrected, snowData);
