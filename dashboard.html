@@ -51,6 +51,26 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/hw.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script>
+    // v3 mørk flate (2026-10-01): aksetekst og rutenett i Chart.js må leses på mørk bunn.
+    // Ingen grafer setter egne tick-farger, så globale defaults holder.
+    if (window.Chart) {
+        Chart.defaults.color = '#9db0b0';
+        Chart.defaults.borderColor = 'rgba(157,176,176,0.14)';
+        Chart.defaults.font.family = '"IBM Plex Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+    }
+    // Lokal utvikling (python http.server): GET-kall mot /api/ rutes til produksjon,
+    // som tillater alle origins. POST (store-prediction) rutes IKKE, så lokal
+    // testing ikke skriver til Redis. Uten effekt på hatchwatch.no.
+    if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
+        const _fetch = window.fetch.bind(window);
+        window.fetch = function (url, opts) {
+            const method = (opts && opts.method || 'GET').toUpperCase();
+            if (typeof url === 'string' && url.startsWith('/api/') && method === 'GET') url = 'https://www.hatchwatch.no' + url;
+            return _fetch(url, opts);
+        };
+    }
+    </script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         /* ── LYST SKALL (redesign 2027 v2, 2026-08-19) ──
@@ -825,9 +845,141 @@
 
         /* ── BUNNBAR: kommer fra hw-shell.js + hw.css (v3, 2026-10-01).
            Den gamle kopierte bar-CSS-en er fjernet herfra. ── */
+
+        /* ═══════════════════════════════════════════════════════════════
+           v3 MØRK SKINN + SESONGEN (2026-10-01, runde 2)
+           Ligger sist i kaskaden med vilje: mapper de eksisterende
+           komponentene over på tokens fra hw.css uten å røre strukturen.
+           Alt over denne linja er v2-CSS som fortsatt gjelder der den
+           ikke overstyres her.
+           ═══════════════════════════════════════════════════════════════ */
+        body.hw-dark { font-family: var(--hw-body); font-size: 15px; }
+        .container { padding: 14px 14px 28px; }
+        section h2, #modelHeading, #wtHeading, #snowHeading, #weatherHeading, #wtNormalHeading, #flowChartHeading {
+            font-family: var(--hw-mono); font-size: 10.5px; font-weight: 500; letter-spacing: .12em;
+            text-transform: uppercase; color: var(--hw-fg-3); border-bottom: 1px solid var(--hw-line);
+        }
+        a { color: var(--hw-water); }
+        .kpi-card, .card, .hist-gdd-stat, .table-wrap, .chart-wrap, .conv-summary, .settefisk-wrap, .loc-strip, .wx-big {
+            background: var(--hw-bg-2); box-shadow: none; border: 1px solid var(--hw-line); border-radius: var(--hw-radius);
+        }
+        .kpi-card, .hist-gdd-stat { border-top: 1px solid var(--hw-line); }
+        .hist-gdd-stat.hist-gdd-median { border-top: 2px solid var(--hw-hatch); }
+        .kpi-label, .card-label, .hist-gdd-label, .loc-key, .wx-when, .wx-hr .t, .wx-fact .k { color: var(--hw-fg-3); font-family: var(--hw-mono); font-weight: 500; letter-spacing: .1em; }
+        .kpi-unit, .card-note, .progress-label, .loc-val, .wx-tmin, .wx-fact .v small { color: var(--hw-fg-2); }
+        .kpi-value, .card-value, .hist-gdd-val, .wx-date, .wx-fact .v, .wx-comment b, .settefisk-bar .num, .settefisk-toggle, .settefisk-label, .settefisk-chev { color: var(--hw-fg); }
+        .kpi-value, .card-value, .hist-gdd-val { font-family: var(--hw-mono); font-variant-numeric: tabular-nums; }
+        .kpi-value.na-val { color: var(--hw-fg-3); }
+        .card-highlight { color: var(--hw-water); }
+        .yr-early { color: var(--hw-water); } .yr-late { color: var(--hw-bad); } .yr-current { color: var(--hw-hatch); }
+        .progress-wrap { background: var(--hw-bg-3); }
+        .progress-bar { background: linear-gradient(90deg, var(--hw-water), var(--hw-hatch)); }
+        .model-info-band { background: var(--hw-water-soft); border-color: transparent; color: var(--hw-water); }
+        .uncertainty-band, .prior-notice, .settefisk-meta .comment { background: var(--hw-hatch-soft); border-color: transparent; color: var(--hw-fg); }
+        .prior-notice strong, .uncertainty-band strong { color: var(--hw-hatch); }
+        th { background: var(--hw-bg-3); color: var(--hw-fg-2); border-bottom: 1px solid var(--hw-line); font-family: var(--hw-mono); font-weight: 500; letter-spacing: .08em; }
+        td { color: var(--hw-fg); border-bottom-color: var(--hw-line); }
+        tr:hover td { background: var(--hw-bg-3); }
+        .conv-intro { background: var(--hw-bg-2); color: var(--hw-fg-2); border-left-color: var(--hw-water); }
+        .conv-summary { color: var(--hw-fg-2); } .conv-summary strong { color: var(--hw-fg); }
+        .best-wrap, .explain-wrap { background: var(--hw-bg-2); border: 1px solid var(--hw-line); color: var(--hw-fg); }
+        .explain-wrap { border-radius: var(--hw-radius); margin-top: 10px; padding: 16px; }
+        .best-label, .explain-label { color: var(--hw-hatch); font-family: var(--hw-mono); font-size: 10.5px; font-weight: 500; letter-spacing: .12em; }
+        .explain-meta { color: var(--hw-fg-3); }
+        .explain-tempo { background: linear-gradient(90deg, var(--hw-water), var(--hw-good) 50%, var(--hw-bad)); opacity: 1; }
+        .explain-tempo-marker { background: var(--hw-fg); border: 3px solid var(--hw-bg-2); width: 16px; height: 16px; top: -4px; }
+        .explain-tempo-labels { color: var(--hw-fg-3); font-family: var(--hw-mono); font-weight: 500; letter-spacing: .05em; }
+        .drv-cell { background: var(--hw-bg-3); border-radius: var(--hw-radius-sm); }
+        .drv-head { color: var(--hw-fg-3); font-family: var(--hw-mono); font-weight: 500; letter-spacing: .1em; }
+        .drv-value { color: var(--hw-fg); }
+        .drv-cell.drv-anom-mild .drv-value, .drv-cell.drv-anom-strong .drv-value { color: var(--hw-water); }
+        .drv-cell.drv-anom-late-mild .drv-value, .drv-cell.drv-anom-late-strong .drv-value { color: var(--hw-hatch); }
+        .drv-status { color: var(--hw-fg-2); }
+        .explain-text { color: var(--hw-fg-2); border-top-color: var(--hw-line); }
+        .explain-text strong { color: var(--hw-fg); }
+        .explain-text .verdict-early-strong, .explain-text .verdict-early-mild { color: var(--hw-water); }
+        .explain-text .verdict-late-strong, .explain-text .verdict-late-mild { color: var(--hw-hatch); }
+        .explain-text .verdict-normal { color: var(--hw-fg); }
+        .season-banner { color: var(--hw-fg); }
+        .settefisk-wrap { border-top: 1px solid var(--hw-line); }
+        .settefisk-summary { color: var(--hw-water); } .settefisk-summary .nofish { color: var(--hw-fg-3); }
+        .settefisk-body { border-top-color: var(--hw-line); }
+        .settefisk-bar { background: var(--hw-bg-3); border-color: transparent; } .settefisk-bar.zero { background: var(--hw-bg-3); }
+        .settefisk-bar .yr { color: var(--hw-fg-3); } .settefisk-bar.zero .num { color: var(--hw-fg-3); }
+        .settefisk-bar .bar-fill { background: var(--hw-water); } .settefisk-bar.zero .bar-fill { background: var(--hw-far); }
+        .settefisk-meta { color: var(--hw-fg-2); } .settefisk-meta strong { color: var(--hw-fg); }
+        .settefisk-link { color: var(--hw-water); }
+        .wx-big { background: var(--hw-bg-2); }
+        .wx-hours, .wx-facts { background: var(--hw-bg-3); border-top-color: var(--hw-line); }
+        .wx-hr + .wx-hr, .wx-fact + .wx-fact { border-left-color: var(--hw-line); }
+        .wx-comment { color: var(--hw-fg-2); }
+        .t-cold { color: #7fb8e8; } .t-cool { color: #6fc3b8; } .t-mild { color: #8fcf6f; } .t-warm { color: var(--hw-hatch); } .t-hot { color: var(--hw-bad); }
+        .wv-calm { color: var(--hw-fg-2); } .wv-fresh { color: var(--hw-hatch); } .wv-strong { color: var(--hw-bad); }
+        .wx-rain-on { color: var(--hw-water); } .wx-rain-off { color: var(--hw-fg-3); }
+        .range-pill { background: var(--hw-bg-3); color: var(--hw-fg-2); }
+        .range-pill.on { background: var(--hw-hatch); color: var(--hw-hatch-ink); }
+        .flow-note, .wx-foot, #wtNote, #snowNote, #iceSection [data-i18n="iceShortNote"], #lakePickerNote, #seasonIndicatorsSection [data-i18n="indicatorsFooter"] { color: var(--hw-fg-2) !important; }
+        .loading-wrap { color: var(--hw-fg-2) !important; }
+        .spinner { border-color: var(--hw-line); border-top-color: var(--hw-hatch); }
+        #gddHistSection { border-top-color: var(--hw-line); margin-top: 24px; padding-top: 20px; }
+        .error-box { background: rgba(232,115,92,.12); border-color: var(--hw-bad); color: var(--hw-bad); }
+        .error-box code { background: var(--hw-bg-3); color: var(--hw-fg); }
+        #lakePicker { background: var(--hw-bg-2) !important; color: var(--hw-fg) !important; border-color: var(--hw-line) !important; }
+        .badge-active { background: var(--hw-water-soft); color: var(--hw-water); }
+        .badge-cold { background: var(--hw-bg-3); color: var(--hw-fg-2); }
+        .badge-always { background: rgba(111,207,151,.16); color: var(--hw-good); }
+        .badge-prior { background: var(--hw-hatch-soft); color: var(--hw-hatch); }
+
+        /* ── Hero (Sesongen) ── */
+        .best-wrap.hw-hero { padding: 16px; position: relative; overflow: hidden; border-radius: var(--hw-radius); margin-top: 0; margin-bottom: 10px; }
+        .best-wrap.hw-hero::before { content: ""; position: absolute; inset: -40% -20% auto auto; width: 70%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(closest-side, var(--hw-hatch-soft), transparent 70%); pointer-events: none; }
+        .hero-body { position: relative; }
+        .hero-eye { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .hero-date { font-family: var(--hw-display); font-weight: 800; font-size: 46px; letter-spacing: -.035em; line-height: .95; margin: 6px 0 4px; }
+        .hero-date span { font-family: var(--hw-mono); font-weight: 500; font-size: 14px; letter-spacing: 0; color: var(--hw-fg-2); margin-left: 8px; }
+        .hero-line { font-size: 14px; color: var(--hw-fg-2); }
+        .hero-line b { color: var(--hw-fg); font-weight: 600; }
+        .hero-cal { display: flex; align-items: center; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+        .hero-method { font-family: var(--hw-mono); font-size: 10.5px; color: var(--hw-fg-3); margin-top: 6px; letter-spacing: .02em; line-height: 1.5; }
+        .hero-species { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--hw-line); }
+        .tl { width: 100%; height: auto; margin-top: 10px; max-width: 560px; display: block; }
+        .tl text { font-family: var(--hw-mono); font-size: 9.5px; fill: var(--hw-fg-3); }
+        .tl .axis { stroke: var(--hw-line); }
+        .tl .band { fill: var(--hw-hatch-soft); }
+        .tl .bar { fill: var(--hw-hatch); } .tl .bar.marg { fill: var(--hw-water); } .tl .bar.vesp { fill: var(--hw-coming); } .tl .bar.mygg { fill: var(--hw-far); }
+        .tl .today { stroke: var(--hw-fg); stroke-width: 1.2; stroke-dasharray: 2 2; }
+        .tl .todaylbl { fill: var(--hw-fg); font-weight: 600; }
+        .tl .lbl { fill: var(--hw-fg-2); }
+        .tl .peak { fill: var(--hw-bg-2); stroke: var(--hw-fg); stroke-width: 1.2; }
+        .tl .rowlbl { font-family: var(--hw-body); font-size: 11px; fill: var(--hw-fg); }
+        .tl .rowsub { font-size: 9px; fill: var(--hw-fg-3); }
+        .stars { display: inline-flex; gap: 2px; vertical-align: middle; }
+        .stars svg { width: 11px; height: 11px; fill: var(--hw-hatch); }
+        .stars svg.off { fill: var(--hw-far); }
+        .updated { color: var(--hw-fg-3) !important; }
+        .season-banner .sb-sub { color: var(--hw-fg-2); }
+
+        /* ── Handlinger ── */
+        .hw-actions { margin: 0 0 24px; }
+        .hw-ctas { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-width: 560px; }
+        .hw-ctas .primary { grid-column: 1 / -1; }
+        .hw-actions .obs { margin-top: 8px; width: 100%; max-width: 560px; white-space: normal; text-align: center; }
+        .hw-btn svg { width: 16px; height: 16px; }
+
+        /* ── Bevis ── */
+        #evidenceSection { margin-top: 8px; }
+        #evidenceSection > h2 { border-bottom: 0; margin-bottom: 0; }
+        #evidenceSection .hw-acc > .body { padding: 4px 0 8px; color: var(--hw-fg); font-size: inherit; }
+        #evidenceSection .hw-acc > .body > section { margin-top: 12px; }
+        #evidenceSection .hw-acc summary { font-family: var(--hw-body); font-size: 15px; }
+        table.hw-src { font-size: 13.5px; }
+        table.hw-src th { background: none; border: 0; padding: 6px 10px 6px 0; width: 1%; white-space: nowrap; vertical-align: top; font-family: var(--hw-mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--hw-fg-3); }
+        table.hw-src td { border: 0; padding: 6px 0; color: var(--hw-fg-2); }
+        table.hw-src tr:hover td { background: none; }
+        @media (max-width: 520px) { .hero-date { font-size: 38px; } }
     </style>
 </head>
-<body>
+<body class="hw-dark">
 
 <header>
     <!-- Slank header (2026-08-19, per Stians mockup-godkjenning):
@@ -1072,18 +1224,25 @@
         </section>
 
         <!-- ═══ SEASON HATCH CALENDAR ═══ -->
-        <div class="best-wrap" id="seasonCalendarSection">
+        <!-- v3 (2026-10-01): heroen er SVARET. Dato først, usikkerhet som bånd på
+             en tidslinje, artstidslinje under, metode som liten linje. Fylles av
+             renderSpeciesCalendar(). bestNote/bestDate beholdes skjult fordi GA og
+             eldre kode leser dem. -->
+        <div class="best-wrap hw-hero" id="seasonCalendarSection">
             <div class="best-header">
-                <div class="best-label" id="bestLabel">▶ Hatch Forecast</div>
+                <div class="best-label" id="bestLabel">Klekkeprognose</div>
                 <div class="best-right">
-                    <div class="best-note" id="bestNote">Loading…</div>
                     <div class="updated" id="lastUpdated"></div>
                 </div>
             </div>
-            <div id="speciesCalendar" class="species-grid"></div>
+            <div id="speciesCalendar" class="hero-body"></div>
             <div id="seasonStatusBanner" class="season-banner" style="display:none"></div>
             <span id="bestDate" style="display:none"></span>
+            <span id="bestNote" style="display:none"></span>
         </div>
+        <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+            <symbol id="star" viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.2 6.8.8-5 4.7 1.3 6.8L12 17.7 5.9 21l1.3-6.8-5-4.7 6.8-.8z"/></symbol>
+        </defs></svg>
 
         <!-- ═══ SESONGFORKLARING (eksperimentell, ?explain=1) ═══
              Plassert rett under Sesong klekkekalender. Forklarer hvorfor
@@ -1115,6 +1274,16 @@
              prognosen som vises i Sesongbarometeret rett over. -->
         <section id="forecastEffectSection" style="display:none;margin-top:14px">
             <div id="forecastEffectBanner" style="padding:14px 16px;border-radius:8px;border:1px solid;font-size:0.92rem"></div>
+        </section>
+
+        <!-- ═══ HANDLINGER (v3, 2026-10-01) — sida skal ende i noe du kan gjøre ═══ -->
+        <section id="actionsSection" class="hw-actions" style="display:none">
+            <div class="hw-ctas">
+                <button type="button" class="hw-btn primary" id="actNotif"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10 21a2 2 0 0 0 4 0"/></svg><span>Sett varsel</span></button>
+                <a class="hw-btn ghost" id="actCal" href="#" download="hatchwatch.ics"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Kalender</span></a>
+                <button type="button" class="hw-btn ghost" id="actShare"><svg viewBox="0 0 24 24"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M12 15V3M8 7l4-4 4 4"/></svg><span>Del</span></button>
+            </div>
+            <a class="hw-btn ghost obs" id="actObs" href="/observasjon.html"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Så du klekking her? Meld observasjon</span></a>
         </section>
 
 
@@ -1190,6 +1359,14 @@
             </div>
         </section>
 
+        <!-- ═══ BEVIS (v3, 2026-10-01): alt som lå under svaret ligger nå i trekkspill.
+             Seksjonene inni er uendret; applyMode styrer dem som før. Grafer inni
+             lukkede trekkspill får resize() ved åpning (se initV3Actions). ═══ -->
+        <section id="evidenceSection" style="display:none">
+            <h2 id="evidenceHeading">Bevis og bakgrunn</h2>
+        <details class="hw-acc" id="evPred">
+            <summary><span id="evPredLbl">Prediksjonshistorikk</span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>
+            <div class="body">
         <!-- ═══ PREDICTION CONVERGENCE ═══ -->
         <section id="convergenceSection">
             <h2 data-i18n="convergenceHeading">Prediction history</h2>
@@ -1198,7 +1375,11 @@
             </div>
             <div class="conv-summary" id="convSummary"></div>
         </section>
-
+            </div>
+        </details>
+        <details class="hw-acc" id="evModel">
+            <summary><span id="evModelLbl">Slik regner vi</span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>
+            <div class="body">
         <!-- ═══ GDD MODEL ═══ -->
         <section id="gddModelSection">
             <h2 id="modelHeading">GDD Model · Loading…</h2>
@@ -1232,6 +1413,8 @@
             <h2 data-i18n="histGdd">Historical GDD Model · Year-by-Year</h2>
             <div id="gddHistContent" data-i18n="loadingText">Loading…</div>
         </section>
+            </div>
+        </details>
 
         <!-- ═══ FORECAST-EFFEKT-VARSLING (kun lokasjoner med useLongTermForecast,
                  trigget når 9-dagers MET-prognose flytter prognose ≥ 4 dager) ═══ -->
@@ -1247,6 +1430,9 @@
 
         <!-- forecastEffectSection flyttet til under Sesongbarometeret 2026-05-29 -->
 
+        <details class="hw-acc" id="evData">
+            <summary><span id="evDataLbl">Vann, snø og is</span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>
+            <div class="body">
         <!-- ═══ WATER TEMPERATURE CHART ═══ -->
         <section id="wtSection">
             <h2 id="wtHeading" data-i18n="waterTempChart">Water Temperature May–July · Year-by-Year</h2>
@@ -1304,6 +1490,13 @@
             <h2>🌍 <span data-i18n="southSignalHeading">Sør-Norge-signal</span></h2>
             <div id="southSignalContent"></div>
         </section>
+            </div>
+        </details>
+        <details class="hw-acc" id="evSources">
+            <summary><span id="evSourcesLbl">Datakilder og stasjoner</span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>
+            <div class="body" id="evSourcesBody"></div>
+        </details>
+        </section><!-- /evidenceSection -->
 
     </div><!-- /dashboard -->
 </div><!-- /container -->
@@ -5697,6 +5890,7 @@ const MODE_SECTIONS = {
     forecast: [
         'priorNotice', 'seasonCalendarSection',
         'seasonExplainSection', 'forecastEffectSection',
+        'actionsSection', 'evidenceSection',
         'convergenceSection', 'gddModelSection', 'gddHistSection',
         'wtSection', 'snowSection', 'iceSection',
         'seasonIndicatorsSection', 'southSignalSection',
@@ -7020,29 +7214,139 @@ function renderSeasonExplain(args) {
     document.getElementById('seasonExplainText').innerHTML = text;
 }
 
-function renderSpeciesCalendar(isgangResult, vulgataDate) {
+// v3-hero (2026-10-01): svaret først. Dato i displayskrift, usikkerheten som
+// bånd på en tidslinje med i dag-strek, artstidslinje under, metode som liten
+// linje. `best` kommer fra renderConvergence (samme kandidat som før: dato,
+// usikkerhet og metode-tekst). Artsdatoene er UENDRET: mygg = isgang,
+// marginata = isgang +14/+17/+21, vespertina = +21/+28/+35, vulgata = anker
+// +7 topp, +14 slutt. Finnmark/Troms/Nordland (komprimert sesong) får bare
+// vulgata-vinduet, som før.
+function renderSpeciesCalendar(isgangResult, vulgataDate, best) {
     const grid = document.getElementById('speciesCalendar');
     const label = document.querySelector('.best-label');
     if (!grid) return;
+    const no = LANG !== 'en';
+    if (label) label.textContent = no ? 'Klekkeprognose' : 'Hatch forecast';
+    grid.style.display = 'block';
 
-    // Finnmark / Troms / Nordland: season too compressed for species differentiation — show classic big-date layout
-    if (['Finnmark', 'Troms', 'Nordland'].includes(LOC.region)) {
-        if (label) label.textContent = t('bestEstimateNow');
-        const dateStr = vulgataDate ? fmt(vulgataDate) : '–';
-        grid.style.display = 'block';
-        grid.innerHTML = `
-            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;padding-top:4px">
-                <div style="font-size:2.1rem;font-weight:700">${dateStr}</div>
-                <div style="font-size:0.78rem;opacity:0.55;font-style:italic;text-align:right;white-space:nowrap">
-                    ${t('shortSeason')}
-                </div>
-            </div>`;
-        return;
+    const compressed = ['Finnmark', 'Troms', 'Nordland'].includes(LOC.region);
+    const isgangDate   = isgangResult && isgangResult.date;
+    const isgangSource = isgangResult && isgangResult.source;
+    function dOff(base, n) { const d = new Date(base); d.setDate(d.getDate() + Math.round(n)); return d; }
+
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const todayDoy = doy(today);
+    const unc = (best && best.unc != null && isFinite(best.unc)) ? best.unc : (LOC.uncertaintyDays || 7);
+    const uncTxt = (typeof fmtNum === 'function') ? fmtNum(unc) : String(unc);
+    window._hwHeroDate = vulgataDate || null;
+
+    // Tilstand + hovedlinje
+    let st = 'unknown', line = no ? 'Ingen prognose ennå.' : 'No forecast yet.';
+    if (vulgataDate) {
+        const diff = Math.round((vulgataDate - today) / 86400000);
+        if (diff > 14)      { st = 'coming'; line = no ? `<b>Om ${diff} dager.</b>` : `<b>In ${diff} days.</b>`; }
+        else if (diff > 0)  { st = 'soon';   line = no ? `<b>Om ${diff} dager.</b>` : `<b>In ${diff} days.</b>`; }
+        else if (-diff <= 21) { st = 'now';  line = no ? `<b>Dag ${1 - diff} av vinduet.</b> Vulgata er trolig i gang.` : `<b>Day ${1 - diff} of the window.</b> Vulgata is likely underway.`; }
+        else                { st = 'done';   line = no ? `Vinduet lukket for ${-diff - 21} dager siden.` : `The window closed ${-diff - 21} days ago.`; }
+    }
+    const LBL = no ? { now: 'Pågår', soon: 'Snart', coming: 'På vei', done: 'Ferdig', unknown: 'Ingen prognose' }
+                   : { now: 'Underway', soon: 'Soon', coming: 'Coming', done: 'Done', unknown: 'No forecast' };
+
+    // Kalibrering: stjerner som på kartet (Kautokeino 3, øvrige kalibrerte 1, ukalibrerte 0)
+    const starsN = LOC.calibrated ? (LOC.id === 'kautokeino' ? 3 : 1) : 0;
+    let starsHtml = `<span class="stars" aria-label="${no ? 'Kalibrering' : 'Calibration'} ${starsN}/3">`;
+    for (let i = 0; i < 3; i++) starsHtml += `<svg class="${i < starsN ? '' : 'off'}"><use href="#star"/></svg>`;
+    starsHtml += '</span>';
+    const calTxt = LOC.calibrated
+        ? (no ? 'Kalibrert' : 'Calibrated') + (LOC.calibShortNo ? ' · ' + LOC.calibShortNo : '')
+        : (no ? 'Ukalibrert · indikativ prognose' : 'Uncalibrated · indicative forecast');
+
+    // Tidslinje-akse: 25. april – 10. august, utvidet hvis prognosen faller utenfor
+    const vDoy = vulgataDate ? doy(vulgataDate) : null;
+    let A0 = doy(new Date(YEAR, 3, 25)), A1 = doy(new Date(YEAR, 7, 10));
+    if (vDoy != null) { A0 = Math.min(A0, vDoy - 25); A1 = Math.max(A1, vDoy + 30); }
+    const WPX = 340;
+    const xOf = (n, left) => { left = left || 12; return left + (n - A0) / (A1 - A0) * (WPX - left - 12); };
+    const mShort = (n) => fmt(dateFromDoy(YEAR, n));
+    const monthTicks = (y, left) => {
+        let out = '';
+        for (let m = 3; m <= 8; m++) {
+            const n = doy(new Date(YEAR, m, 1));
+            if (n < A0 || n > A1) continue;
+            const nm = new Date(YEAR, m, 1).toLocaleDateString(no ? 'nb-NO' : 'en-GB', { month: 'short' }).replace('.', '');
+            out += `<line class="axis" x1="${xOf(n, left)}" y1="${y - 4}" x2="${xOf(n, left)}" y2="${y}"/><text x="${xOf(n, left)}" y="${y + 11}" text-anchor="middle">${nm}</text>`;
+        }
+        return out;
+    };
+    const todayIn = todayDoy >= A0 && todayDoy <= A1;
+
+    let windowSvg = '';
+    if (vDoy != null) {
+        const H = 92, y = 44, tx = xOf(todayDoy);
+        const bandW = xOf(vDoy + unc) - xOf(vDoy - unc);
+        windowSvg = `<svg class="tl" viewBox="0 0 ${WPX} ${H}" role="img" aria-label="${no ? 'Klekkevindu' : 'Hatch window'}">
+            <line class="axis" x1="${xOf(A0)}" y1="${y}" x2="${xOf(A1)}" y2="${y}"/>${monthTicks(y + 14)}
+            <rect class="band" x="${xOf(vDoy - unc)}" y="${y - 14}" width="${Math.max(2, bandW)}" height="28" rx="3"/>
+            <rect class="bar" x="${xOf(vDoy)}" y="${y - 5}" width="${xOf(vDoy + 14) - xOf(vDoy)}" height="10" rx="3" opacity=".9"/>
+            <circle class="peak" cx="${xOf(vDoy + 7)}" cy="${y}" r="4"/>
+            <text class="lbl" x="${xOf(vDoy)}" y="${y - 21}" text-anchor="${xOf(vDoy) < 60 ? 'start' : 'middle'}">${no ? 'start' : 'onset'} ${mShort(vDoy)} ±${uncTxt}</text>
+            <text class="lbl" x="${xOf(vDoy + 14)}" y="${y - 21}" text-anchor="${xOf(vDoy + 14) > WPX - 50 ? 'end' : 'start'}" dx="8">${no ? 'slutt' : 'end'} ${mShort(vDoy + 14)}</text>
+            ${todayIn ? `<line class="today" x1="${tx}" y1="${y - 16}" x2="${tx}" y2="${y + 24}"/><text class="todaylbl" x="${tx}" y="${y + 37}" text-anchor="${tx > WPX - 40 ? 'end' : tx < 40 ? 'start' : 'middle'}">${no ? 'i dag' : 'today'}</text>` : ''}
+        </svg>`;
     }
 
+    // Artstidslinje (ikke for komprimert sesong)
+    let speciesHtml = '';
+    if (compressed) {
+        speciesHtml = `<div class="hero-method">${t('shortSeason')}</div>`;
+    } else if (isgangDate) {
+        const rows = [
+            { key: 'mygg', name: no ? 'Mygg' : 'Midge', sub: no ? 'fra isgang' : 'from ice-out', a: doy(isgangDate), p: null, b: A1 },
+            { key: 'marg', name: 'Marginata', sub: no ? 'isgang +14' : 'ice-out +14', a: doy(dOff(isgangDate, 14)), p: doy(dOff(isgangDate, 17)), b: doy(dOff(isgangDate, 21)) },
+            { key: 'vulg', name: 'Vulgata · Grandis', sub: no ? 'varmesum + vanntemp' : 'GDD + water temp', a: vDoy, p: vDoy != null ? vDoy + 7 : null, b: vDoy != null ? vDoy + 14 : null },
+            { key: 'vesp', name: 'Vespertina', sub: no ? 'isgang +21' : 'ice-out +21', a: doy(dOff(isgangDate, 21)), p: doy(dOff(isgangDate, 28)), b: doy(dOff(isgangDate, 35)) },
+        ];
+        const rh = 26, top = 8, L = 82, H = top + rows.length * rh + 24;
+        let s = `<svg class="tl" viewBox="0 0 ${WPX} ${H}" role="img" aria-label="${no ? 'Artstidslinje' : 'Species timeline'}">`;
+        rows.forEach((sp, i) => {
+            const y = top + i * rh + 12;
+            s += `<text class="rowlbl" x="0" y="${y - 1}">${sp.name}</text><text class="rowsub" x="0" y="${y + 9}">${sp.sub}</text>`;
+            s += `<line class="axis" x1="${xOf(A0, L)}" y1="${y}" x2="${xOf(A1, L)}" y2="${y}" opacity=".5"/>`;
+            if (sp.a != null && sp.b != null) {
+                const x0 = Math.max(xOf(A0, L), xOf(sp.a, L)), x1 = Math.min(xOf(A1, L), xOf(sp.b, L));
+                s += `<rect class="bar ${sp.key}" x="${x0}" y="${y - 4}" width="${Math.max(2, x1 - x0)}" height="8" rx="3"${sp.key === 'mygg' ? ' opacity=".55"' : ''}/>`;
+                if (sp.p != null) s += `<circle class="peak" cx="${xOf(sp.p, L)}" cy="${y}" r="3.2"/>`;
+            } else {
+                s += `<text class="rowsub" x="${xOf(A0, L) + 4}" y="${y + 3}">–</text>`;
+            }
+        });
+        const yb = top + rows.length * rh + 2;
+        s += `<line class="axis" x1="${xOf(A0, L)}" y1="${yb}" x2="${xOf(A1, L)}" y2="${yb}"/>${monthTicks(yb + 2, L)}`;
+        if (todayIn) s += `<line class="today" x1="${xOf(todayDoy, L)}" y1="2" x2="${xOf(todayDoy, L)}" y2="${yb}"/>`;
+        s += '</svg>';
+        const srcTxt = isgangSource ? (no ? `Isgang ${fmt(isgangDate)} (${isgangSource}).` : `Ice-out ${fmt(isgangDate)} (${isgangSource}).`) : '';
+        speciesHtml = `<div class="hero-species"><div class="hw-eyebrow">${no ? 'Alle arter' : 'All species'} · ${LOC.area}</div>${s}
+            <div class="hero-method">${no ? 'Ringen er ventet topp. Vulgata er dobbelttrigger, de andre er festet til isgangen.' : 'Ring = expected peak. Vulgata is dual-trigger, the others are anchored to ice-out.'} ${srcTxt}</div></div>`;
+    }
+
+    const dateBig = vulgataDate ? `${fmt(vulgataDate)}<span>±${uncTxt} d</span>` : '–';
+    const method = (best && best.note) ? `<div class="hero-method">${best.note}</div>` : '';
+    grid.innerHTML = `
+        <div class="hero-eye"><span class="hw-chip ${st}"><i></i>${LBL[st]}</span><span class="hw-eyebrow gold">Vulgata · ${no ? 'anslått start' : 'estimated onset'}</span></div>
+        <div class="hero-date">${dateBig}</div>
+        <div class="hero-line">${line}</div>
+        ${windowSvg}
+        <div class="hero-cal">${starsHtml}<span class="hw-eyebrow">${calTxt}</span></div>
+        ${method}
+        ${speciesHtml}`;
+    return;
+}
+// Beholdt for referanse: den gamle artskalender-gitteret (v2). Ikke i bruk.
+function renderSpeciesCalendarV2(isgangResult, vulgataDate) {
+    const grid = document.getElementById('speciesCalendar');
+    if (!grid) return;
     const isgangDate   = isgangResult.date;
     const isgangSource = isgangResult.source;
-
     function dOff(base, n) {
         const d = new Date(base);
         d.setDate(d.getDate() + Math.round(n));
@@ -7381,7 +7685,7 @@ async function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate,
     if (adgDate && l2Date) {
         vulgataAnchor = adgDate > l2Date ? adgDate : l2Date;
     }
-    renderSpeciesCalendar(isgangResult, vulgataAnchor);
+    renderSpeciesCalendar(isgangResult, vulgataAnchor, best);
 
     // ── Konvergensgraf ──
     // Bruk SAMME avgTemp som projectADGDate (10-års DOY-snitt eller MET-prognose
@@ -9340,6 +9644,85 @@ if ('serviceWorker' in navigator) {
      Kroker: språk følger LANG, Varsler åpner modalen i installert PWA,
      Meld observasjon tar med området, og språkbytte ligger i menyen. -->
 <script>
+// ── v3 handlinger + bevis-trekkspill (2026-10-01) ─────────────────────
+(function initV3Actions() {
+    var no = (typeof LANG === 'undefined') || LANG !== 'en';
+    var area = (typeof LOC === 'object' && LOC && LOC.area) || '';
+    function txt(id, s) { var el = document.getElementById(id); if (el) el.textContent = s; }
+    if (!no) {
+        txt('evidenceHeading', 'Evidence and background'); txt('evPredLbl', 'Prediction history');
+        txt('evModelLbl', 'How we calculate'); txt('evDataLbl', 'Water, snow and ice'); txt('evSourcesLbl', 'Data sources and stations');
+        var q = function (id) { var b = document.querySelector('#' + id + ' span'); return b; };
+        if (q('actNotif')) q('actNotif').textContent = 'Set alert';
+        if (q('actCal')) q('actCal').textContent = 'Calendar';
+        if (q('actShare')) q('actShare').textContent = 'Share';
+        if (q('actObs')) q('actObs').textContent = 'Seen a hatch here? Report it';
+    }
+    var obs = document.getElementById('actObs');
+    if (obs) obs.href = '/observasjon.html?area=' + encodeURIComponent(area);
+
+    // Varsel: samme regel som menyen — modal i installert app, varsler-sida i nettleser
+    var notif = document.getElementById('actNotif');
+    if (notif) notif.addEventListener('click', function () {
+        var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+        if (standalone && typeof window.hwOpenNotifModal === 'function') window.hwOpenNotifModal();
+        else location.href = '/varsler.html';
+    });
+
+    // Kalender: .ics for anslått startdato (heldags), bygges i klikkøyeblikket
+    var cal = document.getElementById('actCal');
+    if (cal) cal.addEventListener('click', function (e) {
+        var d = window._hwHeroDate;
+        if (!d) { e.preventDefault(); return; }
+        var pad = function (n) { return String(n).padStart(2, '0'); };
+        var ymd = function (dt) { return dt.getFullYear() + pad(dt.getMonth() + 1) + pad(dt.getDate()); };
+        var end = new Date(d); end.setDate(end.getDate() + 1);
+        var ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//HatchWatch//NO', 'BEGIN:VEVENT',
+            'UID:hw-' + (LOC && LOC.id) + '-' + ymd(d) + '@hatchwatch.no',
+            'DTSTAMP:' + ymd(new Date()) + 'T080000Z',
+            'DTSTART;VALUE=DATE:' + ymd(d), 'DTEND;VALUE=DATE:' + ymd(end),
+            'SUMMARY:' + (no ? 'Vulgata anslått start · ' : 'Vulgata estimated onset · ') + area,
+            'DESCRIPTION:' + (no ? 'Modellens anslag for klekkestart. Sjekk hatchwatch.no for oppdatert prognose.' : 'Model estimate for hatch onset. Check hatchwatch.no for the latest forecast.'),
+            'URL:https://www.hatchwatch.no/dashboard.html?loc=' + (LOC && LOC.id),
+            'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+        cal.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics);
+    });
+
+    // Del: native delingsark der det finnes, ellers kopier lenka
+    var share = document.getElementById('actShare');
+    if (share) share.addEventListener('click', function () {
+        var url = 'https://www.hatchwatch.no/dashboard.html?loc=' + (LOC && LOC.id);
+        var d = window._hwHeroDate;
+        var text = area + (d ? (no ? ': vulgata anslått ' : ': vulgata estimated ') + fmt(d) : '') + ' · HatchWatch';
+        var lbl = share.querySelector('span');
+        if (navigator.share) { navigator.share({ title: 'HatchWatch · ' + area, text: text, url: url }).catch(function () {}); return; }
+        var done = function () { if (lbl) { var o = lbl.textContent; lbl.textContent = no ? 'Lenke kopiert' : 'Link copied'; setTimeout(function () { lbl.textContent = o; }, 1800); } };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, done); else done();
+    });
+
+    // Datakilder og stasjoner (stasjonskodene bor her nå, ikke i headeren)
+    var src = document.getElementById('evSourcesBody');
+    if (src && typeof LOC === 'object' && LOC) {
+        var rows = [];
+        if (LOC.frostStation) rows.push([no ? 'Luft og snø' : 'Air and snow', (LOC.airStationName || '') + ' · ' + LOC.frostStation + ' · MET Norway (Frost)']);
+        var nveId = LOC.nveWaterTempStation || LOC.nveStation;
+        if (nveId) rows.push([no ? 'Vann' : 'Water', (LOC.waterStationName || '') + ' · ' + nveId + ' · NVE HydAPI']);
+        rows.push([no ? 'Vær' : 'Weather', 'MET Norway (yr.no) · ' + LOC.lat + '°N ' + LOC.lon + '°Ø']);
+        rows.push([no ? 'Isgang' : 'Ice-out', no ? 'Sentinel-observasjoner der de finnes, ellers hybrid ismodell (Stefan + klimajustert median)' : 'Sentinel observations where available, otherwise hybrid ice model']);
+        rows.push([no ? 'Høyde' : 'Altitude', (typeof getCurrentAltitude === 'function' ? getCurrentAltitude(LOC) : LOC.altitude) + ' moh']);
+        src.innerHTML = '<table class="hw-src"><tbody>' + rows.map(function (r) { return '<tr><th>' + r[0] + '</th><td>' + r[1] + '</td></tr>'; }).join('') + '</tbody></table>' +
+            '<p class="hero-method" style="margin-top:8px">' + (no ? 'Oppdateres hver morgen. Prognoser lagres når noen åpner vannet.' : 'Updated every morning. Forecasts are stored when someone opens the water.') + '</p>';
+    }
+
+    // Grafer inni lukkede trekkspill: tving resize når de åpnes
+    document.querySelectorAll('#evidenceSection details').forEach(function (d) {
+        d.addEventListener('toggle', function () {
+            if (!d.open || !window.Chart) return;
+            d.querySelectorAll('canvas').forEach(function (c) { var ch = Chart.getChart(c); if (ch) ch.resize(); });
+        });
+    });
+})();
+
 window.HW_SHELL = {
     lang: (typeof LANG !== 'undefined' ? LANG : (localStorage.getItem('lang') || 'no')),
     obsHref: '/observasjon.html?area=' + encodeURIComponent((typeof LOC === 'object' && LOC && LOC.area) || ''),
