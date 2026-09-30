@@ -1,0 +1,3 @@
+# iOS-appen (Capacitor) skal ikke serveres som del av nettsiden.
+app/
+codemagic.yaml

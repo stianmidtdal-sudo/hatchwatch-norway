@@ -1,0 +1,15 @@
+{
+  "appId": "no.hatchwatch.app",
+  "appName": "HatchWatch",
+  "webDir": "www",
+  "server": {
+    "url": "https://www.hatchwatch.no",
+    "cleartext": false
+  },
+  "backgroundColor": "#1B4332",
+  "ios": {
+    "contentInset": "automatic",
+    "scheme": "HatchWatch",
+    "limitsNavigationsToAppBoundDomains": false
+  }
+}
