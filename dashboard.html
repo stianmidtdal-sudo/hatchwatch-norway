@@ -921,7 +921,8 @@
         .flow-note, .wx-foot, #wtNote, #snowNote, #iceSection [data-i18n="iceShortNote"], #lakePickerNote, #seasonIndicatorsSection [data-i18n="indicatorsFooter"] { color: var(--hw-fg-2) !important; }
         .loading-wrap { color: var(--hw-fg-2) !important; }
         .spinner { border-color: var(--hw-line); border-top-color: var(--hw-hatch); }
-        #gddHistSection { border-top-color: var(--hw-line); margin-top: 24px; padding-top: 20px; }
+        #gddHistSection { border-top: 0; margin-top: 10px; padding-top: 0; }
+        .drv-icon:empty { display: none; }
         .error-box { background: rgba(232,115,92,.12); border-color: var(--hw-bad); color: var(--hw-bad); }
         .error-box code { background: var(--hw-bg-3); color: var(--hw-fg); }
         #lakePicker { background: var(--hw-bg-2) !important; color: var(--hw-fg) !important; border-color: var(--hw-line) !important; }
@@ -1036,7 +1037,7 @@
         <button id="favHeart" class="hw-iconbtn fav" type="button" aria-label="Legg til i Mine vann" title="Mine vann">
             <svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.7-9.3-9A5.2 5.2 0 0 1 12 6.6a5.2 5.2 0 0 1 9.3 4.9c-1.8 4.3-9.3 9-9.3 9z"/></svg>
         </button>
-        <button id="hwMenuBtn" hidden type="button" aria-label="Meny" title="Meny" style="background:rgba(255,255,255,0.12);color:white;border:none;width:52px;height:52px;border-radius:8px;cursor:pointer;font-size:1.8rem;display:none;align-items:center;justify-content:center;transition:background 0.15s;line-height:1">☰</button>
+        <button id="hwMenuBtn" hidden type="button" aria-label="Meny" title="Meny" style="background:rgba(255,255,255,0.12);color:white;border:none;width:52px;height:52px;border-radius:8px;cursor:pointer;font-size:1.8rem;display:none;align-items:center;justify-content:center;transition:background 0.15s;line-height:1"></button>
         <!-- Dropdown vises ved klikk på hamburger -->
         <div id="hwMenuDropdown" style="display:none;position:absolute;top:100%;right:0;margin-top:8px;background:white;color:#121413;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,0.25);min-width:220px;z-index:9998;overflow:hidden">
             <button class="hw-menu-item" data-action="notif" style="display:block;width:100%;text-align:left;background:none;border:none;padding:14px 18px;cursor:pointer;font-size:0.94rem;color:#121413;border-bottom:1px solid #eee">
@@ -1170,7 +1171,7 @@
 
         <!-- ═══ PRIOR MODEL NOTICE (shown for uncalibrated) ═══ -->
         <div id="priorNotice" class="prior-notice" style="display:none">
-            <span data-i18n-html="priorNoticeText">⚠ <strong>Indikativ prognose:</strong> Modellen bruker kalibrerte varmesum-parametere, men er ikke validert mot observerte klekkedatoer for denne lokasjonen. Bruk som veiledning. Vær fra nærmeste MET Norge-stasjon.</span>
+            <span data-i18n-html="priorNoticeText"><strong>Indikativ prognose:</strong> Modellen bruker kalibrerte varmesum-parametere, men er ikke validert mot observerte klekkedatoer for denne lokasjonen. Bruk som veiledning. Vær fra nærmeste MET Norge-stasjon.</span>
         </div>
 
         <!-- ═══ SPINNERFALL-VAKT INTRO-POPUP (vises første gang seksjonen aktiveres) ═══ -->
@@ -1300,7 +1301,7 @@
              vanntemp/snødybde) sammenliknet med 5-årssnitt. -->
         <div id="seasonExplainSection" class="explain-wrap" style="display:none;">
             <div class="explain-header">
-                <div class="explain-label" id="seasonExplainLabel">▶ Sesongbarometer</div>
+                <div class="explain-label" id="seasonExplainLabel">Sesongbarometer</div>
                 <div class="explain-meta" id="seasonExplainMeta"></div>
             </div>
             <div class="explain-tempo">
@@ -1324,6 +1325,13 @@
              prognosen som vises i Sesongbarometeret rett over. -->
         <section id="forecastEffectSection" style="display:none;margin-top:14px">
             <div id="forecastEffectBanner" style="padding:14px 16px;border-radius:8px;border:1px solid;font-size:0.92rem"></div>
+        </section>
+
+        <!-- ═══ HISTORIKK (flyttet opp 2026-10-01 etter Stians innspill: historikken er
+             det som verifiserer modellen, og det folk leser om vinteren) ═══ -->
+        <section id="gddHistSection">
+            <h2 data-i18n="histGdd">Historikk · slik traff modellen</h2>
+            <div id="gddHistContent" data-i18n="loadingText">Loading…</div>
         </section>
 
         <!-- ═══ HANDLINGER (v3, 2026-10-01) — sida skal ende i noe du kan gjøre ═══ -->
@@ -1389,7 +1397,7 @@
         <!-- ═══ SPINNERFALL-VAKT (skumringstema, vises kun i/nær vulgata-sesongen) ═══ -->
         <section id="spinnerfallSection" style="display:none; margin: 20px 0 28px; padding: 20px 22px; background: linear-gradient(135deg, #1a1f2e 0%, #2d2238 55%, #3d2820 100%); border-radius: 12px; color: #f4e4c1; box-shadow: 0 6px 20px rgba(0,0,0,0.18);">
             <div style="display:flex; align-items:baseline; flex-wrap:wrap; gap:10px;">
-                <div id="spinnerfallTitle" style="font-size:0.78rem; font-weight:700; letter-spacing:1.5px; color:#ffd789; text-transform:uppercase;" data-i18n="spinnerfallTitle">▶ Spinnerfall-vakt</div>
+                <div id="spinnerfallTitle" style="font-size:0.78rem; font-weight:700; letter-spacing:1.5px; color:#ffd789; text-transform:uppercase;" data-i18n="spinnerfallTitle">Spinnerfall-vakt</div>
                 <div id="spinnerfallSub" style="font-size:0.8rem; color:rgba(244,228,193,0.72);" data-i18n="spinnerfallSub">Sannsynlighet for vulgataspinnerfall · kveld 19–22</div>
             </div>
             <div id="spinnerfallGrid" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin-top:14px;"></div>
@@ -1458,11 +1466,6 @@
             </div>
         </section>
 
-        <!-- ═══ HISTORICAL GDD WINDOW (all locations) ═══ -->
-        <section id="gddHistSection">
-            <h2 data-i18n="histGdd">Historical GDD Model · Year-by-Year</h2>
-            <div id="gddHistContent" data-i18n="loadingText">Loading…</div>
-        </section>
             </div>
         </details>
 
@@ -1470,12 +1473,12 @@
                  trigget når 9-dagers MET-prognose flytter prognose ≥ 4 dager) ═══ -->
         <!-- ═══ WT-MODELL VARSEL-BANNER (vises kun ved fallback eller URL-flag) ═══ -->
         <div id="thermalWTBanner" style="display:none; margin: 14px 0; padding: 12px 16px; border-left: 4px solid #f59e0b; background: #fff3cd; border-radius: 6px; font-size: 0.9rem;">
-            <strong id="thermalWTBannerTitle">⚠ Vannmodell-varsel</strong> &mdash; <span id="thermalWTBannerInfo">Beregner...</span>
+            <strong id="thermalWTBannerTitle">Vannmodell-varsel</strong> &mdash; <span id="thermalWTBannerInfo">Beregner...</span>
         </div>
 
         <!-- ═══ WATERPROXY DEBUG-BANNER (vises kun når ?waterproxy=... URL-flag er satt) ═══ -->
         <div id="waterProxyBanner" style="display:none; margin: 14px 0; padding: 12px 16px; background: #e0e7ff; border-left: 4px solid #6366f1; border-radius: 6px; font-size: 0.9rem;">
-            <strong>🔁 Vann-proxy aktiv (DEBUG)</strong> &mdash; <span id="waterProxyBannerInfo">Beregner...</span>
+            <strong>Vann-proxy aktiv (DEBUG)</strong> &mdash; <span id="waterProxyBannerInfo">Beregner...</span>
         </div>
 
         <!-- forecastEffectSection flyttet til under Sesongbarometeret 2026-05-29 -->
@@ -1531,13 +1534,13 @@
                 </table>
             </div>
             <div style="font-size:0.74rem;color:#999;margin-top:8px;padding:0 4px;" data-i18n="indicatorsFooter">
-                ⚠ All indicators based on available years of data. For uncalibrated locations, historical averages are derived from weather data only.
+                All indicators based on available years of data. For uncalibrated locations, historical averages are derived from weather data only.
             </div>
         </section>
 
         <!-- ═══ SØR-NORGE-SIGNAL (kun for Finnmark, plassert nederst som "eksperimentell") ═══ -->
         <section id="southSignalSection" style="display:none">
-            <h2>🌍 <span data-i18n="southSignalHeading">Sør-Norge-signal</span></h2>
+            <h2><span data-i18n="southSignalHeading">Sør-Norge-signal</span></h2>
             <div id="southSignalContent"></div>
         </section>
             </div>
@@ -1578,8 +1581,8 @@ const T = {
     observationBtn: 'Send observasjon',
     loading: 'Henter live data fra MET Norge og NVE…',
     loadingHistAvg: 'Laster historisk gjennomsnitt…',
-    seasonCalendar: '▶ Klekkeprognose',
-    bestEstimateNow: '▶ Beste estimat nå',
+    seasonCalendar: 'Klekkeprognose',
+    bestEstimateNow: 'Beste estimat nå',
     todayStatus: 'Dagens status',
     airTemp: 'Lufttemperatur',
     snowDepth: 'Snødybde',
@@ -1625,13 +1628,13 @@ const T = {
     forecastTestPopupBtn: 'Skjønner!',
     calculating: '⏳ Beregner…',
     awaitingSnowFree: '⏳ Venter på snøfri dato',
-    awaitingSpring: '❄️ Venter på våroppvarming',
+    awaitingSpring: ' Venter på våroppvarming',
     noWtData: '— Ingen vanntemperaturdata',
-    active: '✅ Aktiv',
+    active: 'Aktiv',
     datePassed: '⏳ Dato passert — venter på VT',
     awaitingSnowFreeDate: 'Venter på snøfri dato',
     noEstimate: 'Ingen estimat tilgjengelig ennå',
-    histGdd: 'Historikk',
+    histGdd: 'Historikk · slik traff modellen',
     histHatch: 'Historisk klekke-sammenligning',
     histHatchData: 'Historiske klekkedata',
     waterTempChart: 'Vanntemperatur mai–juli · År for år',
@@ -1643,21 +1646,21 @@ const T = {
     indWinterSnow: 'Snødybde gjennomsnitt (des–apr)',
     indSnowFree: 'Snøfri dato',
     indGddRate: 'Varmesum-akkumuleringsrate (14-dagers snitt)',
-    sigLowSnow: '🟢 Lite snø – tidlig sesong-signal',
-    sigNormalSnow: '🟡 Normalt',
-    sigHighSnow: '🔴 Mye snø – sen sesong-signal',
+    sigLowSnow: 'Lite snø – tidlig sesong-signal',
+    sigNormalSnow: 'Normalt',
+    sigHighSnow: 'Mye snø – sen sesong-signal',
     sigNoSnowData: '— Ingen snødata',
     sigNoCurrentSnow: '— Ingen data fra årets sesong',
     sigNotYet: '⏳ Ikke ennå',
-    sigEarly: '🟢 Tidlig',
-    sigLate: '🔴 Sent',
-    sigWinterNormal: '❄️ Vinter – normalt',
-    sigWarmingUp: '🟡 Varmes opp',
-    sigActiveSeason: '🟢 Aktiv sesong',
+    sigEarly: 'Tidlig',
+    sigLate: 'Sent',
+    sigWinterNormal: ' Vinter – normalt',
+    sigWarmingUp: 'Varmes opp',
+    sigActiveSeason: 'Aktiv sesong',
     valNoData: 'Ingen data',
     valNoDataStation: 'Ingen data (stasjon)',
     valNotYet: 'Ikke ennå',
-    indicatorsFooter: '⚠ Alle markører baseres på tilgjengelige år med data. For ukalibrerte lokasjoner er historiske gjennomsnitt utledet kun fra værdata.',
+    indicatorsFooter: 'Alle markører baseres på tilgjengelige år med data. For ukalibrerte lokasjoner er historiske gjennomsnitt utledet kun fra værdata.',
     iceHeading: 'Estimert istykkelse · Stefan-ligningen · h = α × √FDD  (α = 0.6)',
     iceShortNote: 'Historiske søyler = topp-istykkelse den vinteren. Nåværende søyle = løpende estimat basert på frost-døgngrader hittil.',
     iceLegendSeasonPeak: 'Sesong-topp',
@@ -1669,7 +1672,7 @@ const T = {
     locGddTarget: 'Varmesum-terskel',
     locModel: 'Modell',
     masl: 'm o.h.',
-    calibratedModel: '✅ Kalibrert',
+    calibratedModel: 'Kalibrert',
     stdShort: 'typisk avvik',
     daysLabel: 'dager',
     fromJan1: 'fra 1. jan',
@@ -1693,9 +1696,9 @@ const T = {
     preciseLabel: 'presis',
     reliableLabel: 'pålitelig',
     priorUncalibrated: 'prior, ukalibrert',
-    priorNoticeText: '⚠ <strong>Indikativ prognose:</strong> Modellen bruker kalibrerte varmesum-parametere, men er ikke validert mot observerte klekkedatoer for denne lokasjonen. Bruk som veiledning. Vær fra nærmeste MET Norge-stasjon.',
-    verylowSnowNote: (avg, place) => `⚠ Svært lite snø her (snitt maks ${avg} cm ved ${place}). Snødybde er ikke en meningsfylt sesongindikator her.`,
-    lowlandSnowNote: (avg) => `⚠ Lavlandsstasjon (snitt maks ${avg} cm). Snøen er flyktig — hvert segment er en isolert snøhendelse, ikke en sammenhengende sesong.`,
+    priorNoticeText: '<strong>Indikativ prognose:</strong> Modellen bruker kalibrerte varmesum-parametere, men er ikke validert mot observerte klekkedatoer for denne lokasjonen. Bruk som veiledning. Vær fra nærmeste MET Norge-stasjon.',
+    verylowSnowNote: (avg, place) => `Svært lite snø her (snitt maks ${avg} cm ved ${place}). Snødybde er ikke en meningsfylt sesongindikator her.`,
+    lowlandSnowNote: (avg) => `Lavlandsstasjon (snitt maks ${avg} cm). Snøen er flyktig — hvert segment er en isolert snøhendelse, ikke en sammenhengende sesong.`,
     gddThisYear: 'Varmesum i år (fra 1. jan)',
     gddUnit: 'Akkumulert varmesum · base 0°C',
     remaining: 'Gjenstående til terskel',
@@ -1715,8 +1718,8 @@ const T = {
     histSnowFree: 'Snøfri',
     histMaxSnow: 'Maks snø (cm)',
     histIceThickness: 'Est. istykkelse (cm)',
-    altCorrection: '🏔 Høydekorreksjon:',
-    waterAltCorrection: '🏔 Vann-høydekorreksjon:',
+    altCorrection: 'Høydekorreksjon:',
+    waterAltCorrection: 'Vann-høydekorreksjon:',
     waterLapseRate: 'vann-temperaturgradient 0,35°C/100m',
     noHatchDataRow: 'Ingen systematiske klekkobservasjoner tilgjengelig for dette stedet. Værhistorikk (nedenfor) hentes live fra MET Norge. Kontakt oss for å bidra med kalibreringsdata.',
     gddHatchModel: 'Varmesum klekkemodell',
@@ -1727,9 +1730,9 @@ const T = {
     vsAvg: 'vs. snitt',
     latestOf: (gddT, wtT) => `siste av: Varmesum ≥ ${gddT} + vanntemp ≥ ${wtT}°C`,
     gddTriggerOnly: 'Kun varmesum-trigger — for tidlig å ekstrapolere vanntemp',
-    forecastEffectEarlier: (days) => `<strong>🌡 Langtidsvarselet påvirker prognosen.</strong> 9-dagers værvarsel fra MET tilsier varmere vær enn klimasnittet. Estimert klekketidspunkt er fremskyndet ~${days} dager.`,
-    forecastEffectLater: (days) => `<strong>❄ Langtidsvarselet påvirker prognosen.</strong> 9-dagers værvarsel fra MET tilsier kaldere vær enn klimasnittet. Estimert klekketidspunkt er forsinket ~${days} dager.`,
-    spinnerfallTitle: '▶ Spinnerfall-vakt',
+    forecastEffectEarlier: (days) => `<strong>Langtidsvarselet påvirker prognosen.</strong> 9-dagers værvarsel fra MET tilsier varmere vær enn klimasnittet. Estimert klekketidspunkt er fremskyndet ~${days} dager.`,
+    forecastEffectLater: (days) => `<strong> Langtidsvarselet påvirker prognosen.</strong> 9-dagers værvarsel fra MET tilsier kaldere vær enn klimasnittet. Estimert klekketidspunkt er forsinket ~${days} dager.`,
+    spinnerfallTitle: 'Spinnerfall-vakt',
     spinnerfallSub: 'Sannsynlighet for vulgataspinnerfall · kveld 19–22',
     spinnerfallFooter: 'Modellen vurderer kveldstimene 19–22 (lokal tid) basert på MET-prognose og vekter seks variabler ulikt: <b>vind</b>, <b>lufttemperatur</b>, <b>skydekke</b>, <b>nedbør</b>, <b>luftfuktighet</b> og <b>trykk-trend</b>. Vindstille er det viktigste enkeltkravet — raskt fallende lufttrykk (front på vei) dempes også. Modellen er ikke validert mot observasjoner.',
     spinnerfallIntroTitle: 'Ny funksjon: Spinnerfall-vakt',
@@ -1741,7 +1744,7 @@ const T = {
     loadingText: 'Laster…',
     // Sesongforklaring (?explain=1) — driver-basert narrativ for hvorfor
     // prediksjonen ligger der den ligger.
-    seasonExplainLabel: '▶ Sesongbarometer',
+    seasonExplainLabel: 'Sesongbarometer',
     seasonExplainMeta: (area, dateStr) => `${area} · ${dateStr}`,
     seasonExplainEmpty: 'Ikke nok historikk for å sammenligne mot snitt på denne lokasjonen.',
     tempoExtremeEarly: 'Veldig tidlig',
@@ -1809,8 +1812,8 @@ const T = {
     observationBtn: 'Submit observation',
     loading: 'Fetching live data from MET Norway &amp; NVE…',
     loadingHistAvg: 'Loading historical average…',
-    seasonCalendar: '▶ Hatch Forecast',
-    bestEstimateNow: '▶ Best Estimate Now',
+    seasonCalendar: 'Hatch Forecast',
+    bestEstimateNow: 'Best Estimate Now',
     todayStatus: "Today's Status",
     airTemp: 'Air Temperature',
     snowDepth: 'Snow Depth',
@@ -1856,13 +1859,13 @@ const T = {
     forecastTestPopupBtn: 'Got it!',
     calculating: '⏳ Calculating…',
     awaitingSnowFree: '⏳ Awaiting snow-free date',
-    awaitingSpring: '❄️ Awaiting spring warm-up',
+    awaitingSpring: ' Awaiting spring warm-up',
     noWtData: '— No water temp data',
-    active: '✅ Active',
+    active: 'Active',
     datePassed: '⏳ Date passed — awaiting WT',
     awaitingSnowFreeDate: 'Awaiting snow-free date',
     noEstimate: 'No estimate available yet',
-    histGdd: 'History',
+    histGdd: 'History · how the model did',
     histHatch: 'Historical Hatch Comparison',
     histHatchData: 'Historical Hatch Data',
     waterTempChart: 'Water Temperature May–July · Year-by-Year',
@@ -1874,21 +1877,21 @@ const T = {
     indWinterSnow: 'Winter snow average (Dec–Apr)',
     indSnowFree: 'Snow-free date',
     indGddRate: 'GDD accumulation rate (14-day avg)',
-    sigLowSnow: '🟢 Low snow – early season signal',
-    sigNormalSnow: '🟡 Normal',
-    sigHighSnow: '🔴 High snow – late season signal',
+    sigLowSnow: 'Low snow – early season signal',
+    sigNormalSnow: 'Normal',
+    sigHighSnow: 'High snow – late season signal',
     sigNoSnowData: '— No snow data',
     sigNoCurrentSnow: '— No current-season data',
     sigNotYet: '⏳ Not yet',
-    sigEarly: '🟢 Early',
-    sigLate: '🔴 Late',
-    sigWinterNormal: '❄️ Winter – normal',
-    sigWarmingUp: '🟡 Warming up',
-    sigActiveSeason: '🟢 Active season',
+    sigEarly: 'Early',
+    sigLate: 'Late',
+    sigWinterNormal: ' Winter – normal',
+    sigWarmingUp: 'Warming up',
+    sigActiveSeason: 'Active season',
     valNoData: 'No data',
     valNoDataStation: 'No data (station)',
     valNotYet: 'Not yet',
-    indicatorsFooter: '⚠ All indicators based on available years of data. For uncalibrated locations, historical averages are derived from weather data only.',
+    indicatorsFooter: 'All indicators based on available years of data. For uncalibrated locations, historical averages are derived from weather data only.',
     iceHeading: 'Estimated Ice Thickness · Stefan Equation · h = α × √FDD  (α = 0.6)',
     iceShortNote: 'Historical bars = peak ice thickness that winter. Current bar = live estimate based on frost degree-days so far.',
     iceLegendSeasonPeak: 'Season peak',
@@ -1900,7 +1903,7 @@ const T = {
     locGddTarget: 'GDD Target',
     locModel: 'Model',
     masl: 'm a.s.l.',
-    calibratedModel: '✅ Calibrated',
+    calibratedModel: 'Calibrated',
     stdShort: 'typical error',
     daysLabel: 'days',
     fromJan1: 'from 1 Jan',
@@ -1924,9 +1927,9 @@ const T = {
     preciseLabel: 'precise',
     reliableLabel: 'reliable',
     priorUncalibrated: 'prior, uncalibrated',
-    priorNoticeText: '⚠ <strong>Indicative forecast:</strong> Model uses calibrated GDD parameters but has not been validated against observed hatch dates for this location. Use as guidance. Weather from nearest MET Norway station.',
-    verylowSnowNote: (avg, place) => `⚠ Very low snow area (avg. max ${avg} cm at ${place}). Snow depth is not a meaningful seasonal indicator here.`,
-    lowlandSnowNote: (avg) => `⚠ Lowland station (avg. max ${avg} cm). Snow is ephemeral — each segment is an isolated snow event, not a continuous season.`,
+    priorNoticeText: '<strong>Indicative forecast:</strong> Model uses calibrated GDD parameters but has not been validated against observed hatch dates for this location. Use as guidance. Weather from nearest MET Norway station.',
+    verylowSnowNote: (avg, place) => `Very low snow area (avg. max ${avg} cm at ${place}). Snow depth is not a meaningful seasonal indicator here.`,
+    lowlandSnowNote: (avg) => `Lowland station (avg. max ${avg} cm). Snow is ephemeral — each segment is an isolated snow event, not a continuous season.`,
     gddThisYear: 'GDD This Year (from 1 Jan)',
     gddUnit: 'Growing Degree Days · base 0°C',
     remaining: 'Remaining to Target',
@@ -1946,8 +1949,8 @@ const T = {
     histSnowFree: 'Snow free',
     histMaxSnow: 'Max snow (cm)',
     histIceThickness: 'Est. ice thickness (cm)',
-    altCorrection: '🏔 Altitude correction:',
-    waterAltCorrection: '🏔 Water altitude correction:',
+    altCorrection: 'Altitude correction:',
+    waterAltCorrection: 'Water altitude correction:',
     waterLapseRate: 'water lapse 0.35°C/100m',
     noHatchDataRow: 'No systematic hatch observations available for this location. Weather history (below) is fetched live from MET Norway. Contact us to contribute calibration data.',
     gddHatchModel: 'GDD Hatch Model',
@@ -1958,9 +1961,9 @@ const T = {
     vsAvg: 'vs avg',
     latestOf: (gddT, wtT) => `latest of: GDD ≥ ${gddT} + water temp ≥ ${wtT}°C`,
     gddTriggerOnly: 'GDD trigger only — too early to extrapolate water temp',
-    forecastEffectEarlier: (days) => `<strong>🌡 Long-term forecast affects the prediction.</strong> MET's 9-day forecast suggests warmer weather than climate average. Estimated hatch is brought forward ~${days} days.`,
-    forecastEffectLater: (days) => `<strong>❄ Long-term forecast affects the prediction.</strong> MET's 9-day forecast suggests colder weather than climate average. Estimated hatch is delayed ~${days} days.`,
-    spinnerfallTitle: '▶ Spinner Fall Watch',
+    forecastEffectEarlier: (days) => `<strong>Long-term forecast affects the prediction.</strong> MET's 9-day forecast suggests warmer weather than climate average. Estimated hatch is brought forward ~${days} days.`,
+    forecastEffectLater: (days) => `<strong> Long-term forecast affects the prediction.</strong> MET's 9-day forecast suggests colder weather than climate average. Estimated hatch is delayed ~${days} days.`,
+    spinnerfallTitle: 'Spinner Fall Watch',
     spinnerfallSub: 'Probability of vulgata spinner fall · evening 19–22',
     spinnerfallFooter: 'Model assesses evening hours 19–22 (local time) based on MET forecast and weights six variables differently: <b>wind</b>, <b>air temperature</b>, <b>cloud cover</b>, <b>precipitation</b>, <b>humidity</b>, and <b>pressure trend</b>. Calm wind is the single most important requirement — rapidly falling pressure (incoming front) is also penalised. The model has not been validated against observations.',
     spinnerfallIntroTitle: 'New feature: Spinner Fall Watch',
@@ -1972,7 +1975,7 @@ const T = {
     loadingText: 'Loading…',
     // Season Explanation (?explain=1) — driver-based narrative for why
     // the prediction lands where it does.
-    seasonExplainLabel: '▶ Season Barometer',
+    seasonExplainLabel: 'Season Barometer',
     seasonExplainMeta: (area, dateStr) => `${area} · ${dateStr}`,
     seasonExplainEmpty: 'Not enough historical data to compare against the average at this location.',
     tempoExtremeEarly: 'Very early',
@@ -2095,7 +2098,7 @@ const LOCATIONS = {
         //
         // Grid search etter fix (n=8, earliest, 2020 ekskludert):
         //   - Best dual-trigger: GDD 555 + WT 12°C, MAE 2.13, bias +1.63 (for sen)
-        //   - Bias-balansert: GDD 530 + WT 12°C, MAE 2.13, bias +0.13 ★
+        //   - Bias-balansert: GDD 530 + WT 12°C, MAE 2.13, bias +0.13 
         //   - Ekvivalent på 2D: GDD 530 + WT 12-13°C, identiske resultater
         // Reproduserer Excel sin MAE 2.1d nøyaktig.
         //
@@ -2344,7 +2347,7 @@ const LOCATIONS = {
         place: 'Nordmarka',
         region: 'Østlandet',
         lat: 59.94, lon: 10.72, altitude: 381, stationAltitude: 380, waterStationAltitude: 370,  // 381m = matematisk snitt av 16 OFA-vann (oppdatert 2026-05-13)
-        altitudeAdjustable: true,    // ⚡ Aktiverer dropdown for vann-valg
+        altitudeAdjustable: true,    // Aktiverer dropdown for vann-valg
         // Per-vann isgang-historikk innført 2026-05-04 (Sentinel Hub-data fra Stian).
         // Når bruker velger et vann fra dropdown, brukes vannets egen isgang-historikk
         // for Mygg/Marginata/Vespertina-prediksjoner i stedet for default median-data.
@@ -2459,7 +2462,7 @@ const LOCATIONS = {
                                       // basert på lake-til-lake-spread, men det fanges nå av modellens
                                       // høyde-justering. Realistisk usikkerhet er år-til-år + lake-spesifikk
                                       // restvariasjon ≈ ±5 d. Gir bedre tur-planleggingsverdi for fisker.
-        wtThreshold: 14,              // ⚡ EMPIRISK BUMP: Sinnerdammen er regulert demning som
+        wtThreshold: 14,              // EMPIRISK BUMP: Sinnerdammen er regulert demning som
                                       // sannsynligvis er varmere enn typiske skogsvann i Nordmarka.
                                       // Når Sinnerdammen viser 14°C, har de typiske vannene typisk
                                       // ~12°C — det er da klekking faktisk skjer ute i naturen.
@@ -2621,7 +2624,7 @@ const LOCATIONS = {
         waterStationName: 'Mønevann, Enebakk',
         calibrated: false,
         gddThreshold: 200,           // Start-verdi — grid search finner ny optimum med Tb=5
-        gddBaseTemp: 5,              // ⚠ TEST-FELT: kun lest av runCalibration. Ikke i bruk i live-modell.
+        gddBaseTemp: 5,              // TEST-FELT: kun lest av runCalibration. Ikke i bruk i live-modell.
         wtThreshold: 14,
         uncertaintyDays: 6.0,
         calibNoteNo:  'TEST-lokasjon: GDD med basetemp 5°C i stedet for 0°C. Kun grid search-panelet bruker Tb=5. Kjør ?calib=1.',
@@ -4438,7 +4441,7 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
         unc.style.display = 'none';
     } else {
         unc.style.display = '';
-        unc.innerHTML = `⚠ <strong>${t('indicativeLabel')}</strong> — ${t('indicativeNote')}`;
+        unc.innerHTML = `<strong>${t('indicativeLabel')}</strong> — ${t('indicativeNote')}`;
     }
 
 
@@ -4893,7 +4896,7 @@ function renderSpinnerfallSection(eveningData, vulgataDate, historyData) {
                 <div style="height:100%; width:${pct}%; background:${barFill};"></div>
             </div>
             <div style="font-size:0.7rem; color:rgba(244,228,193,0.62); margin-top:9px; line-height:1.5;">
-                💨 ${windStr}<br>🌡 ${tempStr}<br>☁ ${cloudStr}${precipStr}
+                ${lang === 'no' ? 'Vind' : 'Wind'} ${windStr}<br>${lang === 'no' ? 'Temp' : 'Temp'} ${tempStr}<br>${lang === 'no' ? 'Sky' : 'Cloud'} ${cloudStr}${precipStr}
             </div>
         </div>`;
     }).join('');
@@ -4902,8 +4905,8 @@ function renderSpinnerfallSection(eveningData, vulgataDate, historyData) {
     const hasIndicative = forecast.some(f => f.weather && f.weather.n != null && f.weather.n < 3);
     if (hasIndicative) {
         const indFootNote = lang === 'no'
-            ? '📡 De første to dagene har time-oppløst værprognose. Senere dager baseres på 6-timers oppløsning og er mer indikative — bruk dem som retning, ikke planlegging.'
-            : '📡 The first two days use hour-resolution weather forecasts. Later days are based on 6-hour resolution and are more indicative — use them as a direction, not for planning.';
+            ? 'De første to dagene har time-oppløst værprognose. Senere dager baseres på 6-timers oppløsning og er mer indikative — bruk dem som retning, ikke planlegging.'
+            : 'The first two days use hour-resolution weather forecasts. Later days are based on 6-hour resolution and are more indicative — use them as a direction, not for planning.';
         grid.innerHTML += `<div style="grid-column: 1 / -1; margin-top:8px; font-size:0.72rem; color:rgba(244,228,193,0.55); line-height:1.5; font-style:italic;">${indFootNote}</div>`;
     }
 
@@ -5056,7 +5059,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // best". Viktigste elementet er ikke prosentscoren, men den BEGRENSENDE
 // FAKTOREN — det er den som gjør at du velger stillevann framfor elv.
 //
-// ⚠ MODELLEN ER UKALIBRERT. Vi har ingen observasjoner som kobler
+// MODELLEN ER UKALIBRERT. Vi har ingen observasjoner som kobler
 // "forholdene var X" til "det klekket / det klekket ikke". Vektene er satt
 // ut fra fluefiske-litteratur og skjønn, på samme måte som spinnerfall-
 // modellen var ved lansering. Merkes tydelig som indikativ i UI.
@@ -6115,7 +6118,7 @@ function renderSeasonStatus(status) {
     if (status.state === 'closedAfter') {
         // Datoen blir stående fordi den er bakoverskuende og ikke endrer seg mer.
         //
-        // ⚠ ORDLYD (Stian 2026-08-18): IKKE skriv at vulgata "klekket" den
+        // ORDLYD (Stian 2026-08-18): IKKE skriv at vulgata "klekket" den
         // datoen. Vi har ikke observert klekkingen — vi har observert at
         // varmesum og vanntemperatur krysset terskler vi selv har satt, og på
         // ukalibrerte lokasjoner er de tersklene kvalifiserte gjett. Teksten
@@ -6308,13 +6311,13 @@ function renderThermalWTBanner(wtDate) {
     }
 
     if (isFallback) {
-        if (title) title.innerHTML = '⚠ Vannmodell-varsel';
+        if (title) title.innerHTML = 'Vannmodell-varsel';
         banner.style.background = '#fff3cd';
         banner.style.borderLeftColor = '#f59e0b';
         const samples = window._lastWTSampleCount || 0;
         info.innerHTML = `Lookup-modellen mangler tilstrekkelig historisk data for <strong>${LOC.area || LOC.id}</strong> (kun ${samples} år å lære fra). Faller tilbake til lineær regresjon for denne lokasjonen. Modellen er midlertidig mindre presis.`;
     } else if (isLinearOverride) {
-        if (title) title.innerHTML = '🔧 Lineær modell aktiv (DEBUG)';
+        if (title) title.innerHTML = 'Lineær modell aktiv (DEBUG)';
         banner.style.background = '#e0e7ff';
         banner.style.borderLeftColor = '#6366f1';
         info.innerHTML = `Du har skrudd modellen tilbake til lineær regresjon via <code>?wtmodel=linear</code>. Sammenlign med <a href="${location.pathname}?loc=${LOC.id}" style="color:#4338ca;text-decoration:underline">lookup-modell (default)</a>.`;
@@ -6366,12 +6369,12 @@ function makeIsolatingLegendClick() {
 
         // Klassifiser etiketter:
         //   '2020', '2021', ...                  → historisk år (toggle-able)
-        //   '2026 ★'                              → inneværende år (alltid synlig)
+        //   '2026 '                              → inneværende år (alltid synlig)
         //   'Winter 2020', 'Winter 2021', ...    → historisk år (toggle-able)
         //   'Winter 2026'                         → inneværende år (alltid synlig)
         //   '12°C threshold' eller andre         → kontekst-linje (default toggle)
         const isCurrentYear = (lbl) => {
-            if (lbl.includes('★')) return true;
+            if (lbl.includes('')) return true;
             const m = lbl.match(/^Winter (\d{4})$/);
             if (m && parseInt(m[1]) === YEAR) return true;
             return false;
@@ -6446,7 +6449,7 @@ function renderWaterTempChart(wtData) {
             borderColor: s.color, borderWidth: s.w, pointRadius: 0, tension: 0.35, spanGaps: false };
     });
     if (byYear[YEAR]) {
-        datasets.push({ label: `${YEAR} ★`, data: doys.map(d => byYear[YEAR]?.[d] ?? null),
+        datasets.push({ label: `${YEAR} `, data: doys.map(d => byYear[YEAR]?.[d] ?? null),
             borderColor: '#C0392B', borderWidth: 3, pointRadius: 0, tension: 0.35, spanGaps: false });
     }
     const _wtTrigger = getWtThreshold(LOC);
@@ -7088,7 +7091,7 @@ function computeVarmesumDriver(currentADG, histADG) {
     }
     const sign = pct >= 0 ? '+' : '−';
     return {
-        kind: 'varmesum', icon: '🌡',
+        kind: 'varmesum', icon: '',
         deltaPct: pct,
         anomaly, direction, statusKey, cssClass,
         valueLabel: `${sign}${Math.round(Math.abs(pct))} %`,
@@ -7106,7 +7109,7 @@ function computeIsgangDriver(isgangResult, isgangHistory) {
     // å vise "+3 d" som om vi har målt noe. Bug 2026-05-13 (Kauto).
     if (!isPast) {
         return {
-            kind: 'isgang', icon: '❄️',
+            kind: 'isgang', icon: '',
             isPast: false,
             anomaly: 'normal', direction: 'neutral',
             statusKey: 'drvIsgangPending', cssClass: '',
@@ -7130,7 +7133,7 @@ function computeIsgangDriver(isgangResult, isgangHistory) {
     }
     const sign = delta >= 0 ? '+' : '−';
     return {
-        kind: 'isgang', icon: '❄️',
+        kind: 'isgang', icon: '',
         deltaDays: delta, isPast: true,
         anomaly, direction, statusKey, cssClass,
         valueLabel: `${sign}${Math.round(Math.abs(delta))} d`,
@@ -7163,7 +7166,7 @@ function computeVanntempDriver(wtData) {
     }
     const sign = delta >= 0 ? '+' : '−';
     return {
-        kind: 'vanntemp', icon: '💧',
+        kind: 'vanntemp', icon: '',
         deltaDeg: delta,
         anomaly, direction, statusKey, cssClass,
         valueLabel: `${sign}${fmtNum(Math.abs(delta), 1)} °C`,
@@ -7183,7 +7186,7 @@ function computeSnoeDriver(snowData) {
     // Begge små (< 3 cm) → "Borte", ingen anomali
     if (currentSn <= 3 && histAvg <= 3) {
         return {
-            kind: 'snoe', icon: '❄',
+            kind: 'snoe', icon: '',
             anomaly: 'normal', direction: 'neutral',
             statusKey: 'drvSnowGone', cssClass: '',
             valueLabel: '0 cm',
@@ -7206,7 +7209,7 @@ function computeSnoeDriver(snowData) {
         }
     }
     return {
-        kind: 'snoe', icon: '❄',
+        kind: 'snoe', icon: '',
         anomaly, direction, statusKey, cssClass,
         valueLabel: `${Math.round(currentSn)} cm`,
     };
@@ -7807,17 +7810,17 @@ function renderSouthSignal() {
 
     // Kategorisering av sør-vinteren
     function sorCat(d) {
-        if (d < -15) return { lbl: '🟢🟢 Svært mild vinter', col: '#1B7A3E' };
-        if (d <  -7) return { lbl: '🟢 Mild vinter',         col: '#2D6A4F' };
-        if (d > +15) return { lbl: '🔴🔴 Svært kald vinter', col: '#80201a' };
-        if (d >  +7) return { lbl: '🔴 Kald vinter',         col: '#a03020' };
-        return                { lbl: '⚪ Normal vinter',      col: '#666' };
+        if (d < -15) return { lbl: 'Svært mild vinter', col: '#1B7A3E' };
+        if (d <  -7) return { lbl: 'Mild vinter',         col: '#2D6A4F' };
+        if (d > +15) return { lbl: 'Svært kald vinter', col: '#80201a' };
+        if (d >  +7) return { lbl: 'Kald vinter',         col: '#a03020' };
+        return                { lbl: 'Normal vinter',      col: '#666' };
     }
 
     function nordCat(d) {
-        if (d < -7) return { lbl: '🟢 TIDLIG sesong forventet',   col: '#2D6A4F' };
-        if (d > +7) return { lbl: '🔴 SEN sesong forventet',      col: '#a03020' };
-        return                { lbl: '⚪ NORMAL sesong forventet', col: '#666' };
+        if (d < -7) return { lbl: 'TIDLIG sesong forventet',   col: '#2D6A4F' };
+        if (d > +7) return { lbl: 'SEN sesong forventet',      col: '#a03020' };
+        return                { lbl: 'NORMAL sesong forventet', col: '#666' };
     }
 
     const sc = sorCat(aggDev);
@@ -8151,7 +8154,7 @@ async function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate,
     if (_forecastForConv && shouldUseLongTermForecast()) {
         const days = buildDoyAvgTempWithForecast._lastApplied || 0;
         if (days > 0) {
-            summaryHtml += ` <span style="color:#1B7A3E;font-size:0.85rem">🌤 ${t('forecastIncluded')(days)}</span>`;
+            summaryHtml += ` <span style="color:#1B7A3E;font-size:0.85rem">${t('forecastIncluded')(days)}</span>`;
         }
     }
     convSummary.innerHTML = summaryHtml;
@@ -8182,14 +8185,14 @@ async function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate,
 
     // Overskriften i klekkeboksen har tre tilstander.
     //
-    // ⚠ ENDRET 2026-08-18: her lå tidligere logikk som SKJULTE prediksjonshistorikk-
+    // ENDRET 2026-08-18: her lå tidligere logikk som SKJULTE prediksjonshistorikk-
     // og GDD-modell-seksjonene når klekkingen hadde startet, og som returnerte
     // tidlig slik at Chart.js aldri kjørte. Den er fjernet fordi Forhold-modus
     // nå håndterer seksjonsstyringen (se MODE_SECTIONS/applyMode). To konkurrerende
     // mekanismer for å skjule de samme seksjonene ga uforutsigbar oppførsel når
     // brukeren byttet modus manuelt — seksjonene kom ikke tilbake.
     //
-    // ⚠ ENDRET 2026-08-18 (Stian, Kautokeino): «Klekking pågår» ble stående fra
+    // ENDRET 2026-08-18 (Stian, Kautokeino): «Klekking pågår» ble stående fra
     // klekkestart til nyttår — en påstand i presens som holdt seg sann i to uker
     // og feil i ti måneder. Etiketten bytter nå ved samme 21-dagers grense som
     // stenger sesongen og slår av spinnerfall-vakta, så alle tre skifter samtidig.
@@ -8207,8 +8210,8 @@ async function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate,
             const bestLabel = document.querySelector('.best-label');
             if (bestLabel) {
                 bestLabel.textContent = LANG === 'no'
-                    ? (_ongoing ? '🎣 Klekking pågår' : '🎣 Anslått klekkestart')
-                    : (_ongoing ? '🎣 Hatching in progress' : '🎣 Estimated hatch onset');
+                    ? (_ongoing ? 'Klekking pågår' : 'Anslått klekkestart')
+                    : (_ongoing ? 'Hatching in progress' : 'Estimated hatch onset');
             }
         }
     }
@@ -8824,7 +8827,7 @@ function runCalibration(airData, wtData) {
     if (!calibData) {
         const panel = document.createElement('div');
         panel.style.cssText = 'margin:24px auto;padding:18px;max-width:900px;background:#fff8e1;border:1px solid #f0d000;border-radius:6px;font-family:inherit;';
-        panel.innerHTML = `<strong>⚠ Kalibreringsmodus aktiv</strong><br>Ingen observasjoner registrert for ${LOC.id}. Legg til i CALIBRATION_OBSERVATIONS.`;
+        panel.innerHTML = `<strong>Kalibreringsmodus aktiv</strong><br>Ingen observasjoner registrert for ${LOC.id}. Legg til i CALIBRATION_OBSERVATIONS.`;
         document.body.appendChild(panel);
         return;
     }
@@ -8998,7 +9001,7 @@ function runCalibration(airData, wtData) {
                 return `<td style="padding:6px 10px;text-align:right">${fmtErr(e)}</td>`;
             }).join('');
             return `<tr style="${rowStyle}">
-                <td style="padding:6px 10px">${r.threshold}${isBest ? ' ★' : ''}</td>
+                <td style="padding:6px 10px">${r.threshold}${isBest ? ' ' : ''}</td>
                 <td style="padding:6px 10px;text-align:right">${r.mae.toFixed(2)}</td>
                 <td style="padding:6px 10px;text-align:right">${r.bias > 0 ? '+' : ''}${r.bias.toFixed(2)}</td>
                 <td style="padding:6px 10px;text-align:right">${r.rmse.toFixed(2)}</td>
@@ -9007,7 +9010,7 @@ function runCalibration(airData, wtData) {
         }).join('');
         return `
             <h3 style="margin:18px 0 10px">${label}</h3>
-            <p style="font-size:0.85rem;color:#666;margin:0 0 10px">★ = optimal terskel · viser kun terskler innenfor MAE+5 d av beste</p>
+            <p style="font-size:0.85rem;color:#666;margin:0 0 10px">= optimal terskel · viser kun terskler innenfor MAE+5 d av beste</p>
             <div style="overflow-x:auto">
                 <table style="border-collapse:collapse;font-size:0.85rem;width:100%;min-width:600px">
                     <thead>
@@ -9065,7 +9068,7 @@ function runCalibration(airData, wtData) {
                 if (!r || r.mae === null) return '<td style="padding:4px 6px">–</td>';
                 const isBest = (r.gdd === best2D.gdd && r.wt === best2D.wt);
                 const bg = maeColor(r.mae, minMae, maxMae);
-                const star = isBest ? ' ★' : '';
+                const star = isBest ? ' ' : '';
                 const border = isBest ? 'border:2px solid #121413;' : '';
                 return `<td title="GDD ${gdd}, WT ${wt}°C: MAE ${r.mae.toFixed(2)} d, bias ${r.bias > 0 ? '+' : ''}${r.bias.toFixed(2)} d" style="padding:4px 6px;text-align:center;background:${bg};color:#000;font-size:0.75rem;${border}">${r.mae.toFixed(1)}${star}</td>`;
             }).join('');
@@ -9073,7 +9076,7 @@ function runCalibration(airData, wtData) {
         }).join('');
         return `
             <h3 style="margin:18px 0 10px">C. 2D-søk — GDD × vanntemperatur</h3>
-            <p style="font-size:0.85rem;color:#666;margin:0 0 10px">Cellverdi = MAE (dager). Farge fra grønn (lav MAE = god) til rød (høy MAE = dårlig). ★ = optimal kombinasjon. Hover for detaljer.</p>
+            <p style="font-size:0.85rem;color:#666;margin:0 0 10px">Cellverdi = MAE (dager). Farge fra grønn (lav MAE = god) til rød (høy MAE = dårlig). = optimal kombinasjon. Hover for detaljer.</p>
             <div style="overflow-x:auto;margin-bottom:14px">
                 <table style="border-collapse:collapse;font-family:inherit">
                     <thead><tr><th style="padding:4px 8px;background:#121413;color:white;font-size:0.78rem">GDD ↓ \\ WT °C →</th>${wtHeader}</tr></thead>
@@ -9094,7 +9097,7 @@ function runCalibration(airData, wtData) {
             const gapText = r.gap == null ? '<span style="color:#999">—</span>'
                 : `<span style="color:${Math.abs(r.gap) <= 3 ? '#1B7A3E' : Math.abs(r.gap) <= 7 ? '#cc8800' : '#80201a'};font-weight:600">${r.gap > 0 ? '+' : ''}${r.gap.toFixed(1)}d</span>`;
             return `<tr style="${rowStyle}">
-                <td style="padding:6px 10px">${r.gdd}${isBest ? ' ★' : ''}</td>
+                <td style="padding:6px 10px">${r.gdd}${isBest ? ' ' : ''}</td>
                 <td style="padding:6px 10px">${r.wt.toFixed(1)}°C</td>
                 <td style="padding:6px 10px;text-align:right">${r.mae.toFixed(2)}</td>
                 <td style="padding:6px 10px;text-align:right">${r.bias > 0 ? '+' : ''}${r.bias.toFixed(2)}</td>
@@ -9131,7 +9134,7 @@ function runCalibration(airData, wtData) {
     panel.style.cssText = 'margin:32px auto;padding:24px;max-width:1100px;background:#fff;border:2px solid #121413;border-radius:8px;font-family:inherit;box-shadow:0 4px 16px rgba(0,0,0,0.08)';
     panel.innerHTML = `
         <div style="background:#121413;color:white;padding:14px 20px;margin:-24px -24px 18px;border-radius:6px 6px 0 0">
-            <h2 style="margin:0;font-size:1.3rem">🔬 Kalibreringsmodus — ${calibData.name}</h2>
+            <h2 style="margin:0;font-size:1.3rem">Kalibreringsmodus — ${calibData.name}</h2>
             <div style="font-size:0.85rem;opacity:0.9;margin-top:4px">Optimal GDD-terskel for ${calibData.species}-observasjoner mot luftstasjon ${LOC.airStationName} (${LOC.frostStation})</div>
         </div>
 
@@ -9191,7 +9194,7 @@ function runWTFloorCalibration(airData, wtData) {
     if (!calibData) {
         const panel = document.createElement('div');
         panel.style.cssText = 'margin:24px auto;padding:18px;max-width:900px;background:#fff8e1;border:1px solid #f0d000;border-radius:6px;font-family:inherit;';
-        panel.innerHTML = `<strong>⚠ WT-floor-kalibrering krever obs</strong><br>Ingen observasjoner registrert for ${LOC.id}.`;
+        panel.innerHTML = `<strong>WT-floor-kalibrering krever obs</strong><br>Ingen observasjoner registrert for ${LOC.id}.`;
         document.body.appendChild(panel);
         return;
     }
@@ -9306,7 +9309,7 @@ function runWTFloorCalibration(airData, wtData) {
         const isCurrent = r.wtFloor === 5;
         const style = isBest ? 'background:#e8f5e9;font-weight:600' : isCurrent ? 'background:#fff8e1' : '';
         return `<tr style="${style}">
-            <td style="padding:8px 12px">${r.wtFloor}°C${isCurrent ? ' (nåværende)' : ''}${isBest ? ' ★ best' : ''}</td>
+            <td style="padding:8px 12px">${r.wtFloor}°C${isCurrent ? ' (nåværende)' : ''}${isBest ? ' best' : ''}</td>
             <td style="padding:8px 12px;text-align:right">${r.mae !== null ? r.mae.toFixed(2) + ' d' : '—'}</td>
             <td style="padding:8px 12px;text-align:right">${r.bias !== null ? (r.bias > 0 ? '+' : '') + r.bias.toFixed(2) + ' d' : '—'}</td>
             <td style="padding:8px 12px;text-align:right">${r.coverage.toFixed(0)}%</td>
@@ -9377,8 +9380,8 @@ function runWTFloorCalibration(airData, wtData) {
 main();
 </script>
 
-<div style="text-align:center; padding: 32px 0 24px; font-size: 0.75rem; color: #aaa;">
-    Built by <strong style="color:#121413;">Stian Midtdal</strong> &nbsp;·&nbsp; © 2026 Hatch Watch Norway
+<div class="hw-eyebrow" style="text-align:center; padding: 32px 0 24px;">
+    Built by <strong style="color:var(--hw-fg); font-weight:600;">Stian Midtdal</strong> &nbsp;·&nbsp; © 2026 HatchWatch
 </div>
 
 <!-- ═══ FLOATING KLEKKEOBS-FAB (alltid synlig nederst til høyre) ═══ -->
@@ -9561,7 +9564,7 @@ if ('serviceWorker' in navigator) {
         var lang = (typeof LANG !== 'undefined') ? LANG : (localStorage.getItem('lang') || 'no');
         var isNo = lang !== 'en';
         var T = isNo ? {
-            title: '🔔 Varsler', sub: 'for ' + locArea,
+            title: 'Varsler', sub: 'for ' + locArea,
             klekkeChange: 'Klekkedato har endret seg',
             klekkeChangeDesc: 'Få varsel når prediksjonen flytter seg ≥ 2 dager',
             klekkeImminent: 'Klekking starter snart',
@@ -9578,7 +9581,7 @@ if ('serviceWorker' in navigator) {
             permDenied: 'Du må tillate varsler i innstillinger.',
             footer: 'Varsler sendes daglig kl. 07-08 norsk tid når noe interessant skjer for ' + locArea + '.',
         } : {
-            title: '🔔 Notifications', sub: 'for ' + locArea,
+            title: 'Notifications', sub: 'for ' + locArea,
             klekkeChange: 'Hatch date changed',
             klekkeChangeDesc: 'Notify when prediction shifts ≥ 2 days',
             klekkeImminent: 'Hatch starting soon',
@@ -9821,9 +9824,9 @@ if ('serviceWorker' in navigator) {
         var lang = (typeof LANG !== 'undefined') ? LANG : (localStorage.getItem('lang') || 'no');
         var isNo = lang !== 'en';
         var T = isNo ? {
-            title: '🔔 Slik installerer du HatchWatch',
+            title: 'Slik installerer du HatchWatch',
             intro: 'For å få push-varsler om klekkinger, spinnerfall og stokkmaur må HatchWatch installeres som app. Det er gratis, tar 20 sekunder, og bruker ingen plass å snakke om — det er fortsatt nettsiden, bare pakket inn som et app-ikon på enheten din.',
-            mobileTitle: '📱 For mobil',
+            mobileTitle: 'For mobil',
             iosTitle: 'iPhone / iPad (Safari)',
             iosSteps: [
                 'Sørg for at du er i <b>Safari</b> (ikke Chrome — Apple tillater bare installering fra Safari)',
@@ -9840,7 +9843,7 @@ if ('serviceWorker' in navigator) {
                 'Bekreft installasjonen — ikonet legger seg på hjemskjermen',
                 '<b>Åpne HatchWatch fra hjemskjermen</b> — så er Varsler-menyen aktiv',
             ],
-            desktopTitle: '💻 For PC / Mac',
+            desktopTitle: 'For PC / Mac',
             desktopSteps: [
                 'Åpne hatchwatch.no i <b>Chrome</b> eller <b>Edge</b> (Safari på Mac støtter også PWA fra macOS 14)',
                 'Se etter et lite <b>install-ikon i adressefeltet</b> — vanligvis en dataskjerm med en pil ned. Alternativt: åpne meny-knappen (⋮) og finn <b>«Installer HatchWatch»</b>',
@@ -9850,9 +9853,9 @@ if ('serviceWorker' in navigator) {
             note: 'Push-varsler i nettleser krever en installert PWA — vanlig nettleser-tab støtter ikke dette på iPhone, og er ustabilt på andre plattformer. Når appen er installert kan du skru av varsler når som helst via Varsler-menyen.',
             close: 'Lukk',
         } : {
-            title: '🔔 How to install HatchWatch',
+            title: 'How to install HatchWatch',
             intro: 'To receive push notifications about hatches, spinner falls, and carpenter ant swarms, HatchWatch needs to be installed as an app. It is free, takes 20 seconds, and uses negligible space — it is still the website, just wrapped as an app icon on your device.',
-            mobileTitle: '📱 On mobile',
+            mobileTitle: 'On mobile',
             iosTitle: 'iPhone / iPad (Safari)',
             iosSteps: [
                 'Make sure you are in <b>Safari</b> (not Chrome — Apple only allows installation from Safari)',
@@ -9869,7 +9872,7 @@ if ('serviceWorker' in navigator) {
                 'Confirm — the icon lands on your home screen',
                 '<b>Open HatchWatch from your home screen</b> — the Notifications menu will then be active',
             ],
-            desktopTitle: '💻 On PC / Mac',
+            desktopTitle: 'On PC / Mac',
             desktopSteps: [
                 'Open hatchwatch.no in <b>Chrome</b> or <b>Edge</b> (Safari on Mac also supports PWAs from macOS 14)',
                 'Look for a small <b>install icon in the address bar</b> — usually a monitor with a downward arrow. Alternatively: open the menu (⋮) and find <b>"Install HatchWatch"</b>',
