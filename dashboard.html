@@ -922,6 +922,18 @@
         .loading-wrap { color: var(--hw-fg-2) !important; }
         .spinner { border-color: var(--hw-line); border-top-color: var(--hw-hatch); }
         #gddHistSection { border-top: 0; margin-top: 10px; padding-top: 0; }
+        /* Historikktabellen har sju kolonner og er bredere enn en telefon. Den skal
+           rulle sidelengs INNI kortet, ikke skyve hele siden ut i bredden (det gjorde
+           bunnbaren og alt annet bredere enn skjermen etter at historikken ble
+           flyttet opp 2026-10-01). */
+        .table-wrap { overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; }
+        #gddHistContent, #gddHistSection, #dashboard > section { max-width: 100%; min-width: 0; }
+        #gddHistContent { overflow-x: auto; }
+        .table-wrap table th, .table-wrap table td { white-space: nowrap; }
+        .hist-gdd-summary { gap: 8px; margin-bottom: 10px; }
+        .hist-gdd-stat { padding: 12px 10px; min-width: 0; }
+        .hist-gdd-val, .hist-gdd-stat.hist-gdd-median .hist-gdd-val { font-size: 1.15rem; }
+        @media (max-width: 520px) { .hist-gdd-summary { grid-template-columns: 1fr 1fr; } }
         .drv-icon:empty { display: none; }
         .error-box { background: rgba(232,115,92,.12); border-color: var(--hw-bad); color: var(--hw-bad); }
         .error-box code { background: var(--hw-bg-3); color: var(--hw-fg); }
@@ -3835,7 +3847,8 @@ function renderHistoricalGDDSection(stats, correctionDelta, snowData, airData) {
         const diff = c.doy - stats.median;
         const sign = diff >= 0 ? '+' : '';
         const cls  = diff <= -5 ? 'yr-early' : diff >= 5 ? 'yr-late' : '';
-        const col  = diff < 0 ? '#2D6A4F' : diff > 0 ? '#a03020' : '#555';
+        // Tokens (v3): tidligere enn median = vannblå, senere = rød, lik = dempet. Samme som datokolonnen.
+        const col  = diff < 0 ? 'var(--hw-water)' : diff > 0 ? 'var(--hw-bad)' : 'var(--hw-fg-2)';
 
         // Sesongoversikt-felter
         const isgangRaw = LOC.isgangHistory?.[c.year];
@@ -7552,6 +7565,9 @@ function renderSpeciesCalendar(isgangResult, vulgataDate, best) {
     const vDoy = vulgataDate ? doy(vulgataDate) : null;
     let A0 = doy(new Date(YEAR, 3, 25)), A1 = doy(new Date(YEAR, 7, 10));
     if (vDoy != null) { A0 = Math.min(A0, vDoy - 25); A1 = Math.max(A1, vDoy + 30); }
+    // Tidlig isgang (f.eks. Østmarka i april): aksen må starte før isgangen,
+    // ellers havner mygg/marginata utenfor venstre kant.
+    if (isgangDate && !compressed) A0 = Math.min(A0, doy(isgangDate) - 4);
     const WPX = 340;
     const xOf = (n, left) => { left = left || 12; return left + (n - A0) / (A1 - A0) * (WPX - left - 12); };
     const mShort = (n) => fmt(dateFromDoy(YEAR, n));
@@ -7571,13 +7587,21 @@ function renderSpeciesCalendar(isgangResult, vulgataDate, best) {
     if (vDoy != null) {
         const H = 92, y = 44, tx = xOf(todayDoy);
         const bandW = xOf(vDoy + unc) - xOf(vDoy - unc);
+        // Etiketter: «start» venstrestilt fra startpunktet, «slutt» til høyre for
+        // den med garantert luft (ca. 5,8 px per tegn i 9,5 px mono).
+        const startTxt = `${no ? 'start' : 'onset'} ${mShort(vDoy)} ±${uncTxt}`;
+        const endTxt = `${no ? 'slutt' : 'end'} ${mShort(vDoy + 14)}`;
+        const startW = startTxt.length * 5.8, endW = endTxt.length * 5.8;
+        let startX = Math.max(2, Math.min(xOf(vDoy) - startW / 2, WPX - startW - endW - 12));
+        let endX = Math.max(xOf(vDoy + 14) + 6, startX + startW + 10);
+        if (endX + endW > WPX) { endX = WPX - endW; startX = Math.min(startX, endX - startW - 10); }
         windowSvg = `<svg class="tl" viewBox="0 0 ${WPX} ${H}" role="img" aria-label="${no ? 'Klekkevindu' : 'Hatch window'}">
             <line class="axis" x1="${xOf(A0)}" y1="${y}" x2="${xOf(A1)}" y2="${y}"/>${monthTicks(y + 14)}
             <rect class="band" x="${xOf(vDoy - unc)}" y="${y - 14}" width="${Math.max(2, bandW)}" height="28" rx="3"/>
             <rect class="bar" x="${xOf(vDoy)}" y="${y - 5}" width="${xOf(vDoy + 14) - xOf(vDoy)}" height="10" rx="3" opacity=".9"/>
             <circle class="peak" cx="${xOf(vDoy + 7)}" cy="${y}" r="4"/>
-            <text class="lbl" x="${xOf(vDoy)}" y="${y - 21}" text-anchor="${xOf(vDoy) < 60 ? 'start' : 'middle'}">${no ? 'start' : 'onset'} ${mShort(vDoy)} ±${uncTxt}</text>
-            <text class="lbl" x="${xOf(vDoy + 14)}" y="${y - 21}" text-anchor="${xOf(vDoy + 14) > WPX - 50 ? 'end' : 'start'}" dx="8">${no ? 'slutt' : 'end'} ${mShort(vDoy + 14)}</text>
+            <text class="lbl" x="${startX}" y="${y - 21}" text-anchor="start">${startTxt}</text>
+            <text class="lbl" x="${endX}" y="${y - 21}" text-anchor="start">${endTxt}</text>
             ${todayIn ? `<line class="today" x1="${tx}" y1="${y - 16}" x2="${tx}" y2="${y + 24}"/><text class="todaylbl" x="${tx}" y="${y + 37}" text-anchor="${tx > WPX - 40 ? 'end' : tx < 40 ? 'start' : 'middle'}">${no ? 'i dag' : 'today'}</text>` : ''}
         </svg>`;
     }
@@ -7597,7 +7621,9 @@ function renderSpeciesCalendar(isgangResult, vulgataDate, best) {
         let s = `<svg class="tl" viewBox="0 0 ${WPX} ${H}" role="img" aria-label="${no ? 'Artstidslinje' : 'Species timeline'}">`;
         rows.forEach((sp, i) => {
             const y = top + i * rh + 12;
-            s += `<text class="rowlbl" x="0" y="${y - 1}">${sp.name}</text><text class="rowsub" x="0" y="${y + 9}">${sp.sub}</text>`;
+            // Kun artsnavn. Ankringen (isgang +14 osv.) vises ikke her (Stian 2026-10-01);
+            // den står forklart i «Slik regner vi» og på Om-siden.
+            s += `<text class="rowlbl" x="0" y="${y + 4}">${sp.name}</text>`;
             s += `<line class="axis" x1="${xOf(A0, L)}" y1="${y}" x2="${xOf(A1, L)}" y2="${y}" opacity=".5"/>`;
             if (sp.a != null && sp.b != null) {
                 const x0 = Math.max(xOf(A0, L), xOf(sp.a, L)), x1 = Math.min(xOf(A1, L), xOf(sp.b, L));
@@ -7613,7 +7639,7 @@ function renderSpeciesCalendar(isgangResult, vulgataDate, best) {
         s += '</svg>';
         const srcTxt = isgangSource ? (no ? `Isgang ${fmt(isgangDate)} (${isgangSource}).` : `Ice-out ${fmt(isgangDate)} (${isgangSource}).`) : '';
         speciesHtml = `<div class="hero-species"><div class="hw-eyebrow">${no ? 'Alle arter' : 'All species'} · ${LOC.area}</div>${s}
-            <div class="hero-method">${no ? 'Ringen er ventet topp. Vulgata er dobbelttrigger, de andre er festet til isgangen.' : 'Ring = expected peak. Vulgata is dual-trigger, the others are anchored to ice-out.'} ${srcTxt}</div></div>`;
+            <div class="hero-method">${no ? 'Ringen er ventet topp.' : 'Ring = expected peak.'}</div></div>`;
     }
 
     const dateBig = vulgataDate ? `${fmt(vulgataDate)}<span>±${uncTxt} d</span>` : '–';
