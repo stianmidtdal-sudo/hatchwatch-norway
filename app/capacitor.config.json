@@ -6,14 +6,14 @@
     "url": "https://www.hatchwatch.no",
     "cleartext": false
   },
-  "backgroundColor": "#1B4332",
+  "backgroundColor": "#0b1418",
   "plugins": {
     "PushNotifications": {
       "presentationOptions": ["badge", "sound", "alert"]
     }
   },
   "ios": {
-    "contentInset": "automatic",
+    "contentInset": "never",
     "scheme": "HatchWatch",
     "limitsNavigationsToAppBoundDomains": false
   }
