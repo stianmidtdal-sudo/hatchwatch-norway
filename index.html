@@ -92,7 +92,7 @@
   /* ── Legende + zoom ── */
   .legend { position: absolute; left: 12px; top: calc(env(safe-area-inset-top, 0px) + 98px); z-index: 18; display: flex; flex-direction: column; gap: 4px; pointer-events: none; }
   .legend .hw-chip { background: color-mix(in srgb, var(--hw-bg) 85%, transparent); backdrop-filter: blur(6px); }
-  .zoomctl { position: absolute; right: 12px; bottom: 126px; z-index: 20; display: flex; flex-direction: column; gap: 6px; }
+  .zoomctl { position: absolute; right: 12px; bottom: 156px; z-index: 20; display: flex; flex-direction: column; gap: 6px; }
   .zoomctl button { width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--hw-line); background: color-mix(in srgb, var(--hw-bg-2) 92%, transparent); color: var(--hw-fg); font-size: 1.15rem; font-weight: 600; cursor: pointer; backdrop-filter: blur(6px); }
 
   /* ── Tidsskyver: klekkebølgen ── */
@@ -105,6 +105,7 @@
   .scrub .date { font-family: var(--hw-display); font-weight: 700; font-size: 18px; letter-spacing: -.01em; background: none; border: 0; color: var(--hw-fg); cursor: pointer; padding: 0; text-align: left; }
   .scrub .date small { font-family: var(--hw-mono); font-weight: 500; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--hw-hatch); margin-left: 8px; }
   .scrub .sum { font-family: var(--hw-mono); font-size: 11px; color: var(--hw-fg-2); white-space: nowrap; }
+  .scrub .sum.long { font-family: var(--hw-body); font-size: 13px; white-space: normal; line-height: 1.4; }
   .scrub input { width: 100%; accent-color: var(--hw-hatch); margin: 4px 0 2px; }
   .scrub .ticks { display: flex; justify-content: space-between; font-family: var(--hw-mono); font-size: 9.5px; color: var(--hw-fg-3); letter-spacing: .06em; }
   .scrub.hidden { visibility: hidden; }
@@ -382,10 +383,19 @@ function paintScrub() {
   if (isToday) dateBtn.innerHTML = 'I dag';
   else dateBtn.innerHTML = fmtDoy(YEAR, T) + '<small>' + (py !== YEAR ? 'sesongen ' + py : 'tilbake til i dag') + '</small>';
   var sum = document.getElementById('scrubSum');
+  var longMsg = false;
   if (!loaded) sum.textContent = 'laster…';
   else if (day < OPEN_DOY) sum.textContent = 'åpner 1. april';
-  else if (!cnt.now && !cnt.soon && !cnt.later) sum.textContent = 'ingen åpne vinduer';
+  else if (!cnt.now && !cnt.soon && !cnt.later) {
+    // Ingen klekking på vei eller i gang. Står skyveren på i dag og sesongen er
+    // bak oss, sier vi det rett ut (Stians ordlyd 2026-10-02) i stedet for en teller.
+    var seasonDone = LOCS.some(function (l) { return stateOf(l).st === 'closed'; });
+    var nextYear = TODAY >= new Date(YEAR, 3, 1) ? YEAR + 1 : YEAR;
+    if (isToday && seasonDone) { sum.textContent = 'Årets klekkeprognose er ferdig. Prognosen for ' + nextYear + ' åpner i april.'; longMsg = true; }
+    else sum.textContent = 'ingen klekking i gang';
+  }
   else sum.textContent = cnt.now + ' pågår · ' + cnt.soon + ' snart · ' + cnt.later + ' på vei';
+  sum.classList.toggle('long', longMsg);
   document.getElementById('legend').innerHTML =
     '<span class="hw-chip now"><i></i>Pågår</span><span class="hw-chip soon"><i></i>Snart · under 14 d</span><span class="hw-chip coming"><i></i>På vei</span>';
 }
@@ -425,8 +435,8 @@ function fillSheet(id) {
     big.innerHTML = fmtDoy(p.year, p.doy) + '<span>±' + uncOf(l) + ' d</span>';
     var txt;
     if (s.st === 'pre') txt = 'Sesongen åpner 1. april. Dette er ' + (p.year < YEAR ? 'fjorårets' : 'siste') + ' anslag.';
-    else if (s.st === 'now') txt = '<b>Dag ' + s.days + ' av vinduet.</b> Vulgata er trolig i gang.';
-    else if (s.st === 'closed') txt = 'Vinduet lukket for ' + (s.days - 21) + ' dager siden.';
+    else if (s.st === 'now') txt = '<b>Dag ' + s.days + '.</b> Vulgata er trolig i gang.';
+    else if (s.st === 'closed') txt = 'Årets klekking er over. Modellen anslo start for ' + s.days + ' dager siden.';
     else txt = '<b>Om ' + s.days + ' dager</b>' + (isToday ? '.' : ' fra ' + fmtDoy(YEAR, day) + '.');
     if (p.year !== YEAR && s.st !== 'pre') txt += ' <span class="hw-muted">(anslag fra ' + p.year + ')</span>';
     line.innerHTML = txt + '<br>' + stars(l.cal || 0) + '<span class="hw-eyebrow">' + calText(l) + '</span>';

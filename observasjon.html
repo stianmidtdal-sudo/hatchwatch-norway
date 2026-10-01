@@ -113,7 +113,7 @@
         .badge.klekking { background: #e8f4fb; color: #1f6591; }
         .badge.spinnerfall { background: #fdf1e3; color: #9a6a20; }
     
-        /* â•â•â• v3 mÃ¸rk skinn (2026-10-01) â€” tokens fra hw.css, ligger sist i kaskaden â•â•â• */
+        /* v3 mørk skinn (2026-10-01): tokens fra hw.css, ligger sist i kaskaden */
         html, body { background: var(--hw-bg); color: var(--hw-fg); font-family: var(--hw-body); }
         nav, nav.hw-nav { background: var(--hw-bg); box-shadow: none; border-bottom: 1px solid var(--hw-line); gap: 10px; }
         .logo-text, nav.hw-nav .logo-text { font-family: var(--hw-display); font-weight: 700; font-size: 18px; letter-spacing: -.02em; text-transform: none; color: var(--hw-fg); }
@@ -259,7 +259,7 @@
         </form>
 
         <div class="card thanks" id="thanksCard">
-            <div class="big">🎣</div>
+            <div class="big"></div>
             <h2>Tusen takk!</h2>
             <p>Observasjonen er mottatt og går rett inn i kalibreringsgrunnlaget.
             Hver eneste observasjon gjør prognosene bedre — for alle.</p>
@@ -280,7 +280,7 @@
             <div class="admin-bar">
                 <span class="obs-count" id="obsCount"></span>
                 <a id="csvLink" href="#">Last ned CSV</a>
-                <button id="pushBtn">🔔 Varsle meg ved nye</button>
+                <button id="pushBtn">Varsle meg ved nye</button>
             </div>
             <div id="obsItems"></div>
         </div>
@@ -494,7 +494,7 @@
                 if (!r.ok) throw new Error('Abonnering feilet.');
                 btn.textContent = '✓ Du varsles ved nye observasjoner';
             }).catch(function (e2) {
-                btn.textContent = '⚠ ' + e2.message;
+                btn.textContent = '' + e2.message;
                 btn.disabled = false;
             });
         });

@@ -122,7 +122,7 @@ async function handleTestTrigger(req, res) {
         },
         klekkeImminent: {
             predDate: isNo ? '23. mai' : 'May 23',
-            info: isNo ? 'Drivere peker tidlig — Vulgata-vinduet åpner snart.' : 'Drivers point early — Vulgata window opens soon.',
+            info: isNo ? 'Drivere peker tidlig — vulgata-klekkingen nærmer seg.' : 'Drivers point early — Vulgata window opens soon.',
         },
         spinnerfall: {
             info: isNo ? 'Vindstille, klart, 16 °C — perfekt.' : 'Calm winds, clear, 16 °C — perfect.',

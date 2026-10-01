@@ -104,7 +104,7 @@ async function handleSubmit(req, res) {
         const subs = await r.smembers('obsadmin:subs');
         const typeLabel = type === 'klekking' ? 'Klekking' : 'Spinnerfall';
         const payload = {
-            title: `🪰 Ny observasjon — ${area}`,
+            title: `Ny observasjon — ${area}`,
             body: `${typeLabel} · ${insect} · ${date} — fra ${name}`,
             url: '/observasjon.html?admin=1',
             tag: 'obs-admin',

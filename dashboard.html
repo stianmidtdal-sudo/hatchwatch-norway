@@ -5472,8 +5472,8 @@ function renderTodayScore(args) {
     const no = LANG !== 'en';
     const T2 = no ? {
         label: 'Er det verdt å dra i dag?', indic: 'Indikativ · ukalibrert',
-        phase: 'Klekkefase', water: 'Vannet', weather: 'Været', window: 'Fiskevinduet',
-        go: 'Dra i kveld.', maybe: 'Kanskje. Sjekk igjen i morgen.', no: 'Ikke ennå.', over: 'Vinduet er lukket.', closed: 'Sesongen har ikke åpnet.',
+        phase: 'Klekkefase', water: 'Vannet', weather: 'Været', window: 'Kvelden time for time',
+        go: 'Dra i kveld.', maybe: 'Kanskje. Sjekk igjen i morgen.', no: 'Ikke ennå.', over: 'Årets klekking er over.', closed: 'Sesongen har ikke åpnet.',
         underway: 'i gang', soon: 'snart', notyet: 'ikke ennå', done: 'ferdig', nopred: 'ingen prognose',
         warm: 'varmt nok', near: 'nesten', cold: 'kaldt', nomeas: 'ingen måling',
         calm: 'rolig', ok: 'brukbart', rough: 'krevende', nowx: 'ingen prognose',
@@ -5513,13 +5513,13 @@ function renderTodayScore(args) {
             phaseScore = to <= 7 ? 35 : to <= 14 ? 25 : 10; phaseKey = to <= 14 ? 'soon' : 'coming';
             phaseTxt = no ? `Om ${to} dager (${fmt(onset)})` : `In ${to} days (${fmt(onset)})`; phasePill = T2.soon; phaseCls = to <= 7 ? 'mid' : 'bad';
         } else if (ds <= 3) {
-            phaseScore = 70; phaseKey = 'now'; phaseTxt = no ? `Dag ${ds + 1} av vinduet · bygger seg opp` : `Day ${ds + 1} of the window · building`; phasePill = T2.underway; phaseCls = 'good';
+            phaseScore = 70; phaseKey = 'now'; phaseTxt = no ? `Dag ${ds + 1} av klekkingen · bygger seg opp` : `Day ${ds + 1} of the window · building`; phasePill = T2.underway; phaseCls = 'good';
         } else if (ds <= 14) {
-            phaseScore = 100; phaseKey = 'now'; phaseTxt = no ? `Dag ${ds + 1} av vinduet` : `Day ${ds + 1} of the window`; phasePill = T2.underway; phaseCls = 'good';
+            phaseScore = 100; phaseKey = 'now'; phaseTxt = no ? `Dag ${ds + 1} av klekkingen` : `Day ${ds + 1} of the window`; phasePill = T2.underway; phaseCls = 'good';
         } else if (ds <= 21) {
             phaseScore = 60; phaseKey = 'now'; phaseTxt = no ? `Dag ${ds + 1} · etterslep` : `Day ${ds + 1} · tail end`; phasePill = T2.underway; phaseCls = 'mid';
         } else {
-            phaseScore = 15; phaseKey = 'done'; phaseTxt = no ? `Vinduet lukket for ${ds - 21} dager siden` : `Window closed ${ds - 21} days ago`; phasePill = T2.done; phaseCls = 'bad';
+            phaseScore = 15; phaseKey = 'done'; phaseTxt = no ? `Over. Modellen anslo start for ${ds} dager siden` : `Window closed ${ds - 21} days ago`; phasePill = T2.done; phaseCls = 'bad';
         }
     }
 
@@ -5582,7 +5582,7 @@ function renderTodayScore(args) {
     if (phaseKey === 'done' || phaseKey === 'closed' || phaseKey === 'unknown') score = Math.min(score, 25);
     let verdict, expl;
     if (phaseKey === 'closed') { verdict = T2.closed; expl = no ? 'Prognosen åpner 1. april. Fram til da er scoren bare vann og vær.' : 'The forecast opens on 1 April. Until then the score is water and weather only.'; }
-    else if (phaseKey === 'done') { verdict = T2.over; expl = no ? 'Vulgata-vinduet er lukket. Se etter spinnerfall og vespertina i skumringen.' : 'The vulgata window has closed. Look for spinner falls and vespertina at dusk.'; }
+    else if (phaseKey === 'done') { verdict = T2.over; expl = no ? 'Vulgata-klekkingen er over. Se etter spinnerfall og vespertina i skumringen.' : 'The vulgata window has closed. Look for spinner falls and vespertina at dusk.'; }
     else if (score >= 65) { verdict = T2.go; expl = no ? 'Klekkingen er i gang, vannet er varmt nok og kvelden ser brukbar ut.' : 'The hatch is underway, the water is warm enough and the evening looks usable.'; }
     else if (score >= 40) {
         verdict = T2.maybe;
@@ -7545,8 +7545,8 @@ function renderSpeciesCalendar(isgangResult, vulgataDate, best) {
         const diff = Math.round((vulgataDate - today) / 86400000);
         if (diff > 14)      { st = 'coming'; line = no ? `<b>Om ${diff} dager.</b>` : `<b>In ${diff} days.</b>`; }
         else if (diff > 0)  { st = 'soon';   line = no ? `<b>Om ${diff} dager.</b>` : `<b>In ${diff} days.</b>`; }
-        else if (-diff <= 21) { st = 'now';  line = no ? `<b>Dag ${1 - diff} av vinduet.</b> Vulgata er trolig i gang.` : `<b>Day ${1 - diff} of the window.</b> Vulgata is likely underway.`; }
-        else                { st = 'done';   line = no ? `Vinduet lukket for ${-diff - 21} dager siden.` : `The window closed ${-diff - 21} days ago.`; }
+        else if (-diff <= 21) { st = 'now';  line = no ? `<b>Dag ${1 - diff} av klekkingen.</b> Vulgata er trolig i gang.` : `<b>Day ${1 - diff} of the window.</b> Vulgata is likely underway.`; }
+        else                { st = 'done';   line = no ? `Årets klekking er over. Modellen anslo start for ${-diff} dager siden.` : `The window closed ${-diff - 21} days ago.`; }
     }
     const LBL = no ? { now: 'Pågår', soon: 'Snart', coming: 'På vei', done: 'Ferdig', unknown: 'Ingen prognose' }
                    : { now: 'Underway', soon: 'Soon', coming: 'Coming', done: 'Done', unknown: 'No forecast' };
@@ -7594,7 +7594,7 @@ function renderSpeciesCalendar(isgangResult, vulgataDate, best) {
         let startX = Math.max(2, Math.min(xOf(vDoy) - startW / 2, WPX - startW - endW - 12));
         let endX = Math.max(xOf(vDoy + 14) + 6, startX + startW + 10);
         if (endX + endW > WPX) { endX = WPX - endW; startX = Math.min(startX, endX - startW - 10); }
-        windowSvg = `<svg class="tl" viewBox="0 0 ${WPX} ${H}" role="img" aria-label="${no ? 'Klekkevindu' : 'Hatch window'}">
+        windowSvg = `<svg class="tl" viewBox="0 0 ${WPX} ${H}" role="img" aria-label="${no ? 'Klekkeperiode' : 'Hatch period'}">
             <line class="axis" x1="${xOf(A0)}" y1="${y}" x2="${xOf(A1)}" y2="${y}"/>${monthTicks(y + 14)}
             <rect class="band" x="${xOf(vDoy - unc)}" y="${y - 14}" width="${Math.max(2, bandW)}" height="28" rx="3"/>
             <rect class="bar" x="${xOf(vDoy)}" y="${y - 5}" width="${xOf(vDoy + 14) - xOf(vDoy)}" height="10" rx="3" opacity=".9"/>
@@ -9595,11 +9595,11 @@ if ('serviceWorker' in navigator) {
             klekkeImminent: 'Klekking starter snart',
             klekkeImminentDesc: '1-2 dager før dual-trigger fyrer',
             spinnerfall: 'Spinnerfall i kveld',
-            spinnerfallDesc: 'Når kveldsforholdene treffer vulgata-vinduet',
-            stokkmaur: 'Stokkmaur-vindu åpent',
-            stokkmaurDesc: 'Vær- og kalender-vinduet for stokkmaur-sverming',
+            spinnerfallDesc: 'Når kveldsforholdene passer mens vulgata klekker',
+            stokkmaur: 'Stokkmaur-sverming ventet',
+            stokkmaurDesc: 'Når vær og kalender ligger an til stokkmaur-sverming',
             seasonstart: 'Sesongstart',
-            seasonstartDesc: 'Når Vulgata-vinduet snart åpner',
+            seasonstartDesc: 'Når vulgata-klekkingen nærmer seg',
             save: 'Lagre', cancel: 'Avbryt', testAll: 'Test alle varsler',
             saving: 'Lagrer…', saved: 'Lagret ✓', testing: 'Sender test-push…',
             error: 'Feil — prøv igjen',
