@@ -975,6 +975,8 @@
         .hw-actions { margin: 0 0 24px; }
         .hw-ctas { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-width: 560px; }
         .hw-ctas .primary { grid-column: 1 / -1; }
+        /* Kalender skjules når datoen har passert: da skal Del fylle hele raden */
+        .hw-ctas #actCal[style*="display: none"] + #actShare { grid-column: 1 / -1; }
         .hw-actions .obs { margin-top: 8px; width: 100%; max-width: 560px; white-space: normal; text-align: center; }
         .hw-btn svg { width: 16px; height: 16px; }
 

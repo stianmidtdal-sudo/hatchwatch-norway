@@ -84,7 +84,10 @@ body.hw-dark {
 }
 :root[data-theme="light"] body.hw-dark { color-scheme: light; }
 .hw-dark h1, .hw-dark h2, .hw-dark h3 { margin: 0; text-wrap: balance; font-family: var(--hw-display); }
-.hw-dark button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+/* :where() gir nullstillingen null spesifisitet, så komponentklasser (.hw-btn, .mode-btn …)
+   alltid vinner. Uten den slo «padding: 0» ut polstringen på alle knapper (Lukk-knappen i
+   bunnarket, handlingsknappene på Sesongen). Rettet 2026-10-02. */
+:where(.hw-dark) button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
 .hw-dark :is(button, input, a, summary):focus-visible { outline: 2px solid var(--hw-hatch); outline-offset: 2px; }
 
 /* ── Typografi-hjelpere ── */
@@ -121,8 +124,8 @@ body.hw-dark {
 .hw-indic { display: inline-flex; gap: 6px; align-items: center; font-family: var(--hw-mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--hw-fg-3); border: 1px dashed var(--hw-line); border-radius: 999px; padding: 3px 9px; }
 
 /* ── Knapper ── */
-.hw-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: var(--hw-radius-sm); padding: 12px 16px; font-size: 14.5px; font-weight: 500; white-space: nowrap; text-decoration: none; cursor: pointer; font-family: inherit; }
-.hw-btn.primary { background: var(--hw-hatch); color: var(--hw-hatch-ink); font-weight: 600; border: 0; }
+.hw-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid transparent; border-radius: var(--hw-radius-sm); padding: 12px 16px; font-size: 14.5px; font-weight: 500; white-space: nowrap; text-decoration: none; cursor: pointer; font-family: inherit; }
+.hw-btn.primary { background: var(--hw-hatch); color: var(--hw-hatch-ink); font-weight: 600; border-color: transparent; }
 .hw-btn.ghost { border: 1px solid var(--hw-line); color: var(--hw-fg); background: none; }
 .hw-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .hw-iconbtn { width: 40px; height: 40px; border-radius: 50%; background: var(--hw-bg-2); border: 1px solid var(--hw-line); display: grid; place-items: center; color: var(--hw-fg-2); cursor: pointer; }
