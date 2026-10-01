@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Personvern · HatchWatch</title>
+    <meta name="theme-color" content="#0b1418">
+    <meta name="description" content="Personvernerklæring for HatchWatch — hva nettsiden og appen lagrer, hvorfor, og hvordan du får det slettet.">
+    <link rel="icon" type="image/png" sizes="32x32" href="/logos/favicon-32.png?v=2">
+    <link rel="icon" type="image/png" sizes="64x64" href="/logos/favicon-64.png?v=2">
+    <link rel="apple-touch-icon" href="/logos/apple-touch-icon-180.png">
+    <link rel="stylesheet" href="/hw.css">
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        * { box-sizing: border-box; }
+        html, body {
+            margin: 0; padding: 0;
+            background: var(--hw-bg); color: var(--hw-fg);
+            font-family: var(--hw-body);
+            -webkit-font-smoothing: antialiased;
+            text-size-adjust: 100%; -webkit-text-size-adjust: 100%;
+        }
+        body { min-height: 100vh; min-height: 100dvh; }
+        nav {
+            background: var(--hw-bg); color: var(--hw-fg);
+            border-bottom: 1px solid var(--hw-line);
+            padding-top: calc(env(safe-area-inset-top, 0px) + 16px);
+            padding-bottom: 14px;
+            padding-left: calc(env(safe-area-inset-left, 0px) + 18px);
+            padding-right: calc(env(safe-area-inset-right, 0px) + 18px);
+            display: flex; align-items: center;
+        }
+        nav a { text-decoration: none; color: var(--hw-fg); display: flex; align-items: center; gap: 10px; }
+        .logo-text { font-family: var(--hw-display); font-weight: 700; font-size: 18px; letter-spacing: -.02em; }
+        .logo-text b { color: var(--hw-hatch); }
+        main {
+            max-width: 760px; margin: 0 auto;
+            padding: 32px 20px 80px;
+            padding-bottom: max(80px, env(safe-area-inset-bottom, 0px) + 60px);
+        }
+        h1 { margin: 0 0 6px; font-family: var(--hw-display); font-size: 1.9rem; letter-spacing: -.03em; line-height: 1.2; }
+        .updated { color: var(--hw-fg-3); font: 500 11px/1.4 var(--hw-mono); letter-spacing: .08em; text-transform: uppercase; margin: 0 0 22px; }
+        .lead { color: var(--hw-fg); font-size: 1.05rem; line-height: 1.65; margin: 0 0 28px; padding-bottom: 22px; border-bottom: 1px solid var(--hw-line); }
+        h2 { margin: 30px 0 10px; font-family: var(--hw-display); font-size: 1.15rem; letter-spacing: -.01em; color: var(--hw-fg); }
+        p, li { color: var(--hw-fg-2); line-height: 1.7; font-size: 1rem; }
+        p { margin: 0 0 14px; }
+        ul { margin: 0 0 14px; padding-left: 22px; }
+        li { margin-bottom: 6px; }
+        b, strong { color: var(--hw-fg); }
+        a { color: var(--hw-water); }
+        .box {
+            background: var(--hw-bg-2); border: 1px solid var(--hw-line);
+            border-radius: var(--hw-radius-sm); padding: 16px 18px; margin: 0 0 14px;
+        }
+        .box p:last-child, .box ul:last-child { margin-bottom: 0; }
+        @media (max-width: 600px) { h1 { font-size: 1.55rem; } }
+    </style>
+</head>
+<body class="hw-dark">
+
+<nav>
+    <a href="/">
+        <span class="hw-fly" style="width:30px;color:var(--hw-hatch)" aria-hidden="true"></span>
+        <span class="logo-text">Hatch<b>Watch</b></span>
+    </a>
+</nav>
+
+<main>
+    <h1>Personvern</h1>
+    <p class="updated">Sist oppdatert 1. oktober 2026</p>
+
+    <p class="lead">HatchWatch har ingen brukerkontoer, ingen reklame og selger ingen data. Du kan bruke hele tjenesten uten å oppgi noe om deg selv. Denne siden forklarer det lille som likevel lagres, og hvordan du får det slettet. Den gjelder både nettsiden hatchwatch.no og HatchWatch-appen for iPhone.</p>
+
+    <h2>Hvem som er ansvarlig</h2>
+    <p>HatchWatch drives av Stian Midtdal som et privat hobbyprosjekt. Spørsmål om personvern, eller ønske om innsyn og sletting, sendes til <a href="mailto:stian.midtdal@gmail.com">stian.midtdal@gmail.com</a>.</p>
+
+    <h2>Varsler</h2>
+    <p>Hvis du slår på varsler, lagrer vi det som trengs for å sende dem til deg:</p>
+    <ul>
+        <li>en teknisk adresse til enheten eller nettleseren din (et varseltoken fra Apple, eller en abonnementsadresse fra nettleseren)</li>
+        <li>hvilke vann og hvilke varseltyper du har valgt</li>
+        <li>språkvalg og tidspunkt for når abonnementet ble opprettet og sist endret</li>
+    </ul>
+    <p>Adressen sier ikke hvem du er, og vi kobler den ikke til navn eller e-post. Den brukes bare til å levere varslene du har bedt om. Varsler leveres gjennom Apples varseltjeneste i appen, og gjennom nettleserens varseltjeneste (Apple, Google eller Mozilla) på nettsiden.</p>
+    <p>Når du slår av alle varsler, slettes abonnementet. Det slettes også automatisk hvis Apple eller nettleseren melder at adressen ikke lenger er i bruk, for eksempel fordi appen er avinstallert.</p>
+
+    <h2>Observasjoner du sender inn</h2>
+    <p>Når du sender inn en klekkeobservasjon, lagrer vi det du fyller ut: dato, art, område, eventuelt vann og høyde, hva du så, kommentar, samt <b>navn og e-postadresse</b>.</p>
+    <p>Navn og e-post brukes til å vurdere observasjonen og til å kunne stille oppfølgingsspørsmål. De vises ikke offentlig og deles ikke med andre. Selve observasjonen, uten navn og e-post, kan brukes til å forbedre modellen og kan inngå i statistikk og omtale.</p>
+    <p>Observasjoner lagres til du ber om at de slettes. Send en e-post, så sletter vi navn og e-post, eller hele observasjonen om du ønsker det.</p>
+
+    <h2>Posisjon</h2>
+    <p>Knappen for å finne nærmeste vann spør om posisjonen din. Posisjonen brukes der og da, på din egen enhet, til å regne ut hvilket vann som ligger nærmest. Den sendes ikke til oss og lagres ikke.</p>
+
+    <h2>Det som lagres på din egen enhet</h2>
+    <p>Nettsiden og appen husker noen valg lokalt i nettleseren eller appen, så du slipper å gjøre dem på nytt:</p>
+    <ul>
+        <li>favorittvann («Mine vann»)</li>
+        <li>språk og visningsvalg</li>
+        <li>hvilke varsler du har valgt</li>
+        <li>navn og e-post du sist brukte i observasjonsskjemaet, slik at feltene er ferdig utfylt neste gang</li>
+    </ul>
+    <p>Dette ligger bare hos deg. Det forsvinner når du sletter nettleserdata for hatchwatch.no eller avinstallerer appen.</p>
+
+    <h2>Besøksstatistikk</h2>
+    <p>Sidene for enkeltvann bruker Google Analytics for å se hvor mange som bruker tjenesten og hvilke vann som er mest besøkt. Google Analytics setter en informasjonskapsel med en tilfeldig ID og registrerer blant annet sidevisninger, omtrentlig geografisk område og type enhet. Vi ser bare samlede tall og kan ikke identifisere enkeltpersoner. Opplysningene behandles av Google.</p>
+    <p>Du kan hindre dette ved å blokkere informasjonskapsler i nettleseren, eller ved å bruke <a href="https://tools.google.com/dlpage/gaoptout" rel="noopener">Googles avmeldingstillegg</a>.</p>
+
+    <h2>Andre tjenester siden bruker</h2>
+    <p>For at siden skal fungere, henter enheten din innhold fra noen få leverandører. De får da se IP-adressen din, slik all nettrafikk fungerer:</p>
+    <ul>
+        <li><b>Vercel</b> — drifter nettsiden og serverne</li>
+        <li><b>Upstash</b> — databasen der varselabonnementer og observasjoner ligger</li>
+        <li><b>Google Fonts</b> og <b>cdnjs (Cloudflare)</b> — skrifttyper og et grafbibliotek</li>
+        <li><b>Tally</b> — skjemaet «Send tilbakemelding». Det du skriver der, behandles av Tally og sendes til oss</li>
+    </ul>
+    <p>Vær- og vanndata fra MET Norge og NVE hentes av våre servere. De får ingen opplysninger om deg.</p>
+
+    <h2>Det vi ikke gjør</h2>
+    <div class="box">
+        <ul>
+            <li>Vi har ingen brukerkontoer og ber ikke om innlogging.</li>
+            <li>Vi viser ikke reklame og sporer deg ikke på tvers av andre apper eller nettsteder.</li>
+            <li>Vi selger eller deler ikke personopplysninger med andre til deres egne formål.</li>
+        </ul>
+    </div>
+
+    <h2>Dine rettigheter</h2>
+    <p>Du har rett til å få vite hva som er lagret om deg, få det rettet og få det slettet. Send en e-post til <a href="mailto:stian.midtdal@gmail.com">stian.midtdal@gmail.com</a>. Mener du at opplysningene dine behandles feil, kan du klage til <a href="https://www.datatilsynet.no" rel="noopener">Datatilsynet</a>.</p>
+
+    <h2>Endringer</h2>
+    <p>Hvis tjenesten endres slik at mer eller annet lagres, oppdateres denne siden, og datoen øverst endres.</p>
+</main>
+
+<script>
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+</script>
+<script src="/hw-shell.js" defer></script>
+</body>
+</html>

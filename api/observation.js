@@ -13,12 +13,24 @@
 //   obs:all       — LIST, LPUSH av JSON-records (nyeste først)
 //   obsadmin:subs — SET av JSON.stringify(subscription) for admin-push
 //
-// Admin-nøkkel: env OBS_ADMIN_KEY, fallback = beta-passordet fra login.js.
+// Admin-nøkkel: KUN fra env OBS_ADMIN_KEY (Vercel). Ingen reserveverdi i koden:
+// repoet er offentlig, og observasjonene inneholder navn og e-post. Mangler
+// env-variabelen, er admin-endepunktene stengt for alle (2026-10-01).
 
+import crypto from 'crypto';
 import { redis } from '../lib/redis.js';
 import { sendPush } from '../lib/push.js';
 
-const ADMIN_KEY = process.env.OBS_ADMIN_KEY || 'marginata!!!';
+const ADMIN_KEY = (process.env.OBS_ADMIN_KEY || '').trim();
+
+// Sann bare når en nøkkel er satt i Vercel OG den oppgitte er lik.
+// Konstant-tid-sammenligning så nøkkelen ikke kan gjettes tegn for tegn.
+function isAdmin(key) {
+    if (!ADMIN_KEY || typeof key !== 'string' || !key) return false;
+    const a = crypto.createHash('sha256').update(key).digest();
+    const b = crypto.createHash('sha256').update(ADMIN_KEY).digest();
+    return crypto.timingSafeEqual(a, b);
+}
 
 const TYPES = ['klekking', 'spinnerfall'];
 const INSECTS = ['Marginata', 'Vespertina', 'Vulgata', 'Grandis'];
@@ -111,7 +123,7 @@ async function handleSubmit(req, res) {
 
 // ── Admin: liste / CSV ───────────────────────────────────────────────────
 async function handleList(req, res) {
-    if ((req.query.key || '') !== ADMIN_KEY) {
+    if (!isAdmin((req.query.key || '').toString())) {
         return res.status(401).json({ error: 'Feil nøkkel' });
     }
     const r = redis();
@@ -137,7 +149,7 @@ async function handleList(req, res) {
 // ── Admin: push-abonnement ───────────────────────────────────────────────
 async function handleAdminSubscribe(req, res) {
     const { key, subscription } = req.body || {};
-    if (key !== ADMIN_KEY) return res.status(401).json({ error: 'Feil nøkkel' });
+    if (!isAdmin(key)) return res.status(401).json({ error: 'Feil nøkkel' });
     if (!subscription || !subscription.endpoint || !subscription.keys) {
         return res.status(400).json({ error: 'Ugyldig subscription' });
     }
@@ -147,7 +159,7 @@ async function handleAdminSubscribe(req, res) {
 
 async function handleAdminUnsubscribe(req, res) {
     const { key, endpoint } = req.body || {};
-    if (key !== ADMIN_KEY) return res.status(401).json({ error: 'Feil nøkkel' });
+    if (!isAdmin(key)) return res.status(401).json({ error: 'Feil nøkkel' });
     const r = redis();
     const subs = await r.smembers('obsadmin:subs');
     for (const s of subs) {
