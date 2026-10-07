@@ -1,0 +1,4 @@
+{
+ "_forklaring": "Rekkefølgen skyjobben tar områdene i (id fra omraader.json). Jobben går videre til neste område først når forrige er ferdig.",
+ "rekkefolge": ["nordmarka"]
+}

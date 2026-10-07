@@ -1,0 +1,6 @@
+{
+ "_forklaring": "Områder for skyjobben (sky_hent.py). bbox = [lon_min, lat_min, lon_max, lat_max] i WGS84. Alle vann >= 10 ha som berører boksen tas med.",
+ "omraader": [
+  {"id": "nordmarka", "navn": "Nordmarka og Krokskogen", "bbox": [10.40, 59.98, 10.90, 60.25]}
+ ]
+}

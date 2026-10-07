@@ -1,0 +1,65 @@
+# Satellitt-isgang i skyen: henter Sentinel-2-data fra Copernicus for alle vann
+# i områdene i tools/isgang/sky/plan.json, regner isgang-intervall per vann og
+# år, og lagrer resultatet i repoet. Kjører hver natt; stopper selv ved
+# tidsbudsjett (5,25 t) eller månedens kvotetak. Se tools/isgang/sky_hent.py.
+#
+# Hemmeligheter som må ligge i repoet (Settings → Secrets and variables →
+# Actions): CDSE_CLIENT_ID og CDSE_CLIENT_SECRET (Copernicus Data Space).
+
+name: isgang-satellitt
+
+on:
+  schedule:
+    - cron: "0 21 * * *"      # 21:00 UTC = 23:00 norsk sommertid / 22:00 vintertid
+  workflow_dispatch:
+    inputs:
+      omraade:
+        description: "Område-id fra sky/omraader.json (tomt = følg plan.json)"
+        required: false
+        default: ""
+      maks_vannaar:
+        description: "Stopp etter så mange vann-år (0 = ubegrenset, til prøvekjøring)"
+        required: false
+        default: "0"
+
+concurrency:
+  group: isgang-satellitt
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  hent:
+    runs-on: ubuntu-latest
+    timeout-minutes: 345
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0        # full historikk, så «git pull --rebase» virker hvis Stian deployer samtidig
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Hent og regn isgang
+        working-directory: tools/isgang
+        env:
+          CDSE_CLIENT_ID: ${{ secrets.CDSE_CLIENT_ID }}
+          CDSE_CLIENT_SECRET: ${{ secrets.CDSE_CLIENT_SECRET }}
+          PYTHONIOENCODING: utf-8
+        run: python sky_hent.py ${{ github.event.inputs.omraade }} --maks-vannaar ${{ github.event.inputs.maks_vannaar || '0' }}
+
+      - name: Lagre resultatet i repoet
+        if: always()
+        run: |
+          git config user.name "isgang-satellitt"
+          git config user.email "actions@users.noreply.github.com"
+          git add tools/isgang/sky/
+          if git diff --cached --quiet; then
+            echo "Ingen endringer."
+            exit 0
+          fi
+          git commit -m "isgang: nattkjøring $(date -u +%F)"
+          git pull --rebase origin main
+          git push
