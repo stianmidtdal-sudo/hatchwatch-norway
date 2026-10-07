@@ -1,4 +1,25 @@
 {
- "_forklaring": "Rekkefølgen skyjobben tar områdene i (id fra omraader.json). Jobben går videre til neste område først når forrige er ferdig.",
- "rekkefolge": ["nordmarka"]
+ "_forklaring": "Rekkefølgen skyjobben tar områdene i (id fra omraader.json). Jobben går videre til neste område først når forrige er ferdig. Rekkefølge valgt av Stian 7. okt 2026: flest brukere først, Kautokeino høyt fordi det er hjertebarnet.",
+ "rekkefolge": [
+  "nordmarka",
+  "ostmarka",
+  "kautokeino",
+  "romeriksasen",
+  "finnemarka",
+  "vestfjella",
+  "rena",
+  "roros",
+  "hardangervidda",
+  "bergen",
+  "trondheim",
+  "lierne",
+  "borgefjell",
+  "mo_i_rana",
+  "narvik",
+  "bardu",
+  "dividalen",
+  "alta",
+  "porsanger",
+  "ifjordfjellet"
+ ]
 }

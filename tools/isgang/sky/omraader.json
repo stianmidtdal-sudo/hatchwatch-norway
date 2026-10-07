@@ -1,6 +1,25 @@
 {
- "_forklaring": "Områder for skyjobben (sky_hent.py). bbox = [lon_min, lat_min, lon_max, lat_max] i WGS84. Alle vann >= 10 ha som berører boksen tas med.",
+ "_forklaring": "Områder for skyjobben (sky_hent.py). bbox = [lon_min, lat_min, lon_max, lat_max] i WGS84. Vann på 10–3 000 ha med midtpunkt i boksen tas med. Boksene er ca. 34 km høye og brede rundt lokasjonene i dashboardet; Nordmarka er tegnet for hånd, Romeriksåsen starter der Nordmarka slutter så ingen vann hentes to ganger.",
  "omraader": [
-  {"id": "nordmarka", "navn": "Nordmarka og Krokskogen", "bbox": [10.40, 59.98, 10.90, 60.25]}
+  {"id": "nordmarka",      "navn": "Nordmarka og Krokskogen",        "bbox": [10.40, 59.98, 10.90, 60.25]},
+  {"id": "ostmarka",       "navn": "Østmarka",                       "bbox": [10.87, 59.55, 11.47, 59.85]},
+  {"id": "kautokeino",     "navn": "Kautokeino",                     "bbox": [22.62, 68.86, 23.46, 69.16]},
+  {"id": "romeriksasen",   "navn": "Romeriksåsen",                   "bbox": [10.90, 60.01, 11.19, 60.31]},
+  {"id": "finnemarka",     "navn": "Finnemarka",                     "bbox": [10.00, 59.71, 10.60, 60.01]},
+  {"id": "vestfjella",     "navn": "Vestfjella",                     "bbox": [11.37, 59.15, 11.95, 59.45]},
+  {"id": "rena",           "navn": "Rena",                           "bbox": [11.34, 60.99, 11.96, 61.29]},
+  {"id": "roros",          "navn": "Røros",                          "bbox": [11.06, 62.42, 11.72, 62.72]},
+  {"id": "hardangervidda", "navn": "Hardangervidda",                 "bbox": [8.25, 59.99, 8.85, 60.29]},
+  {"id": "bergen",         "navn": "Bergen",                         "bbox": [5.40, 60.35, 6.00, 60.65]},
+  {"id": "trondheim",      "navn": "Trondheim",                      "bbox": [10.48, 63.33, 11.15, 63.63]},
+  {"id": "lierne",         "navn": "Lierne",                         "bbox": [12.80, 64.04, 13.49, 64.34]},
+  {"id": "borgefjell",     "navn": "Børgefjell",                     "bbox": [13.73, 64.96, 14.45, 65.26]},
+  {"id": "mo_i_rana",      "navn": "Mo i Rana",                      "bbox": [14.32, 66.21, 15.07, 66.51]},
+  {"id": "narvik",         "navn": "Narvik",                         "bbox": [17.22, 68.21, 18.03, 68.51]},
+  {"id": "bardu",          "navn": "Bardu",                          "bbox": [18.40, 68.89, 19.24, 69.19]},
+  {"id": "dividalen",      "navn": "Dividalen",                      "bbox": [19.38, 68.52, 20.21, 68.82]},
+  {"id": "alta",           "navn": "Alta",                           "bbox": [22.83, 69.82, 23.71, 70.12]},
+  {"id": "porsanger",      "navn": "Porsanger",                      "bbox": [24.56, 69.92, 25.44, 70.22]},
+  {"id": "ifjordfjellet",  "navn": "Ifjordfjellet",                  "bbox": [27.76, 70.04, 28.65, 70.34]}
  ]
 }
