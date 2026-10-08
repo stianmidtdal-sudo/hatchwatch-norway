@@ -90,6 +90,12 @@ etter 5,25 timer eller ved 20 000 PU i måneden (av 30 000), og fortsetter
 neste natt. Nye områder: legg en boks i `sky/omraader.json` og id-en i
 `sky/plan.json`. Vann på 10–3 000 ha med midtpunkt i boksen tas med.
 
+Fra 8. okt lagres også «p» per vann-år: en kompakt liste over alle pass
+(MMDD:n/mørk/lys_is/lys_annet/sky, ca. 1 KB). Med den kan klar-pass-regelen
+og isandel-terskelen regnes om i ettertid uten å hente fra satellitten; bare
+lyshets-/ndsi-terskelen (tv, tn) er låst i tallene. Vann-år uten «p» (natt 1)
+hentes automatisk på nytt.
+
 Resultatfilene eies av jobben og ligger kun i repoet på GitHub.
 `deploy_now.py` laster dem aldri opp. Nøklene ligger som GitHub-hemmeligheter
 (CDSE_CLIENT_ID, CDSE_CLIENT_SECRET), aldri i filer.

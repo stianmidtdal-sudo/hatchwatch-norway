@@ -19,7 +19,10 @@ hemmeligheter) eller fra tools/isgang/.env lokalt.
 
 Filer per område i sky/:
   vann_<id>.json     vannene (fra NVE Innsjødatabase, >= 10 ha i boksen)
-  isgang_<id>.json   resultat per vann og år + kvoteforbruk per måned
+  isgang_<id>.json   resultat per vann og år + kvoteforbruk per måned.
+                     Per vann-år: status, intervall (lo/hi), antall pass og
+                     klare pass, PU, og «p» = kompakt liste over alle pass
+                     (dato og pikseltall) så metoden kan regnes om senere.
   status_<id>.md     lesbar oppsummering
 """
 import argparse
@@ -128,11 +131,26 @@ def skriv_resultat(res):
     json.dump(res, io.open(resultat_sti(res["omraade"]), "w", encoding="utf-8"), ensure_ascii=False, indent=0)
 
 
+def passliste(obs, valg):
+    """Kompakt liste over ALLE pass i vinduet, så metoden kan regnes om senere uten
+    satellitten (Stian 2026-10-08: «vi bør få denne dataen så godt som mulig nå»).
+    Format per pass: MMDD:n/mørk/lys_is/lys_annet/sky  — pikseltall med den låste
+    lyshets- og ndsi-terskelen (tv, tn). Skilletegn «;». Med dette kan både
+    klar-pass-regelen og isandel-terskelen endres i ettertid; bare tv/tn er låst."""
+    ut = []
+    for r in sorted(obs, key=lambda r: r["dato"]):
+        mork, lys_is, lys_annet = v5.klassifiser(r, valg["tv"], valg["tn"])
+        ut.append("%s:%d/%d/%d/%d/%d" % (r["dato"][5:7] + r["dato"][8:10], int(r["n"]), mork, lys_is, lys_annet, int(r["scl_sky"])))
+    return ";".join(ut)
+
+
 def ferdig(res, lnr, y):
     post = res["vann"].get(str(lnr), {}).get("aar", {}).get(str(y))
     if not post:
         return False
-    return post["status"] != "feil" or post.get("forsok", 0) >= MAKS_FORSOK
+    if post["status"] == "feil":
+        return post.get("forsok", 0) >= MAKS_FORSOK
+    return "p" in post          # hentet før passlista kom med (natt 1) → hentes på nytt
 
 
 def status_md(omr, vann, res):
@@ -230,7 +248,8 @@ def kjor(omr, start, timer, maks_pu_mnd, maks_vannaar):
         obs = h4.flat_ut(svar)
         kl = a7.klare(obs, valg["tv"], valg["tn"], valg["regel"])
         r = v3.finn_isgang(kl, v5.TERSKEL)
-        post = {"status": r["status"], "pass": len(obs), "klare": len(kl), "pu": round(pu or 0, 1)}
+        post = {"status": r["status"], "pass": len(obs), "klare": len(kl), "pu": round(pu or 0, 1),
+                "p": passliste(obs, valg)}
         if r["status"] == "ok":
             post["lo"], post["hi"] = r["lo"], r["hi"]
         elif kl:
