@@ -10,6 +10,7 @@
     <link rel="icon" type="image/png" sizes="64x64" href="/logos/favicon-64.png?v=2">
     <link rel="apple-touch-icon" href="/logos/apple-touch-icon-180.png">
     <link rel="stylesheet" href="/hw.css">
+    <script src="/hw-lang.js"></script>
     <link rel="manifest" href="/manifest.json">
     <style>
         * { box-sizing: border-box; }
@@ -193,10 +194,10 @@
     <div class="header-controls">
         <button id="hwMenuBtn" type="button" aria-label="Meny" title="Meny"></button>
         <div id="hwMenuDropdown">
-            <a href="/" class="hw-menu-item">Forside</a>
-            <a href="/artikler.html" class="hw-menu-item">Artikler</a>
-            <a href="/om.html" class="hw-menu-item">Om HatchWatch</a>
-            <a href="https://tally.so/r/EkBErN" class="hw-menu-item">Send tilbakemelding</a>
+            <a href="/" class="hw-menu-item" data-i18n="navHome">Forside</a>
+            <a href="/artikler.html" class="hw-menu-item" data-i18n="navArticles">Artikler</a>
+            <a href="/om.html" class="hw-menu-item" data-i18n="navAbout">Om HatchWatch</a>
+            <a href="https://tally.so/r/EkBErN" class="hw-menu-item" data-i18n="navFeedback">Send tilbakemelding</a>
         </div>
     </div>
 </nav>
@@ -204,76 +205,76 @@
 <main>
     <!-- INTRO -->
     <div class="hero-section">
-        <h1>Varsler</h1>
-        <div class="lead">Få push-varsler direkte på telefonen når klekkingen flytter seg, når kvelden er ideell for spinnerfall, eller når været ligger an til stokkmaur-sverming.</div>
+        <h1 data-i18n="h1">Varsler</h1>
+        <div class="lead" data-i18n="lead">Få push-varsler direkte på telefonen når klekkingen flytter seg, når kvelden er ideell for spinnerfall, eller når været ligger an til stokkmaur-sverming.</div>
     </div>
 
-    <h2>Hvilke varsler kan du få?</h2>
+    <h2 data-i18n="which">Hvilke varsler kan du få?</h2>
     <div class="trigger-grid">
         <div class="trigger-item">
-            <div class="name">Klekking starter snart</div>
-            <div class="desc">1-2 dager før dual-trigger fyrer for valgt lokasjon</div>
+            <div class="name" data-i18n="t1">Klekking starter snart</div>
+            <div class="desc" data-i18n="t1d">1-2 dager før dual-trigger fyrer for valgt lokasjon</div>
         </div>
         <div class="trigger-item">
-            <div class="name">Klekkedato endret</div>
-            <div class="desc">Når prediksjonen flytter seg ≥ 2 dager basert på ny værprognose</div>
+            <div class="name" data-i18n="t2">Klekkedato endret</div>
+            <div class="desc" data-i18n="t2d">Når prediksjonen flytter seg ≥ 2 dager basert på ny værprognose</div>
         </div>
         <div class="trigger-item">
-            <div class="name">Spinnerfall i kveld</div>
-            <div class="desc">Når kveldsforholdene passer mens vulgata klekker</div>
+            <div class="name" data-i18n="t3">Spinnerfall i kveld</div>
+            <div class="desc" data-i18n="t3d">Når kveldsforholdene passer mens vulgata klekker</div>
         </div>
         <div class="trigger-item">
-            <div class="name">Stokkmaur-sverming ventet</div>
-            <div class="desc">Værforholdene matcher stokkmaur-svermings-kriteriene</div>
+            <div class="name" data-i18n="t4">Stokkmaur-sverming ventet</div>
+            <div class="desc" data-i18n="t4d">Værforholdene matcher stokkmaur-svermings-kriteriene</div>
         </div>
         <div class="trigger-item">
-            <div class="name">Sesongstart</div>
-            <div class="desc">Når vulgata-klekkingen nærmer seg for valgt lokasjon</div>
+            <div class="name" data-i18n="t5">Sesongstart</div>
+            <div class="desc" data-i18n="t5d">Når vulgata-klekkingen nærmer seg for valgt lokasjon</div>
         </div>
     </div>
 
-    <p style="max-width:800px">Varsler er valgfrie per lokasjon og kan skrus av når som helst. Du kan abonnere på flere lokasjoner samtidig — relevant hvis du fisker både Østmarka og Hardangervidda gjennom sesongen.</p>
+    <p style="max-width:800px" data-i18n="optional">Varsler er valgfrie per lokasjon og kan skrus av når som helst. Du kan abonnere på flere lokasjoner samtidig — relevant hvis du fisker både Østmarka og Hardangervidda gjennom sesongen.</p>
 
     <!-- INSTALLER-VEILEDER (vises kun i nettleser) -->
     <div id="installCard" style="display:none">
-        <h2>Installer appen for å motta varsler</h2>
-        <p style="max-width:800px">Push-varsler krever at HatchWatch installeres som app — det er gratis, tar 20 sekunder, og bruker ingen plass å snakke om. Det er fortsatt nettsiden, bare pakket inn som et app-ikon på enheten din.</p>
+        <h2 data-i18n="installH">Installer appen for å motta varsler</h2>
+        <p style="max-width:800px" data-i18n="installP">Push-varsler krever at HatchWatch installeres som app — det er gratis, tar 20 sekunder, og bruker ingen plass å snakke om. Det er fortsatt nettsiden, bare pakket inn som et app-ikon på enheten din.</p>
 
         <div class="install-grid">
             <div class="install-section">
-                <h3>For mobil</h3>
+                <h3 data-i18n="forMobile">For mobil</h3>
 
                 <div class="platform-title">iPhone / iPad (Safari)</div>
                 <ol>
-                    <li>Sørg for at du er i <b>Safari</b> (ikke Chrome — Apple tillater bare installering fra Safari)</li>
-                    <li>Trykk på <b>Del-knappen</b> nederst på skjermen — det er firkanten med en pil som peker oppover</li>
-                    <li>Bla nedover i menyen til du ser <b>«Legg til på Hjem-skjerm»</b> og trykk på den</li>
-                    <li>Trykk <b>«Legg til»</b> øverst til høyre</li>
-                    <li>Åpne HatchWatch fra hjemskjermen — Varsler-knappen i menyen aktiveres da</li>
+                    <li data-i18n-html="ios1">Sørg for at du er i <b>Safari</b> (ikke Chrome — Apple tillater bare installering fra Safari)</li>
+                    <li data-i18n-html="ios2">Trykk på <b>Del-knappen</b> nederst på skjermen — det er firkanten med en pil som peker oppover</li>
+                    <li data-i18n-html="ios3">Bla nedover i menyen til du ser <b>«Legg til på Hjem-skjerm»</b> og trykk på den</li>
+                    <li data-i18n-html="ios4">Trykk <b>«Legg til»</b> øverst til høyre</li>
+                    <li data-i18n-html="ios5">Åpne HatchWatch fra hjemskjermen — Varsler-knappen i menyen aktiveres da</li>
                 </ol>
 
                 <div class="platform-title">Android (Chrome)</div>
                 <ol>
-                    <li>Åpne hatchwatch.no i <b>Chrome</b></li>
-                    <li>Trykk på <b>meny-knappen (⋮)</b> øverst til høyre i Chrome</li>
-                    <li>Velg <b>«Installer app»</b> eller <b>«Legg til på Hjem-skjerm»</b></li>
-                    <li>Bekreft installasjonen — ikonet legger seg på hjemskjermen</li>
-                    <li>Åpne HatchWatch fra hjemskjermen — Varsler-knappen i menyen aktiveres da</li>
+                    <li data-i18n-html="and1">Åpne hatchwatch.no i <b>Chrome</b></li>
+                    <li data-i18n-html="and2">Trykk på <b>meny-knappen (⋮)</b> øverst til høyre i Chrome</li>
+                    <li data-i18n-html="and3">Velg <b>«Installer app»</b> eller <b>«Legg til på Hjem-skjerm»</b></li>
+                    <li data-i18n-html="and4">Bekreft installasjonen — ikonet legger seg på hjemskjermen</li>
+                    <li data-i18n-html="and5">Åpne HatchWatch fra hjemskjermen — Varsler-knappen i menyen aktiveres da</li>
                 </ol>
             </div>
 
             <div class="install-section">
-                <h3>For PC / Mac</h3>
+                <h3 data-i18n="forPc">For PC / Mac</h3>
                 <ol>
-                    <li>Åpne hatchwatch.no i <b>Chrome</b> eller <b>Edge</b> (Safari på Mac støtter også PWA fra macOS 14)</li>
-                    <li>Se etter et lite <b>install-ikon i adressefeltet</b> — vanligvis en dataskjerm med en pil ned. Alternativt: åpne meny-knappen (⋮) og finn <b>«Installer HatchWatch»</b></li>
-                    <li>Klikk <b>«Installer»</b> i dialogen som dukker opp</li>
-                    <li>HatchWatch åpnes i sitt eget vindu og legger seg blant programmene dine — åpne appen derfra for å aktivere Varsler-menyen</li>
+                    <li data-i18n-html="pc1">Åpne hatchwatch.no i <b>Chrome</b> eller <b>Edge</b> (Safari på Mac støtter også PWA fra macOS 14)</li>
+                    <li data-i18n-html="pc2">Se etter et lite <b>install-ikon i adressefeltet</b> — vanligvis en dataskjerm med en pil ned. Alternativt: åpne meny-knappen (⋮) og finn <b>«Installer HatchWatch»</b></li>
+                    <li data-i18n-html="pc3">Klikk <b>«Installer»</b> i dialogen som dukker opp</li>
+                    <li data-i18n-html="pc4">HatchWatch åpnes i sitt eget vindu og legger seg blant programmene dine — åpne appen derfra for å aktivere Varsler-menyen</li>
                 </ol>
             </div>
         </div>
 
-        <div class="note">
+        <div class="note" data-i18n="installNote">
             Push-varsler krever en installert PWA — vanlig nettleser-tab støtter ikke dette på iPhone, og er ustabilt på andre plattformer. Når appen er installert kan du skru av varsler når som helst via Varsler-knappen inne på en lokasjon.
         </div>
     </div>
@@ -281,21 +282,21 @@
     <!-- VEILEDER FOR PWA-BRUKERE -->
     <div id="setupCard" style="display:none">
         <div class="setup-block">
-            <h2>Slik setter du opp varsler</h2>
-            <p>HatchWatch er installert som app. Varsler stilles inn <b>per lokasjon</b> — slik kan du velge ulike triggere for Østmarka og Hardangervidda, eller bare abonnere på de stedene du faktisk fisker.</p>
+            <h2 data-i18n="setupH">Slik setter du opp varsler</h2>
+            <p data-i18n-html="setupP">HatchWatch er installert som app. Varsler stilles inn <b>per lokasjon</b> — slik kan du velge ulike triggere for Østmarka og Hardangervidda, eller bare abonnere på de stedene du faktisk fisker.</p>
 
             <ol>
-                <li>Gå til <a href="/" style="color:#1f83bd;font-weight:600">forsiden</a> og velg en lokasjon</li>
-                <li>Åpne hamburger-menyen () øverst til høyre</li>
-                <li>Velg <b>Varsler</b></li>
-                <li>Huk av hvilke triggere du vil motta for den lokasjonen</li>
-                <li>Trykk <b>Lagre</b>. Du blir bedt om å tillate varsler — godkjenn for at varslene skal komme fram</li>
+                <li data-i18n-html="s1">Gå til <a href="/" style="color:#1f83bd;font-weight:600">forsiden</a> og velg en lokasjon</li>
+                <li data-i18n-html="s2">Åpne hamburger-menyen () øverst til høyre</li>
+                <li data-i18n-html="s3">Velg <b>Varsler</b></li>
+                <li data-i18n-html="s4">Huk av hvilke triggere du vil motta for den lokasjonen</li>
+                <li data-i18n-html="s5">Trykk <b>Lagre</b>. Du blir bedt om å tillate varsler — godkjenn for at varslene skal komme fram</li>
             </ol>
 
-            <p>Du kan teste oppsettet med <b>«Test alle varsler»</b>-knappen — den sender én test-push for hver trigger-type så du ser hvordan de ser ut.</p>
+            <p data-i18n-html="testP">Du kan teste oppsettet med <b>«Test alle varsler»</b>-knappen — den sender én test-push for hver trigger-type så du ser hvordan de ser ut.</p>
 
             <div class="cta-row">
-                <a href="/" class="cta-btn">Velg lokasjon</a>
+                <a href="/" class="cta-btn" data-i18n="pick">Velg lokasjon</a>
             </div>
         </div>
     </div>
@@ -303,21 +304,75 @@
     <!-- VEDVARENDE INFO-SEKSJON (2-kolonne på desktop) -->
     <div class="info-grid">
         <div>
-            <h2>Når sendes varslene?</h2>
-            <p>HatchWatch sjekker triggerne hver morgen klokken 08:00 norsk tid. Hvis betingelsene er oppfylt for noen av dine abonnementer, blir varselet sendt ut umiddelbart. Maksimalt ett varsel per trigger-type per lokasjon per dag, så du ikke får spam.</p>
+            <h2 data-i18n="whenH">Når sendes varslene?</h2>
+            <p data-i18n="whenP">HatchWatch sjekker triggerne hver morgen klokken 08:00 norsk tid. Hvis betingelsene er oppfylt for noen av dine abonnementer, blir varselet sendt ut umiddelbart. Maksimalt ett varsel per trigger-type per lokasjon per dag, så du ikke får spam.</p>
         </div>
         <div>
-            <h2>Hvordan vil varslene se ut?</h2>
-            <p>Et varsel inneholder lokasjonsnavn, hva som skjer, og kort kontekst (f.eks. ny estimert dato eller dagens skår). Trykker du på varselet, åpnes HatchWatch direkte på lokasjonen.</p>
+            <h2 data-i18n="lookH">Hvordan vil varslene se ut?</h2>
+            <p data-i18n="lookP">Et varsel inneholder lokasjonsnavn, hva som skjer, og kort kontekst (f.eks. ny estimert dato eller dagens skår). Trykker du på varselet, åpnes HatchWatch direkte på lokasjonen.</p>
         </div>
     </div>
 
-    <div class="note">
+    <div class="note" data-i18n-html="iosTip">
         <b>iOS-tips:</b> hvis varslene kommer "lydløst" inn i varselsenteret, sjekk Innstillinger → Varsler → HatchWatch og pass på at <b>Lyder</b> er på, og at <b>Banner-stil</b> er satt til "Vedvarende". Sjekk også at Fokus-modus ikke skjuler appen.
     </div>
 </main>
 
 <script>
+// Engelsk (2026-10-08): hw-lang.js velger språk; norsk står i HTML-en, engelsk legges over her.
+(function () {
+    if (window.HW_LANG !== 'en') return;
+    var EN = {
+        navHome: 'Front page', navArticles: 'Articles', navAbout: 'About HatchWatch', navFeedback: 'Send feedback',
+        h1: 'Notifications',
+        lead: 'Get push notifications on your phone when the hatch date moves, when the evening looks right for a spinner fall, or when the weather is lining up for a carpenter ant swarm.',
+        which: 'Which notifications can you get?',
+        t1: 'Hatch starting soon', t1d: '1–2 days before the dual trigger fires for your location',
+        t2: 'Hatch date changed', t2d: 'When the prediction moves 2 days or more on a new weather forecast',
+        t3: 'Spinner fall tonight', t3d: 'When the evening conditions fit while vulgata is hatching',
+        t4: 'Carpenter ant swarm expected', t4d: 'The weather matches the swarming criteria',
+        t5: 'Season start', t5d: 'When the vulgata hatch is getting close for your location',
+        optional: 'Notifications are optional, set per location, and can be turned off at any time. You can subscribe to several locations at once, handy if you fish both Østmarka and Hardangervidda through the season.',
+        installH: 'Install the app to get notifications',
+        installP: 'Push notifications need HatchWatch installed as an app. It is free, takes 20 seconds and uses hardly any space. It is still the website, just wrapped as an app icon on your device.',
+        forMobile: 'For phones', forPc: 'For PC / Mac',
+        ios1: 'Make sure you are in <b>Safari</b> (not Chrome. Apple only allows installing from Safari)',
+        ios2: 'Tap the <b>Share button</b> at the bottom of the screen, the square with an arrow pointing up',
+        ios3: 'Scroll down the menu until you see <b>“Add to Home Screen”</b> and tap it',
+        ios4: 'Tap <b>“Add”</b> in the top right corner',
+        ios5: 'Open HatchWatch from your home screen. The Notifications button in the menu is now active',
+        and1: 'Open hatchwatch.no in <b>Chrome</b>',
+        and2: 'Tap the <b>menu button (⋮)</b> in the top right of Chrome',
+        and3: 'Choose <b>“Install app”</b> or <b>“Add to Home screen”</b>',
+        and4: 'Confirm, and the icon lands on your home screen',
+        and5: 'Open HatchWatch from your home screen. The Notifications button in the menu is now active',
+        pc1: 'Open hatchwatch.no in <b>Chrome</b> or <b>Edge</b> (Safari on Mac also supports this from macOS 14)',
+        pc2: 'Look for a small <b>install icon in the address bar</b>, usually a screen with an arrow pointing down. Or open the menu button (⋮) and find <b>“Install HatchWatch”</b>',
+        pc3: 'Click <b>“Install”</b> in the dialog',
+        pc4: 'HatchWatch opens in its own window and sits among your programs. Open it from there to activate the Notifications menu',
+        installNote: 'Push notifications need an installed app. A normal browser tab does not support this on iPhone, and is unreliable elsewhere. Once installed, you can turn notifications off at any time with the Notifications button inside a location.',
+        setupH: 'How to set up notifications',
+        setupP: 'HatchWatch is installed as an app. Notifications are set <b>per location</b>, so you can pick different triggers for Østmarka and Hardangervidda, or only subscribe to the places you actually fish.',
+        s1: 'Go to the <a href="/" style="color:#1f83bd;font-weight:600">front page</a> and pick a location',
+        s2: 'Open the menu (☰) in the top right',
+        s3: 'Choose <b>Notifications</b>',
+        s4: 'Tick the triggers you want for that location',
+        s5: 'Tap <b>Save</b>. You will be asked to allow notifications. Say yes, or they cannot reach you',
+        testP: 'You can test the setup with the <b>“Test all notifications”</b> button. It sends one test push per trigger type so you can see what they look like.',
+        pick: 'Pick a location',
+        whenH: 'When are notifications sent?',
+        whenP: 'HatchWatch checks the triggers every morning at 08:00 Norwegian time. If the conditions are met for any of your subscriptions, the notification goes out right away. At most one notification per trigger type per location per day, so you do not get spammed.',
+        lookH: 'What do they look like?',
+        lookP: 'A notification has the location name, what is happening, and a short bit of context (for example the new estimated date or today’s score). Tap it and HatchWatch opens straight on that location.',
+        iosTip: '<b>iOS tip:</b> if notifications arrive silently in the notification centre, check Settings → Notifications → HatchWatch and make sure <b>Sounds</b> is on and <b>Banner style</b> is set to “Persistent”. Also check that a Focus mode is not hiding the app.'
+    };
+    document.title = 'Notifications · HatchWatch';
+    document.querySelectorAll('[data-i18n]').forEach(function (el) { var v = EN[el.getAttribute('data-i18n')]; if (v) el.textContent = v; });
+    document.querySelectorAll('[data-i18n-html]').forEach(function (el) { var v = EN[el.getAttribute('data-i18n-html')]; if (v) el.innerHTML = v; });
+    var mb = document.getElementById('hwMenuBtn');
+    if (mb) { mb.setAttribute('aria-label', 'Menu'); mb.title = 'Menu'; }
+})();
+
 // Vis riktig seksjon basert på om brukeren er i PWA-modus eller nettleser
 (function() {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches

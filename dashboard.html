@@ -49,6 +49,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/hw.css">
+    <script src="/hw-lang.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <script>
     // v3 mørk flate (2026-10-01): aksetekst og rutenett i Chart.js må leses på mørk bunn.
@@ -1573,7 +1574,9 @@
 // ═══════════════════════════════════════════════════════════════════
 //  LANGUAGE / i18n
 // ═══════════════════════════════════════════════════════════════════
-const LANG = localStorage.getItem('lang') || 'no';
+// Språket velges av hw-lang.js (delt med forsiden og undersidene; første besøk
+// følger telefonens språk). Reserve: lagret valg, ellers norsk.
+const LANG = (window.HW_LANG === 'en' || window.HW_LANG === 'no') ? window.HW_LANG : (localStorage.getItem('lang') || 'no');
 // Tall-formatering med locale-bevisst desimaltegn. Brukes for ±X.Y dager o.l.
 // hvor NO-UI bruker komma (5,8) og EN-UI bruker punktum (5.8).
 // Heltall renderes uten desimal (14, ikke 14,0). Float runder til `decimals`.

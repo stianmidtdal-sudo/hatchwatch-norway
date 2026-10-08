@@ -10,6 +10,7 @@
     <link rel="icon" type="image/png" sizes="64x64" href="/logos/favicon-64.png?v=2">
     <link rel="apple-touch-icon" href="/logos/apple-touch-icon-180.png">
     <link rel="stylesheet" href="/hw.css">
+    <script src="/hw-lang.js"></script>
     <link rel="manifest" href="/manifest.json">
     <style>
         * { box-sizing: border-box; }
@@ -144,65 +145,97 @@
     <div class="header-controls">
         <button id="hwMenuBtn" type="button" aria-label="Meny" title="Meny"></button>
         <div id="hwMenuDropdown">
-            <a href="/" class="hw-menu-item">Forside</a>
-            <a href="/varsler.html" class="hw-menu-item">Varsler</a>
-            <a href="/artikler.html" class="hw-menu-item">Artikler</a>
-            <a href="https://tally.so/r/EkBErN" class="hw-menu-item">Send tilbakemelding</a>
+            <a href="/" class="hw-menu-item" data-i18n="navHome">Forside</a>
+            <a href="/varsler.html" class="hw-menu-item" data-i18n="navNotif">Varsler</a>
+            <a href="/artikler.html" class="hw-menu-item" data-i18n="navArticles">Artikler</a>
+            <a href="https://tally.so/r/EkBErN" class="hw-menu-item" data-i18n="navFeedback">Send tilbakemelding</a>
         </div>
     </div>
 </nav>
 
 <main>
     <div class="hero-section">
-        <h1>Om HatchWatch</h1>
-        <div class="tagline">Klekkeprognoser for fluefiskere</div>
+        <h1 data-i18n="h1">Om HatchWatch</h1>
+        <div class="tagline" data-i18n="tagline">Klekkeprognoser for fluefiskere</div>
     </div>
 
     <div class="body-grid">
         <div>
-            <p>HatchWatch er en åpen prediksjonsmodell for klekking av døgnfluer i norske vassdrag og stillevann. Modellen kombinerer luft- og vanntemperatur-historikk, isgang-observasjoner, snødybde og kalibrerte terskler per lokasjon for å estimere når klekkingen for vulgata, marginata, vespertina og andre sentrale arter starter.</p>
+            <p data-i18n="p1">HatchWatch er en åpen prediksjonsmodell for klekking av døgnfluer i norske vassdrag og stillevann. Modellen kombinerer luft- og vanntemperatur-historikk, isgang-observasjoner, snødybde og kalibrerte terskler per lokasjon for å estimere når klekkingen for vulgata, marginata, vespertina og andre sentrale arter starter.</p>
 
-            <p>Sentralt i modellen står <em>varmesum-prinsippet</em> (Growing Degree Days): nymfens utviklingstempo styres direkte av temperatur, og når akkumulert varme siden 1. januar overstiger en arts- og lokasjonspesifikk terskel, er nymfen klar for overflateoppstigning. Som supplering brukes en <em>dual-trigger</em>-betingelse på vanntemperatur (typisk 12°C), som fanger opp år der lufta er varm før vannet rekker å varmes opp. Klekkedatoen anslås som den første dagen begge krav er oppfylt samtidig.</p>
+            <p data-i18n-html="p2">Sentralt i modellen står <em>varmesum-prinsippet</em> (Growing Degree Days): nymfens utviklingstempo styres direkte av temperatur, og når akkumulert varme siden 1. januar overstiger en arts- og lokasjonspesifikk terskel, er nymfen klar for overflateoppstigning. Som supplering brukes en <em>dual-trigger</em>-betingelse på vanntemperatur (typisk 12°C), som fanger opp år der lufta er varm før vannet rekker å varmes opp. Klekkedatoen anslås som den første dagen begge krav er oppfylt samtidig.</p>
 
-            <p>For dager fram i tid blandes faktiske målinger med MET sitt 10-dagers langtidsvarsel, og deretter 10-årssnittet for resten av sesongen. Etter hvert som faktiske målinger kommer inn dag for dag, erstatter de antagelsene — og prognosen konvergerer mot en stadig sikrere dato.</p>
+            <p data-i18n="p3">For dager fram i tid blandes faktiske målinger med MET sitt 10-dagers langtidsvarsel, og deretter 10-årssnittet for resten av sesongen. Etter hvert som faktiske målinger kommer inn dag for dag, erstatter de antagelsene — og prognosen konvergerer mot en stadig sikrere dato.</p>
 
-            <h2>Forbedring over tid</h2>
-            <p>Modellen er ikke statisk. Hver gang en kalibrert lokasjon får inn en ny verifisert klekkeobservasjon, justeres terskelverdiene. Dette gjør at HatchWatch blir mer presis for hvert år som går — særlig for lokasjoner som blir aktivt rapportert til. Det er også grunnen til at innsendte observasjoner er så verdifulle.</p>
+            <h2 data-i18n="betterH">Forbedring over tid</h2>
+            <p data-i18n="betterP">Modellen er ikke statisk. Hver gang en kalibrert lokasjon får inn en ny verifisert klekkeobservasjon, justeres terskelverdiene. Dette gjør at HatchWatch blir mer presis for hvert år som går — særlig for lokasjoner som blir aktivt rapportert til. Det er også grunnen til at innsendte observasjoner er så verdifulle.</p>
         </div>
 
         <div>
-            <h2>Datakilder</h2>
+            <h2 data-i18n="sourcesH">Datakilder</h2>
             <ul>
-                <li><b>MET Norge (Frost API)</b> — historiske luft- og snødata, pluss 10-dagers værvarsel</li>
-                <li><b>NVE (HydAPI)</b> — vanntemperatur og vannføring fra hydrologiske stasjoner</li>
-                <li><b>Sentinel Hub</b> — isgang-observasjoner via satellittbilder</li>
-                <li><b>OFA</b> — Oslomarka Fiskeadministrasjons referansedata for Nordmarka-vann</li>
-                <li><b>Brukerobservasjoner</b> — klekkeobservasjoner fra fluefiskere rundt om i landet (<a href="/observasjon.html">bidra med dine her</a>)</li>
+                <li data-i18n-html="src1"><b>MET Norge (Frost API)</b> — historiske luft- og snødata, pluss 10-dagers værvarsel</li>
+                <li data-i18n-html="src2"><b>NVE (HydAPI)</b> — vanntemperatur og vannføring fra hydrologiske stasjoner</li>
+                <li data-i18n-html="src3"><b>Sentinel Hub</b> — isgang-observasjoner via satellittbilder</li>
+                <li data-i18n-html="src4"><b>OFA</b> — Oslomarka Fiskeadministrasjons referansedata for Nordmarka-vann</li>
+                <li data-i18n-html="src5"><b>Brukerobservasjoner</b> — klekkeobservasjoner fra fluefiskere rundt om i landet (<a href="/observasjon.html">bidra med dine her</a>)</li>
             </ul>
-            <p>Værdata oppdateres daglig.</p>
+            <p data-i18n="daily">Værdata oppdateres daglig.</p>
 
-            <h2>Usikkerhet</h2>
-            <p>Tenk på klekkeprognosen som en værmelding: tidlig i sesongen er usikkerheten større, fordi mer av vær- og vannutviklingen ligger fram i tid. Etter hvert som faktiske målinger kommer inn, krymper estimatet og treffsikkerheten øker. For godt dokumenterte lokasjoner treffer modellen typisk innenfor noen få dager. Men naturen er uforutsigbar — bruk verktøyet som veiledning, ikke fasit.</p>
+            <h2 data-i18n="uncH">Usikkerhet</h2>
+            <p data-i18n="uncP">Tenk på klekkeprognosen som en værmelding: tidlig i sesongen er usikkerheten større, fordi mer av vær- og vannutviklingen ligger fram i tid. Etter hvert som faktiske målinger kommer inn, krymper estimatet og treffsikkerheten øker. For godt dokumenterte lokasjoner treffer modellen typisk innenfor noen få dager. Men naturen er uforutsigbar — bruk verktøyet som veiledning, ikke fasit.</p>
 
-            <h2>Bygget av</h2>
-            <p>Stian Midtdal. Tilbakemeldinger, observasjoner og forslag mottas med stor takk — det er reelle observasjoner som forbedrer modellen mest. Bruk lenken nederst i menyen.</p>
+            <h2 data-i18n="builtH">Bygget av</h2>
+            <p data-i18n="builtP">Stian Midtdal. Tilbakemeldinger, observasjoner og forslag mottas med stor takk — det er reelle observasjoner som forbedrer modellen mest. Bruk lenken nederst i menyen.</p>
         </div>
     </div>
 
-    <div class="disclaimer">
+    <div class="disclaimer" data-i18n-html="disclaimer">
         <b>En modell er en hjelpemiddel, ikke en fasit.</b> Klekking varierer fra lokasjon til lokasjon og fra år til år. Vær og lokale forhold på selve dagen kan både framskynde og utsette en klekking. HatchWatch er ment som et utgangspunkt for planlegging — ikke en garanti for fisk.
     </div>
 
     <div class="cta-row">
-            <a href="/" class="cta-btn">Se lokasjoner</a>
-            <a href="/artikler.html" class="cta-btn secondary">Les artikler</a>
-            <a href="https://tally.so/r/EkBErN" class="cta-btn secondary">Send tilbakemelding</a>
-            <a href="/personvern.html" class="cta-btn secondary">Personvern</a>
+            <a href="/" class="cta-btn" data-i18n="ctaLoc">Se lokasjoner</a>
+            <a href="/artikler.html" class="cta-btn secondary" data-i18n="ctaArt">Les artikler</a>
+            <a href="https://tally.so/r/EkBErN" class="cta-btn secondary" data-i18n="ctaFb">Send tilbakemelding</a>
+            <a href="/personvern.html" class="cta-btn secondary" data-i18n="ctaPriv">Personvern</a>
         </div>
     </div>
 </main>
 
 <script>
+// Engelsk (2026-10-08): hw-lang.js velger språk; norsk står i HTML-en, engelsk legges over her.
+(function () {
+    if (window.HW_LANG !== 'en') return;
+    var EN = {
+        navHome: 'Front page', navNotif: 'Notifications', navArticles: 'Articles', navFeedback: 'Send feedback',
+        h1: 'About HatchWatch', tagline: 'Hatch forecasts for fly fishers',
+        p1: 'HatchWatch is an open prediction model for mayfly hatches in Norwegian rivers and lakes. It combines air and water temperature history, ice-out observations, snow depth and calibrated thresholds for each location to estimate when the hatch starts for vulgata, marginata, vespertina and other key species.',
+        p2: 'At the heart of the model is the <em>heat sum principle</em> (growing degree days): how fast a nymph develops is driven by temperature, and once the heat accumulated since 1 January passes a threshold specific to the species and the location, the nymph is ready to rise. On top of that sits a <em>dual trigger</em> on water temperature (typically 12 °C), which catches the years when the air is warm before the water has caught up. The hatch date is the first day both conditions are met at the same time.',
+        p3: 'For days ahead, the model blends real measurements with MET Norway’s 10-day forecast, and then the 10-year average for the rest of the season. As real measurements come in day by day, they replace the assumptions, and the forecast settles on an ever more certain date.',
+        betterH: 'Getting better over time',
+        betterP: 'The model is not fixed. Every time a calibrated location gets a new verified hatch observation, the thresholds are adjusted. That is why HatchWatch gets more accurate every year, especially for locations people report from. It is also why reported observations are so valuable.',
+        sourcesH: 'Data sources',
+        src1: '<b>MET Norway (Frost API)</b>: historical air and snow data, plus the 10-day forecast',
+        src2: '<b>NVE (HydAPI)</b>: water temperature and flow from hydrological stations',
+        src3: '<b>Sentinel Hub</b>: ice-out observations from satellite images',
+        src4: '<b>OFA</b>: reference data from the Oslomarka fisheries association for lakes in Nordmarka',
+        src5: '<b>User observations</b>: hatch reports from fly fishers around the country (<a href="/observasjon.html">add yours here</a>)',
+        daily: 'Weather data is updated daily.',
+        uncH: 'Uncertainty',
+        uncP: 'Think of the hatch forecast as a weather forecast: early in the season the uncertainty is bigger, because more of the weather and water development is still ahead. As real measurements come in, the estimate narrows and the accuracy improves. For well-documented locations the model typically lands within a few days. But nature is unpredictable. Use the tool as guidance, not as fact.',
+        builtH: 'Built by',
+        builtP: 'Stian Midtdal. Feedback, observations and ideas are very welcome. Real observations are what improve the model most. Use the link at the bottom of the menu.',
+        disclaimer: '<b>A model is a tool, not an answer key.</b> Hatches vary from place to place and from year to year. The weather and local conditions on the day can bring a hatch forward or push it back. HatchWatch is meant as a starting point for planning, not a guarantee of fish.',
+        ctaLoc: 'See locations', ctaArt: 'Read articles', ctaFb: 'Send feedback', ctaPriv: 'Privacy'
+    };
+    document.title = 'About HatchWatch · HatchWatch';
+    document.querySelectorAll('[data-i18n]').forEach(function (el) { var v = EN[el.getAttribute('data-i18n')]; if (v) el.textContent = v; });
+    document.querySelectorAll('[data-i18n-html]').forEach(function (el) { var v = EN[el.getAttribute('data-i18n-html')]; if (v) el.innerHTML = v; });
+    var mb = document.getElementById('hwMenuBtn');
+    if (mb) { mb.setAttribute('aria-label', 'Menu'); mb.title = 'Menu'; }
+})();
+
 (function() {
     const btn = document.getElementById('hwMenuBtn');
     const dropdown = document.getElementById('hwMenuDropdown');

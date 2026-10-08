@@ -12,6 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="/hw.css">
+<script src="/hw-lang.js"></script>
 <style>
   /* ═══ KARTFORSIDE — redesign 2027 v3 (2026-10-01) ═══
      Mørk flate, tokens fra hw.css. Tre nye grep mot v2:
@@ -195,7 +196,7 @@
       <div class="sum" id="scrubSum">laster…</div>
     </div>
     <input type="range" id="scrubRange" min="60" max="273" value="60" aria-label="Klekkebølgen uke for uke gjennom sesongen">
-    <div class="ticks"><span>Mar</span><span>Apr</span><span>Mai</span><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span></div>
+    <div class="ticks"><span>Mar</span><span>Apr</span><span id="tickMay">Mai</span><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span></div>
   </div>
 
   <div class="sheet" id="sheet" aria-live="polite">
@@ -216,7 +217,7 @@
 
 <!-- Sesong-panel: fylles av skriptet under, åpnes fra Sesong-fanen eller /#sesong -->
 <div class="hwpanel" id="sesongPanel" role="dialog" aria-label="Nå i Norge">
-  <div class="hwp-title"><span>Nå i Norge</span><button class="hwp-close" type="button" id="sesongClose" aria-label="Lukk">×</button></div>
+  <div class="hwp-title"><span id="sesongTitle">Nå i Norge</span><button class="hwp-close" type="button" id="sesongClose" aria-label="Lukk">×</button></div>
   <div class="sesong-head" id="sesongHead"></div>
   <div class="hwp-scroll" id="sesongList"></div>
 </div>
@@ -254,11 +255,35 @@ var CLUSTER_C = { x: 103.4, y: 457.4 };  // sentroid av 5 (Romeriksåsen med, 20
 var W = 340, H = 620;
 var DEFAULT_UNC = 7;   // ukalibrert vann: indikativ ±7 d
 
+// ── Språk (2026-10-08): hw-lang.js velger no/en; tx(no, en) plukker tekst ──
+var EN = window.HW_LANG === 'en';
+function tx(no, en) { return EN ? en : no; }
+(function applyStaticLang() {
+  if (!EN) return;
+  document.title = 'HatchWatch — Norway map';
+  var q = document.getElementById('q'); q.placeholder = 'Search lake, river or place'; q.setAttribute('aria-label', 'Search location');
+  var lb = document.getElementById('locateBtn'); lb.setAttribute('aria-label', 'Nearest me'); lb.title = 'Nearest me';
+  document.getElementById('zin').setAttribute('aria-label', 'Zoom in');
+  document.getElementById('zout').setAttribute('aria-label', 'Zoom out');
+  document.getElementById('scrubDate').title = 'Back to today';
+  document.getElementById('scrubRange').setAttribute('aria-label', 'The hatch wave week by week through the season');
+  document.getElementById('tickMay').textContent = 'May';
+  document.getElementById('shFav').setAttribute('aria-label', 'Add to My waters');
+  document.getElementById('shOpen').textContent = 'Open the forecast';
+  document.getElementById('shClose').textContent = 'Close';
+  document.getElementById('sesongTitle').textContent = 'Norway right now';
+  document.getElementById('sesongPanel').setAttribute('aria-label', 'Norway right now');
+  document.getElementById('sesongClose').setAttribute('aria-label', 'Close');
+  document.getElementById('mapsvg').setAttribute('aria-label', 'Map of Norway with hatch status');
+})();
+
 // ── Dato-hjelpere (dag-i-året, lokal tid) ────────────────────────────
-var MON = ['jan', 'feb', 'mars', 'april', 'mai', 'juni', 'juli', 'aug', 'sep', 'okt', 'nov', 'des'];
+var MON = EN ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+             : ['jan', 'feb', 'mars', 'april', 'mai', 'juni', 'juli', 'aug', 'sep', 'okt', 'nov', 'des'];
 function doyOf(d) { return Math.floor((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - Date.UTC(d.getFullYear(), 0, 1)) / 86400000) + 1; }
 function dateOfDoy(year, n) { return new Date(year, 0, n); }
-function fmtDoy(year, n) { var d = dateOfDoy(year, n); return d.getDate() + '. ' + MON[d.getMonth()]; }
+function fmtDoy(year, n) { var d = dateOfDoy(year, n); return EN ? d.getDate() + ' ' + MON[d.getMonth()] : d.getDate() + '. ' + MON[d.getMonth()]; }
+var MOH = tx('moh', 'm a.s.l.');
 var TODAY = new Date(); TODAY.setHours(0, 0, 0, 0);
 var YEAR = TODAY.getFullYear();
 var TODAY_DOY = doyOf(TODAY);
@@ -299,7 +324,8 @@ function stateAt(pred, T) {
   if (since <= 21) return { st: 'now', days: since + 1 };   // dag 1 = startdagen
   return { st: 'closed', days: since };
 }
-var LBL = { now: 'Pågår', soon: 'Snart', later: 'På vei', closed: 'Ferdig', pre: 'Åpner 1. april', unknown: 'Ingen prognose' };
+var LBL = EN ? { now: 'Under way', soon: 'Soon', later: 'Coming up', closed: 'Over', pre: 'Opens 1 April', unknown: 'No forecast' }
+             : { now: 'Pågår', soon: 'Snart', later: 'På vei', closed: 'Ferdig', pre: 'Åpner 1. april', unknown: 'Ingen prognose' };
 var ORDER = { now: 0, soon: 1, later: 2, closed: 3, unknown: 4, pre: 5 };
 
 // ── Tilstand ─────────────────────────────────────────────────────────
@@ -380,24 +406,30 @@ function paintScrub() {
   var dateBtn = document.getElementById('scrubDate');
   var py = predYear();
   var day = isToday ? TODAY_DOY : T;
-  if (isToday) dateBtn.innerHTML = 'I dag';
-  else dateBtn.innerHTML = fmtDoy(YEAR, T) + '<small>' + (py !== YEAR ? 'sesongen ' + py : 'tilbake til i dag') + '</small>';
+  if (isToday) dateBtn.innerHTML = tx('I dag', 'Today');
+  else dateBtn.innerHTML = fmtDoy(YEAR, T) + '<small>' + (py !== YEAR ? (EN ? 'the ' + py + ' season' : 'sesongen ' + py) : tx('tilbake til i dag', 'back to today')) + '</small>';
   var sum = document.getElementById('scrubSum');
   var longMsg = false;
-  if (!loaded) sum.textContent = 'laster…';
-  else if (day < OPEN_DOY) sum.textContent = 'åpner 1. april';
+  if (!loaded) sum.textContent = tx('laster…', 'loading…');
+  else if (day < OPEN_DOY) sum.textContent = tx('åpner 1. april', 'opens 1 April');
   else if (!cnt.now && !cnt.soon && !cnt.later) {
     // Ingen klekking på vei eller i gang. Står skyveren på i dag og sesongen er
     // bak oss, sier vi det rett ut (Stians ordlyd 2026-10-02) i stedet for en teller.
     var seasonDone = LOCS.some(function (l) { return stateOf(l).st === 'closed'; });
     var nextYear = TODAY >= new Date(YEAR, 3, 1) ? YEAR + 1 : YEAR;
-    if (isToday && seasonDone) { sum.textContent = 'Årets klekkeprognose er ferdig. Prognosen for ' + nextYear + ' åpner i april.'; longMsg = true; }
-    else sum.textContent = 'ingen klekking i gang';
+    if (isToday && seasonDone) {
+      sum.textContent = EN ? 'This year’s hatch forecast is done. The ' + nextYear + ' forecast opens in April.'
+                           : 'Årets klekkeprognose er ferdig. Prognosen for ' + nextYear + ' åpner i april.';
+      longMsg = true;
+    }
+    else sum.textContent = tx('ingen klekking i gang', 'no hatch under way');
   }
-  else sum.textContent = cnt.now + ' pågår · ' + cnt.soon + ' snart · ' + cnt.later + ' på vei';
+  else sum.textContent = EN ? cnt.now + ' under way · ' + cnt.soon + ' soon · ' + cnt.later + ' coming up'
+                            : cnt.now + ' pågår · ' + cnt.soon + ' snart · ' + cnt.later + ' på vei';
   sum.classList.toggle('long', longMsg);
-  document.getElementById('legend').innerHTML =
-    '<span class="hw-chip now"><i></i>Pågår</span><span class="hw-chip soon"><i></i>Snart · under 14 d</span><span class="hw-chip coming"><i></i>På vei</span>';
+  document.getElementById('legend').innerHTML = EN
+    ? '<span class="hw-chip now"><i></i>Under way</span><span class="hw-chip soon"><i></i>Soon · under 14 d</span><span class="hw-chip coming"><i></i>Coming up</span>'
+    : '<span class="hw-chip now"><i></i>Pågår</span><span class="hw-chip soon"><i></i>Snart · under 14 d</span><span class="hw-chip coming"><i></i>På vei</span>';
 }
 function setT(n, today) {
   T = +n; isToday = !!today;
@@ -412,33 +444,44 @@ document.getElementById('scrubDate').addEventListener('click', function () { set
 // ── Bunnark: svaret ved pinnetrykk ───────────────────────────────────
 var sheet = document.getElementById('sheet');
 function stars(n) {
-  var s = '<span class="stars" aria-label="Kalibrering ' + n + ' av 3">';
+  var s = '<span class="stars" aria-label="' + tx('Kalibrering ', 'Calibration ') + n + tx(' av 3', ' of 3') + '">';
   for (var i = 0; i < 3; i++) s += '<svg class="' + (i < n ? '' : 'off') + '"><use href="#star"/></svg>';
   return s + '</span>';
 }
 function calText(l) {
-  if (l.cal) return 'Kalibrert' + (l.n ? ' · ' + l.n + ' år' : '') + ' · typisk avvik ±' + l.unc + ' d';
-  return 'Ukalibrert · indikativ prognose';
+  if (l.cal) return EN ? 'Calibrated' + (l.n ? ' · ' + l.n + ' years' : '') + ' · typically within ±' + l.unc + ' d'
+                       : 'Kalibrert' + (l.n ? ' · ' + l.n + ' år' : '') + ' · typisk avvik ±' + l.unc + ' d';
+  return tx('Ukalibrert · indikativ prognose', 'Not calibrated · rough forecast');
 }
 function uncOf(l) { return l.unc || DEFAULT_UNC; }
 function fillSheet(id) {
   var l = byId(id); if (!l) return;
   var p = preds[id], s = stateOf(l), day = isToday ? TODAY_DOY : T;
   document.getElementById('shName').textContent = l.name;
-  document.getElementById('shSub').textContent = l.region + ' · ' + l.moh + ' moh';
-  document.getElementById('shEye').innerHTML = '<span class="hw-chip ' + (s.st === 'later' ? 'coming' : s.st) + '"><i></i>' + LBL[s.st] + '</span> &nbsp;Vulgata · anslått start';
+  document.getElementById('shSub').textContent = l.region + ' · ' + l.moh + ' ' + MOH;
+  document.getElementById('shEye').innerHTML = '<span class="hw-chip ' + (s.st === 'later' ? 'coming' : s.st) + '"><i></i>' + LBL[s.st] + '</span> &nbsp;' + tx('Vulgata · anslått start', 'Vulgata · estimated start');
   var big = document.getElementById('shBig'), line = document.getElementById('shLine');
   if (!p) {
-    big.innerHTML = '<span style="margin:0;font-size:16px">Ingen lagret prognose ennå</span>';
-    line.innerHTML = 'Prognosen regnes ut når noen åpner vannet. Åpne den, så lagres dagens anslag her.<br>' + stars(l.cal || 0) + '<span class="hw-eyebrow">' + calText(l) + '</span>';
+    big.innerHTML = '<span style="margin:0;font-size:16px">' + tx('Ingen lagret prognose ennå', 'No saved forecast yet') + '</span>';
+    line.innerHTML = tx('Prognosen regnes ut når noen åpner vannet. Åpne den, så lagres dagens anslag her.',
+                        'The forecast is worked out when someone opens the water. Open it, and today’s estimate is saved here.') +
+                     '<br>' + stars(l.cal || 0) + '<span class="hw-eyebrow">' + calText(l) + '</span>';
   } else {
     big.innerHTML = fmtDoy(p.year, p.doy) + '<span>±' + uncOf(l) + ' d</span>';
     var txt;
-    if (s.st === 'pre') txt = 'Sesongen åpner 1. april. Dette er ' + (p.year < YEAR ? 'fjorårets' : 'siste') + ' anslag.';
-    else if (s.st === 'now') txt = '<b>Dag ' + s.days + '.</b> Vulgata er trolig i gang.';
-    else if (s.st === 'closed') txt = 'Årets klekking er over. Modellen anslo start for ' + s.days + ' dager siden.';
-    else txt = '<b>Om ' + s.days + ' dager</b>' + (isToday ? '.' : ' fra ' + fmtDoy(YEAR, day) + '.');
-    if (p.year !== YEAR && s.st !== 'pre') txt += ' <span class="hw-muted">(anslag fra ' + p.year + ')</span>';
+    if (EN) {
+      if (s.st === 'pre') txt = 'The season opens 1 April. This is ' + (p.year < YEAR ? 'last year’s' : 'the latest') + ' estimate.';
+      else if (s.st === 'now') txt = '<b>Day ' + s.days + '.</b> Vulgata is probably under way.';
+      else if (s.st === 'closed') txt = 'This year’s hatch is over. The model estimated the start ' + s.days + ' days ago.';
+      else txt = '<b>In ' + s.days + ' days</b>' + (isToday ? '.' : ' from ' + fmtDoy(YEAR, day) + '.');
+      if (p.year !== YEAR && s.st !== 'pre') txt += ' <span class="hw-muted">(estimate from ' + p.year + ')</span>';
+    } else {
+      if (s.st === 'pre') txt = 'Sesongen åpner 1. april. Dette er ' + (p.year < YEAR ? 'fjorårets' : 'siste') + ' anslag.';
+      else if (s.st === 'now') txt = '<b>Dag ' + s.days + '.</b> Vulgata er trolig i gang.';
+      else if (s.st === 'closed') txt = 'Årets klekking er over. Modellen anslo start for ' + s.days + ' dager siden.';
+      else txt = '<b>Om ' + s.days + ' dager</b>' + (isToday ? '.' : ' fra ' + fmtDoy(YEAR, day) + '.');
+      if (p.year !== YEAR && s.st !== 'pre') txt += ' <span class="hw-muted">(anslag fra ' + p.year + ')</span>';
+    }
     line.innerHTML = txt + '<br>' + stars(l.cal || 0) + '<span class="hw-eyebrow">' + calText(l) + '</span>';
   }
   document.getElementById('shFav').classList.toggle('on', isFav(id));
@@ -473,8 +516,8 @@ qIn.addEventListener('input', function () {
   if (v.length < 1) { hits.classList.remove('open'); return; }
   var m = LOCS.filter(function (l) { return l.name.toLowerCase().indexOf(v) >= 0 || l.region.toLowerCase().indexOf(v) >= 0; }).slice(0, 6);
   hits.innerHTML = m.length ? m.map(function (l) {
-    return '<button class="hit" type="button" data-id="' + l.id + '"><span><b>' + l.name + '</b><small>' + l.region + ' · ' + l.moh + ' moh</small></span>' + chipFor(l) + '</button>';
-  }).join('') : '<div class="hit-empty">Ingen treff. Vi dekker 16 områder så langt, og flere kommer.</div>';
+    return '<button class="hit" type="button" data-id="' + l.id + '"><span><b>' + l.name + '</b><small>' + l.region + ' · ' + l.moh + ' ' + MOH + '</small></span>' + chipFor(l) + '</button>';
+  }).join('') : '<div class="hit-empty">' + tx('Ingen treff. Vi dekker 16 områder så langt, og flere kommer.', 'No match. We cover 16 areas so far, and more are coming.') + '</div>';
   hits.classList.add('open');
 });
 hits.addEventListener('click', function (e) { var b = e.target.closest('.hit'); if (b) goTo(byId(b.getAttribute('data-id'))); });
@@ -488,16 +531,16 @@ function haversine(a, b, c, d) {
 }
 document.getElementById('locateBtn').addEventListener('click', function () {
   var btn = this;
-  if (!navigator.geolocation) { btn.title = 'Posisjon støttes ikke'; return; }
+  if (!navigator.geolocation) { btn.title = tx('Posisjon støttes ikke', 'Location is not supported'); return; }
   btn.disabled = true; btn.style.opacity = '.6';
   navigator.geolocation.getCurrentPosition(function (pos) {
     btn.disabled = false; btn.style.opacity = '';
     var best = null, bd = 1e9;
     LOCS.forEach(function (l) { var d = haversine(pos.coords.latitude, pos.coords.longitude, l.lat, l.lon); if (d < bd) { bd = d; best = l; } });
-    if (best) { goTo(best); document.getElementById('shSub').textContent = best.region + ' · ' + best.moh + ' moh · ' + Math.round(bd) + ' km unna'; }
+    if (best) { goTo(best); document.getElementById('shSub').textContent = best.region + ' · ' + best.moh + ' ' + MOH + ' · ' + Math.round(bd) + tx(' km unna', ' km away'); }
   }, function () {
     btn.disabled = false; btn.style.opacity = '';
-    qIn.focus(); qIn.placeholder = 'Posisjon avslått. Søk i stedet.';
+    qIn.focus(); qIn.placeholder = tx('Posisjon avslått. Søk i stedet.', 'Location declined. Search instead.');
   }, { timeout: 8000, maximumAge: 300000 });
 });
 
@@ -507,11 +550,11 @@ function pct(n) { var a = OPEN_DOY - 10, b = doyOf(new Date(YEAR, 7, 15)); retur
 function rowHTML(l) {
   var p = preds[l.id], s = stateOf(l), day = isToday ? TODAY_DOY : T, st = s.st, cls = st === 'later' ? 'coming' : st;
   var right;
-  if (!p) right = '<div class="d hw-muted">–</div><span>ingen prognose</span>';
-  else if (st === 'pre') right = '<div class="d">' + fmtDoy(p.year, p.doy) + '</div><span>' + (p.year < YEAR ? 'fjorårets anslag' : 'siste anslag') + '</span>';
-  else if (st === 'now') right = '<div class="d" style="color:var(--hw-hatch)">dag ' + s.days + '</div><span>' + fmtDoy(p.year, p.doy) + ' ±' + uncOf(l) + '</span>';
-  else if (st === 'closed') right = '<div class="d hw-muted">ferdig</div><span>' + fmtDoy(p.year, p.doy) + '</span>';
-  else right = '<div class="d">om ' + s.days + ' d</div><span>' + fmtDoy(p.year, p.doy) + ' ±' + uncOf(l) + '</span>';
+  if (!p) right = '<div class="d hw-muted">–</div><span>' + tx('ingen prognose', 'no forecast') + '</span>';
+  else if (st === 'pre') right = '<div class="d">' + fmtDoy(p.year, p.doy) + '</div><span>' + (p.year < YEAR ? tx('fjorårets anslag', 'last year’s estimate') : tx('siste anslag', 'latest estimate')) + '</span>';
+  else if (st === 'now') right = '<div class="d" style="color:var(--hw-hatch)">' + tx('dag ', 'day ') + s.days + '</div><span>' + fmtDoy(p.year, p.doy) + ' ±' + uncOf(l) + '</span>';
+  else if (st === 'closed') right = '<div class="d hw-muted">' + tx('ferdig', 'over') + '</div><span>' + fmtDoy(p.year, p.doy) + '</span>';
+  else right = '<div class="d">' + tx('om ', 'in ') + s.days + ' d</div><span>' + fmtDoy(p.year, p.doy) + ' ±' + uncOf(l) + '</span>';
   var bar = p ? '<div class="mini"><i style="left:' + pct(p.doy - uncOf(l)) + '%;width:' + (pct(p.doy + 21) - pct(p.doy - uncOf(l))) + '%"></i><em style="left:' + pct(day) + '%"></em></div>' : '';
   return '<a class="lrow" href="/dashboard.html?loc=' + encodeURIComponent(l.id) + '"><div class="grow"><b>' + l.name + '</b><span class="sub">' + l.region + ' <span class="hw-chip ' + cls + '"><i></i>' + LBL[st] + '</span></span>' + bar + '</div><div class="r">' + right + '</div></a>';
 }
@@ -524,7 +567,7 @@ function paintSesong() {
     var pa = preds[a.id], pb = preds[b.id];
     return (pa ? pa.doy : 999) - (pb ? pb.doy : 999);
   });
-  document.getElementById('sesongHead').textContent = (isToday ? 'I dag, ' : '') + fmtDoy(YEAR, day) + ' · alle vann sortert etter hvor nær klekkingen er.';
+  document.getElementById('sesongHead').textContent = (isToday ? tx('I dag, ', 'Today, ') : '') + fmtDoy(YEAR, day) + tx(' · alle vann sortert etter hvor nær klekkingen er.', ' · all waters sorted by how close the hatch is.');
   document.getElementById('sesongList').innerHTML = sorted.map(rowHTML).join('');
 }
 function openSesong() {
@@ -553,8 +596,8 @@ window.HW_SHELL = {
     var l = byId(id); if (!l) return '';
     var p = preds[id], s = stateOf(l);
     if (!p) return LBL[s.st];
-    if (s.st === 'now') return 'Pågår · dag ' + s.days;
-    if (s.st === 'soon' || s.st === 'later') return 'Om ' + s.days + ' dager · ' + fmtDoy(p.year, p.doy);
+    if (s.st === 'now') return LBL.now + tx(' · dag ', ' · day ') + s.days;
+    if (s.st === 'soon' || s.st === 'later') return tx('Om ', 'In ') + s.days + tx(' dager · ', ' days · ') + fmtDoy(p.year, p.doy);
     return LBL[s.st] + ' · ' + fmtDoy(p.year, p.doy);
   }
 };

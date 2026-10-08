@@ -46,31 +46,35 @@
     book: '<svg viewBox="0 0 24 24"><path d="M4 19V5a2 2 0 0 1 2-2h13v18H6a2 2 0 0 1-2-2z"/><path d="M8 7h7M8 11h7"/></svg>',
     drop: '<svg viewBox="0 0 24 24"><path d="M12 3c3 4.5 6 7.5 6 11a6 6 0 1 1-12 0c0-3.5 3-6.5 6-11z"/></svg>',
     info: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>',
-    out: '<svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9"/><path d="M21 3l-9 9M15 3h6v6"/></svg>'
+    out: '<svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9"/><path d="M21 3l-9 9M15 3h6v6"/></svg>',
+    globe: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></svg>'
   };
 
   var path = location.pathname.replace(/\/index\.html$/, '/');
   var pageTab = path === '/' ? (location.hash === '#sesong' ? 'sesong' : 'home') : '';
 
-  // Tekster: norsk er standard; dashboardet kan be om engelsk via cfg.lang.
-  var EN = cfg.lang === 'en';
+  // Tekster: språket kommer fra hw-lang.js (window.HW_LANG); dashboardet kan
+  // overstyre via cfg.lang. Uten hw-lang.js: norsk.
+  var EN = (cfg.lang || window.HW_LANG) === 'en';
   var S = EN ? {
-    map: 'Map', season: 'Season', fav: 'My waters', menu: 'Menu', close: 'Close',
+    map: 'Map', season: 'Season', fav: 'My waters', menu: 'Menu', close: 'Close', nav: 'Main navigation',
     obs: 'Report a hatch', obsSub: 'Seen a hatch? It makes the model better.',
     notif: 'Notifications', notifSub: 'Hatch, spinner fall, ants · push',
-    articles: 'Articles', articlesSub: 'Mayflies, spinner fall, ants',
+    articles: 'Articles', articlesSub: 'Mayflies, spinner fall, ants · in Norwegian for now',
     ofa: 'OFA stocking', ofaSub: 'Nordmarka 2021–2025',
     about: 'About HatchWatch', aboutSub: 'The model, data sources, stations',
     feedback: 'Send feedback', feedbackSub: 'Beta · we read everything',
+    lang: 'Norsk', langSub: 'Switch to Norwegian',
     empty: '<b>No waters yet.</b><br>Tap the heart on a water in the map or at the top of a forecast, and your waters gather here. Your notifications follow this list.'
   } : {
-    map: 'Kart', season: 'Sesong', fav: 'Mine vann', menu: 'Meny', close: 'Lukk',
+    map: 'Kart', season: 'Sesong', fav: 'Mine vann', menu: 'Meny', close: 'Lukk', nav: 'Hovednavigasjon',
     obs: 'Meld observasjon', obsSub: 'Så du klekking? Det gjør modellen bedre.',
     notif: 'Varsler', notifSub: 'Klekking, spinnerfall, stokkmaur · push',
     articles: 'Artikler', articlesSub: 'Døgnfluer, spinnerfall, stokkmaur',
     ofa: 'OFA settefisk', ofaSub: 'Utsett i Nordmarka 2021–2025',
     about: 'Om HatchWatch', aboutSub: 'Modellen, datakildene, stasjonene',
     feedback: 'Send tilbakemelding', feedbackSub: 'Beta · vi leser alt',
+    lang: 'English', langSub: 'Bytt til engelsk',
     empty: '<b>Ingen vann ennå.</b><br>Trykk hjertet på et vann i kartet eller øverst på prognosen, så samler vannene dine seg her. Varslene dine følger denne lista.'
   };
 
@@ -87,7 +91,7 @@
   var extras = Array.isArray(cfg.menuExtra) ? cfg.menuExtra : [];
 
   var html =
-    '<nav id="hwBar" aria-label="Hovednavigasjon">' +
+    '<nav id="hwBar" aria-label="' + S.nav + '">' +
       '<a class="hwb" data-tab="home" href="/">' + ICON.map + '<span>' + S.map + '</span></a>' +
       '<a class="hwb" data-tab="sesong" href="/#sesong">' + ICON.season + '<span>' + S.season + '</span></a>' +
       '<button class="hwb" data-tab="fav" id="hwbFav" type="button">' + ICON.heart + '<span>' + S.fav + '</span></button>' +
@@ -107,6 +111,8 @@
         row('/om.html', ICON.info, S.about, S.aboutSub) +
         row('https://tally.so/r/EkBErN', ICON.out, S.feedback, S.feedbackSub, ' target="_blank" rel="noopener"') +
         extras.map(function (x, i) { return btnRow(i, x.icon || ICON.out, x.title, x.sub); }).join('') +
+        '<button class="hwp-row" type="button" id="hwbLang">' + ICON.globe +
+          '<span><span class="mt">' + S.lang + '</span><span class="ms">' + S.langSub + '</span></span><span class="chev">›</span></button>' +
         '<div class="hwp-foot">hatchwatch.no · beta · data: MET · NVE · Sentinel</div>' +
       '</div>' +
     '</div>';
@@ -159,6 +165,11 @@
   });
   mount.querySelectorAll('[data-extra]').forEach(function (b) {
     b.addEventListener('click', function () { var x = extras[+b.getAttribute('data-extra')]; closeAll(); if (x && typeof x.onClick === 'function') x.onClick(); });
+  });
+  document.getElementById('hwbLang').addEventListener('click', function () {
+    if (typeof window.hwToggleLang === 'function') { window.hwToggleLang(); return; }
+    try { localStorage.setItem('lang', EN ? 'no' : 'en'); } catch (e) {}
+    location.reload();
   });
   mount.querySelectorAll('.hwp-close').forEach(function (b) { b.addEventListener('click', closeAll); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeAll(); });
