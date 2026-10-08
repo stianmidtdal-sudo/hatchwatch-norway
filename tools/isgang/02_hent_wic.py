@@ -81,10 +81,13 @@ function evaluatePixel(s) {
 
 
 def les_env():
+    """Nøkler fra tools/isgang/.env, ellers fra miljøet (GitHub-hemmeligheter i
+    skyjobben). Rettet 2026-10-08: re-innloggingen i send() leste bare .env,
+    så skyjobben stoppet etter første utløpte token."""
+    ut = {k: os.environ[k] for k in ("CDSE_CLIENT_ID", "CDSE_CLIENT_SECRET") if os.environ.get(k)}
     sti = os.path.join(HER, ".env")
     if not os.path.exists(sti):
-        return {}
-    ut = {}
+        return ut
     for linje in io.open(sti, encoding="utf-8-sig"):
         linje = linje.strip()
         if not linje or linje.startswith("#") or "=" not in linje:
