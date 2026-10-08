@@ -1,0 +1,625 @@
+{
+ "omraade": {
+  "id": "nordmarka",
+  "navn": "Nordmarka og Krokskogen",
+  "bbox": [
+   10.4,
+   59.98,
+   10.9,
+   60.25
+  ]
+ },
+ "min_ha": 10.0,
+ "hentet": "2026-10-08",
+ "vann": [
+  {
+   "vatnlnr": 298,
+   "navn": "Maridalsvannet",
+   "moh": 149,
+   "areal_ha": 389.4,
+   "piksel_m": 40
+  },
+  {
+   "vatnlnr": 304,
+   "navn": "Store Sandungen",
+   "moh": 391,
+   "areal_ha": 385.5,
+   "piksel_m": 40
+  },
+  {
+   "vatnlnr": 604,
+   "navn": "Øyangen",
+   "moh": 562,
+   "areal_ha": 309.1,
+   "piksel_m": 40
+  },
+  {
+   "vatnlnr": 140,
+   "navn": "Gjerdingen",
+   "moh": 449,
+   "areal_ha": 299.5,
+   "piksel_m": 40
+  },
+  {
+   "vatnlnr": 299,
+   "navn": "Katnosa",
+   "moh": 464,
+   "areal_ha": 227.1,
+   "piksel_m": 40
+  },
+  {
+   "vatnlnr": 116,
+   "navn": "Harestuvatnet",
+   "moh": 234,
+   "areal_ha": 205.9,
+   "piksel_m": 40
+  },
+  {
+   "vatnlnr": 306,
+   "navn": "Storflåtan",
+   "moh": 451,
+   "areal_ha": 193.7,
+   "piksel_m": 40
+  },
+  {
+   "vatnlnr": 303,
+   "navn": "Hakkloa",
+   "moh": 373,
+   "areal_ha": 189.6,
+   "piksel_m": 40
+  },
+  {
+   "vatnlnr": 300,
+   "navn": "Helgeren",
+   "moh": 358,
+   "areal_ha": 182.1,
+   "piksel_m": 40
+  },
+  {
+   "vatnlnr": 117,
+   "navn": "Mylla",
+   "moh": 496,
+   "areal_ha": 173.7,
+   "piksel_m": 40
+  },
+  {
+   "vatnlnr": 302,
+   "navn": "Bjørnsjøen",
+   "moh": 337,
+   "areal_ha": 160.7,
+   "piksel_m": 40
+  },
+  {
+   "vatnlnr": 305,
+   "navn": "Østre Fyllingen",
+   "moh": 350,
+   "areal_ha": 157.1,
+   "piksel_m": 40
+  },
+  {
+   "vatnlnr": 307,
+   "navn": "Søndre Heggelivatnet",
+   "moh": 500,
+   "areal_ha": 153.1,
+   "piksel_m": 40
+  },
+  {
+   "vatnlnr": 2518,
+   "navn": "Vesleflåtan",
+   "moh": 447,
+   "areal_ha": 118.9,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 308,
+   "navn": "Nordre Heggelivatnet",
+   "moh": 500,
+   "areal_ha": 100.4,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5035,
+   "navn": "Storøyungen",
+   "moh": 331,
+   "areal_ha": 97.6,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 2502,
+   "navn": "Spålen",
+   "moh": 478,
+   "areal_ha": 92.9,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 184,
+   "navn": "Råsjøen",
+   "moh": 436,
+   "areal_ha": 88.5,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5144,
+   "navn": "Ørfiske",
+   "moh": 337,
+   "areal_ha": 77.2,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 2517,
+   "navn": "Heimtjern",
+   "moh": 315,
+   "areal_ha": 76.2,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5170,
+   "navn": "Øyungen",
+   "moh": 282,
+   "areal_ha": 75.0,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5013,
+   "navn": "Store Skillingen",
+   "moh": 249,
+   "areal_ha": 70.3,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 301,
+   "navn": "Skjersjøen",
+   "moh": 260,
+   "areal_ha": 64.9,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5099,
+   "navn": "Elvannet",
+   "moh": 341,
+   "areal_ha": 64.9,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5112,
+   "navn": "Svarten",
+   "moh": 387,
+   "areal_ha": 58.5,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5111,
+   "navn": "Trehørningen",
+   "moh": 360,
+   "areal_ha": 58.0,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5114,
+   "navn": "Langvann",
+   "moh": 342,
+   "areal_ha": 54.6,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 2503,
+   "navn": "Buvatn",
+   "moh": 499,
+   "areal_ha": 50.4,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 4977,
+   "navn": "Fjellsjøen",
+   "moh": 425,
+   "areal_ha": 49.4,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5168,
+   "navn": "Rottungen",
+   "moh": 309,
+   "areal_ha": 45.5,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 4992,
+   "navn": "Mosjøen",
+   "moh": 525,
+   "areal_ha": 44.0,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 4948,
+   "navn": "Råbjørn",
+   "moh": 490,
+   "areal_ha": 43.4,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5095,
+   "navn": "Damtjern",
+   "moh": 453,
+   "areal_ha": 43.4,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5194,
+   "navn": "Byvatnet",
+   "moh": 338,
+   "areal_ha": 43.0,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 4981,
+   "navn": "Bjertnessjøen",
+   "moh": 338,
+   "areal_ha": 42.7,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 2504,
+   "navn": "Skarvvatnet",
+   "moh": 504,
+   "areal_ha": 42.2,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 67987,
+   "navn": "Aklangen",
+   "moh": 464,
+   "areal_ha": 37.3,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 2497,
+   "navn": "Store Daltjuven",
+   "moh": 445,
+   "areal_ha": 37.2,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 2506,
+   "navn": "Ølja",
+   "moh": 528,
+   "areal_ha": 37.0,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5003,
+   "navn": "Vrangen",
+   "moh": 478,
+   "areal_ha": 37.0,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5021,
+   "navn": "Damsortungen",
+   "moh": 444,
+   "areal_ha": 36.9,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5182,
+   "navn": "Trehørningen",
+   "moh": 371,
+   "areal_ha": 33.1,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 2507,
+   "navn": "Store Fyllingen",
+   "moh": 473,
+   "areal_ha": 29.2,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 4950,
+   "navn": "Store Klattertjernet",
+   "moh": 433,
+   "areal_ha": 27.3,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5103,
+   "navn": "Bleiksjøen",
+   "moh": 445,
+   "areal_ha": 25.2,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 2505,
+   "navn": "Tverrsjøen",
+   "moh": 510,
+   "areal_ha": 24.7,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5089,
+   "navn": "Nordvannet",
+   "moh": 361,
+   "areal_ha": 24.4,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5225,
+   "navn": "Triungsvanna",
+   "moh": 352,
+   "areal_ha": 24.0,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5216,
+   "navn": "Aurevann",
+   "moh": 276,
+   "areal_ha": 23.1,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 4963,
+   "navn": "Åssjøen",
+   "moh": 559,
+   "areal_ha": 22.4,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5200,
+   "navn": "Setervann",
+   "moh": 412,
+   "areal_ha": 21.4,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 67923,
+   "navn": "Skamrek",
+   "moh": null,
+   "areal_ha": 21.0,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5094,
+   "navn": "Nordre Måsjøen",
+   "moh": 393,
+   "areal_ha": 19.8,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5206,
+   "navn": "Småvann",
+   "moh": 312,
+   "areal_ha": 18.9,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5361,
+   "navn": "Strykenvatnet",
+   "moh": 234,
+   "areal_ha": 17.9,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5135,
+   "navn": "Nibbitjern",
+   "moh": 527,
+   "areal_ha": 16.8,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5032,
+   "navn": "Steinsortungen",
+   "moh": 447,
+   "areal_ha": 16.2,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5125,
+   "navn": "Hakklokroktjern",
+   "moh": 443,
+   "areal_ha": 16.2,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5145,
+   "navn": "Store Gørja",
+   "moh": 376,
+   "areal_ha": 16.2,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 2498,
+   "navn": "Grimstjernet",
+   "moh": 454,
+   "areal_ha": 16.1,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 2516,
+   "navn": "Kalvsjøen",
+   "moh": 387,
+   "areal_ha": 16.0,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 4994,
+   "navn": "Store Elsjø",
+   "moh": 509,
+   "areal_ha": 15.3,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 4980,
+   "navn": "Langpiperen",
+   "moh": 532,
+   "areal_ha": 14.5,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5102,
+   "navn": "Åbortjern",
+   "moh": 393,
+   "areal_ha": 14.3,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5205,
+   "navn": "Dausjøen",
+   "moh": 154,
+   "areal_ha": 14.2,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5024,
+   "navn": "Finntjern",
+   "moh": 494,
+   "areal_ha": 13.9,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5131,
+   "navn": "Kringla",
+   "moh": 331,
+   "areal_ha": 13.8,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5054,
+   "navn": "Fagervatnet",
+   "moh": 515,
+   "areal_ha": 13.7,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5141,
+   "navn": "Store Oppkuvvatnet",
+   "moh": 586,
+   "areal_ha": 13.7,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5208,
+   "navn": "Store Åklungen",
+   "moh": 293,
+   "areal_ha": 13.5,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 4991,
+   "navn": "Søndre Tvekjelleren",
+   "moh": 493,
+   "areal_ha": 13.4,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 2515,
+   "navn": "Aurevann",
+   "moh": 293,
+   "areal_ha": 12.8,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5014,
+   "navn": "Lauvtangen",
+   "moh": 472,
+   "areal_ha": 12.6,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5022,
+   "navn": "Buvann",
+   "moh": 472,
+   "areal_ha": 12.6,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5101,
+   "navn": "Søndre Måsjøen",
+   "moh": 393,
+   "areal_ha": 12.2,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 4995,
+   "navn": "Vesle Skillingen",
+   "moh": 235,
+   "areal_ha": 12.0,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5110,
+   "navn": "Øvre Øyvann",
+   "moh": 357,
+   "areal_ha": 12.0,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5134,
+   "navn": "Holmetjern",
+   "moh": 413,
+   "areal_ha": 11.8,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 4985,
+   "navn": "Langvatn",
+   "moh": 585,
+   "areal_ha": 11.6,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 4943,
+   "navn": "Belteren",
+   "moh": 497,
+   "areal_ha": 11.5,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5185,
+   "navn": "Kopperhaugtjernet",
+   "moh": 428,
+   "areal_ha": 10.9,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5150,
+   "navn": "Fortjern",
+   "moh": 338,
+   "areal_ha": 10.7,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5192,
+   "navn": "Fagervann",
+   "moh": 416,
+   "areal_ha": 10.7,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 4957,
+   "navn": "Skotjernet",
+   "moh": 538,
+   "areal_ha": 10.6,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5015,
+   "navn": "Store Sindera",
+   "moh": 484,
+   "areal_ha": 10.6,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5140,
+   "navn": "Lille Gørja",
+   "moh": 371,
+   "areal_ha": 10.6,
+   "piksel_m": 20
+  },
+  {
+   "vatnlnr": 5085,
+   "navn": "Store Åbortjern",
+   "moh": 508,
+   "areal_ha": 10.3,
+   "piksel_m": 20
+  }
+ ]
+}
