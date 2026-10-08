@@ -10,6 +10,7 @@
     <link rel="icon" type="image/png" sizes="64x64" href="/logos/favicon-64.png?v=2">
     <link rel="apple-touch-icon" href="/logos/apple-touch-icon-180.png">
     <link rel="stylesheet" href="/hw.css">
+    <script src="/hw-lang.js"></script>
     <link rel="manifest" href="/manifest.json">
     <style>
         * { box-sizing: border-box; }
@@ -294,10 +295,10 @@
     <div class="header-controls">
         <button id="hwMenuBtn" type="button" aria-label="Meny" title="Meny"></button>
         <div id="hwMenuDropdown">
-            <a href="/" class="hw-menu-item">Forside</a>
-            <a href="/varsler.html" class="hw-menu-item">Varsler</a>
-            <a href="/om.html" class="hw-menu-item">Om HatchWatch</a>
-            <a href="https://tally.so/r/EkBErN" class="hw-menu-item">Send tilbakemelding</a>
+            <a href="/" class="hw-menu-item" data-i18n-html="a1">Forside</a>
+            <a href="/varsler.html" class="hw-menu-item" data-i18n-html="a2">Varsler</a>
+            <a href="/om.html" class="hw-menu-item" data-i18n-html="a3">Om HatchWatch</a>
+            <a href="https://tally.so/r/EkBErN" class="hw-menu-item" data-i18n-html="a4">Send tilbakemelding</a>
         </div>
     </div>
 </nav>
@@ -306,33 +307,33 @@
 
 <!-- ═══ ARTIKKEL-OVERSIKT (magasin-layout) ═══ -->
 <div class="article-list-wrap" id="articleListWrap">
-    <h1 class="intro-title">Artikler</h1>
-    <p class="intro-tagline">Biologien, været og fortellingen bak norsk stillevannsfiske. Hva som driver klekkingene, spinnerfallene og maursvermingene du jakter — og hvorfor det er verdt å forstå.</p>
+    <h1 class="intro-title" data-i18n-html="a5">Artikler</h1>
+    <p class="intro-tagline" data-i18n-html="a6">Biologien, været og fortellingen bak norsk stillevannsfiske. Hva som driver klekkingene, spinnerfallene og maursvermingene du jakter — og hvorfor det er verdt å forstå.</p>
 
     <!-- HERO ROW -->
     <div class="hero-row">
         <div class="article-card" data-id="klekkinger">
             <div class="img-wrap"><img src="/article-images/klekkinger.jpg" alt="Bredelv med skyer"></div>
-            <div class="topic">Generelt · Biologi</div>
-            <h3>Døgnflueklekkinger — varmesum og biologi</h3>
-            <p>Hvorfor klekker det noen ganger ikke før i juli i Nordmarka, mens Østmarka allerede er ferdig?</p>
-            <div class="read-link">Les artikkelen →</div>
+            <div class="topic" data-i18n-html="a7">Generelt · Biologi</div>
+            <h3 data-i18n-html="a8">Døgnflueklekkinger — varmesum og biologi</h3>
+            <p data-i18n-html="a9">Hvorfor klekker det noen ganger ikke før i juli i Nordmarka, mens Østmarka allerede er ferdig?</p>
+            <div class="read-link" data-i18n-html="a10">Les artikkelen →</div>
         </div>
 
         <div class="article-card feature" data-id="vulgata">
             <div class="img-wrap"><img src="/article-images/vulgata.jpg" alt="Vulgata på finger"></div>
-            <div class="topic">Døgnflue · Stillevann</div>
-            <h3>Ephemera vulgata — norges største stillevannsdøgnflue</h3>
-            <p>Den er så stor at du ikke kan ta feil av den. Når vulgataspinnerne dropper på en stille junikveld, kommer selv de mest forsiktige storfiskene opp i overflaten. Her er biologien bak en av de mest etterlengtede hendelsene i norsk fluefiske.</p>
-            <div class="read-link">Les artikkelen →</div>
+            <div class="topic" data-i18n-html="a11">Døgnflue · Stillevann</div>
+            <h3 data-i18n-html="a12">Ephemera vulgata — norges største stillevannsdøgnflue</h3>
+            <p data-i18n-html="a13">Den er så stor at du ikke kan ta feil av den. Når vulgataspinnerne dropper på en stille junikveld, kommer selv de mest forsiktige storfiskene opp i overflaten. Her er biologien bak en av de mest etterlengtede hendelsene i norsk fluefiske.</p>
+            <div class="read-link" data-i18n-html="a14">Les artikkelen →</div>
         </div>
 
         <div class="article-card" data-id="spinnerfall">
             <div class="img-wrap"><img src="/article-images/spinnerfall.jpg" alt="Kajakk i solnedgang"></div>
-            <div class="topic">Generelt · Spinnerfall</div>
-            <h3>Spinnerfall — paringens siste akt</h3>
-            <p>Det biologiske øyeblikket hvor en hel generasjon døgnfluer dør på samme overflate — og fisken vet det.</p>
-            <div class="read-link">Les artikkelen →</div>
+            <div class="topic" data-i18n-html="a15">Generelt · Spinnerfall</div>
+            <h3 data-i18n-html="a16">Spinnerfall — paringens siste akt</h3>
+            <p data-i18n-html="a17">Det biologiske øyeblikket hvor en hel generasjon døgnfluer dør på samme overflate — og fisken vet det.</p>
+            <div class="read-link" data-i18n-html="a18">Les artikkelen →</div>
         </div>
     </div>
 
@@ -340,368 +341,596 @@
     <div class="article-grid">
         <div class="article-card" data-id="marginata">
             <div class="img-wrap"><img src="/article-images/marginata.jpg" alt="Skogstjern"></div>
-            <div class="topic">Døgnflue · Stillevann</div>
-            <h3>Leptophlebia marginata — den brune skogsdøgnflua</h3>
-            <p>Hun er ikke spektakulær som vulgata, men ofte førstemann ut. Klekker tidlig, og lenge.</p>
-            <div class="read-link">Les artikkelen →</div>
+            <div class="topic" data-i18n-html="a19">Døgnflue · Stillevann</div>
+            <h3 data-i18n-html="a20">Leptophlebia marginata — den brune skogsdøgnflua</h3>
+            <p data-i18n-html="a21">Hun er ikke spektakulær som vulgata, men ofte førstemann ut. Klekker tidlig, og lenge.</p>
+            <div class="read-link" data-i18n-html="a22">Les artikkelen →</div>
         </div>
 
         <div class="article-card" data-id="vespertina">
             <div class="img-wrap"><img src="/article-images/vespertina.jpg" alt="Elv i kveldslys"></div>
-            <div class="topic">Døgnflue · Stillevann</div>
-            <h3>Leptophlebia vespertina — søsteren som klekker sent</h3>
-            <p>Marginatas ettermiddagsversjon. Nøkkelen til mai- og junikvelder mange overser.</p>
-            <div class="read-link">Les artikkelen →</div>
+            <div class="topic" data-i18n-html="a23">Døgnflue · Stillevann</div>
+            <h3 data-i18n-html="a24">Leptophlebia vespertina — søsteren som klekker sent</h3>
+            <p data-i18n-html="a25">Marginatas ettermiddagsversjon. Nøkkelen til mai- og junikvelder mange overser.</p>
+            <div class="read-link" data-i18n-html="a26">Les artikkelen →</div>
         </div>
 
         <div class="article-card" data-id="stokkmaur">
             <div class="img-wrap"><img src="/article-images/stokkmaur.jpg" alt="Reinsdyrgevir i bjørketre"></div>
-            <div class="topic">Maur · Bonanza</div>
-            <h3>Stokkmaur — fluefiskerens sjeldenheter</h3>
-            <p>Når stokkmaurkolonien svermer, går selv de mest forsiktige storfiskene av skaftet.</p>
-            <div class="read-link">Les artikkelen →</div>
+            <div class="topic" data-i18n-html="a27">Maur · Bonanza</div>
+            <h3 data-i18n-html="a28">Stokkmaur — fluefiskerens sjeldenheter</h3>
+            <p data-i18n-html="a29">Når stokkmaurkolonien svermer, går selv de mest forsiktige storfiskene av skaftet.</p>
+            <div class="read-link" data-i18n-html="a30">Les artikkelen →</div>
         </div>
     </div>
 
     <!-- PULL QUOTE -->
     <div class="pullquote-block">
-        <div class="quote">«I overgangstimene til sommernatten vet alle innsjøens fiskearter hva som skjer.»</div>
-        <div class="attribution">Lars Nilssen — om vulgata-spinnerfallet</div>
+        <div class="quote" data-i18n-html="a31">«I overgangstimene til sommernatten vet alle innsjøens fiskearter hva som skjer.»</div>
+        <div class="attribution" data-i18n-html="a32">Lars Nilssen — om vulgata-spinnerfallet</div>
     </div>
 
     <!-- ROW 3 -->
     <div class="article-grid">
         <div class="article-card" data-id="maursverming">
             <div class="img-wrap"><img src="/article-images/maursverming.jpg" alt="Bål ved skogstjern"></div>
-            <div class="topic">Maur · Bonus</div>
-            <h3>Maursverming generelt — flygende maur i fluefiske</h3>
-            <p>Stokkmaur er den dramatiske, men ikke den eneste. Lasius, Formica, Myrmica — og når de fyrer.</p>
-            <div class="read-link">Les artikkelen →</div>
+            <div class="topic" data-i18n-html="a33">Maur · Bonus</div>
+            <h3 data-i18n-html="a34">Maursverming generelt — flygende maur i fluefiske</h3>
+            <p data-i18n-html="a35">Stokkmaur er den dramatiske, men ikke den eneste. Lasius, Formica, Myrmica — og når de fyrer.</p>
+            <div class="read-link" data-i18n-html="a36">Les artikkelen →</div>
         </div>
 
         <div class="article-card" data-id="kronologi">
             <div class="img-wrap"><img src="/article-images/kronologi.jpg" alt="Myrvei sen kveld"></div>
-            <div class="topic">Generelt · Bonus</div>
-            <h3>Klekkerekken gjennom året — en kronologi</h3>
-            <p>Den norske stillevannsesongen som en sammenhengende kalender, fra første vårklekking til siste maursverming.</p>
-            <div class="read-link">Les artikkelen →</div>
+            <div class="topic" data-i18n-html="a37">Generelt · Bonus</div>
+            <h3 data-i18n-html="a38">Klekkerekken gjennom året — en kronologi</h3>
+            <p data-i18n-html="a39">Den norske stillevannsesongen som en sammenhengende kalender, fra første vårklekking til siste maursverming.</p>
+            <div class="read-link" data-i18n-html="a40">Les artikkelen →</div>
         </div>
     </div>
 </div>
 
 <!-- ═══ ARTIKKEL-LESEMODUS ═══ -->
 
-<button class="back-to-list" id="backToList" style="display:none">← Tilbake til oversikt</button>
+<button class="back-to-list" id="backToList" style="display:none" data-i18n-html="a41">← Tilbake til oversikt</button>
 
 <article class="reading" id="art-vulgata">
     <div class="hero-img"><img src="/article-images/vulgata.jpg" alt="Vulgata på finger"></div>
-    <div class="topic">Døgnflue · Stillevann</div>
-    <h1>Ephemera vulgata — norges største stillevannsdøgnflue</h1>
-    <p class="lead">Den er så stor at du ikke kan ta feil av den. Når vulgataspinnerne dropper på en stille junikveld, kommer selv de mest forsiktige storfiskene opp i overflaten. Her er biologien bak en av de mest etterlengtede hendelsene i norsk fluefiske.</p>
+    <div class="topic" data-i18n-html="a42">Døgnflue · Stillevann</div>
+    <h1 data-i18n-html="a43">Ephemera vulgata — norges største stillevannsdøgnflue</h1>
+    <p class="lead" data-i18n-html="a44">Den er så stor at du ikke kan ta feil av den. Når vulgataspinnerne dropper på en stille junikveld, kommer selv de mest forsiktige storfiskene opp i overflaten. Her er biologien bak en av de mest etterlengtede hendelsene i norsk fluefiske.</p>
 
-    <h2>Den enkleste IDen i norsk insektsfauna</h2>
-    <p>Med en kroppslengde på opptil 22 millimeter og halehår nesten like lange igjen er <em>Ephemera vulgata</em> uten konkurranse vår største stillevannsdøgnflue. Vingespennet kan nærme seg fem centimeter. Ser du en stor vakende skikkelse på et norsk fiskevann i juni og lurer på om det er vulgata, er svaret nesten alltid ja. De øvrige stillevannsfluene — marginata, vespertina, caenis, baetider — er rene puslinger i sammenligning.</p>
-    <p>Voksne vulgata har tre haletråder (ikke to, som ofte misforstås), to par kraftig årede vinger med en gulbrunlig tone, og en slank, rødbrun kropp som mørkner med alderen. Hannene har spinkle, lange forbein som de bruker til å holde fast på hunnen under paring i lufta.</p>
+    <h2 data-i18n-html="a45">Den enkleste IDen i norsk insektsfauna</h2>
+    <p data-i18n-html="a46">Med en kroppslengde på opptil 22 millimeter og halehår nesten like lange igjen er <em>Ephemera vulgata</em> uten konkurranse vår største stillevannsdøgnflue. Vingespennet kan nærme seg fem centimeter. Ser du en stor vakende skikkelse på et norsk fiskevann i juni og lurer på om det er vulgata, er svaret nesten alltid ja. De øvrige stillevannsfluene — marginata, vespertina, caenis, baetider — er rene puslinger i sammenligning.</p>
+    <p data-i18n-html="a47">Voksne vulgata har tre haletråder (ikke to, som ofte misforstås), to par kraftig årede vinger med en gulbrunlig tone, og en slank, rødbrun kropp som mørkner med alderen. Hannene har spinkle, lange forbein som de bruker til å holde fast på hunnen under paring i lufta.</p>
 
-    <h2>Tre stadier, ett mål</h2>
-    <p>Som alle døgnfluer går vulgataen gjennom tre livsstadier. Nymfen lever ett til tre år i bunnsedimentet, og er en gravende type med fjæraktige gjeller langs sidene. Den vil ha myk, men oksygenrik bunn — ikke for slammet, ikke for steinete. Når nymfen er moden, svømmer den opp til overflatehinnen, kvitter seg med eksoskjelettet, og blir til en <em>dun</em> (subimago): en matt, lurvete versjon av insektet med vinger som må tørke før den kan fly.</p>
-    <p>Etter noen sekunder eller mange minutter på overflaten — avhengig av luftfuktighet og temperatur — letter dunet og flyr inn mot land. Der finner den et bartreskudd, et bjørkeblad eller et sivstrå og henger seg fast. I løpet av ett til to døgn molter den til <em>spinner</em> (imago): den slanke, glassklare og flyvedyktige formen som skal pare seg og dø.</p>
+    <h2 data-i18n-html="a48">Tre stadier, ett mål</h2>
+    <p data-i18n-html="a49">Som alle døgnfluer går vulgataen gjennom tre livsstadier. Nymfen lever ett til tre år i bunnsedimentet, og er en gravende type med fjæraktige gjeller langs sidene. Den vil ha myk, men oksygenrik bunn — ikke for slammet, ikke for steinete. Når nymfen er moden, svømmer den opp til overflatehinnen, kvitter seg med eksoskjelettet, og blir til en <em>dun</em> (subimago): en matt, lurvete versjon av insektet med vinger som må tørke før den kan fly.</p>
+    <p data-i18n-html="a50">Etter noen sekunder eller mange minutter på overflaten — avhengig av luftfuktighet og temperatur — letter dunet og flyr inn mot land. Der finner den et bartreskudd, et bjørkeblad eller et sivstrå og henger seg fast. I løpet av ett til to døgn molter den til <em>spinner</em> (imago): den slanke, glassklare og flyvedyktige formen som skal pare seg og dø.</p>
 
-    <div class="factbox">
+    <div class="factbox" data-i18n-html="a51">
         <b>Når på året i Norge</b>
         Vulgata klekker fra midten av mai i lavlandet på Østlandet, med tyngdepunktet rundt midten av juni. I høyereliggende vann og lenger nord forskyves sesongen tilsvarende — i de høyestliggende Nordmarka-vannene kan klekkingen så vidt være i gang i begynnelsen av juli. Den nordligste utbredelsen går til Finnmark, men kjernehabitatet er lavereliggende skogssjøer og dammer i Sør- og Midt-Norge, særlig Hedmark.
     </div>
 
-    <h2>Klekkingen — frustrasjon med innslag av magi</h2>
-    <p>Vulgata-klekkingene har kjernetid mellom klokken 10 og 16, og varer lenge sammenlignet med andre døgnfluer. Det er dette som gjør vulgatafisket berømt frustrerende: de store dunene blir ofte stående i timevis på overflaten uten at fisken viser interesse. Når 50 dun ligger og driver uten at det vakes, er det fordi konsentrasjonen er for lav til å vekke målrettet beiteatferd hos ørreten.</p>
-    <p>Men når de massive klekkingene først treffer, er det da eventyret ligger. Lars Nilssen har skrevet flere ganger om hvordan kraftige regnbyger midt på dagen kan utløse svært tette ansamlinger av vulgata-dun på vannet, og at fisken da går amok. Den våte luften gjør at dunene ikke greier å lette, og de blir stående i tette flokker på le-siden av øyer og holmer. Det er i slike øyeblikk de virkelig store fiskene viser seg.</p>
+    <h2 data-i18n-html="a52">Klekkingen — frustrasjon med innslag av magi</h2>
+    <p data-i18n-html="a53">Vulgata-klekkingene har kjernetid mellom klokken 10 og 16, og varer lenge sammenlignet med andre døgnfluer. Det er dette som gjør vulgatafisket berømt frustrerende: de store dunene blir ofte stående i timevis på overflaten uten at fisken viser interesse. Når 50 dun ligger og driver uten at det vakes, er det fordi konsentrasjonen er for lav til å vekke målrettet beiteatferd hos ørreten.</p>
+    <p data-i18n-html="a54">Men når de massive klekkingene først treffer, er det da eventyret ligger. Lars Nilssen har skrevet flere ganger om hvordan kraftige regnbyger midt på dagen kan utløse svært tette ansamlinger av vulgata-dun på vannet, og at fisken da går amok. Den våte luften gjør at dunene ikke greier å lette, og de blir stående i tette flokker på le-siden av øyer og holmer. Det er i slike øyeblikk de virkelig store fiskene viser seg.</p>
 
     <figure class="mid-img">
         <img src="/article-images/vulgata_fish.jpg" alt="Stor ørret i hov">
-        <figcaption>En velvoksen ørret slippes løs etter en god vulgatadag. Det er disse fiskene som dukker opp i de massive klekkingene.</figcaption>
+        <figcaption data-i18n-html="a55">En velvoksen ørret slippes løs etter en god vulgatadag. Det er disse fiskene som dukker opp i de massive klekkingene.</figcaption>
     </figure>
 
-    <div class="pullquote">«Den eneste regelen for massive klekkinger, er at det ikke finnes noen regel.»</div>
+    <div class="pullquote" data-i18n-html="a56">«Den eneste regelen for massive klekkinger, er at det ikke finnes noen regel.»</div>
 
-    <h2>Spinnerfallet — vakbryteren</h2>
-    <p>Hvis dagklekkingen er en usikker affære, er spinnerfallet langt mer pålitelig. Etter ett til to døgn som spinner i strandvegetasjonen er hunnen klar for paring. Vulgataen vil ha vindstille, varme og helst solrike kvelder for å danne svermesøyler — typisk fra sen ettermiddag og fram til solnedgang.</p>
-    <p>Hannene flyr opp og ned i søyler, hunnene flyr inn, paringen skjer i lufta. Etterpå sprer hunnene seg utover vannet, slipper de befruktede eggene i en rekke små dypp, og faller så ned på overflaten med vingene flatt ut til siden. Dette er <em>spinnerfallet</em>. Det varer kort — typisk en konsentrert time mellom 20 og 22.30 i månedsskiftet mai/juni på Østlandet — men intensiteten er voldsom. Ørreten går umiddelbart over til en sammenhengende, småpoppende sippevaking som sjelden kommer tilbake senere i sesongen.</p>
+    <h2 data-i18n-html="a57">Spinnerfallet — vakbryteren</h2>
+    <p data-i18n-html="a58">Hvis dagklekkingen er en usikker affære, er spinnerfallet langt mer pålitelig. Etter ett til to døgn som spinner i strandvegetasjonen er hunnen klar for paring. Vulgataen vil ha vindstille, varme og helst solrike kvelder for å danne svermesøyler — typisk fra sen ettermiddag og fram til solnedgang.</p>
+    <p data-i18n-html="a59">Hannene flyr opp og ned i søyler, hunnene flyr inn, paringen skjer i lufta. Etterpå sprer hunnene seg utover vannet, slipper de befruktede eggene i en rekke små dypp, og faller så ned på overflaten med vingene flatt ut til siden. Dette er <em>spinnerfallet</em>. Det varer kort — typisk en konsentrert time mellom 20 og 22.30 i månedsskiftet mai/juni på Østlandet — men intensiteten er voldsom. Ørreten går umiddelbart over til en sammenhengende, småpoppende sippevaking som sjelden kommer tilbake senere i sesongen.</p>
 
-    <p class="source-note"><b>Kilder:</b> Lars Nilssen, larsoglars.no. Fred Arbona, <em>The Mayflies, the Angler, and the Trout</em>. Egne observasjoner og samtaler med erfarne østlandsfluefiskere.</p>
+    <p class="source-note" data-i18n-html="a60"><b>Kilder:</b> Lars Nilssen, larsoglars.no. Fred Arbona, <em>The Mayflies, the Angler, and the Trout</em>. Egne observasjoner og samtaler med erfarne østlandsfluefiskere.</p>
 </article>
 
 <article class="reading" id="art-marginata">
     <div class="hero-img"><img src="/article-images/marginata.jpg" alt="Skogstjern"></div>
-    <div class="topic">Døgnflue · Stillevann</div>
-    <h1>Leptophlebia marginata — den brune skogsdøgnflua</h1>
-    <p class="lead">Hun er ikke spektakulær som vulgata, men hun er ofte førstemann ut. På et godt skogstjern starter marginata-klekkingen før noen andre, og kan gi en uke eller to med jevn fisk før de store fluene tar over.</p>
+    <div class="topic" data-i18n-html="a61">Døgnflue · Stillevann</div>
+    <h1 data-i18n-html="a62">Leptophlebia marginata — den brune skogsdøgnflua</h1>
+    <p class="lead" data-i18n-html="a63">Hun er ikke spektakulær som vulgata, men hun er ofte førstemann ut. På et godt skogstjern starter marginata-klekkingen før noen andre, og kan gi en uke eller to med jevn fisk før de store fluene tar over.</p>
 
-    <h2>Identifisering</h2>
-    <p>Marginata er mellomstor — kroppslengde 10–13 mm, vinger litt lenger igjen — med mørk gulbrun til rødbrun kropp. Tre halehår, mørke (nesten svarte) vinger med en tydelig rødbrun forkant, og lange bakvinger. Den mørke vingefargen er den enkleste ID-knaggen: ingen andre vanlige norske stillevannsdøgnfluer har så mørke vinger i forhold til kroppen.</p>
-    <p>Nymfen lever i bunnsedimentet i ettårige sykluser, ofte i grunne myrtjern og skogssjøer med relativt sur pH. Den tåler surere vann enn vulgata, og finnes derfor i tjern der vulgata ikke trives.</p>
+    <h2 data-i18n-html="a64">Identifisering</h2>
+    <p data-i18n-html="a65">Marginata er mellomstor — kroppslengde 10–13 mm, vinger litt lenger igjen — med mørk gulbrun til rødbrun kropp. Tre halehår, mørke (nesten svarte) vinger med en tydelig rødbrun forkant, og lange bakvinger. Den mørke vingefargen er den enkleste ID-knaggen: ingen andre vanlige norske stillevannsdøgnfluer har så mørke vinger i forhold til kroppen.</p>
+    <p data-i18n-html="a66">Nymfen lever i bunnsedimentet i ettårige sykluser, ofte i grunne myrtjern og skogssjøer med relativt sur pH. Den tåler surere vann enn vulgata, og finnes derfor i tjern der vulgata ikke trives.</p>
 
-    <h2>Klekkingen — den første gnisten av sesong</h2>
-    <p>Marginata er blant de første stillevannsdøgnfluene som klekker i Norge, ofte fra slutten av april i de lavereliggende skogstjernene på Østlandet og litt senere ellers. Kjernetiden ligger fra midten av mai til midten av juni. Klekkingen er gjerne en formiddagsaffære — fra rundt klokken 11 til 14 — og er mindre værfølsom enn vulgata. Marginata-dunet kommer også opp i overskyet og lett regnvær, så lenge vinden ikke er for sterk.</p>
-    <p>Det fine med marginata er at klekkingen kommer i bølger gjennom sesongen, ikke som ett enkelt voldsomt utbrudd. Du kan få solide klekkinger i tre-fire perioder à én-to uker gjennom mai og juni. Sesongen blir lang, men tetthetene sjelden veldig høye.</p>
+    <h2 data-i18n-html="a67">Klekkingen — den første gnisten av sesong</h2>
+    <p data-i18n-html="a68">Marginata er blant de første stillevannsdøgnfluene som klekker i Norge, ofte fra slutten av april i de lavereliggende skogstjernene på Østlandet og litt senere ellers. Kjernetiden ligger fra midten av mai til midten av juni. Klekkingen er gjerne en formiddagsaffære — fra rundt klokken 11 til 14 — og er mindre værfølsom enn vulgata. Marginata-dunet kommer også opp i overskyet og lett regnvær, så lenge vinden ikke er for sterk.</p>
+    <p data-i18n-html="a69">Det fine med marginata er at klekkingen kommer i bølger gjennom sesongen, ikke som ett enkelt voldsomt utbrudd. Du kan få solide klekkinger i tre-fire perioder à én-to uker gjennom mai og juni. Sesongen blir lang, men tetthetene sjelden veldig høye.</p>
 
-    <div class="factbox">
+    <div class="factbox" data-i18n-html="a70">
         <b>Habitat-preferanser</b>
         Marginata er <em>skogstjernenes</em> klassiske ørret-mat: gjerne grunne tjern omgitt av tett barskog, med myk torvbunn og brunfarget vann. Den tåler lavere pH enn vulgata — ned mot 5,8 finnes den fortsatt — og kan derfor blomstre i vann hvor andre arter sliter. Surt vann, grunn bunn og skogkant er signaturen.
     </div>
 
-    <h2>Spinnerfallet — annerledes enn vulgata</h2>
-    <p>Mens vulgata-spinnerfallet er en av kveldens beste fiskemuligheter, foregår marginata-spinnerfallet ofte om morgenen. Spinnerne svermer over skogkanten på rolige formiddager, og hunnene legger egg utover dagen. Det kommer sjelden et tydelig konsentrert «fall» — det er mer en jevn drypping av brukte fluer over noen timer.</p>
-    <p>For fiskeren er det mindre dramatisk, men ikke mindre verdifullt. Mellom klekkebølgene kan du ofte se sippevaking på utbrukte marginata i overflaten, særlig inntil land og i le. Fisken tar dem uten stress, og en godt presentert spent-imitasjon kan gi rolig, jevnt fiske gjennom en lang formiddag.</p>
+    <h2 data-i18n-html="a71">Spinnerfallet — annerledes enn vulgata</h2>
+    <p data-i18n-html="a72">Mens vulgata-spinnerfallet er en av kveldens beste fiskemuligheter, foregår marginata-spinnerfallet ofte om morgenen. Spinnerne svermer over skogkanten på rolige formiddager, og hunnene legger egg utover dagen. Det kommer sjelden et tydelig konsentrert «fall» — det er mer en jevn drypping av brukte fluer over noen timer.</p>
+    <p data-i18n-html="a73">For fiskeren er det mindre dramatisk, men ikke mindre verdifullt. Mellom klekkebølgene kan du ofte se sippevaking på utbrukte marginata i overflaten, særlig inntil land og i le. Fisken tar dem uten stress, og en godt presentert spent-imitasjon kan gi rolig, jevnt fiske gjennom en lang formiddag.</p>
 
-    <p class="source-note"><b>Kilder:</b> Lars Nilssen, «Marginata, Vespertina, Mygg, Maur og Vulgata», larsoglars.no. Sandberg &amp; Bredo, <em>Døgnfluer i Norden</em>.</p>
+    <p class="source-note" data-i18n-html="a74"><b>Kilder:</b> Lars Nilssen, «Marginata, Vespertina, Mygg, Maur og Vulgata», larsoglars.no. Sandberg &amp; Bredo, <em>Døgnfluer i Norden</em>.</p>
 </article>
 
 <article class="reading" id="art-vespertina">
     <div class="hero-img"><img src="/article-images/vespertina.jpg" alt="Elv i kveldslys"></div>
-    <div class="topic">Døgnflue · Stillevann</div>
-    <h1>Leptophlebia vespertina — søsteren som klekker sent</h1>
-    <p class="lead">Hun overlapper med marginata, men kommer som regel litt senere på dagen og litt senere i sesongen. For den oppmerksomme fluefiskeren er hun nøkkelen til mai- og junikvelder mange overser.</p>
+    <div class="topic" data-i18n-html="a75">Døgnflue · Stillevann</div>
+    <h1 data-i18n-html="a76">Leptophlebia vespertina — søsteren som klekker sent</h1>
+    <p class="lead" data-i18n-html="a77">Hun overlapper med marginata, men kommer som regel litt senere på dagen og litt senere i sesongen. For den oppmerksomme fluefiskeren er hun nøkkelen til mai- og junikvelder mange overser.</p>
 
-    <h2>Forskjellen fra marginata</h2>
-    <p>Vespertina (<em>Leptophlebia vespertina</em>) er en mindre og mer rødfarget slektning av marginata. Kroppslengden ligger på 8–11 mm — litt mindre enn marginata — med en tydelig oransje-rødbrun kropp og lysere, mer transparente vinger. Som artsnavnet antyder («vesper» = kveld), klekker hun senere på dagen enn marginata, ofte fra ettermiddagen og inn mot tidlig kveld.</p>
-    <p>De to artene er nært beslektet og deler mye habitat. Fisker du et marginata-tjern, er sjansen stor for at vespertina også finnes der — bare i mindre antall, og med forskjøvet aktivitetstidspunkt.</p>
+    <h2 data-i18n-html="a78">Forskjellen fra marginata</h2>
+    <p data-i18n-html="a79">Vespertina (<em>Leptophlebia vespertina</em>) er en mindre og mer rødfarget slektning av marginata. Kroppslengden ligger på 8–11 mm — litt mindre enn marginata — med en tydelig oransje-rødbrun kropp og lysere, mer transparente vinger. Som artsnavnet antyder («vesper» = kveld), klekker hun senere på dagen enn marginata, ofte fra ettermiddagen og inn mot tidlig kveld.</p>
+    <p data-i18n-html="a80">De to artene er nært beslektet og deler mye habitat. Fisker du et marginata-tjern, er sjansen stor for at vespertina også finnes der — bare i mindre antall, og med forskjøvet aktivitetstidspunkt.</p>
 
-    <h2>Hvorfor to så like arter?</h2>
-    <p>Hvorfor har norsk fauna to nesten identiske leptophlebia-arter med overlappende habitat? Svaret ligger trolig i <em>nisjepartisjonering</em> — å unngå konkurranse ved å forskyve når man er aktiv. Marginata klekker på formiddagen i mai/juni; vespertina på ettermiddagen, med tyngdepunkt i slutten av mai og begynnelsen av juni. Spinnerfallene følger samme mønster: marginata om morgenen, vespertina om kvelden.</p>
-    <p>For nymfene betyr det at de bruker samme bunnsubstrat, men i forskjøvede livsfaser — marginata-nymfene er klare for overflateoppstigning et par uker før vespertina-nymfene, slik at de ikke konkurrerer direkte om beiteressursene i overflatehinnen.</p>
+    <h2 data-i18n-html="a81">Hvorfor to så like arter?</h2>
+    <p data-i18n-html="a82">Hvorfor har norsk fauna to nesten identiske leptophlebia-arter med overlappende habitat? Svaret ligger trolig i <em>nisjepartisjonering</em> — å unngå konkurranse ved å forskyve når man er aktiv. Marginata klekker på formiddagen i mai/juni; vespertina på ettermiddagen, med tyngdepunkt i slutten av mai og begynnelsen av juni. Spinnerfallene følger samme mønster: marginata om morgenen, vespertina om kvelden.</p>
+    <p data-i18n-html="a83">For nymfene betyr det at de bruker samme bunnsubstrat, men i forskjøvede livsfaser — marginata-nymfene er klare for overflateoppstigning et par uker før vespertina-nymfene, slik at de ikke konkurrerer direkte om beiteressursene i overflatehinnen.</p>
 
-    <div class="factbox">
+    <div class="factbox" data-i18n-html="a84">
         <b>Praktisk konsekvens</b>
         Fisker du et skogstjern i siste halvdel av mai og treffer marginata-klekking om formiddagen, kommer ofte en oppfølger i form av vespertina-klekking sent på ettermiddagen, og deretter spinnerfall mot skumringen. Det gir muligheten til en <em>dobbel klekkedag</em>: morgenfiske på marginata-dun, ettermiddagsfiske på vespertina-dun, og kveldsfiske på vespertina-spinner.
     </div>
 
-    <h2>Klekking og spinnerfall</h2>
-    <p>Vespertina-klekkingen pågår fra rundt klokken 14 til 19, med tyngdepunktet mellom 16 og 17. Mindre værfølsom enn vulgata, men foretrekker stille og varme dager. Klekkebølger varer typisk én til tre uker per lokasjon. Dunene er små nok til at vingene tørker raskt — gjerne på under et minutt — så de er kortvarige på overflaten sammenlignet med vulgata.</p>
-    <p>Spinnerfallet skjer om kvelden, ofte i overgangstimene mellom 19 og 22. Svermesøylene danner seg over åpent vann, helst på lesidene av sjøen der vinden er minst. Hunnene legger eggene ved å dyppe bakkroppen i overflaten gang på gang, før de faller ned og blir liggende i klassisk spinner-posisjon — vingene flatt ut til siden.</p>
+    <h2 data-i18n-html="a85">Klekking og spinnerfall</h2>
+    <p data-i18n-html="a86">Vespertina-klekkingen pågår fra rundt klokken 14 til 19, med tyngdepunktet mellom 16 og 17. Mindre værfølsom enn vulgata, men foretrekker stille og varme dager. Klekkebølger varer typisk én til tre uker per lokasjon. Dunene er små nok til at vingene tørker raskt — gjerne på under et minutt — så de er kortvarige på overflaten sammenlignet med vulgata.</p>
+    <p data-i18n-html="a87">Spinnerfallet skjer om kvelden, ofte i overgangstimene mellom 19 og 22. Svermesøylene danner seg over åpent vann, helst på lesidene av sjøen der vinden er minst. Hunnene legger eggene ved å dyppe bakkroppen i overflaten gang på gang, før de faller ned og blir liggende i klassisk spinner-posisjon — vingene flatt ut til siden.</p>
 
-    <p class="source-note"><b>Kilder:</b> Lars Nilssen, larsoglars.no. Bauernfeind &amp; Soldán, <em>The Mayflies of Europe</em>. Norsk Entomologisk Forenings artsbeskrivelser.</p>
+    <p class="source-note" data-i18n-html="a88"><b>Kilder:</b> Lars Nilssen, larsoglars.no. Bauernfeind &amp; Soldán, <em>The Mayflies of Europe</em>. Norsk Entomologisk Forenings artsbeskrivelser.</p>
 </article>
 
 <article class="reading" id="art-spinnerfall">
     <div class="hero-img"><img src="/article-images/spinnerfall.jpg" alt="Kajakk i solnedgang"></div>
-    <div class="topic">Generelt · Spinnerfall</div>
-    <h1>Spinnerfall — paringens siste akt</h1>
-    <p class="lead">De beste fluefiske-historiene utspiller seg som regel i skumringen, og det er ikke tilfeldig. Spinnerfallet er det biologiske øyeblikket hvor en hel generasjon døgnfluer dør på samme overflate — og fisken vet det.</p>
+    <div class="topic" data-i18n-html="a89">Generelt · Spinnerfall</div>
+    <h1 data-i18n-html="a90">Spinnerfall — paringens siste akt</h1>
+    <p class="lead" data-i18n-html="a91">De beste fluefiske-historiene utspiller seg som regel i skumringen, og det er ikke tilfeldig. Spinnerfallet er det biologiske øyeblikket hvor en hel generasjon døgnfluer dør på samme overflate — og fisken vet det.</p>
 
-    <h2>Hva skjer egentlig</h2>
-    <p>Et spinnerfall er kulminasjonen av døgnfluens voksne liv. Etter klekking har dunet tilbrakt ett til to døgn i strandvegetasjonen, der den molter til den slankere og flyvedyktige <em>spinneren</em> (biologisk: <em>imago</em>). Spinneren lever fra noen timer til flere dager — den har ikke fungerende munndeler og kan ikke spise — og har som eneste oppgave å pare seg og legge egg.</p>
-    <p>Hannene danner svermesøyler over vann eller åpen mark, og stiger og faller i en jevn, takvis bevegelse. Hunnene oppdager svermen, flyr inn, blir grepet i lufta, og paringen skjer mens de svever. Etterpå sprer hunnene seg utover vannflaten, slipper de befruktede eggene i en rekke små dypp, og faller så ned på overflaten. Vingene legger seg flatt utover, kroppen synker delvis gjennom overflatehinnen, og fluen dør.</p>
+    <h2 data-i18n-html="a92">Hva skjer egentlig</h2>
+    <p data-i18n-html="a93">Et spinnerfall er kulminasjonen av døgnfluens voksne liv. Etter klekking har dunet tilbrakt ett til to døgn i strandvegetasjonen, der den molter til den slankere og flyvedyktige <em>spinneren</em> (biologisk: <em>imago</em>). Spinneren lever fra noen timer til flere dager — den har ikke fungerende munndeler og kan ikke spise — og har som eneste oppgave å pare seg og legge egg.</p>
+    <p data-i18n-html="a94">Hannene danner svermesøyler over vann eller åpen mark, og stiger og faller i en jevn, takvis bevegelse. Hunnene oppdager svermen, flyr inn, blir grepet i lufta, og paringen skjer mens de svever. Etterpå sprer hunnene seg utover vannflaten, slipper de befruktede eggene i en rekke små dypp, og faller så ned på overflaten. Vingene legger seg flatt utover, kroppen synker delvis gjennom overflatehinnen, og fluen dør.</p>
 
     <figure class="mid-img">
         <img src="/article-images/spinnerfall_sunset.jpg" alt="Solnedgang over vann i Finnmark">
-        <figcaption>Spinnerfallet skjer i overgangstimene mellom dag og natt. Det er ikke uten grunn at fluefiskere planlegger ettermiddagene rundt akkurat disse timene.</figcaption>
+        <figcaption data-i18n-html="a95">Spinnerfallet skjer i overgangstimene mellom dag og natt. Det er ikke uten grunn at fluefiskere planlegger ettermiddagene rundt akkurat disse timene.</figcaption>
     </figure>
 
-    <h2>Hvorfor det skjer akkurat da det skjer</h2>
-    <p>Fire primære faktorer styrer når et spinnerfall faktisk inntreffer — <b>vind</b>, <b>temperatur</b>, <b>luftfuktighet</b> og <b>lufttrykk-trend</b>. Disse fire er forskningens kjernevariabler. I tillegg modifiserer to operasjonelle faktorer — <b>skydekke</b> og <b>nedbør</b> — kveldsbildet på praktiske måter.</p>
+    <h2 data-i18n-html="a96">Hvorfor det skjer akkurat da det skjer</h2>
+    <p data-i18n-html="a97">Fire primære faktorer styrer når et spinnerfall faktisk inntreffer — <b>vind</b>, <b>temperatur</b>, <b>luftfuktighet</b> og <b>lufttrykk-trend</b>. Disse fire er forskningens kjernevariabler. I tillegg modifiserer to operasjonelle faktorer — <b>skydekke</b> og <b>nedbør</b> — kveldsbildet på praktiske måter.</p>
 
-    <h3>Vind <span style="opacity:0.6;font-size:0.85em;">— primær</span></h3>
-    <p>Det viktigste enkeltkravet. Spinneren har skjøre vinger og greier ikke å holde stabile svermesøyler i merkbar vind. Litteraturen er entydig: roer ikke vinden seg i overgangen mellom dag og kveld, blir det ikke noe spinnerfall — det utsettes til neste dag. Norsk fluefiskertradisjon snakker om <em>blikkstille vann</em>, typisk under 2 m/s. Det er ikke bare snittvinden som teller — sterke vindkast knuser svermesøyler like effektivt selv om snittvinden er lav. En kveld med 2 m/s snitt og kast på 10 m/s gir derfor mye dårligere spinnerfall enn det snittvinden alene tilsier.</p>
+    <h3 data-i18n-html="a98">Vind <span style="opacity:0.6;font-size:0.85em;">— primær</span></h3>
+    <p data-i18n-html="a99">Det viktigste enkeltkravet. Spinneren har skjøre vinger og greier ikke å holde stabile svermesøyler i merkbar vind. Litteraturen er entydig: roer ikke vinden seg i overgangen mellom dag og kveld, blir det ikke noe spinnerfall — det utsettes til neste dag. Norsk fluefiskertradisjon snakker om <em>blikkstille vann</em>, typisk under 2 m/s. Det er ikke bare snittvinden som teller — sterke vindkast knuser svermesøyler like effektivt selv om snittvinden er lav. En kveld med 2 m/s snitt og kast på 10 m/s gir derfor mye dårligere spinnerfall enn det snittvinden alene tilsier.</p>
 
-    <h3>Temperatur <span style="opacity:0.6;font-size:0.85em;">— primær</span></h3>
-    <p>Spinnerens muskulatur fungerer dårlig under en viss terskel. Litteraturen peker mot temperaturer fra rundt 14 °C og oppover, med optimum mellom 17 og 20 °C. Under 12 °C blir aktiviteten lav. Over 25 °C er det sjelden et problem så lenge resten av vilkårene stemmer — selv om svært varme dager kan skyve spinnerfallet senere ut i kvelden, når luften har kjølt seg ned igjen.</p>
+    <h3 data-i18n-html="a100">Temperatur <span style="opacity:0.6;font-size:0.85em;">— primær</span></h3>
+    <p data-i18n-html="a101">Spinnerens muskulatur fungerer dårlig under en viss terskel. Litteraturen peker mot temperaturer fra rundt 14 °C og oppover, med optimum mellom 17 og 20 °C. Under 12 °C blir aktiviteten lav. Over 25 °C er det sjelden et problem så lenge resten av vilkårene stemmer — selv om svært varme dager kan skyve spinnerfallet senere ut i kvelden, når luften har kjølt seg ned igjen.</p>
 
-    <h3>Skydekke <span style="opacity:0.6;font-size:0.85em;">— operasjonell</span></h3>
-    <p>Solrike kvelder gir generelt bedre spinnerfall enn tett overskyede. Svermesøyler dannes mest stabilt i klart vær, og hannene orienterer seg lettere mot lave solstråler. Lett til moderat skydekke (under 70 %) tolereres godt, men ved kompakt overskyet himmel dempes aktiviteten merkbart — særlig i kombinasjon med kjøligere temperaturer som ofte følger med skyene.</p>
+    <h3 data-i18n-html="a102">Skydekke <span style="opacity:0.6;font-size:0.85em;">— operasjonell</span></h3>
+    <p data-i18n-html="a103">Solrike kvelder gir generelt bedre spinnerfall enn tett overskyede. Svermesøyler dannes mest stabilt i klart vær, og hannene orienterer seg lettere mot lave solstråler. Lett til moderat skydekke (under 70 %) tolereres godt, men ved kompakt overskyet himmel dempes aktiviteten merkbart — særlig i kombinasjon med kjøligere temperaturer som ofte følger med skyene.</p>
 
-    <h3>Nedbør <span style="opacity:0.6;font-size:0.85em;">— operasjonell</span></h3>
-    <p>Regn i selve kveldstimene avbryter spinnerfallet. Lett duggregn (under 0,3 mm/t) tolereres og kan endog gi gunstig luftfuktighet etter at det letter, men når nedbøren overstiger noen tideler millimeter per time, faller svermesøylene fra hverandre. En tørr kveld er derfor et krav — det skal helst være tørt gjennom hele kvelden, fra 19 til 22, ikke bare ved start.</p>
+    <h3 data-i18n-html="a104">Nedbør <span style="opacity:0.6;font-size:0.85em;">— operasjonell</span></h3>
+    <p data-i18n-html="a105">Regn i selve kveldstimene avbryter spinnerfallet. Lett duggregn (under 0,3 mm/t) tolereres og kan endog gi gunstig luftfuktighet etter at det letter, men når nedbøren overstiger noen tideler millimeter per time, faller svermesøylene fra hverandre. En tørr kveld er derfor et krav — det skal helst være tørt gjennom hele kvelden, fra 19 til 22, ikke bare ved start.</p>
 
-    <h3>Luftfuktighet <span style="opacity:0.6;font-size:0.85em;">— primær</span></h3>
-    <p>En faktor som ofte glemmes i fluefiskelitteraturen. Fred Arbona har påpekt at høyere luftfuktighet er en nøkkelfaktor for solide spinnerfall: spinnerens eksoskjelett må være mykt nok til at paringsmanøvrene lykkes, og insektet tørker raskt ut i tørr luft. Spinnerfall etter en dag med ettermiddagsbyge — der fuktigheten er høy, men selve regnet er over — er ofte spesielt tette.</p>
+    <h3 data-i18n-html="a106">Luftfuktighet <span style="opacity:0.6;font-size:0.85em;">— primær</span></h3>
+    <p data-i18n-html="a107">En faktor som ofte glemmes i fluefiskelitteraturen. Fred Arbona har påpekt at høyere luftfuktighet er en nøkkelfaktor for solide spinnerfall: spinnerens eksoskjelett må være mykt nok til at paringsmanøvrene lykkes, og insektet tørker raskt ut i tørr luft. Spinnerfall etter en dag med ettermiddagsbyge — der fuktigheten er høy, men selve regnet er over — er ofte spesielt tette.</p>
 
-    <h3>Lufttrykk-trend <span style="opacity:0.6;font-size:0.85em;">— primær</span></h3>
-    <p>Stabilt eller stigende lufttrykk gir god aktivitet. Et raskt fallende trykk varsler at en lavtrykksfront er på vei, og insektene merker det og roer seg ned i timene før. Står du ved vannet og barometeret faller raskt, blir det trolig lite spinnerfall den kvelden — uansett hvor pent været ser ut.</p>
+    <h3 data-i18n-html="a108">Lufttrykk-trend <span style="opacity:0.6;font-size:0.85em;">— primær</span></h3>
+    <p data-i18n-html="a109">Stabilt eller stigende lufttrykk gir god aktivitet. Et raskt fallende trykk varsler at en lavtrykksfront er på vei, og insektene merker det og roer seg ned i timene før. Står du ved vannet og barometeret faller raskt, blir det trolig lite spinnerfall den kvelden — uansett hvor pent været ser ut.</p>
 
-    <div class="pullquote">«I overgangstimene til sommernatten vet alle innsjøens fiskearter hva som skjer.»</div>
+    <div class="pullquote" data-i18n-html="a110">«I overgangstimene til sommernatten vet alle innsjøens fiskearter hva som skjer.»</div>
 
-    <h2>Akkumulasjonseffekt</h2>
-    <p>Spinnere som klekker på en dag med dårlig vær — vind, regn eller kulde — <em>venter</em>. De kan leve i to til fem dager etter klekking, avhengig av art og fuktforhold (lengst lever de under kjølige og fuktige perioder; tørr og varm luft korter levetiden ned mot ett til to døgn). Hvis paringssjansen mangler den første kvelden, prøver de igjen den neste. Etter en periode med tre eller fire dårlige kvelder bygger det seg opp en stor akkumulasjon av modne spinnere som står og venter. Den første gode kvelden etter en slik periode kan derfor bli usedvanlig intens — flere generasjoner spinnere faller på samme overflate samtidig.</p>
-    <p>Det er en av grunnene til at erfarne fluefiskere venter på <em>den første vindstille kvelden etter en blåseperiode</em>. Det er da tetthetene blir voldsomme.</p>
+    <h2 data-i18n-html="a111">Akkumulasjonseffekt</h2>
+    <p data-i18n-html="a112">Spinnere som klekker på en dag med dårlig vær — vind, regn eller kulde — <em>venter</em>. De kan leve i to til fem dager etter klekking, avhengig av art og fuktforhold (lengst lever de under kjølige og fuktige perioder; tørr og varm luft korter levetiden ned mot ett til to døgn). Hvis paringssjansen mangler den første kvelden, prøver de igjen den neste. Etter en periode med tre eller fire dårlige kvelder bygger det seg opp en stor akkumulasjon av modne spinnere som står og venter. Den første gode kvelden etter en slik periode kan derfor bli usedvanlig intens — flere generasjoner spinnere faller på samme overflate samtidig.</p>
+    <p data-i18n-html="a113">Det er en av grunnene til at erfarne fluefiskere venter på <em>den første vindstille kvelden etter en blåseperiode</em>. Det er da tetthetene blir voldsomme.</p>
 
-    <p class="source-note"><b>Kilder:</b> Fred Arbona, <em>The Mayflies, the Angler, and the Trout</em>. J. E. Brittain, <em>Biology of Mayflies</em> (1982). Sandberg &amp; Bredo, <em>Døgnfluer i Norden</em>. Lars Nilssen, larsoglars.no. Wild Trout Trust, <em>Mayfly time</em>. Midcurrent, «You Can Do Something About the Weather» (Brant Oswald).</p>
+    <p class="source-note" data-i18n-html="a114"><b>Kilder:</b> Fred Arbona, <em>The Mayflies, the Angler, and the Trout</em>. J. E. Brittain, <em>Biology of Mayflies</em> (1982). Sandberg &amp; Bredo, <em>Døgnfluer i Norden</em>. Lars Nilssen, larsoglars.no. Wild Trout Trust, <em>Mayfly time</em>. Midcurrent, «You Can Do Something About the Weather» (Brant Oswald).</p>
 </article>
 
 <article class="reading" id="art-klekkinger">
     <div class="hero-img"><img src="/article-images/klekkinger.jpg" alt="Bredelv med skyer"></div>
-    <div class="topic">Generelt · Biologi</div>
-    <h1>Døgnflueklekkinger — varmesum og biologi</h1>
-    <p class="lead">Hvorfor klekker det noen ganger ikke før i juli i Nordmarka, mens Østmarka allerede er ferdig i begynnelsen av juni? Svaret ligger i en enkel matematisk modell biologene har brukt i over hundre år.</p>
+    <div class="topic" data-i18n-html="a115">Generelt · Biologi</div>
+    <h1 data-i18n-html="a116">Døgnflueklekkinger — varmesum og biologi</h1>
+    <p class="lead" data-i18n-html="a117">Hvorfor klekker det noen ganger ikke før i juli i Nordmarka, mens Østmarka allerede er ferdig i begynnelsen av juni? Svaret ligger i en enkel matematisk modell biologene har brukt i over hundre år.</p>
 
-    <h2>Varmesum-modellen</h2>
-    <p>Insekter er <em>vekselvarme</em> (ektoterme), som betyr at utviklingstempoet deres styres direkte av omgivelsestemperaturen. En nymfe vokser ikke i kalde vintre — den utvikler seg når vannet er varmt nok. Hvor mye varme den trenger for å nå et gitt utviklingsstadium kan beregnes ved hjelp av <em>Growing Degree Days</em> (GDD) — på norsk: varmesum.</p>
-    <p>Tanken er enkel: hver dag legges en mengde varme over en basistemperatur til en akkumulert sum. Er basistemperaturen 0 °C og dagens snitt 7 °C, har den dagen bidratt med 7 varmesum-enheter. Når summen siden 1. januar når en lokasjon-spesifikk terskel — for vulgata på Østlandet typisk rundt 520–530 GDD-enheter — er nymfene modne for klekking.</p>
+    <h2 data-i18n-html="a118">Varmesum-modellen</h2>
+    <p data-i18n-html="a119">Insekter er <em>vekselvarme</em> (ektoterme), som betyr at utviklingstempoet deres styres direkte av omgivelsestemperaturen. En nymfe vokser ikke i kalde vintre — den utvikler seg når vannet er varmt nok. Hvor mye varme den trenger for å nå et gitt utviklingsstadium kan beregnes ved hjelp av <em>Growing Degree Days</em> (GDD) — på norsk: varmesum.</p>
+    <p data-i18n-html="a120">Tanken er enkel: hver dag legges en mengde varme over en basistemperatur til en akkumulert sum. Er basistemperaturen 0 °C og dagens snitt 7 °C, har den dagen bidratt med 7 varmesum-enheter. Når summen siden 1. januar når en lokasjon-spesifikk terskel — for vulgata på Østlandet typisk rundt 520–530 GDD-enheter — er nymfene modne for klekking.</p>
 
-    <div class="factbox">
+    <div class="factbox" data-i18n-html="a121">
         <b>Hvorfor GDD virker</b>
         Cellulære prosesser akselererer eksponentielt med temperatur, men bare i området der enzymene er aktive. Over en gitt minimumsterskel (basistemperaturen) blir utviklingen praktisk talt lineær med samlet varmemengde. Det er derfor en enkel sum av daglige snitt-temperaturer fungerer så godt som modellramme for insektutvikling. Den er ikke perfekt — fotoperiode, mikroforhold og art-spesifikke variasjoner faller utenfor — men som førsteapproksimasjon kommer du langt med den.
     </div>
 
-    <h2>Vann mot luft</h2>
-    <p>Tradisjonell varmesum-modellering for landinsekter bruker lufttemperatur. For akvatiske døgnfluer er det egentlig <em>vanntemperaturen</em> som er biologisk relevant — nymfen lever i bunnsedimentet, ikke i lufta. I praksis er det likevel sterk samvariasjon mellom luft og vann over en sesong, så luftbaserte GDD-modeller gir brukbare resultater for de fleste norske stillevann.</p>
-    <p>For å skjerpe presisjonen kan man kombinere: GDD fra luft som primær indikator, supplert med en <em>vanntemperatur-terskel</em> (typisk 12 °C) som ekstra krav. Det fanger opp år hvor lufta er varm men vannet henger etter — typisk etter en kald, sen vinter. Denne såkalte <em>dual-trigger-modellen</em> gir merkbart bedre prediksjoner enn ren GDD i krevende år.</p>
+    <h2 data-i18n-html="a122">Vann mot luft</h2>
+    <p data-i18n-html="a123">Tradisjonell varmesum-modellering for landinsekter bruker lufttemperatur. For akvatiske døgnfluer er det egentlig <em>vanntemperaturen</em> som er biologisk relevant — nymfen lever i bunnsedimentet, ikke i lufta. I praksis er det likevel sterk samvariasjon mellom luft og vann over en sesong, så luftbaserte GDD-modeller gir brukbare resultater for de fleste norske stillevann.</p>
+    <p data-i18n-html="a124">For å skjerpe presisjonen kan man kombinere: GDD fra luft som primær indikator, supplert med en <em>vanntemperatur-terskel</em> (typisk 12 °C) som ekstra krav. Det fanger opp år hvor lufta er varm men vannet henger etter — typisk etter en kald, sen vinter. Denne såkalte <em>dual-trigger-modellen</em> gir merkbart bedre prediksjoner enn ren GDD i krevende år.</p>
 
     <figure class="mid-img">
         <img src="/article-images/klekkinger_morning.jpg" alt="Tåkete elv om morgenen">
-        <figcaption>Morgentåke over et elveparti. Vannets termiske treghet — det at det varmes opp og kjøles ned saktere enn lufta — er en av nøkkelfaktorene som styrer klekketidspunktet.</figcaption>
+        <figcaption data-i18n-html="a125">Morgentåke over et elveparti. Vannets termiske treghet — det at det varmes opp og kjøles ned saktere enn lufta — er en av nøkkelfaktorene som styrer klekketidspunktet.</figcaption>
     </figure>
 
-    <h2>Hvorfor høyere = senere</h2>
-    <p>Hva forklarer at Nordmarka klekker fem dager til to uker senere enn Østmarka, til tross for relativt liten geografisk avstand? Tre faktorer som virker sammen:</p>
+    <h2 data-i18n-html="a126">Hvorfor høyere = senere</h2>
+    <p data-i18n-html="a127">Hva forklarer at Nordmarka klekker fem dager til to uker senere enn Østmarka, til tross for relativt liten geografisk avstand? Tre faktorer som virker sammen:</p>
     <ol>
-        <li><b>Høydegradient</b> (lapse rate): temperaturen faller rundt 6–7 °C per 1000 høydemeter. Et vann på 400 moh. har systematisk kjøligere sommerklima enn et tilsvarende vann på 200 moh.</li>
-        <li><b>Snø og is som henger igjen:</b> høyereliggende vann har is lenger, og snøen i nedbørfeltet smelter senere. Det holder vannet kjølig langt utover våren.</li>
-        <li><b>Termisk treghet:</b> dypere fjellvann har et større vannvolum å varme opp. Selv etter at lufta er varm, tar det lang tid å løfte hele vannmassen til klekkegrensen.</li>
+        <li data-i18n-html="a128"><b>Høydegradient</b> (lapse rate): temperaturen faller rundt 6–7 °C per 1000 høydemeter. Et vann på 400 moh. har systematisk kjøligere sommerklima enn et tilsvarende vann på 200 moh.</li>
+        <li data-i18n-html="a129"><b>Snø og is som henger igjen:</b> høyereliggende vann har is lenger, og snøen i nedbørfeltet smelter senere. Det holder vannet kjølig langt utover våren.</li>
+        <li data-i18n-html="a130"><b>Termisk treghet:</b> dypere fjellvann har et større vannvolum å varme opp. Selv etter at lufta er varm, tar det lang tid å løfte hele vannmassen til klekkegrensen.</li>
     </ol>
-    <p>Følgen er at varmesummen bygges opp langsommere, og at terskelen muligens må justeres litt opp (det skal mer «regnskapsmessig varme» til for å klekke en nymfe i et kaldt fjellvann).</p>
+    <p data-i18n-html="a131">Følgen er at varmesummen bygges opp langsommere, og at terskelen muligens må justeres litt opp (det skal mer «regnskapsmessig varme» til for å klekke en nymfe i et kaldt fjellvann).</p>
 
-    <h2>Klimaendring og klekkeprognoser</h2>
-    <p>Tre tiår med data viser at vulgata-klekkingen på Østlandet har flyttet seg én til to uker tidligere i kalenderen siden 1990-tallet. Det stemmer godt med en oppvarming på rundt 1–1,5 °C i samme periode. For fluefiskeren betyr det at de gamle tommelfingerreglene om datoer («vulgata starter rundt 25. mai i Østmarka») gradvis blir utdaterte. En modellbasert prediksjon som faktisk regner på årets temperaturer er mer å stole på enn å huske hva som hendte for ti år siden.</p>
-    <p>Klimaendringen framskynder ikke bare kalenderen — den <em>øker også variabiliteten</em>. Et år som 2018 (ekstrem varme) og et år som 2025 (sen vår) kan ligge fire-fem uker fra hverandre på samme lokasjon. Det er flere ganger større enn det naturlige spennet før 1990, og gjør prediksjoner samtidig mer verdifulle og mer krevende.</p>
+    <h2 data-i18n-html="a132">Klimaendring og klekkeprognoser</h2>
+    <p data-i18n-html="a133">Tre tiår med data viser at vulgata-klekkingen på Østlandet har flyttet seg én til to uker tidligere i kalenderen siden 1990-tallet. Det stemmer godt med en oppvarming på rundt 1–1,5 °C i samme periode. For fluefiskeren betyr det at de gamle tommelfingerreglene om datoer («vulgata starter rundt 25. mai i Østmarka») gradvis blir utdaterte. En modellbasert prediksjon som faktisk regner på årets temperaturer er mer å stole på enn å huske hva som hendte for ti år siden.</p>
+    <p data-i18n-html="a134">Klimaendringen framskynder ikke bare kalenderen — den <em>øker også variabiliteten</em>. Et år som 2018 (ekstrem varme) og et år som 2025 (sen vår) kan ligge fire-fem uker fra hverandre på samme lokasjon. Det er flere ganger større enn det naturlige spennet før 1990, og gjør prediksjoner samtidig mer verdifulle og mer krevende.</p>
 
-    <h2>Hva modellen ikke kan fange</h2>
-    <p>Selv den beste GDD-modellen kan ikke forutsi alt:</p>
+    <h2 data-i18n-html="a135">Hva modellen ikke kan fange</h2>
+    <p data-i18n-html="a136">Selv den beste GDD-modellen kan ikke forutsi alt:</p>
     <ul>
-        <li><b>Klekke-intensitet:</b> modellen sier <em>når</em>, ikke <em>hvor heftig</em>. Et år med mange nymfer i bunnsubstratet gir en kraftigere klekking enn et magert år.</li>
-        <li><b>Daglig timing:</b> modellen treffer datoen, ikke klokkeslettet. Er været på selve dagen feil, kan klekkingen skyves senere på dagen eller utebli.</li>
-        <li><b>Lokale forhold:</b> en stor sjø klekker ikke overalt samtidig. Grunne, beskyttede bukter starter flere dager før dypvanns-områdene.</li>
+        <li data-i18n-html="a137"><b>Klekke-intensitet:</b> modellen sier <em>når</em>, ikke <em>hvor heftig</em>. Et år med mange nymfer i bunnsubstratet gir en kraftigere klekking enn et magert år.</li>
+        <li data-i18n-html="a138"><b>Daglig timing:</b> modellen treffer datoen, ikke klokkeslettet. Er været på selve dagen feil, kan klekkingen skyves senere på dagen eller utebli.</li>
+        <li data-i18n-html="a139"><b>Lokale forhold:</b> en stor sjø klekker ikke overalt samtidig. Grunne, beskyttede bukter starter flere dager før dypvanns-områdene.</li>
     </ul>
 
-    <p class="source-note"><b>Kilder:</b> Diverse Ephemeroptera-litteratur, MET Norges metodikk for GDD-modellering, samt erfaringsdata samlet over flere norske lokasjoner (HatchWatch).</p>
+    <p class="source-note" data-i18n-html="a140"><b>Kilder:</b> Diverse Ephemeroptera-litteratur, MET Norges metodikk for GDD-modellering, samt erfaringsdata samlet over flere norske lokasjoner (HatchWatch).</p>
 </article>
 
 <article class="reading" id="art-stokkmaur">
     <div class="hero-img"><img src="/article-images/stokkmaur.jpg" alt="Reinsdyrgevir i bjørketre"></div>
-    <div class="topic">Maur · Bonanza</div>
-    <h1>Stokkmaur — fluefiskerens sjeldenheter</h1>
-    <p class="lead">Det er et fenomen mange erfarne fluefiskere har hørt om, men færre har opplevd. Når stokkmaurkolonien svermer og vinden bærer hannmaurene ut på vannet, går selv de mest forsiktige storfiskene av skaftet.</p>
+    <div class="topic" data-i18n-html="a141">Maur · Bonanza</div>
+    <h1 data-i18n-html="a142">Stokkmaur — fluefiskerens sjeldenheter</h1>
+    <p class="lead" data-i18n-html="a143">Det er et fenomen mange erfarne fluefiskere har hørt om, men færre har opplevd. Når stokkmaurkolonien svermer og vinden bærer hannmaurene ut på vannet, går selv de mest forsiktige storfiskene av skaftet.</p>
 
-    <h2>Hva er stokkmaur?</h2>
-    <p>I Norge bruker vi navnet «stokkmaur» om de to artene i slekten <em>Camponotus</em>: <em>C. herculeanus</em> (boreal stokkmaur) og <em>C. ligniperdus</em> (sør-stokkmaur). Begge er store maur — arbeidere kan bli over 10 mm lange, dronninger over 15 mm — og bygger reir i død ved, helst i furustubber eller dødved fra grove trær.</p>
-    <p>For fluefiskeren er det <em>hannmaurene og de nye dronningene</em> som teller, ikke arbeiderne. Én gang i året (i sjeldne tilfeller to ganger) produserer kolonien store mengder vingede kjønnsdyr som skal fly ut og pare seg. Det er denne paringssvermingen som blir til fluefiske.</p>
+    <h2 data-i18n-html="a144">Hva er stokkmaur?</h2>
+    <p data-i18n-html="a145">I Norge bruker vi navnet «stokkmaur» om de to artene i slekten <em>Camponotus</em>: <em>C. herculeanus</em> (boreal stokkmaur) og <em>C. ligniperdus</em> (sør-stokkmaur). Begge er store maur — arbeidere kan bli over 10 mm lange, dronninger over 15 mm — og bygger reir i død ved, helst i furustubber eller dødved fra grove trær.</p>
+    <p data-i18n-html="a146">For fluefiskeren er det <em>hannmaurene og de nye dronningene</em> som teller, ikke arbeiderne. Én gang i året (i sjeldne tilfeller to ganger) produserer kolonien store mengder vingede kjønnsdyr som skal fly ut og pare seg. Det er denne paringssvermingen som blir til fluefiske.</p>
 
-    <h2>Når svermer det</h2>
-    <p>Camponotus-sverming i Norge skjer typisk fra siste halvdel av mai til midten av juli, med kjernetid rundt de første varme dagene i juni. Det er sjelden en gradvis affære — koloniene synkroniserer ofte svermingen over et stort område, slik at <em>én</em> bestemt dag eksploderer med maur over flere kvadratkilometer samtidig. Det er biologisk smart: synkroniseringen reduserer faren for å bli spist per individ, og maksimerer paringsmulighetene.</p>
+    <h2 data-i18n-html="a147">Når svermer det</h2>
+    <p data-i18n-html="a148">Camponotus-sverming i Norge skjer typisk fra siste halvdel av mai til midten av juli, med kjernetid rundt de første varme dagene i juni. Det er sjelden en gradvis affære — koloniene synkroniserer ofte svermingen over et stort område, slik at <em>én</em> bestemt dag eksploderer med maur over flere kvadratkilometer samtidig. Det er biologisk smart: synkroniseringen reduserer faren for å bli spist per individ, og maksimerer paringsmulighetene.</p>
 
-    <div class="factbox">
+    <div class="factbox" data-i18n-html="a149">
         <b>Hvorfor synkronisert?</b>
         Hvis bare én koloni svermer av gangen, blir maurene lett bytte for fugler. Svermer tusen kolonier samme dag, drukner predatorene i overskudd, og en langt større andel maur overlever til paring. Utløseren er trolig en kombinasjon av flere dagers oppbygd varme og en spesifikk værkombinasjon på selve dagen — varm, fuktig, vindstille, gjerne etter regn. Det gjør stokkmaur-prediksjon vanskelig, men ikke umulig.
     </div>
 
-    <h2>Hva må til</h2>
-    <p>Værkravene for stokkmaur-sverming er ganske spesifikke:</p>
+    <h2 data-i18n-html="a150">Hva må til</h2>
+    <p data-i18n-html="a151">Værkravene for stokkmaur-sverming er ganske spesifikke:</p>
     <ul>
-        <li><b>Temperatur:</b> maks-temp må være minst 18 °C, helst 20–25 °C. Kjøligere dager utløser sjelden noe masseutbrudd.</li>
-        <li><b>Vind:</b> maksimum rundt 5 m/s. Maurene styrer ikke flygingen i sterk vind, og kolonien holder seg i ro.</li>
-        <li><b>Skydekke:</b> helst under 70 %. Sollys er en sterk pådriver — det varmer opp reiroverflaten og er trolig selve startsignalet.</li>
-        <li><b>Nedbør:</b> tørt på selve dagen. Lett regn dagen før kan være positivt (høyere luftfuktighet etterpå), men regn under selve svermingen avlyser den.</li>
-        <li><b>Fuktighet i jorda:</b> vanskelig å måle, men kolonien ser ut til å foretrekke dager der det har vært nedbør i forrige uke.</li>
+        <li data-i18n-html="a152"><b>Temperatur:</b> maks-temp må være minst 18 °C, helst 20–25 °C. Kjøligere dager utløser sjelden noe masseutbrudd.</li>
+        <li data-i18n-html="a153"><b>Vind:</b> maksimum rundt 5 m/s. Maurene styrer ikke flygingen i sterk vind, og kolonien holder seg i ro.</li>
+        <li data-i18n-html="a154"><b>Skydekke:</b> helst under 70 %. Sollys er en sterk pådriver — det varmer opp reiroverflaten og er trolig selve startsignalet.</li>
+        <li data-i18n-html="a155"><b>Nedbør:</b> tørt på selve dagen. Lett regn dagen før kan være positivt (høyere luftfuktighet etterpå), men regn under selve svermingen avlyser den.</li>
+        <li data-i18n-html="a156"><b>Fuktighet i jorda:</b> vanskelig å måle, men kolonien ser ut til å foretrekke dager der det har vært nedbør i forrige uke.</li>
     </ul>
 
-    <h2>Hvorfor blir fisken så gal</h2>
-    <p>Sverming er en eksplosjon av høykalori-protein. En vingedronning kan veie 30–40 mg, en hann 15–20 mg — flere ganger så mye som en typisk døgnflue. Når vinden bærer mauren ut på vannet, har ørreten plutselig hundrevis av store, energirike byttedyr som ikke kan flykte (mauren er våt og får ikke lettet igjen).</p>
-    <p>Fisken blir aggressivt opportunistisk. Selv stor ørret som vanligvis vaker forsiktig på spinnere i overflatehinnen, kommer opp og slår på mauren. Det er en av de få anledningene i sesongen hvor du kan presentere en relativt klønete flue og likevel bli belønnet med en stor fisk.</p>
+    <h2 data-i18n-html="a157">Hvorfor blir fisken så gal</h2>
+    <p data-i18n-html="a158">Sverming er en eksplosjon av høykalori-protein. En vingedronning kan veie 30–40 mg, en hann 15–20 mg — flere ganger så mye som en typisk døgnflue. Når vinden bærer mauren ut på vannet, har ørreten plutselig hundrevis av store, energirike byttedyr som ikke kan flykte (mauren er våt og får ikke lettet igjen).</p>
+    <p data-i18n-html="a159">Fisken blir aggressivt opportunistisk. Selv stor ørret som vanligvis vaker forsiktig på spinnere i overflatehinnen, kommer opp og slår på mauren. Det er en av de få anledningene i sesongen hvor du kan presentere en relativt klønete flue og likevel bli belønnet med en stor fisk.</p>
 
-    <div class="pullquote">«Maursverminger og tunge vulgataklekkinger er det som kan løfte vannets store individer.»</div>
+    <div class="pullquote" data-i18n-html="a160">«Maursverminger og tunge vulgataklekkinger er det som kan løfte vannets store individer.»</div>
 
-    <h2>Hvor i Norge</h2>
-    <p>Camponotus herculeanus finnes så langt nord som Bodø-området (rundt 67°N), men svermer ujevnt nord for Trondheim. Kjerneutbredelsen for pålitelig stokkmaur-sverming er Sør- og Midt-Norge til og med Trøndelag. I Finnmark, Nordland og Troms vil du ikke pålitelig oppleve fenomenet — enkeltkolonier finnes, men svermingen er for sjelden og uforutsigbar til at det er verdt å planlegge fiske etter.</p>
+    <h2 data-i18n-html="a161">Hvor i Norge</h2>
+    <p data-i18n-html="a162">Camponotus herculeanus finnes så langt nord som Bodø-området (rundt 67°N), men svermer ujevnt nord for Trondheim. Kjerneutbredelsen for pålitelig stokkmaur-sverming er Sør- og Midt-Norge til og med Trøndelag. I Finnmark, Nordland og Troms vil du ikke pålitelig oppleve fenomenet — enkeltkolonier finnes, men svermingen er for sjelden og uforutsigbar til at det er verdt å planlegge fiske etter.</p>
 
-    <p class="source-note"><b>Kilder:</b> Norsk Entomologisk Forenings utbredelseskart for Camponotus. <em>Maursverming og fluefiske</em>-tradisjonen i norske fagblader. Egne observasjoner fra fluefiske-litteraturen.</p>
+    <p class="source-note" data-i18n-html="a163"><b>Kilder:</b> Norsk Entomologisk Forenings utbredelseskart for Camponotus. <em>Maursverming og fluefiske</em>-tradisjonen i norske fagblader. Egne observasjoner fra fluefiske-litteraturen.</p>
 </article>
 
 <article class="reading" id="art-maursverming">
     <div class="hero-img"><img src="/article-images/maursverming.jpg" alt="Bål ved skogstjern"></div>
-    <div class="topic">Maur · Bonus</div>
-    <h1>Maursverming generelt — flygende maur i fluefiske</h1>
-    <p class="lead">Stokkmaur er den dramatiske, men ikke den eneste. Flere maurarter svermer gjennom sommeren, og når du ser små svarte vingede maur falle på vannet en juli-ettermiddag, er det også fluefiske-mat — bare i mindre format.</p>
+    <div class="topic" data-i18n-html="a164">Maur · Bonus</div>
+    <h1 data-i18n-html="a165">Maursverming generelt — flygende maur i fluefiske</h1>
+    <p class="lead" data-i18n-html="a166">Stokkmaur er den dramatiske, men ikke den eneste. Flere maurarter svermer gjennom sommeren, og når du ser små svarte vingede maur falle på vannet en juli-ettermiddag, er det også fluefiske-mat — bare i mindre format.</p>
 
-    <h2>Hvilke maur svermer i Norge</h2>
-    <p>I tillegg til Camponotus (stokkmaur) er det særlig tre maurslekter som er relevante for fluefiskeren:</p>
+    <h2 data-i18n-html="a167">Hvilke maur svermer i Norge</h2>
+    <p data-i18n-html="a168">I tillegg til Camponotus (stokkmaur) er det særlig tre maurslekter som er relevante for fluefiskeren:</p>
     <ul>
-        <li><b>Lasius</b> (gulmaur, svartmaur og sukker-/jordmaur): den vanligste svermende mauren. Svermer flere ganger gjennom sommeren, ofte i tette skyer på varme ettermiddager fra juli til september. Mindre enn stokkmaur — typisk 4–6 mm — men i langt større antall.</li>
-        <li><b>Formica</b> (røde skogmauer): svermer i mai–juni. Større enn Lasius (8–10 mm), men sjeldnere ut over vann fordi reirene som regel ligger lenger inne i skogen.</li>
-        <li><b>Myrmica</b> (røde stikkmaur): svermer i august–september. Små — 4–5 mm — men kan komme i tettheter på linje med Lasius.</li>
+        <li data-i18n-html="a169"><b>Lasius</b> (gulmaur, svartmaur og sukker-/jordmaur): den vanligste svermende mauren. Svermer flere ganger gjennom sommeren, ofte i tette skyer på varme ettermiddager fra juli til september. Mindre enn stokkmaur — typisk 4–6 mm — men i langt større antall.</li>
+        <li data-i18n-html="a170"><b>Formica</b> (røde skogmauer): svermer i mai–juni. Større enn Lasius (8–10 mm), men sjeldnere ut over vann fordi reirene som regel ligger lenger inne i skogen.</li>
+        <li data-i18n-html="a171"><b>Myrmica</b> (røde stikkmaur): svermer i august–september. Små — 4–5 mm — men kan komme i tettheter på linje med Lasius.</li>
     </ul>
 
-    <h2>Den uforutsigbare svermdagen</h2>
-    <p>I motsetning til stokkmaur, som har én sterkt synkronisert svermedag i året, har Lasius og Myrmica flere svermehendelser gjennom sesongen. Hver enkelt er kortvarig — gjerne én til tre timer på ettermiddagen — men en god lokasjon nær skog kan ha fem til åtte slike hendelser i løpet av en sommer.</p>
-    <p>Værkravene minner om stokkmaur, men er mindre strenge: varmere enn 15 °C, lite vind, og helst høy luftfuktighet (etter regn er ideelt). De mindre artene er også mindre værfølsomme enn Camponotus — Lasius kan svermes på relativt overskyede dager.</p>
+    <h2 data-i18n-html="a172">Den uforutsigbare svermdagen</h2>
+    <p data-i18n-html="a173">I motsetning til stokkmaur, som har én sterkt synkronisert svermedag i året, har Lasius og Myrmica flere svermehendelser gjennom sesongen. Hver enkelt er kortvarig — gjerne én til tre timer på ettermiddagen — men en god lokasjon nær skog kan ha fem til åtte slike hendelser i løpet av en sommer.</p>
+    <p data-i18n-html="a174">Værkravene minner om stokkmaur, men er mindre strenge: varmere enn 15 °C, lite vind, og helst høy luftfuktighet (etter regn er ideelt). De mindre artene er også mindre værfølsomme enn Camponotus — Lasius kan svermes på relativt overskyede dager.</p>
 
-    <div class="factbox">
+    <div class="factbox" data-i18n-html="a175">
         <b>Den klassiske maur-dagen</b>
         Fluefiskere snakker noen ganger om en «ant day»: en bestemt dag i juli eller august der vinden plutselig bærer store mengder små maur ut på vannet, og fisken låser seg på maur. Det er som regel en Lasius-sverming, og kan vare fra et par timer til en hel ettermiddag.
     </div>
 
-    <h2>Hvorfor maur driver ut på vannet</h2>
-    <p>Vingede maur er svake flygere. De stiger opp i luftstrømmen for å pare seg, men har dårlig kontroll på flygebanen og blir lett blåst ut over åpent vann. Skjer svermingen en kvart kilometer fra et fiskevann, kan vinden bære tusenvis av maur ut på flata i løpet av minutter. Det er denne vinddriften som gjør maur relevant for fluefiskere — det er ikke at mauren har noe ærend på vannet, det er at den havner der ved et uhell.</p>
+    <h2 data-i18n-html="a176">Hvorfor maur driver ut på vannet</h2>
+    <p data-i18n-html="a177">Vingede maur er svake flygere. De stiger opp i luftstrømmen for å pare seg, men har dårlig kontroll på flygebanen og blir lett blåst ut over åpent vann. Skjer svermingen en kvart kilometer fra et fiskevann, kan vinden bære tusenvis av maur ut på flata i løpet av minutter. Det er denne vinddriften som gjør maur relevant for fluefiskere — det er ikke at mauren har noe ærend på vannet, det er at den havner der ved et uhell.</p>
 
-    <h2>Hvordan kjenne igjen en maur-situasjon</h2>
+    <h2 data-i18n-html="a178">Hvordan kjenne igjen en maur-situasjon</h2>
     <ul>
-        <li>Sippende vaking i overflaten på en stille ettermiddag, gjerne uten synlige store insekter i lufta.</li>
-        <li>Vinden kommer fra skogen mot vannet — ofte fra sør eller sørvest om ettermiddagen.</li>
-        <li>Ser du nøye på overflaten med polariserende briller, oppdager du små svarte prikker som driver med strømmen. Det er maur.</li>
-        <li>Fisken kan være selektiv: en standard tørrflue av tilsvarende størrelse blir ofte avvist. En enkel maur-imitasjon (foam eller dubbet kropp i svart eller mørk brun) gjør underverker.</li>
+        <li data-i18n-html="a179">Sippende vaking i overflaten på en stille ettermiddag, gjerne uten synlige store insekter i lufta.</li>
+        <li data-i18n-html="a180">Vinden kommer fra skogen mot vannet — ofte fra sør eller sørvest om ettermiddagen.</li>
+        <li data-i18n-html="a181">Ser du nøye på overflaten med polariserende briller, oppdager du små svarte prikker som driver med strømmen. Det er maur.</li>
+        <li data-i18n-html="a182">Fisken kan være selektiv: en standard tørrflue av tilsvarende størrelse blir ofte avvist. En enkel maur-imitasjon (foam eller dubbet kropp i svart eller mørk brun) gjør underverker.</li>
     </ul>
 
-    <p class="source-note"><b>Kilder:</b> Norsk Entomologisk Forenings artsbeskrivelser av Lasius, Formica og Myrmica. Erfaringer dokumentert av norske fluefiskere over flere tiår.</p>
+    <p class="source-note" data-i18n-html="a183"><b>Kilder:</b> Norsk Entomologisk Forenings artsbeskrivelser av Lasius, Formica og Myrmica. Erfaringer dokumentert av norske fluefiskere over flere tiår.</p>
 </article>
 
 <article class="reading" id="art-kronologi">
     <div class="hero-img"><img src="/article-images/kronologi.jpg" alt="Myrvei sen kveld"></div>
-    <div class="topic">Generelt · Bonus</div>
-    <h1>Klekkerekken gjennom året — en kronologi</h1>
-    <p class="lead">Vet du hvilken uke det er, vet du ofte hvilket insekt du jakter. Her er den norske stillevannsesongen som en sammenhengende kalender — fra første vårklekking til siste maursverming.</p>
+    <div class="topic" data-i18n-html="a184">Generelt · Bonus</div>
+    <h1 data-i18n-html="a185">Klekkerekken gjennom året — en kronologi</h1>
+    <p class="lead" data-i18n-html="a186">Vet du hvilken uke det er, vet du ofte hvilket insekt du jakter. Her er den norske stillevannsesongen som en sammenhengende kalender — fra første vårklekking til siste maursverming.</p>
 
-    <h2>April — sesongens første spadetak</h2>
-    <p>April er ikke noen stor klekkemåned, men de første antydningene melder seg. I lavereliggende skogstjern på Østlandet kan du i siste halvdel av april se enkelte <em>Leptophlebia marginata</em>-dun på overflaten på milde dager. Det er sjelden noe man planlegger fiske etter, men det forteller at vannet har gått over kritisk temperatur (~10 °C) og at sesongen er i gang.</p>
-    <p>Samtidig skjer det noe under overflaten: stigende temperaturer setter nymfeaktiviteten i gang, og fisker du nymfer i grunt vann, kan du allerede nå få aktivt beitende ørret.</p>
+    <h2 data-i18n-html="a187">April — sesongens første spadetak</h2>
+    <p data-i18n-html="a188">April er ikke noen stor klekkemåned, men de første antydningene melder seg. I lavereliggende skogstjern på Østlandet kan du i siste halvdel av april se enkelte <em>Leptophlebia marginata</em>-dun på overflaten på milde dager. Det er sjelden noe man planlegger fiske etter, men det forteller at vannet har gått over kritisk temperatur (~10 °C) og at sesongen er i gang.</p>
+    <p data-i18n-html="a189">Samtidig skjer det noe under overflaten: stigende temperaturer setter nymfeaktiviteten i gang, og fisker du nymfer i grunt vann, kan du allerede nå få aktivt beitende ørret.</p>
 
-    <h2>Mai — marginata-måneden</h2>
-    <p>Mai er klassisk marginata-tid. Klekkingene tar seg opp for alvor rundt 8.–15. mai på Østlandet og kan holde på til midten av juni. Vespertina følger noen uker etter, typisk fra siste halvdel av mai. Lavlandstjernene er nå i full sving, og en uke med stabilt vær gir solide klekkebølger.</p>
-    <p>I månedsskiftet mai/juni starter også <em>Ephemera vulgata</em>-klekkingen i de mest produktive vannene. Hedmark og lavereliggende deler av Buskerud og Vestfold ser de første dunene rundt 25. mai, mens Oslomarka og Østmarka kan ha første klekkinger i begynnelsen av juni.</p>
+    <h2 data-i18n-html="a190">Mai — marginata-måneden</h2>
+    <p data-i18n-html="a191">Mai er klassisk marginata-tid. Klekkingene tar seg opp for alvor rundt 8.–15. mai på Østlandet og kan holde på til midten av juni. Vespertina følger noen uker etter, typisk fra siste halvdel av mai. Lavlandstjernene er nå i full sving, og en uke med stabilt vær gir solide klekkebølger.</p>
+    <p data-i18n-html="a192">I månedsskiftet mai/juni starter også <em>Ephemera vulgata</em>-klekkingen i de mest produktive vannene. Hedmark og lavereliggende deler av Buskerud og Vestfold ser de første dunene rundt 25. mai, mens Oslomarka og Østmarka kan ha første klekkinger i begynnelsen av juni.</p>
 
-    <div class="factbox">
+    <div class="factbox" data-i18n-html="a193">
         <b>Mai-tips</b>
         Hold øye med <em>isgangen</em>. Et høyereliggende vann som mistet isen 1. mai får marginata-klekking rundt tre uker senere — altså omkring 22. mai. Vann som mistet isen 15. mai starter marginata omkring 12. juni. Denne sammenhengen er en av de mest pålitelige sesongprognosene i norsk fluefiske.
     </div>
 
-    <h2>Juni — fluefiskerens måned</h2>
-    <p>Juni er hovedmåneden. Vulgata når toppen i månedsskiftet juni/juli i lavlandet, marginata og vespertina avtar gradvis, og <em>stokkmaur-svermingen</em> (Camponotus) inntreffer som regel innenfor en uke eller to rundt sankthansaften — gitt at været stemmer.</p>
-    <p>På gode junikvelder kan du oppleve overlappende fenomener: marginata-spinnerfall om morgenen, vulgata-klekking på dagen, og vulgata-spinnerfall i skumringen. Det er sjelden hele klekkesyklusen er aktiv samtidig — men når det skjer, er det fiskefantastisk.</p>
-    <p>I elv begynner også <em>Ephemera danica</em> i juni (mayfly på engelsk) — fetter til vulgata, men hører hjemme i elv. I norske elver som Trysilelva er dette en av de viktigste tørrflueperiodene.</p>
+    <h2 data-i18n-html="a194">Juni — fluefiskerens måned</h2>
+    <p data-i18n-html="a195">Juni er hovedmåneden. Vulgata når toppen i månedsskiftet juni/juli i lavlandet, marginata og vespertina avtar gradvis, og <em>stokkmaur-svermingen</em> (Camponotus) inntreffer som regel innenfor en uke eller to rundt sankthansaften — gitt at været stemmer.</p>
+    <p data-i18n-html="a196">På gode junikvelder kan du oppleve overlappende fenomener: marginata-spinnerfall om morgenen, vulgata-klekking på dagen, og vulgata-spinnerfall i skumringen. Det er sjelden hele klekkesyklusen er aktiv samtidig — men når det skjer, er det fiskefantastisk.</p>
+    <p data-i18n-html="a197">I elv begynner også <em>Ephemera danica</em> i juni (mayfly på engelsk) — fetter til vulgata, men hører hjemme i elv. I norske elver som Trysilelva er dette en av de viktigste tørrflueperiodene.</p>
 
-    <h2>Juli — overgang og maur</h2>
-    <p>I begynnelsen av juli avsluttes vulgata-sesongen i de fleste lavlandsvann, og fokuset flytter seg opp i høyden — Nordmarka over 400 moh., Hardangervidda og fjellpartiene generelt, som først nå når klekkegrensen. Disse «etter-klekkingene» er ofte tynnere, men mer pålitelige, fordi været i juli er stabilere.</p>
-    <p>Juli er også <em>maurmåneden</em>. Lasius-svermingen overtar som det dominerende terrestriske insektet. Stille ettermiddager med litt vind fra skogen mot vannet er klassiske maur-situasjoner.</p>
-    <p>Samtidig vokser betydningen av <em>vårfluer</em> (caddis) og <em>mygg</em> (Chironomidae) — to grupper som ikke lar seg modellere like godt som døgnfluene, men som er svært viktige for ørretens dagdiett i juli og august.</p>
+    <h2 data-i18n-html="a198">Juli — overgang og maur</h2>
+    <p data-i18n-html="a199">I begynnelsen av juli avsluttes vulgata-sesongen i de fleste lavlandsvann, og fokuset flytter seg opp i høyden — Nordmarka over 400 moh., Hardangervidda og fjellpartiene generelt, som først nå når klekkegrensen. Disse «etter-klekkingene» er ofte tynnere, men mer pålitelige, fordi været i juli er stabilere.</p>
+    <p data-i18n-html="a200">Juli er også <em>maurmåneden</em>. Lasius-svermingen overtar som det dominerende terrestriske insektet. Stille ettermiddager med litt vind fra skogen mot vannet er klassiske maur-situasjoner.</p>
+    <p data-i18n-html="a201">Samtidig vokser betydningen av <em>vårfluer</em> (caddis) og <em>mygg</em> (Chironomidae) — to grupper som ikke lar seg modellere like godt som døgnfluene, men som er svært viktige for ørretens dagdiett i juli og august.</p>
 
-    <h2>August — Caenis, småolive og mygg</h2>
-    <p>August blir ofte regnet som «den dårlige måneden» i norsk fluefiske. Det er ikke riktig — sesongprofilen har bare skiftet karakter. De store dramatiske klekkingene er over, men det er stabilt og jevnt fiske på mindre insekter.</p>
+    <h2 data-i18n-html="a202">August — Caenis, småolive og mygg</h2>
+    <p data-i18n-html="a203">August blir ofte regnet som «den dårlige måneden» i norsk fluefiske. Det er ikke riktig — sesongprofilen har bare skiftet karakter. De store dramatiske klekkingene er over, men det er stabilt og jevnt fiske på mindre insekter.</p>
     <ul>
-        <li><em>Caenis</em> (hvit-spinner, «the white curse»): små døgnfluer som kan klekke i enorme tettheter morgen og kveld. Selektiv fisk, krever små imitasjoner (#20–22).</li>
-        <li>Småolive og baetider: størrelse #16–18, klekker gjennom hele august.</li>
-        <li>Mygg (Chironomidae): klekketoppen ligger i august, mye av det skjer i skumring og natt.</li>
-        <li>Sen Lasius-sverming kan fortsatt forekomme.</li>
+        <li data-i18n-html="a204"><em>Caenis</em> (hvit-spinner, «the white curse»): små døgnfluer som kan klekke i enorme tettheter morgen og kveld. Selektiv fisk, krever små imitasjoner (#20–22).</li>
+        <li data-i18n-html="a205">Småolive og baetider: størrelse #16–18, klekker gjennom hele august.</li>
+        <li data-i18n-html="a206">Mygg (Chironomidae): klekketoppen ligger i august, mye av det skjer i skumring og natt.</li>
+        <li data-i18n-html="a207">Sen Lasius-sverming kan fortsatt forekomme.</li>
     </ul>
 
-    <h2>September — sesongen rundes av</h2>
-    <p>September er ofte best i elv — laks- og ørretelver med kjøligere vann og økt aktivitet. På stillevann blir aktiviteten gradvis lavere. <em>Myrmica</em>-svermingen kan gi enkelte sene maur-dager. Vann på 8–12 °C, med oksygenrik luft og en kjølig kveldsbris, kan by på de siste tørrfluemulighetene før vinteren.</p>
+    <h2 data-i18n-html="a208">September — sesongen rundes av</h2>
+    <p data-i18n-html="a209">September er ofte best i elv — laks- og ørretelver med kjøligere vann og økt aktivitet. På stillevann blir aktiviteten gradvis lavere. <em>Myrmica</em>-svermingen kan gi enkelte sene maur-dager. Vann på 8–12 °C, med oksygenrik luft og en kjølig kveldsbris, kan by på de siste tørrfluemulighetene før vinteren.</p>
 
-    <div class="pullquote">«Sesongen er ikke én lineær linje — det er en kjede av overlappende episoder, hvor hver enkelt insekt har sin egen logikk.»</div>
+    <div class="pullquote" data-i18n-html="a210">«Sesongen er ikke én lineær linje — det er en kjede av overlappende episoder, hvor hver enkelt insekt har sin egen logikk.»</div>
 
-    <h2>Hvorfor denne kronologien er nyttig</h2>
-    <p>To grunner. Først: <em>plan</em>. Vet du at du har en helg ledig 12.–14. juni, kan du velge lokasjon ut fra hvilket fenomen du er mest interessert i — Nordmarka for sen marginata, Østmarka for vulgata-toppen, eller et lavlandstjern for det første mauret. Dernest: <em>identifikasjon</em>. Når du står ved vannet og ser uvanlig vakaktivitet, hjelper det å vite hvilke insekter som typisk er aktive nettopp den uka. Da går du til vannet med en forventning, i stedet for å gjette i ettertid.</p>
+    <h2 data-i18n-html="a211">Hvorfor denne kronologien er nyttig</h2>
+    <p data-i18n-html="a212">To grunner. Først: <em>plan</em>. Vet du at du har en helg ledig 12.–14. juni, kan du velge lokasjon ut fra hvilket fenomen du er mest interessert i — Nordmarka for sen marginata, Østmarka for vulgata-toppen, eller et lavlandstjern for det første mauret. Dernest: <em>identifikasjon</em>. Når du står ved vannet og ser uvanlig vakaktivitet, hjelper det å vite hvilke insekter som typisk er aktive nettopp den uka. Da går du til vannet med en forventning, i stedet for å gjette i ettertid.</p>
 
-    <p class="source-note"><b>Kilder:</b> Norsk fluefiske-tradisjon dokumentert over flere tiår. HatchWatch-modellens estimater basert på MET-data og NVE-vanntemperatur. Lars Nilssen, larsoglars.no, for kvalitative sesongbeskrivelser.</p>
+    <p class="source-note" data-i18n-html="a213"><b>Kilder:</b> Norsk fluefiske-tradisjon dokumentert over flere tiår. HatchWatch-modellens estimater basert på MET-data og NVE-vanntemperatur. Lars Nilssen, larsoglars.no, for kvalitative sesongbeskrivelser.</p>
 </article>
 
 </main>
+
+<script>
+// Engelsk (2026-10-08): hw-lang.js velger språk; norsk står i HTML-en, engelsk legges over her.
+// Nøklene (data-i18n-html) er satt maskinelt i dokumentrekkefølge. Ny norsk tekst: gi den
+// neste ledige nøkkel og legg engelsk inn i EN under.
+(function () {
+    if (window.HW_LANG !== 'en') return;
+    var EN = {
+"a1": "Front page",
+"a2": "Notifications",
+"a3": "About HatchWatch",
+"a4": "Send feedback",
+"a5": "Articles",
+"a6": "The biology, the weather and the story behind stillwater fly fishing in Norway. What drives the hatches, spinner falls and ant swarms you are chasing, and why it is worth understanding.",
+"a7": "General · Biology",
+"a8": "Mayfly hatches: heat sums and biology",
+"a9": "Why does the hatch sometimes not come until July in Nordmarka, while Østmarka is already done?",
+"a10": "Read the article →",
+"a11": "Mayfly · Stillwater",
+"a12": "Ephemera vulgata: Norway’s biggest stillwater mayfly",
+"a13": "It is so big you cannot mistake it. When the vulgata spinners drop on a still June evening, even the most cautious big trout come up to the surface. Here is the biology behind one of the most longed-for events in Norwegian fly fishing.",
+"a14": "Read the article →",
+"a15": "General · Spinner fall",
+"a16": "Spinner fall: the last act of mating",
+"a17": "The biological moment when a whole generation of mayflies dies on the same surface, and the fish know it.",
+"a18": "Read the article →",
+"a19": "Mayfly · Stillwater",
+"a20": "Leptophlebia marginata: the brown forest mayfly",
+"a21": "She is not spectacular like vulgata, but often first out. Hatches early, and for a long time.",
+"a22": "Read the article →",
+"a23": "Mayfly · Stillwater",
+"a24": "Leptophlebia vespertina: the sister that hatches late",
+"a25": "Marginata’s afternoon version. The key to May and June evenings many people overlook.",
+"a26": "Read the article →",
+"a27": "Ants · Bonanza",
+"a28": "Carpenter ants: the fly fisher’s rare treat",
+"a29": "When the carpenter ant colony swarms, even the most cautious big fish lose their heads.",
+"a30": "Read the article →",
+"a31": "“In the hours between day and summer night, every fish species in the lake knows what is going on.”",
+"a32": "Lars Nilssen, on the vulgata spinner fall",
+"a33": "Ants · Bonus",
+"a34": "Ant swarms in general: flying ants in fly fishing",
+"a35": "Carpenter ants are the dramatic ones, but not the only ones. Lasius, Formica, Myrmica, and when they fire.",
+"a36": "Read the article →",
+"a37": "General · Bonus",
+"a38": "The hatch sequence through the year: a chronology",
+"a39": "The Norwegian stillwater season as one continuous calendar, from the first spring hatch to the last ant swarm.",
+"a40": "Read the article →",
+"a41": "← Back to the list",
+"a42": "Mayfly · Stillwater",
+"a43": "Ephemera vulgata: Norway’s biggest stillwater mayfly",
+"a44": "It is so big you cannot mistake it. When the vulgata spinners drop on a still June evening, even the most cautious big trout come up to the surface. Here is the biology behind one of the most longed-for events in Norwegian fly fishing.",
+"a45": "The easiest ID in Norwegian insect life",
+"a46": "With a body up to 22 millimetres long and tails almost as long again, <em>Ephemera vulgata</em> is without competition our biggest stillwater mayfly. The wingspan can get close to five centimetres. If you see a big fly on a Norwegian lake in June and wonder whether it is vulgata, the answer is almost always yes. The other stillwater mayflies, marginata, vespertina, caenis and the baetids, are tiddlers by comparison.",
+"a47": "Adult vulgata have three tails (not two, as is often assumed), two pairs of strongly veined wings with a yellow-brown tone, and a slim, red-brown body that darkens with age. The males have long, spindly front legs that they use to hold on to the female during mating in the air.",
+"a48": "Three stages, one goal",
+"a49": "Like all mayflies, vulgata goes through three life stages. The nymph lives one to three years in the bottom sediment, a burrowing type with feathery gills along its sides. It wants a soft but oxygen-rich bottom, not too muddy, not too stony. When the nymph is ready, it swims up to the surface film, sheds its skin and becomes a <em>dun</em> (subimago): a dull, scruffy version of the insect with wings that have to dry before it can fly.",
+"a50": "After a few seconds or many minutes on the surface, depending on humidity and temperature, the dun takes off and flies towards land. There it finds a conifer shoot, a birch leaf or a reed and hangs on. Within one to two days it moults into the <em>spinner</em> (imago): the slim, glassy, strong-flying form whose job is to mate and die.",
+"a51": "<b>When in the year in Norway</b>\nVulgata hatches from mid May in the lowlands of eastern Norway, peaking around the middle of June. In higher lakes and further north the season shifts later; in the highest lakes in Nordmarka the hatch may only just be getting going in early July. The northernmost range reaches Finnmark, but the core habitat is lower forest lakes and ponds in southern and central Norway, especially Hedmark.",
+"a52": "The hatch: frustration with a touch of magic",
+"a53": "Vulgata hatches peak between 10 in the morning and 4 in the afternoon, and last long compared with other mayflies. This is what makes vulgata fishing famously frustrating: the big duns often sit on the surface for hours without the fish showing any interest. When 50 duns are drifting and nothing rises, it is because the concentration is too low to switch the trout on to feeding properly.",
+"a54": "But when the massive hatches do hit, that is where the adventure lies. Lars Nilssen has written several times about how heavy rain showers in the middle of the day can trigger very dense gatherings of vulgata duns on the water, and how the fish then go berserk. The wet air stops the duns from taking off, and they sit in thick rafts on the lee side of islands and islets. It is in moments like these that the really big fish show themselves.",
+"a55": "A well-grown trout is released after a good vulgata day. These are the fish that turn up in the massive hatches.",
+"a56": "“The only rule for massive hatches is that there is no rule.”",
+"a57": "The spinner fall: the rise switch",
+"a58": "If the daytime hatch is an uncertain affair, the spinner fall is far more reliable. After one to two days as a spinner in the shoreline vegetation, the female is ready to mate. Vulgata wants calm, warm and preferably sunny evenings to form swarming columns, typically from late afternoon until sunset.",
+"a59": "The males fly up and down in columns, the females fly in, and mating happens in the air. Afterwards the females spread out over the water, release the fertilised eggs in a series of small dips, and then fall onto the surface with their wings flat out to the sides. This is the <em>spinner fall</em>. It is short, typically one concentrated hour between 8 and 10.30 in the evening at the turn of May and June in eastern Norway, but the intensity is tremendous. The trout immediately switch to a steady, soft sipping rise that rarely comes back later in the season.",
+"a60": "<b>Sources:</b> Lars Nilssen, larsoglars.no. Fred Arbona, <em>The Mayflies, the Angler, and the Trout</em>. Own observations and conversations with experienced fly fishers in eastern Norway.",
+"a61": "Mayfly · Stillwater",
+"a62": "Leptophlebia marginata: the brown forest mayfly",
+"a63": "She is not spectacular like vulgata, but she is often first out. On a good forest tarn the marginata hatch starts before anything else, and can give a week or two of steady fishing before the big flies take over.",
+"a64": "Identification",
+"a65": "Marginata is medium-sized, with a body of 10–13 mm and wings a little longer again, and a dark yellow-brown to red-brown body. Three tails, dark (almost black) wings with a clear red-brown leading edge, and long hind wings. The dark wing colour is the easiest ID mark: no other common Norwegian stillwater mayfly has wings this dark relative to the body.",
+"a66": "The nymph lives in the bottom sediment on a one-year cycle, often in shallow bog tarns and forest lakes with fairly acidic water. It tolerates more acidic water than vulgata, and so turns up in tarns where vulgata does not thrive.",
+"a67": "The hatch: the first spark of the season",
+"a68": "Marginata is among the first stillwater mayflies to hatch in Norway, often from the end of April in the lower forest tarns of eastern Norway and a little later elsewhere. The core period runs from mid May to mid June. The hatch tends to be a late-morning affair, from around 11 to 2, and is less weather-sensitive than vulgata. Marginata duns also come up in overcast and light rain, as long as the wind is not too strong.",
+"a69": "The nice thing about marginata is that the hatch comes in waves through the season, not as one big burst. You can get solid hatches in three or four periods of one to two weeks through May and June. The season is long, but the densities are rarely very high.",
+"a70": "<b>Habitat</b>\nMarginata is the classic trout food of <em>forest tarns</em>: shallow tarns surrounded by dense conifer forest, with a soft peat bottom and brown water. It tolerates lower pH than vulgata, and is still found down towards 5.8, so it can thrive in waters where other species struggle. Acidic water, a shallow bottom and a forest edge are the signature.",
+"a71": "The spinner fall: different from vulgata",
+"a72": "While the vulgata spinner fall is one of the best fishing chances of the evening, the marginata spinner fall often happens in the morning. The spinners swarm over the forest edge on calm late mornings, and the females lay eggs through the day. There is rarely a clear, concentrated “fall”; it is more a steady trickle of spent flies over a few hours.",
+"a73": "For the angler it is less dramatic, but no less valuable. Between the hatch waves you can often see sipping rises to spent marginata on the surface, especially close to the bank and in the lee. The fish take them without stress, and a well-presented spent imitation can give calm, steady fishing through a long morning.",
+"a74": "<b>Sources:</b> Lars Nilssen, “Marginata, Vespertina, Mygg, Maur og Vulgata”, larsoglars.no. Sandberg &amp; Bredo, <em>Døgnfluer i Norden</em>.",
+"a75": "Mayfly · Stillwater",
+"a76": "Leptophlebia vespertina: the sister that hatches late",
+"a77": "She overlaps with marginata, but usually comes a little later in the day and a little later in the season. For the attentive fly fisher she is the key to May and June evenings many people overlook.",
+"a78": "How she differs from marginata",
+"a79": "Vespertina (<em>Leptophlebia vespertina</em>) is a smaller, redder relative of marginata. The body is 8–11 mm, a little smaller than marginata, with a clear orange to red-brown body and lighter, more transparent wings. As the name suggests (“vesper” means evening), she hatches later in the day than marginata, often from the afternoon into early evening.",
+"a80": "The two species are closely related and share a lot of habitat. If you fish a marginata tarn, there is a good chance vespertina is there too, just in smaller numbers and at a different time of day.",
+"a81": "Why two such similar species?",
+"a82": "Why does Norway have two almost identical Leptophlebia species with overlapping habitat? The answer probably lies in <em>niche partitioning</em>: avoiding competition by being active at different times. Marginata hatches in the late morning in May and June; vespertina in the afternoon, peaking at the end of May and start of June. The spinner falls follow the same pattern: marginata in the morning, vespertina in the evening.",
+"a83": "For the nymphs this means they use the same bottom substrate, but at offset life stages. The marginata nymphs are ready to rise a couple of weeks before the vespertina nymphs, so they do not compete directly for food in the surface film.",
+"a84": "<b>What it means in practice</b>\nIf you fish a forest tarn in the second half of May and hit a marginata hatch in the morning, there is often a follow-up in the form of a vespertina hatch late in the afternoon, and then a spinner fall towards dusk. That gives you the chance of a <em>double hatch day</em>: morning fishing on marginata duns, afternoon fishing on vespertina duns, and evening fishing on vespertina spinners.",
+"a85": "Hatch and spinner fall",
+"a86": "The vespertina hatch runs from around 2 to 7 in the afternoon, peaking between 4 and 5. Less weather-sensitive than vulgata, but prefers still, warm days. Hatch waves typically last one to three weeks per location. The duns are small enough that their wings dry fast, often in under a minute, so they are short-lived on the surface compared with vulgata.",
+"a87": "The spinner fall happens in the evening, often in the transition hours between 7 and 10. The swarming columns form over open water, preferably on the lee side of the lake where there is least wind. The females lay eggs by dipping their abdomen into the surface again and again, before falling and lying in the classic spinner position, wings flat out to the sides.",
+"a88": "<b>Sources:</b> Lars Nilssen, larsoglars.no. Bauernfeind &amp; Soldán, <em>The Mayflies of Europe</em>. Species descriptions from the Norwegian Entomological Society.",
+"a89": "General · Spinner fall",
+"a90": "Spinner fall: the last act of mating",
+"a91": "The best fly fishing stories usually play out at dusk, and that is no accident. The spinner fall is the biological moment when a whole generation of mayflies dies on the same surface, and the fish know it.",
+"a92": "What is actually happening",
+"a93": "A spinner fall is the climax of the mayfly’s adult life. After hatching, the dun has spent one to two days in the shoreline vegetation, where it moults into the slimmer, strong-flying <em>spinner</em> (biologically, the <em>imago</em>). The spinner lives from a few hours to several days. It has no working mouthparts and cannot eat, and its only job is to mate and lay eggs.",
+"a94": "The males form swarming columns over water or open ground, rising and falling in a steady, rhythmic movement. The females spot the swarm, fly in, are grabbed in the air, and mating happens while they hover. Afterwards the females spread out over the water, release the fertilised eggs in a series of small dips, and then fall onto the surface. The wings lie flat, the body sinks partly through the surface film, and the fly dies.",
+"a95": "The spinner fall happens in the transition hours between day and night. There is a reason fly fishers plan their afternoons around exactly these hours.",
+"a96": "Why it happens exactly when it happens",
+"a97": "Four primary factors decide when a spinner fall actually happens: <b>wind</b>, <b>temperature</b>, <b>humidity</b> and the <b>trend in air pressure</b>. These four are the core variables in the research. On top of them, two practical factors, <b>cloud cover</b> and <b>rain</b>, shape the evening in concrete ways.",
+"a98": "Wind <span style=\"opacity:0.6;font-size:0.85em;\">— primary</span>",
+"a99": "The single most important requirement. The spinner has fragile wings and cannot hold a stable swarming column in any noticeable wind. The literature is clear: if the wind does not die down in the transition from day to evening, there is no spinner fall; it is postponed to the next day. Norwegian fly fishing tradition talks about <em>dead calm water</em>, typically under 2 m/s. And it is not just the average wind that counts. Strong gusts break up swarming columns just as effectively even when the average is low. An evening with 2 m/s average and gusts of 10 m/s gives a much poorer spinner fall than the average alone suggests.",
+"a100": "Temperature <span style=\"opacity:0.6;font-size:0.85em;\">— primary</span>",
+"a101": "The spinner’s muscles work poorly below a certain threshold. The literature points to temperatures from around 14 °C and up, with the optimum between 17 and 20 °C. Below 12 °C activity is low. Above 25 °C is rarely a problem as long as the rest of the conditions are right, though very hot days can push the spinner fall later into the evening, once the air has cooled again.",
+"a102": "Cloud cover <span style=\"opacity:0.6;font-size:0.85em;\">— practical</span>",
+"a103": "Sunny evenings generally give better spinner falls than heavily overcast ones. Swarming columns form most stably in clear weather, and the males find it easier to orient towards the low sun. Light to moderate cloud (under 70 %) is tolerated well, but under a solid overcast sky activity drops noticeably, especially combined with the cooler temperatures that often come with the clouds.",
+"a104": "Rain <span style=\"opacity:0.6;font-size:0.85em;\">— practical</span>",
+"a105": "Rain in the evening hours themselves cuts the spinner fall short. Light drizzle (under 0.3 mm/h) is tolerated and can even leave useful humidity behind once it clears, but when the rain gets above a few tenths of a millimetre per hour, the swarming columns fall apart. A dry evening is therefore a requirement, and ideally dry all evening, from 7 to 10, not just at the start.",
+"a106": "Humidity <span style=\"opacity:0.6;font-size:0.85em;\">— primary</span>",
+"a107": "A factor that is often forgotten in fly fishing literature. Fred Arbona pointed out that higher humidity is a key factor for solid spinner falls: the spinner’s exoskeleton has to be soft enough for the mating manoeuvres to succeed, and the insect dries out fast in dry air. Spinner falls after a day with an afternoon shower, where the humidity is high but the rain itself has passed, are often especially dense.",
+"a108": "Air pressure trend <span style=\"opacity:0.6;font-size:0.85em;\">— primary</span>",
+"a109": "Stable or rising air pressure gives good activity. A fast fall in pressure means a low-pressure front is on the way, and the insects sense it and settle down in the hours before. If you are standing by the water and the barometer is falling fast, there will probably be little spinner fall that evening, however nice the weather looks.",
+"a110": "“In the hours between day and summer night, every fish species in the lake knows what is going on.”",
+"a111": "The build-up effect",
+"a112": "Spinners that hatch on a day of bad weather, wind, rain or cold, <em>wait</em>. They can live two to five days after hatching, depending on species and humidity (longest in cool, damp periods; dry, warm air cuts the lifespan down towards one to two days). If there is no chance to mate the first evening, they try again the next. After a run of three or four bad evenings, a big build-up of mature spinners is sitting and waiting. The first good evening after such a period can therefore be unusually intense, with several generations of spinners falling on the same surface at once.",
+"a113": "That is one of the reasons experienced fly fishers wait for <em>the first calm evening after a windy spell</em>. That is when the densities get enormous.",
+"a114": "<b>Sources:</b> Fred Arbona, <em>The Mayflies, the Angler, and the Trout</em>. J. E. Brittain, <em>Biology of Mayflies</em> (1982). Sandberg &amp; Bredo, <em>Døgnfluer i Norden</em>. Lars Nilssen, larsoglars.no. Wild Trout Trust, <em>Mayfly time</em>. Midcurrent, “You Can Do Something About the Weather” (Brant Oswald).",
+"a115": "General · Biology",
+"a116": "Mayfly hatches: heat sums and biology",
+"a117": "Why does the hatch sometimes not come until July in Nordmarka, while Østmarka is already done in early June? The answer lies in a simple mathematical model biologists have used for over a hundred years.",
+"a118": "The heat sum model",
+"a119": "Insects are <em>cold-blooded</em> (ectothermic), which means their development speed is driven directly by the temperature around them. A nymph does not grow in a cold winter; it develops when the water is warm enough. How much heat it needs to reach a given stage can be calculated with <em>growing degree days</em> (GDD), or heat sums.",
+"a120": "The idea is simple: every day, the amount of warmth above a base temperature is added to a running total. If the base is 0 °C and the day’s average is 7 °C, that day contributes 7 heat units. When the total since 1 January reaches a threshold specific to the location, for vulgata in eastern Norway typically around 520–530 GDD units, the nymphs are ready to hatch.",
+"a121": "<b>Why GDD works</b>\nCellular processes speed up exponentially with temperature, but only in the range where the enzymes are active. Above a certain minimum (the base temperature), development becomes practically linear with the total amount of heat. That is why a simple sum of daily average temperatures works so well as a framework for insect development. It is not perfect: day length, microclimate and differences between species fall outside it. But as a first approximation it takes you a long way.",
+"a122": "Water versus air",
+"a123": "Traditional heat sum modelling for land insects uses air temperature. For aquatic mayflies it is really the <em>water temperature</em> that matters biologically, since the nymph lives in the bottom sediment, not in the air. In practice, though, air and water track each other closely over a season, so air-based GDD models give usable results for most Norwegian lakes.",
+"a124": "To sharpen the precision you can combine them: GDD from air as the primary indicator, plus a <em>water temperature threshold</em> (typically 12 °C) as an extra requirement. That catches the years when the air is warm but the water lags behind, typically after a cold, late winter. This so-called <em>dual trigger model</em> gives noticeably better predictions than pure GDD in difficult years.",
+"a125": "Morning mist over a stretch of river. The thermal inertia of water, the fact that it warms and cools more slowly than air, is one of the key factors that decide when the hatch comes.",
+"a126": "Why higher means later",
+"a127": "What explains Nordmarka hatching five days to two weeks later than Østmarka, despite the short distance between them? Three factors working together:",
+"a128": "<b>Altitude</b> (lapse rate): temperature drops around 6–7 °C per 1,000 metres of altitude. A lake at 400 m has a systematically cooler summer climate than a similar lake at 200 m.",
+"a129": "<b>Snow and ice that linger:</b> higher lakes keep their ice longer, and the snow in the catchment melts later. That keeps the water cool well into spring.",
+"a130": "<b>Thermal inertia:</b> deeper mountain lakes have a bigger volume of water to warm up. Even once the air is warm, it takes a long time to lift the whole body of water to the hatch threshold.",
+"a131": "The result is that the heat sum builds more slowly, and the threshold may have to be nudged up a little (it takes more “accounting heat” to hatch a nymph in a cold mountain lake).",
+"a132": "Climate change and hatch forecasts",
+"a133": "Three decades of data show that the vulgata hatch in eastern Norway has moved one to two weeks earlier in the calendar since the 1990s. That fits well with warming of around 1–1.5 °C over the same period. For the fly fisher it means the old rules of thumb about dates (“vulgata starts around 25 May in Østmarka”) are gradually going out of date. A model-based forecast that actually calculates on this year’s temperatures is more reliable than remembering what happened ten years ago.",
+"a134": "Climate change does not just move the calendar forward; it <em>also increases the variability</em>. A year like 2018 (extreme heat) and a year like 2025 (late spring) can sit four or five weeks apart at the same location. That is several times bigger than the natural spread before 1990, and it makes forecasts both more valuable and more demanding.",
+"a135": "What the model cannot capture",
+"a136": "Even the best GDD model cannot predict everything:",
+"a137": "<b>Hatch intensity:</b> the model says <em>when</em>, not <em>how heavy</em>. A year with many nymphs in the bottom substrate gives a stronger hatch than a lean year.",
+"a138": "<b>Timing within the day:</b> the model hits the date, not the hour. If the weather on the day itself is wrong, the hatch can be pushed later in the day or not happen at all.",
+"a139": "<b>Local conditions:</b> a big lake does not hatch everywhere at once. Shallow, sheltered bays start several days before the deep-water areas.",
+"a140": "<b>Sources:</b> Various Ephemeroptera literature, MET Norway’s methods for GDD modelling, and field data gathered across several Norwegian locations (HatchWatch).",
+"a141": "Ants · Bonanza",
+"a142": "Carpenter ants: the fly fisher’s rare treat",
+"a143": "It is a phenomenon many experienced fly fishers have heard of, but fewer have seen. When the carpenter ant colony swarms and the wind carries the males out onto the water, even the most cautious big fish lose their heads.",
+"a144": "What are carpenter ants?",
+"a145": "In Norway the name “stokkmaur” covers the two species in the genus <em>Camponotus</em>: <em>C. herculeanus</em> and <em>C. ligniperdus</em>. Both are big ants. Workers can be over 10 mm long, queens over 15 mm, and they nest in dead wood, preferably pine stumps or dead wood from large trees.",
+"a146": "For the fly fisher it is <em>the males and the new queens</em> that matter, not the workers. Once a year (in rare cases twice) the colony produces large numbers of winged reproductive ants that fly out to mate. It is this mating swarm that turns into fishing.",
+"a147": "When they swarm",
+"a148": "Camponotus swarming in Norway typically happens from the second half of May to mid July, with the core around the first warm days of June. It is rarely a gradual affair. Colonies often synchronise their swarming over a wide area, so that <em>one</em> particular day explodes with ants over several square kilometres at once. Biologically it is smart: synchronising reduces the risk of being eaten per individual, and maximises the chances of mating.",
+"a149": "<b>Why synchronised?</b>\nIf only one colony swarms at a time, the ants are easy prey for birds. If a thousand colonies swarm on the same day, the predators are drowned in surplus, and a far bigger share of the ants survive to mate. The trigger is probably a combination of several days of built-up warmth and a specific mix of weather on the day itself: warm, humid, calm, often after rain. That makes carpenter ant prediction hard, but not impossible.",
+"a150": "What it takes",
+"a151": "The weather requirements for a carpenter ant swarm are fairly specific:",
+"a152": "<b>Temperature:</b> the daily maximum must be at least 18 °C, ideally 20–25 °C. Cooler days rarely trigger a mass swarm.",
+"a153": "<b>Wind:</b> a maximum of around 5 m/s. The ants cannot control their flight in strong wind, and the colony stays put.",
+"a154": "<b>Cloud cover:</b> preferably under 70 %. Sunlight is a strong driver. It warms the surface of the nest and is probably the actual start signal.",
+"a155": "<b>Rain:</b> dry on the day itself. Light rain the day before can be a plus (higher humidity afterwards), but rain during the swarm cancels it.",
+"a156": "<b>Soil moisture:</b> hard to measure, but the colony seems to prefer days when there has been rain in the previous week.",
+"a157": "Why the fish go so wild",
+"a158": "A swarm is an explosion of high-calorie protein. A winged queen can weigh 30–40 mg, a male 15–20 mg, several times a typical mayfly. When the wind carries the ants out onto the water, the trout suddenly have hundreds of large, energy-rich prey that cannot escape (the ant is wet and cannot take off again).",
+"a159": "The fish become aggressively opportunistic. Even big trout that normally rise cautiously to spinners in the surface film come up and hit the ants. It is one of the few times in the season when you can present a fairly clumsy fly and still be rewarded with a big fish.",
+"a160": "“Ant swarms and heavy vulgata hatches are what can lift the big individuals of a lake.”",
+"a161": "Where in Norway",
+"a162": "Camponotus herculeanus is found as far north as the Bodø area (around 67°N), but swarms unevenly north of Trondheim. The core range for reliable carpenter ant swarms is southern and central Norway up to and including Trøndelag. In Finnmark, Nordland and Troms you will not reliably see the phenomenon. Individual colonies exist, but the swarming is too rare and unpredictable to plan fishing around.",
+"a163": "<b>Sources:</b> The Norwegian Entomological Society’s distribution maps for Camponotus. The tradition of <em>ant swarms and fly fishing</em> in Norwegian magazines. Own observations from the fly fishing literature.",
+"a164": "Ants · Bonus",
+"a165": "Ant swarms in general: flying ants in fly fishing",
+"a166": "Carpenter ants are the dramatic ones, but not the only ones. Several ant species swarm through the summer, and when you see small black winged ants falling on the water on a July afternoon, that is fly fishing food too, just in a smaller format.",
+"a167": "Which ants swarm in Norway",
+"a168": "Besides Camponotus (carpenter ants), three ant genera in particular matter to the fly fisher:",
+"a169": "<b>Lasius</b> (yellow meadow ants, black garden ants and related species): the most common swarming ant. Swarms several times through the summer, often in dense clouds on warm afternoons from July to September. Smaller than carpenter ants, typically 4–6 mm, but in far greater numbers.",
+"a170": "<b>Formica</b> (red wood ants): swarms in May and June. Bigger than Lasius (8–10 mm), but less often out over water because the nests usually sit further into the forest.",
+"a171": "<b>Myrmica</b> (red stinging ants): swarms in August and September. Small, 4–5 mm, but can come in densities on a par with Lasius.",
+"a172": "The unpredictable swarm day",
+"a173": "Unlike carpenter ants, which have one strongly synchronised swarm day a year, Lasius and Myrmica have several swarming events through the season. Each one is short, often one to three hours in the afternoon, but a good location near forest can have five to eight such events over a summer.",
+"a174": "The weather requirements resemble carpenter ants but are less strict: warmer than 15 °C, little wind, and preferably high humidity (after rain is ideal). The smaller species are also less weather-sensitive than Camponotus. Lasius can swarm on fairly overcast days.",
+"a175": "<b>The classic ant day</b>\nFly fishers sometimes talk about an “ant day”: a particular day in July or August when the wind suddenly carries large numbers of small ants out onto the water, and the fish lock on to ants. It is usually a Lasius swarm, and can last from a couple of hours to a whole afternoon.",
+"a176": "Why ants drift out onto the water",
+"a177": "Winged ants are weak fliers. They rise into the air current to mate, but have poor control of their flight path and are easily blown out over open water. If the swarm happens a quarter of a kilometre from a fishing lake, the wind can carry thousands of ants out onto the surface within minutes. It is this wind drift that makes ants relevant to fly fishers. The ant has no business on the water; it ends up there by accident.",
+"a178": "How to recognise an ant situation",
+"a179": "Sipping rises in the surface on a still afternoon, often with no big insects visible in the air.",
+"a180": "The wind is blowing from the forest towards the water, often from the south or south-west in the afternoon.",
+"a181": "Look closely at the surface with polarised glasses and you will spot small black dots drifting with the current. Those are ants.",
+"a182": "The fish can be selective: a standard dry fly of similar size is often refused. A simple ant imitation (foam or a dubbed body in black or dark brown) works wonders.",
+"a183": "<b>Sources:</b> The Norwegian Entomological Society’s species descriptions of Lasius, Formica and Myrmica. Experience documented by Norwegian fly fishers over several decades.",
+"a184": "General · Bonus",
+"a185": "The hatch sequence through the year: a chronology",
+"a186": "If you know which week it is, you often know which insect you are hunting. Here is the Norwegian stillwater season as one continuous calendar, from the first spring hatch to the last ant swarm.",
+"a187": "April: the season’s first stirrings",
+"a188": "April is not a big hatch month, but the first hints appear. In the lower forest tarns of eastern Norway you can see the odd <em>Leptophlebia marginata</em> dun on the surface on mild days in the second half of April. It is rarely something you plan fishing around, but it tells you the water has passed the critical temperature (about 10 °C) and the season is under way.",
+"a189": "At the same time something is happening below the surface: rising temperatures get the nymphs active, and if you fish nymphs in shallow water you can already find actively feeding trout.",
+"a190": "May: the marginata month",
+"a191": "May is classic marginata time. The hatches get going in earnest around 8–15 May in eastern Norway and can carry on to the middle of June. Vespertina follows a few weeks later, typically from the second half of May. The lowland tarns are now in full swing, and a week of stable weather gives solid hatch waves.",
+"a192": "At the turn of May and June the <em>Ephemera vulgata</em> hatch also starts in the most productive lakes. Hedmark and the lower parts of Buskerud and Vestfold see the first duns around 25 May, while Oslomarka and Østmarka may get their first hatches in early June.",
+"a193": "<b>May tip</b>\nKeep an eye on the <em>ice-out</em>. A higher lake that lost its ice on 1 May gets its marginata hatch around three weeks later, so around 22 May. Lakes that lost their ice on 15 May start marginata around 12 June. This link is one of the most reliable season forecasts in Norwegian fly fishing.",
+"a194": "June: the fly fisher’s month",
+"a195": "June is the main month. Vulgata peaks at the turn of June and July in the lowlands, marginata and vespertina gradually fade, and the <em>carpenter ant swarm</em> (Camponotus) usually lands within a week or two of Midsummer, provided the weather is right.",
+"a196": "On good June evenings you can see overlapping phenomena: a marginata spinner fall in the morning, a vulgata hatch in the day, and a vulgata spinner fall at dusk. It is rare for the whole hatch cycle to be active at once, but when it happens, the fishing is fantastic.",
+"a197": "In rivers, <em>Ephemera danica</em> (the mayfly in English usage) also starts in June. A cousin of vulgata, but it belongs in rivers. In Norwegian rivers like Trysilelva this is one of the most important dry fly periods.",
+"a198": "July: transition and ants",
+"a199": "In early July the vulgata season ends in most lowland lakes, and the focus moves up in altitude: Nordmarka above 400 m, Hardangervidda and the mountain areas in general, which only now reach the hatch threshold. These “late hatches” are often thinner but more reliable, because July weather is more stable.",
+"a200": "July is also the <em>ant month</em>. The Lasius swarms take over as the dominant terrestrial insect. Still afternoons with a little wind from the forest towards the water are classic ant situations.",
+"a201": "At the same time, <em>caddis flies</em> and <em>midges</em> (Chironomidae) grow in importance. Two groups that do not lend themselves to modelling as well as the mayflies, but that are very important to the trout’s daytime diet in July and August.",
+"a202": "August: Caenis, small olives and midges",
+"a203": "August is often called “the bad month” in Norwegian fly fishing. That is not right; the season profile has just changed character. The big dramatic hatches are over, but there is stable, steady fishing on smaller insects.",
+"a204": "<em>Caenis</em> (the white spinner, “the white curse”): small mayflies that can hatch in enormous densities morning and evening. Selective fish, needs small imitations (#20–22).",
+"a205": "Small olives and baetids: size #16–18, hatching right through August.",
+"a206": "Midges (Chironomidae): the hatch peak is in August, and much of it happens at dusk and at night.",
+"a207": "Late Lasius swarms can still occur.",
+"a208": "September: the season winds down",
+"a209": "September is often best in rivers, salmon and trout rivers with cooler water and more activity. On stillwaters the activity gradually drops. <em>Myrmica</em> swarms can give the odd late ant day. Water at 8–12 °C, with oxygen-rich air and a cool evening breeze, can offer the last dry fly chances before winter.",
+"a210": "“The season is not one straight line. It is a chain of overlapping episodes, where each insect has its own logic.”",
+"a211": "Why this chronology is useful",
+"a212": "Two reasons. First, <em>planning</em>. If you know you have a free weekend on 12–14 June, you can choose the location by which phenomenon interests you most: Nordmarka for late marginata, Østmarka for the vulgata peak, or a lowland tarn for the first ants. Second, <em>identification</em>. When you are standing by the water and see unusual rising activity, it helps to know which insects are typically active that very week. Then you arrive with an expectation instead of guessing afterwards.",
+"a213": "<b>Sources:</b> Norwegian fly fishing tradition documented over several decades. HatchWatch model estimates based on MET data and NVE water temperatures. Lars Nilssen, larsoglars.no, for qualitative season descriptions."
+};
+    document.title = 'Articles · HatchWatch';
+    document.querySelectorAll('[data-i18n-html]').forEach(function (el) { var v = EN[el.getAttribute('data-i18n-html')]; if (v) el.innerHTML = v; });
+    var mb = document.getElementById('hwMenuBtn');
+    if (mb) { mb.setAttribute('aria-label', 'Menu'); mb.title = 'Menu'; }
+})();
+</script>
 
 <script>
 // ─── Artikkel-routing ─────────────────────────────────────

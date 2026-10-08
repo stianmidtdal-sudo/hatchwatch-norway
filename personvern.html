@@ -10,6 +10,7 @@
     <link rel="icon" type="image/png" sizes="64x64" href="/logos/favicon-64.png?v=2">
     <link rel="apple-touch-icon" href="/logos/apple-touch-icon-180.png">
     <link rel="stylesheet" href="/hw.css">
+    <script src="/hw-lang.js"></script>
     <link rel="manifest" href="/manifest.json">
     <style>
         * { box-sizing: border-box; }
@@ -66,73 +67,125 @@
 </nav>
 
 <main>
-    <h1>Personvern</h1>
-    <p class="updated">Sist oppdatert 1. oktober 2026</p>
+    <h1 data-i18n="h1">Personvern</h1>
+    <p class="updated" data-i18n="updated">Sist oppdatert 1. oktober 2026</p>
 
-    <p class="lead">HatchWatch har ingen brukerkontoer, ingen reklame og selger ingen data. Du kan bruke hele tjenesten uten å oppgi noe om deg selv. Denne siden forklarer det lille som likevel lagres, og hvordan du får det slettet. Den gjelder både nettsiden hatchwatch.no og HatchWatch-appen for iPhone.</p>
+    <p class="lead" data-i18n="lead">HatchWatch har ingen brukerkontoer, ingen reklame og selger ingen data. Du kan bruke hele tjenesten uten å oppgi noe om deg selv. Denne siden forklarer det lille som likevel lagres, og hvordan du får det slettet. Den gjelder både nettsiden hatchwatch.no og HatchWatch-appen for iPhone.</p>
 
-    <h2>Hvem som er ansvarlig</h2>
-    <p>HatchWatch drives av Stian Midtdal som et privat hobbyprosjekt. Spørsmål om personvern, eller ønske om innsyn og sletting, sendes til <a href="mailto:stian.midtdal@gmail.com">stian.midtdal@gmail.com</a>.</p>
+    <h2 data-i18n="whoH">Hvem som er ansvarlig</h2>
+    <p data-i18n-html="whoP">HatchWatch drives av Stian Midtdal som et privat hobbyprosjekt. Spørsmål om personvern, eller ønske om innsyn og sletting, sendes til <a href="mailto:stian.midtdal@gmail.com">stian.midtdal@gmail.com</a>.</p>
 
-    <h2>Varsler</h2>
-    <p>Hvis du slår på varsler, lagrer vi det som trengs for å sende dem til deg:</p>
+    <h2 data-i18n="notifH">Varsler</h2>
+    <p data-i18n="notifP1">Hvis du slår på varsler, lagrer vi det som trengs for å sende dem til deg:</p>
     <ul>
-        <li>en teknisk adresse til enheten eller nettleseren din (et varseltoken fra Apple, eller en abonnementsadresse fra nettleseren)</li>
-        <li>hvilke vann og hvilke varseltyper du har valgt</li>
-        <li>språkvalg og tidspunkt for når abonnementet ble opprettet og sist endret</li>
+        <li data-i18n="notifL1">en teknisk adresse til enheten eller nettleseren din (et varseltoken fra Apple, eller en abonnementsadresse fra nettleseren)</li>
+        <li data-i18n="notifL2">hvilke vann og hvilke varseltyper du har valgt</li>
+        <li data-i18n="notifL3">språkvalg og tidspunkt for når abonnementet ble opprettet og sist endret</li>
     </ul>
-    <p>Adressen sier ikke hvem du er, og vi kobler den ikke til navn eller e-post. Den brukes bare til å levere varslene du har bedt om. Varsler leveres gjennom Apples varseltjeneste i appen, og gjennom nettleserens varseltjeneste (Apple, Google eller Mozilla) på nettsiden.</p>
-    <p>Når du slår av alle varsler, slettes abonnementet. Det slettes også automatisk hvis Apple eller nettleseren melder at adressen ikke lenger er i bruk, for eksempel fordi appen er avinstallert.</p>
+    <p data-i18n="notifP2">Adressen sier ikke hvem du er, og vi kobler den ikke til navn eller e-post. Den brukes bare til å levere varslene du har bedt om. Varsler leveres gjennom Apples varseltjeneste i appen, og gjennom nettleserens varseltjeneste (Apple, Google eller Mozilla) på nettsiden.</p>
+    <p data-i18n="notifP3">Når du slår av alle varsler, slettes abonnementet. Det slettes også automatisk hvis Apple eller nettleseren melder at adressen ikke lenger er i bruk, for eksempel fordi appen er avinstallert.</p>
 
-    <h2>Observasjoner du sender inn</h2>
-    <p>Når du sender inn en klekkeobservasjon, lagrer vi det du fyller ut: dato, art, område, eventuelt vann og høyde, hva du så, kommentar, samt <b>navn og e-postadresse</b>.</p>
-    <p>Navn og e-post brukes til å vurdere observasjonen og til å kunne stille oppfølgingsspørsmål. De vises ikke offentlig og deles ikke med andre. Selve observasjonen, uten navn og e-post, kan brukes til å forbedre modellen og kan inngå i statistikk og omtale.</p>
-    <p>Observasjoner lagres til du ber om at de slettes. Send en e-post, så sletter vi navn og e-post, eller hele observasjonen om du ønsker det.</p>
+    <h2 data-i18n="obsH">Observasjoner du sender inn</h2>
+    <p data-i18n-html="obsP1">Når du sender inn en klekkeobservasjon, lagrer vi det du fyller ut: dato, art, område, eventuelt vann og høyde, hva du så, kommentar, samt <b>navn og e-postadresse</b>.</p>
+    <p data-i18n="obsP2">Navn og e-post brukes til å vurdere observasjonen og til å kunne stille oppfølgingsspørsmål. De vises ikke offentlig og deles ikke med andre. Selve observasjonen, uten navn og e-post, kan brukes til å forbedre modellen og kan inngå i statistikk og omtale.</p>
+    <p data-i18n="obsP3">Observasjoner lagres til du ber om at de slettes. Send en e-post, så sletter vi navn og e-post, eller hele observasjonen om du ønsker det.</p>
 
-    <h2>Posisjon</h2>
-    <p>Knappen for å finne nærmeste vann spør om posisjonen din. Posisjonen brukes der og da, på din egen enhet, til å regne ut hvilket vann som ligger nærmest. Den sendes ikke til oss og lagres ikke.</p>
+    <h2 data-i18n="posH">Posisjon</h2>
+    <p data-i18n="posP">Knappen for å finne nærmeste vann spør om posisjonen din. Posisjonen brukes der og da, på din egen enhet, til å regne ut hvilket vann som ligger nærmest. Den sendes ikke til oss og lagres ikke.</p>
 
-    <h2>Det som lagres på din egen enhet</h2>
-    <p>Nettsiden og appen husker noen valg lokalt i nettleseren eller appen, så du slipper å gjøre dem på nytt:</p>
+    <h2 data-i18n="localH">Det som lagres på din egen enhet</h2>
+    <p data-i18n="localP1">Nettsiden og appen husker noen valg lokalt i nettleseren eller appen, så du slipper å gjøre dem på nytt:</p>
     <ul>
-        <li>favorittvann («Mine vann»)</li>
-        <li>språk og visningsvalg</li>
-        <li>hvilke varsler du har valgt</li>
-        <li>navn og e-post du sist brukte i observasjonsskjemaet, slik at feltene er ferdig utfylt neste gang</li>
+        <li data-i18n="localL1">favorittvann («Mine vann»)</li>
+        <li data-i18n="localL2">språk og visningsvalg</li>
+        <li data-i18n="localL3">hvilke varsler du har valgt</li>
+        <li data-i18n="localL4">navn og e-post du sist brukte i observasjonsskjemaet, slik at feltene er ferdig utfylt neste gang</li>
     </ul>
-    <p>Dette ligger bare hos deg. Det forsvinner når du sletter nettleserdata for hatchwatch.no eller avinstallerer appen.</p>
+    <p data-i18n="localP2">Dette ligger bare hos deg. Det forsvinner når du sletter nettleserdata for hatchwatch.no eller avinstallerer appen.</p>
 
-    <h2>Besøksstatistikk</h2>
-    <p>Sidene for enkeltvann bruker Google Analytics for å se hvor mange som bruker tjenesten og hvilke vann som er mest besøkt. Google Analytics setter en informasjonskapsel med en tilfeldig ID og registrerer blant annet sidevisninger, omtrentlig geografisk område og type enhet. Vi ser bare samlede tall og kan ikke identifisere enkeltpersoner. Opplysningene behandles av Google.</p>
-    <p>Du kan hindre dette ved å blokkere informasjonskapsler i nettleseren, eller ved å bruke <a href="https://tools.google.com/dlpage/gaoptout" rel="noopener">Googles avmeldingstillegg</a>.</p>
+    <h2 data-i18n="statsH">Besøksstatistikk</h2>
+    <p data-i18n="statsP1">Sidene for enkeltvann bruker Google Analytics for å se hvor mange som bruker tjenesten og hvilke vann som er mest besøkt. Google Analytics setter en informasjonskapsel med en tilfeldig ID og registrerer blant annet sidevisninger, omtrentlig geografisk område og type enhet. Vi ser bare samlede tall og kan ikke identifisere enkeltpersoner. Opplysningene behandles av Google.</p>
+    <p data-i18n-html="statsP2">Du kan hindre dette ved å blokkere informasjonskapsler i nettleseren, eller ved å bruke <a href="https://tools.google.com/dlpage/gaoptout" rel="noopener">Googles avmeldingstillegg</a>.</p>
 
-    <h2>Andre tjenester siden bruker</h2>
-    <p>For at siden skal fungere, henter enheten din innhold fra noen få leverandører. De får da se IP-adressen din, slik all nettrafikk fungerer:</p>
+    <h2 data-i18n="thirdH">Andre tjenester siden bruker</h2>
+    <p data-i18n="thirdP1">For at siden skal fungere, henter enheten din innhold fra noen få leverandører. De får da se IP-adressen din, slik all nettrafikk fungerer:</p>
     <ul>
-        <li><b>Vercel</b> — drifter nettsiden og serverne</li>
-        <li><b>Upstash</b> — databasen der varselabonnementer og observasjoner ligger</li>
-        <li><b>Google Fonts</b> og <b>cdnjs (Cloudflare)</b> — skrifttyper og et grafbibliotek</li>
-        <li><b>Tally</b> — skjemaet «Send tilbakemelding». Det du skriver der, behandles av Tally og sendes til oss</li>
+        <li data-i18n-html="thirdL1"><b>Vercel</b> — drifter nettsiden og serverne</li>
+        <li data-i18n-html="thirdL2"><b>Upstash</b> — databasen der varselabonnementer og observasjoner ligger</li>
+        <li data-i18n-html="thirdL3"><b>Google Fonts</b> og <b>cdnjs (Cloudflare)</b> — skrifttyper og et grafbibliotek</li>
+        <li data-i18n-html="thirdL4"><b>Tally</b> — skjemaet «Send tilbakemelding». Det du skriver der, behandles av Tally og sendes til oss</li>
     </ul>
-    <p>Vær- og vanndata fra MET Norge og NVE hentes av våre servere. De får ingen opplysninger om deg.</p>
+    <p data-i18n="thirdP2">Vær- og vanndata fra MET Norge og NVE hentes av våre servere. De får ingen opplysninger om deg.</p>
 
-    <h2>Det vi ikke gjør</h2>
+    <h2 data-i18n="notH">Det vi ikke gjør</h2>
     <div class="box">
         <ul>
-            <li>Vi har ingen brukerkontoer og ber ikke om innlogging.</li>
-            <li>Vi viser ikke reklame og sporer deg ikke på tvers av andre apper eller nettsteder.</li>
-            <li>Vi selger eller deler ikke personopplysninger med andre til deres egne formål.</li>
+            <li data-i18n="notL1">Vi har ingen brukerkontoer og ber ikke om innlogging.</li>
+            <li data-i18n="notL2">Vi viser ikke reklame og sporer deg ikke på tvers av andre apper eller nettsteder.</li>
+            <li data-i18n="notL3">Vi selger eller deler ikke personopplysninger med andre til deres egne formål.</li>
         </ul>
     </div>
 
-    <h2>Dine rettigheter</h2>
-    <p>Du har rett til å få vite hva som er lagret om deg, få det rettet og få det slettet. Send en e-post til <a href="mailto:stian.midtdal@gmail.com">stian.midtdal@gmail.com</a>. Mener du at opplysningene dine behandles feil, kan du klage til <a href="https://www.datatilsynet.no" rel="noopener">Datatilsynet</a>.</p>
+    <h2 data-i18n="rightsH">Dine rettigheter</h2>
+    <p data-i18n-html="rightsP">Du har rett til å få vite hva som er lagret om deg, få det rettet og få det slettet. Send en e-post til <a href="mailto:stian.midtdal@gmail.com">stian.midtdal@gmail.com</a>. Mener du at opplysningene dine behandles feil, kan du klage til <a href="https://www.datatilsynet.no" rel="noopener">Datatilsynet</a>.</p>
 
-    <h2>Endringer</h2>
-    <p>Hvis tjenesten endres slik at mer eller annet lagres, oppdateres denne siden, og datoen øverst endres.</p>
+    <h2 data-i18n="changesH">Endringer</h2>
+    <p data-i18n="changesP">Hvis tjenesten endres slik at mer eller annet lagres, oppdateres denne siden, og datoen øverst endres.</p>
 </main>
 
 <script>
+// Engelsk (2026-10-08): hw-lang.js velger språk; norsk står i HTML-en, engelsk legges over her.
+(function () {
+    if (window.HW_LANG !== 'en') return;
+    var EN = {
+        h1: 'Privacy', updated: 'Last updated 1 October 2026',
+        lead: 'HatchWatch has no user accounts, no ads, and sells no data. You can use the whole service without telling us anything about yourself. This page explains the little that is stored anyway, and how to get it deleted. It covers both the website hatchwatch.no and the HatchWatch app for iPhone.',
+        whoH: 'Who is responsible',
+        whoP: 'HatchWatch is run by Stian Midtdal as a private hobby project. Questions about privacy, or requests to see or delete your data, go to <a href="mailto:stian.midtdal@gmail.com">stian.midtdal@gmail.com</a>.',
+        notifH: 'Notifications',
+        notifP1: 'If you turn on notifications, we store what is needed to send them to you:',
+        notifL1: 'a technical address for your device or browser (a notification token from Apple, or a subscription address from the browser)',
+        notifL2: 'which waters and which notification types you have chosen',
+        notifL3: 'your language choice and when the subscription was created and last changed',
+        notifP2: 'The address does not say who you are, and we do not link it to a name or email. It is only used to deliver the notifications you asked for. Notifications go through Apple’s notification service in the app, and through the browser’s notification service (Apple, Google or Mozilla) on the website.',
+        notifP3: 'When you turn off all notifications, the subscription is deleted. It is also deleted automatically if Apple or the browser tells us the address is no longer in use, for example because the app was uninstalled.',
+        obsH: 'Observations you send in',
+        obsP1: 'When you send in a hatch observation, we store what you fill in: date, species, area, lake and altitude if given, what you saw, your comment, and your <b>name and email address</b>.',
+        obsP2: 'Name and email are used to assess the observation and to ask follow-up questions. They are not shown publicly and not shared with anyone. The observation itself, without name and email, may be used to improve the model and may appear in statistics and write-ups.',
+        obsP3: 'Observations are kept until you ask for them to be deleted. Send an email and we delete the name and email, or the whole observation if you prefer.',
+        posH: 'Location',
+        posP: 'The button for finding the nearest water asks for your location. It is used there and then, on your own device, to work out which water is closest. It is not sent to us and not stored.',
+        localH: 'What is stored on your own device',
+        localP1: 'The website and the app remember a few choices locally in the browser or the app, so you do not have to make them again:',
+        localL1: 'favourite waters (“My waters”)',
+        localL2: 'language and display choices',
+        localL3: 'which notifications you have chosen',
+        localL4: 'the name and email you last used in the observation form, so the fields are filled in next time',
+        localP2: 'This lives only on your device. It disappears when you clear browser data for hatchwatch.no or uninstall the app.',
+        statsH: 'Visitor statistics',
+        statsP1: 'The pages for individual waters use Google Analytics to see how many people use the service and which waters are visited most. Google Analytics sets a cookie with a random ID and records things like page views, approximate region and type of device. We only see totals and cannot identify individuals. The data is processed by Google.',
+        statsP2: 'You can prevent this by blocking cookies in your browser, or by using <a href="https://tools.google.com/dlpage/gaoptout" rel="noopener">Google’s opt-out add-on</a>.',
+        thirdH: 'Other services the site uses',
+        thirdP1: 'For the site to work, your device fetches content from a few providers. They then see your IP address, as with all web traffic:',
+        thirdL1: '<b>Vercel</b>: hosts the website and the servers',
+        thirdL2: '<b>Upstash</b>: the database where notification subscriptions and observations are kept',
+        thirdL3: '<b>Google Fonts</b> and <b>cdnjs (Cloudflare)</b>: fonts and a charting library',
+        thirdL4: '<b>Tally</b>: the “Send feedback” form. What you write there is processed by Tally and sent to us',
+        thirdP2: 'Weather and water data from MET Norway and NVE are fetched by our servers. They get no information about you.',
+        notH: 'What we do not do',
+        notL1: 'We have no user accounts and do not ask you to log in.',
+        notL2: 'We show no ads and do not track you across other apps or websites.',
+        notL3: 'We do not sell or share personal data with others for their own purposes.',
+        rightsH: 'Your rights',
+        rightsP: 'You have the right to know what is stored about you, to have it corrected, and to have it deleted. Send an email to <a href="mailto:stian.midtdal@gmail.com">stian.midtdal@gmail.com</a>. If you think your data is being handled wrongly, you can complain to the Norwegian Data Protection Authority, <a href="https://www.datatilsynet.no" rel="noopener">Datatilsynet</a>.',
+        changesH: 'Changes',
+        changesP: 'If the service changes so that more or different data is stored, this page is updated and the date at the top changes.'
+    };
+    document.title = 'Privacy · HatchWatch';
+    document.querySelectorAll('[data-i18n]').forEach(function (el) { var v = EN[el.getAttribute('data-i18n')]; if (v) el.textContent = v; });
+    document.querySelectorAll('[data-i18n-html]').forEach(function (el) { var v = EN[el.getAttribute('data-i18n-html')]; if (v) el.innerHTML = v; });
+})();
+
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 </script>
 <script src="/hw-shell.js" defer></script>

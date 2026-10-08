@@ -9,6 +9,7 @@
     <link rel="icon" type="image/png" sizes="64x64" href="/logos/favicon-64.png?v=2">
     <link rel="apple-touch-icon" href="/logos/apple-touch-icon-180.png">
     <link rel="stylesheet" href="/hw.css">
+    <script src="/hw-lang.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
@@ -160,26 +161,26 @@
 <main>
     <!-- ── SKJEMA ── -->
     <div id="formWrap">
-        <h1>Send observasjon</h1>
-        <p class="intro">Bidra med en observasjon — klekking eller spinnerfall — det styrker
+        <h1 data-i18n="h1">Send observasjon</h1>
+        <p class="intro" data-i18n="intro">Bidra med en observasjon — klekking eller spinnerfall — det styrker
         modellen og gir bedre prediksjoner for alle. Tusen takk!</p>
 
         <form class="card" id="obsForm" novalidate>
-            <label>Type observasjon</label>
+            <label data-i18n="type">Type observasjon</label>
             <div class="seg" id="typeSeg">
-                <button type="button" data-v="klekking" class="on">Klekking</button>
-                <button type="button" data-v="spinnerfall">Spinnerfall</button>
+                <button type="button" data-v="klekking" class="on" data-i18n="typeHatch">Klekking</button>
+                <button type="button" data-v="spinnerfall" data-i18n="typeSpinner">Spinnerfall</button>
             </div>
 
             <div class="row2">
                 <div>
-                    <label for="fDate">Dato</label>
+                    <label for="fDate" data-i18n="date">Dato</label>
                     <input type="date" id="fDate" required>
                 </div>
                 <div>
-                    <label for="fInsect">Insekt</label>
+                    <label for="fInsect" data-i18n="insect">Insekt</label>
                     <select id="fInsect" required>
-                        <option value="">Velg …</option>
+                        <option value="" data-i18n="choose">Velg …</option>
                         <option>Marginata</option>
                         <option>Vespertina</option>
                         <option>Vulgata</option>
@@ -188,9 +189,9 @@
                 </div>
             </div>
 
-            <label for="fArea">Lokasjonsområde</label>
+            <label for="fArea" data-i18n="area">Lokasjonsområde</label>
             <select id="fArea" required>
-                <option value="">Velg …</option>
+                <option value="" data-i18n="choose">Velg …</option>
                 <option>Kautokeino</option><option>Alta</option><option>Porsanger</option>
                 <option>Ifjordfjellet</option><option>Dividalen</option><option>Bardu</option>
                 <option>Narvik</option><option>Mo i Rana</option><option>Børgefjell</option>
@@ -198,52 +199,53 @@
                 <option>Finnemarka</option><option>Hardangervidda</option><option>Bergen</option>
                 <option>Røros</option><option>Romeriksåsen</option>
                 <option>Nordmarka</option><option>Østmarka</option>
-                <option>Vestfjella</option><option>Annet (oppgi i kommentar)</option>
+                <option>Vestfjella</option><option value="Annet (oppgi i kommentar)" data-i18n="areaOther">Annet (oppgi i kommentar)</option>
             </select>
 
             <div class="row2">
                 <div>
-                    <label for="fLake">Vann <span class="opt">(valgfritt)</span></label>
+                    <label for="fLake" data-i18n-html="lake">Vann <span class="opt">(valgfritt)</span></label>
                     <input type="text" id="fLake" maxlength="80">
                 </div>
                 <div>
-                    <label for="fAlt">Høyde over havet <span class="opt">(valgfritt, meter)</span></label>
+                    <label for="fAlt" data-i18n-html="alt">Høyde over havet <span class="opt">(valgfritt, meter)</span></label>
                     <input type="number" id="fAlt" min="0" max="2500">
                 </div>
             </div>
 
             <div class="row2">
                 <div>
-                    <label for="fObserved">Hva ble observert? <span class="opt">(valgfritt)</span></label>
+                    <label for="fObserved" data-i18n-html="observed">Hva ble observert? <span class="opt">(valgfritt)</span></label>
+                    <!-- Verdiene (value) holdes på norsk så lagrede observasjoner er like uansett språk -->
                     <select id="fObserved">
-                        <option value="">Velg …</option>
-                        <option>Første klekking sett</option>
-                        <option>Pågående klekkebølge</option>
-                        <option>Slutt på klekking</option>
-                        <option>Sporadisk</option>
+                        <option value="" data-i18n="choose">Velg …</option>
+                        <option value="Første klekking sett" data-i18n="obs1">Første klekking sett</option>
+                        <option value="Pågående klekkebølge" data-i18n="obs2">Pågående klekkebølge</option>
+                        <option value="Slutt på klekking" data-i18n="obs3">Slutt på klekking</option>
+                        <option value="Sporadisk" data-i18n="obs4">Sporadisk</option>
                     </select>
                 </div>
                 <div>
-                    <label for="fAmount">Anslag på mengde <span class="opt">(valgfritt)</span></label>
+                    <label for="fAmount" data-i18n-html="amount">Anslag på mengde <span class="opt">(valgfritt)</span></label>
                     <select id="fAmount">
-                        <option value="">Velg …</option>
-                        <option>Få enkelt-stykker</option>
-                        <option>Tydelig klekking</option>
-                        <option>Eksplosjon (massiv klekking)</option>
+                        <option value="" data-i18n="choose">Velg …</option>
+                        <option value="Få enkelt-stykker" data-i18n="amt1">Få enkelt-stykker</option>
+                        <option value="Tydelig klekking" data-i18n="amt2">Tydelig klekking</option>
+                        <option value="Eksplosjon (massiv klekking)" data-i18n="amt3">Eksplosjon (massiv klekking)</option>
                     </select>
                 </div>
             </div>
 
-            <label for="fComment">Kommentar / feltbemerkning <span class="opt">(valgfritt)</span></label>
+            <label for="fComment" data-i18n-html="comment">Kommentar / feltbemerkning <span class="opt">(valgfritt)</span></label>
             <textarea id="fComment" maxlength="2000"></textarea>
 
             <div class="row2">
                 <div>
-                    <label for="fName">Navn</label>
+                    <label for="fName" data-i18n="name">Navn</label>
                     <input type="text" id="fName" required maxlength="80" autocomplete="name">
                 </div>
                 <div>
-                    <label for="fEmail">E-post</label>
+                    <label for="fEmail" data-i18n="email">E-post</label>
                     <input type="email" id="fEmail" required maxlength="120" autocomplete="email">
                 </div>
             </div>
@@ -255,15 +257,15 @@
             </div>
 
             <div class="err" id="formErr"></div>
-            <button type="submit" class="submit-btn" id="submitBtn">Send inn</button>
+            <button type="submit" class="submit-btn" id="submitBtn" data-i18n="submit">Send inn</button>
         </form>
 
         <div class="card thanks" id="thanksCard">
             <div class="big" style="line-height:0"><span class="hw-fly" style="width:76px;color:var(--hw-hatch)" aria-hidden="true"></span></div>
-            <h2>Tusen takk!</h2>
-            <p>Observasjonen er mottatt og går rett inn i kalibreringsgrunnlaget.
+            <h2 data-i18n="thanksH">Tusen takk!</h2>
+            <p data-i18n="thanksP">Observasjonen er mottatt og går rett inn i kalibreringsgrunnlaget.
             Hver eneste observasjon gjør prognosene bedre — for alle.</p>
-            <button id="oneMoreBtn">Send en til</button>
+            <button id="oneMoreBtn" data-i18n="oneMore">Send en til</button>
         </div>
     </div>
 
@@ -288,6 +290,33 @@
 </main>
 
 <script>
+// Engelsk (2026-10-08): hw-lang.js velger språk; norsk står i HTML-en, engelsk legges over her.
+// Admin-delen (?admin=1) er bare for Stian og holdes på norsk. Valgene i nedtrekksmenyene
+// beholder norske verdier, så lagrede observasjoner ser like ut uansett språk.
+var OBS_EN = window.HW_LANG === 'en';
+(function () {
+    if (!OBS_EN) return;
+    var EN = {
+        h1: 'Report an observation',
+        intro: 'Seen a hatch or a spinner fall? Tell us. Every report makes the model stronger and the forecasts better for everyone. Thank you!',
+        type: 'Type of observation', typeHatch: 'Hatch', typeSpinner: 'Spinner fall',
+        date: 'Date', insect: 'Insect', choose: 'Choose …', area: 'Area', areaOther: 'Other (say where in the comment)',
+        lake: 'Lake or river <span class="opt">(optional)</span>',
+        alt: 'Altitude <span class="opt">(optional, metres)</span>',
+        observed: 'What did you see? <span class="opt">(optional)</span>',
+        obs1: 'First hatch seen', obs2: 'Hatch wave under way', obs3: 'End of the hatch', obs4: 'Scattered',
+        amount: 'How much? <span class="opt">(optional)</span>',
+        amt1: 'A few single flies', amt2: 'A clear hatch', amt3: 'Explosion (massive hatch)',
+        comment: 'Comment / field notes <span class="opt">(optional)</span>',
+        name: 'Name', email: 'Email', submit: 'Send',
+        thanksH: 'Thank you!', thanksP: 'Your observation has been received and goes straight into the calibration data. Every single observation makes the forecasts better, for everyone.',
+        oneMore: 'Send another'
+    };
+    document.title = 'Report an observation — HatchWatch';
+    document.querySelector('nav .back').setAttribute('aria-label', 'To the front page');
+    document.querySelectorAll('[data-i18n]').forEach(function (el) { var v = EN[el.getAttribute('data-i18n')]; if (v) el.textContent = v; });
+    document.querySelectorAll('[data-i18n-html]').forEach(function (el) { var v = EN[el.getAttribute('data-i18n-html')]; if (v) el.innerHTML = v; });
+})();
 (function () {
     var qs = new URLSearchParams(location.search);
 
@@ -346,20 +375,20 @@
         };
 
         if (!payload.date || !payload.insect || !payload.area || !payload.name || !payload.email) {
-            err.textContent = 'Fyll ut dato, insekt, lokasjonsområde, navn og e-post.';
+            err.textContent = OBS_EN ? 'Please fill in date, insect, area, name and email.' : 'Fyll ut dato, insekt, lokasjonsområde, navn og e-post.';
             err.style.display = 'block';
             return;
         }
 
         var btn = document.getElementById('submitBtn');
-        btn.disabled = true; btn.textContent = 'Sender …';
+        btn.disabled = true; btn.textContent = OBS_EN ? 'Sending …' : 'Sender …';
 
         fetch('/api/observation', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         }).then(function (r) {
-            if (!r.ok) return r.json().then(function (j) { throw new Error(j.error || 'Noe gikk galt'); });
+            if (!r.ok) return r.json().then(function (j) { throw new Error(j.error || (OBS_EN ? 'Something went wrong' : 'Noe gikk galt')); });
             try {
                 localStorage.setItem('hw_obs_name', payload.name);
                 localStorage.setItem('hw_obs_email', payload.email);
@@ -368,10 +397,10 @@
             document.getElementById('thanksCard').style.display = 'block';
             window.scrollTo(0, 0);
         }).catch(function (e2) {
-            err.textContent = e2.message + ' — prøv igjen.';
+            err.textContent = e2.message + (OBS_EN ? '. Please try again.' : ' — prøv igjen.');
             err.style.display = 'block';
         }).finally(function () {
-            btn.disabled = false; btn.textContent = 'Send inn';
+            btn.disabled = false; btn.textContent = OBS_EN ? 'Send' : 'Send inn';
         });
     });
 

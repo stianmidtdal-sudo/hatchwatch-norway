@@ -60,7 +60,7 @@
     map: 'Map', season: 'Season', fav: 'My waters', menu: 'Menu', close: 'Close', nav: 'Main navigation',
     obs: 'Report a hatch', obsSub: 'Seen a hatch? It makes the model better.',
     notif: 'Notifications', notifSub: 'Hatch, spinner fall, ants · push',
-    articles: 'Articles', articlesSub: 'Mayflies, spinner fall, ants · in Norwegian for now',
+    articles: 'Articles', articlesSub: 'Mayflies, spinner fall, ants',
     ofa: 'OFA stocking', ofaSub: 'Nordmarka 2021–2025',
     about: 'About HatchWatch', aboutSub: 'The model, data sources, stations',
     feedback: 'Send feedback', feedbackSub: 'Beta · we read everything',

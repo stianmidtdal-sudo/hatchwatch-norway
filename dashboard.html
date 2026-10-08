@@ -5336,7 +5336,9 @@ function wxComment(d, hours, no) {
     let lead;
     if (wWord && d.wind != null && d.wind >= 1.5 && dirName) {
         // «Mye nordavind» / «Lett sønnavind» — retningen bærer betydning
-        lead = no ? `${wWord} ${dirName}` : `${wWord} ${dirName} wind`;
+        // Engelsk: «A strong northerly wind» — artikkelen i dirName («a northerly»)
+        // flyttes foran styrkeordet (rettet 2026-10-08, sto «Strong a northerly wind»).
+        lead = no ? `${wWord} ${dirName}` : `A ${wWord.toLowerCase()} ${dirName.replace(/^an? /, '')} wind`;
     } else if (wWord) {
         lead = no ? `${wWord}${d.wind != null && d.wind >= 1.5 ? ' vind' : ''}`
                   : `${wWord}${d.wind != null && d.wind >= 1.5 ? ' wind' : ''}`;
@@ -5537,6 +5539,11 @@ function renderTodayScore(args) {
             phaseScore = 15; phaseKey = 'done'; phaseTxt = no ? `Over. Modellen anslo start for ${ds} dager siden` : `Window closed ${ds - 21} days ago`; phasePill = T2.done; phaseCls = 'bad';
         }
     }
+    // Utenfor sesongen (over 21 d etter anslått start, eller før 1. april) skjules
+    // hele boksen (Stian 2026-10-08): «grader til terskelen» og «se etter
+    // spinnerfall i skumringen» gir ingen mening når vannet er på vei ned og
+    // ingen fisker. Samme grense som sesongkortet bruker. Tilbake 1. april.
+    if (phaseKey === 'done' || phaseKey === 'closed') { markSelfHidden(section, true); return; }
 
     // ── 2. Vann (30 %) ──
     const thr = getWtThreshold(LOC);
@@ -5683,7 +5690,9 @@ function renderWeatherSection(dayData, hourlyData) {
     bigWrap.innerHTML = days.slice(0, 2).map((it, idx) => {
         const d = it.d;
         const when = idx === 0 ? (no ? 'I dag' : 'Today') : (no ? 'I morgen' : 'Tomorrow');
-        const dateStr = `${dayNamesLong[it.date.getDay()]} ${it.date.getDate()}. ${monthsLong[it.date.getMonth()]}`;
+        const dateStr = no
+            ? `${dayNamesLong[it.date.getDay()]} ${it.date.getDate()}. ${monthsLong[it.date.getMonth()]}`
+            : `${dayNamesLong[it.date.getDay()]} ${it.date.getDate()} ${monthsLong[it.date.getMonth()]}`;
         const tmax = d.tempMax24 != null ? d.tempMax24 : d.tempMax;
         const tmin = d.tempMin24;
         return `<div class="wx-big">
