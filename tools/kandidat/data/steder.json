@@ -1,0 +1,82 @@
+{
+ "Kautokeino": {
+  "lat": 69.01,
+  "lon": 23.04,
+  "moh": 307
+ },
+ "Østmarka": {
+  "lat": 59.7,
+  "lon": 11.17,
+  "moh": 170
+ },
+ "Nordmarka": {
+  "lat": 59.94,
+  "lon": 10.72,
+  "moh": 381
+ },
+ "Leira/Nannestad": {
+  "lat": 60.22,
+  "lon": 11.0,
+  "moh": 200
+ },
+ "Losbyvassdraget": {
+  "lat": 59.9,
+  "lon": 10.98,
+  "moh": 200
+ },
+ "Romeriksåsen": {
+  "lat": 60.156,
+  "lon": 10.892,
+  "moh": 330
+ },
+ "Romeriksåsen/Hurdal": {
+  "lat": 60.33,
+  "lon": 11.05,
+  "moh": 330
+ },
+ "Mjøsa": {
+  "lat": 60.8,
+  "lon": 11.0,
+  "moh": 123
+ },
+ "Trysil": {
+  "lat": 61.3,
+  "lon": 12.27,
+  "moh": 360
+ },
+ "Bærumsmarka": {
+  "lat": 59.93,
+  "lon": 10.5,
+  "moh": 250
+ },
+ "Røros": {
+  "lat": 62.57,
+  "lon": 11.39,
+  "moh": 628
+ },
+ "Rena": {
+  "lat": 61.135,
+  "lon": 11.65,
+  "moh": 209
+ },
+ "Solør (Igletjernet)": {
+  "lat": 60.694,
+  "lon": 11.764,
+  "moh": 200
+ },
+ "Blefjell": {
+  "lat": 59.75,
+  "lon": 9.3,
+  "moh": 800
+ },
+ "Engeråa/Engerdal": {
+  "lat": 61.75,
+  "lon": 11.95,
+  "moh": 500
+ },
+ "Vestfjella": {
+  "lat": 59.3,
+  "lon": 11.66,
+  "moh": 180
+ }
+}

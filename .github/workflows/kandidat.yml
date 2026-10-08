@@ -1,0 +1,49 @@
+# Kandidatmodell-prøven mot Artsdatabanken (tools/kandidat/04_artsdatabanken.py).
+# Startes for hånd under Actions → «kandidat-prøve» → Run workflow. Henter vær
+# fra open-meteo (GitHub-maskinen har egen kvote der), regner, og lagrer
+# rapporten i repoet. Rører ingenting på nettsiden.
+
+name: kandidat-prøve
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: kandidat-prove
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  prove:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Kjør prøven
+        working-directory: tools/kandidat
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python -u 04_artsdatabanken.py
+
+      - name: Lagre rapporten i repoet
+        if: always()
+        run: |
+          git config user.name "kandidat-prove"
+          git config user.email "actions@users.noreply.github.com"
+          git add tools/kandidat/KANDIDATMODELL_artsdatabanken.md tools/kandidat/data/artsdatabanken_test.json tools/kandidat/data/artsdatabanken_steder.json
+          if git diff --cached --quiet; then
+            echo "Ingen endringer."
+            exit 0
+          fi
+          git commit -m "kandidat: Artsdatabanken-prøve $(date -u +%F)"
+          git pull --rebase origin main
+          git push
