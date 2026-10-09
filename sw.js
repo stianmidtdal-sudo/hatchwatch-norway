@@ -7,7 +7,7 @@
 //
 // Innført 2026-05-19.
 
-const CACHE_VERSION = 'hw-v30';  // v30: engelsk på forside, varsler, om + felles språkvalg hw-lang.js (2026-10-08).  // v29: satellitt-isgang 2026 for ti lokasjoner (2026-10-06).  // v24: personvern.html + lenke fra om.html (2026-10-01).  // v19: historikk opp, emojier ut.  // v18: varsler i iPhone-appen (APNs via Capacitor) i dashboard + varsler (2026-10-01)
+const CACHE_VERSION = 'hw-v31';  // v31: generell modell som kandidatrad i kalibreringspanelet (?calib=1) (2026-10-09).  // v30: engelsk på forside, varsler, om + felles språkvalg hw-lang.js (2026-10-08).  // v29: satellitt-isgang 2026 for ti lokasjoner (2026-10-06).  // v24: personvern.html + lenke fra om.html (2026-10-01).  // v19: historikk opp, emojier ut.  // v18: varsler i iPhone-appen (APNs via Capacitor) i dashboard + varsler (2026-10-01)
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const API_CACHE = `${CACHE_VERSION}-api`;
 const VENDOR_CACHE = `${CACHE_VERSION}-vendor`;

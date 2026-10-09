@@ -9086,6 +9086,42 @@ function runCalibration(airData, wtData) {
     const currentEvalGdd = evaluate(currentThreshold, null);
     const currentEvalDual = evaluate(currentThreshold, wtThresholdCurrent);
 
+    // ── GENERELL MODELL (kandidat, 2026-10-09) ──────────────────────────
+    // Flyttbar vulgata-modell uten lokal kalibrering (tools/kandidat/KANDIDATMODELL.md):
+    // varmesum av døgnmiddel fra 1. APRIL, base 0, høydekorrigert (airData er alt
+    // korrigert til vannets høyde), terskel 450 — samme terskel overalt. Vises her
+    // side om side med dagens modell mot de samme observasjonene, så vi ser hvor mye
+    // den lokale kalibreringen er verdt. IKKE i bruk i prognosen. Rører ingenting.
+    const GENERELL_TERSKEL = 450;
+    function finnGenerell(year) {
+        const dates = Object.keys(airData).filter(d => d.startsWith(String(year)) && d >= `${year}-04-01`).sort();
+        let s = 0;
+        for (const d of dates) {
+            const v = airData[d];
+            if (v != null) s += Math.max(0, v);
+            if (s >= GENERELL_TERSKEL) return d;
+        }
+        return null;
+    }
+    const generellRows = obsEntries.map(([yr, obsStr]) => {
+        const g = finnGenerell(yr);
+        const cur = (currentEvalDual.errors.find(e => e.year === yr) || {});
+        return { year: yr, observed: obsStr, predicted: g,
+                 error: g ? Math.round((new Date(g) - new Date(obsStr)) / 86400000) : null,
+                 curPredicted: cur.predicted || null, curError: cur.error ?? null };
+    });
+    const generellValid = generellRows.filter(r => r.error !== null).map(r => r.error);
+    const generellMae = generellValid.length ? generellValid.reduce((s, e) => s + Math.abs(e), 0) / generellValid.length : null;
+    const generellBias = generellValid.length ? generellValid.reduce((s, e) => s + e, 0) / generellValid.length : null;
+    const generellTable = generellRows.map(r => `<tr>
+        <td style="padding:5px 10px">${r.year}</td>
+        <td style="padding:5px 10px">${r.observed}</td>
+        <td style="padding:5px 10px">${r.curPredicted || '–'}</td>
+        <td style="padding:5px 10px;text-align:right">${fmtErr({ error: r.curError })}</td>
+        <td style="padding:5px 10px">${r.predicted || '–'}</td>
+        <td style="padding:5px 10px;text-align:right">${fmtErr({ error: r.error })}</td>
+    </tr>`).join('');
+
     // Heatmap: cellfarge basert på MAE (grønn = lav, rød = høy)
     function maeColor(mae, minMae, maxMae) {
         const t = (mae - minMae) / (maxMae - minMae);  // 0 = best, 1 = worst
@@ -9196,6 +9232,24 @@ function runCalibration(airData, wtData) {
         <div style="background:#fff8e1;padding:12px 16px;border-left:4px solid #f0d000;margin-bottom:18px">
             <strong>Nåværende konfigurasjon:</strong> GDD-terskel ${currentThreshold} · Dual-trigger med vanntemp ≥ ${wtThresholdCurrent}°C<br>
             <span style="font-size:0.9rem">→ MAE (kun GDD): <strong>${currentEvalGdd.mae?.toFixed(2) || '–'} d</strong> · MAE (dual-trigger): <strong>${currentEvalDual.mae?.toFixed(2) || '–'} d</strong></span>
+        </div>
+
+        <div style="background:#eef4fb;padding:12px 16px;border-left:4px solid #1f83bd;margin-bottom:18px">
+            <strong>Generell modell (kandidat, ikke i bruk):</strong> varmesum fra 1. april ≥ ${GENERELL_TERSKEL}, base 0, samme terskel overalt, ingen vanntemp, ingen lokal kalibrering.<br>
+            <span style="font-size:0.9rem">→ MAE: <strong>${generellMae != null ? generellMae.toFixed(2) : '–'} d</strong> · bias ${generellBias != null ? (generellBias > 0 ? '+' : '') + generellBias.toFixed(2) : '–'} d · mot dagens dual-trigger ${currentEvalDual.mae?.toFixed(2) || '–'} d. Se tools/kandidat/KANDIDATMODELL.md.</span>
+            <div style="overflow-x:auto;margin-top:10px">
+                <table style="border-collapse:collapse;font-size:0.85rem">
+                    <thead><tr style="background:#121413;color:white">
+                        <th style="padding:5px 10px;text-align:left">År</th>
+                        <th style="padding:5px 10px;text-align:left">Observert</th>
+                        <th style="padding:5px 10px;text-align:left">Dagens modell</th>
+                        <th style="padding:5px 10px;text-align:right">feil</th>
+                        <th style="padding:5px 10px;text-align:left">Generell</th>
+                        <th style="padding:5px 10px;text-align:right">feil</th>
+                    </tr></thead>
+                    <tbody>${generellTable}</tbody>
+                </table>
+            </div>
         </div>
 
         ${renderTable(resultsGddOnly, 'A. Optimalisering — kun GDD-modell', bestGdd)}
