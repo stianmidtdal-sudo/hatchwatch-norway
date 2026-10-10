@@ -1,6 +1,6 @@
 # Satellitt-isgang: Nordmarka og Krokskogen
 
-Sist kjørt 2026-10-09. 87 vann på 10–3000 ha med midtpunkt i boksen (NVE Innsjødatabase), 10 år (2017–2026) = 870 vann-år å hente.
+Sist kjørt 2026-10-10. 87 vann på 10–3000 ha med midtpunkt i boksen (NVE Innsjødatabase), 10 år (2017–2026) = 870 vann-år å hente.
 
 | | |
 |---|---|
