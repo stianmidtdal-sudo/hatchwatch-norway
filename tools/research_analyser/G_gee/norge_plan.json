@@ -353,7 +353,7 @@
    "n40": 124,
    "n60": 48,
    "droppet_n": 8,
-   "status": "delvis",
+   "status": "ferdig",
    "estimat_timer_nve": 190.02,
    "start": "2026-10-11T13:12:23",
    "droppet": [
@@ -398,21 +398,21 @@
      "areal_ha": 9327.1
     }
    ],
-   "hoppet_over": 100,
-   "vann_i_kjoring": 1929,
-   "vannaar": 19290,
-   "estimat_timer_liste": 180.83,
-   "vannaar_komplett": 9416,
+   "hoppet_over": 1006,
+   "vann_i_kjoring": 1023,
+   "vannaar": 10230,
+   "estimat_timer_liste": 94.7,
+   "vannaar_komplett": 10230,
    "klasse": {
-    "A": 2562,
-    "B": 2263,
-    "C": 4003,
-    "X": 588
+    "A": 471,
+    "B": 313,
+    "C": 550,
+    "X": 8896
    },
-   "brukt_timer_estimat": 90.02,
-   "nye_vannaar_i_datasettet": 9416,
+   "brukt_timer_estimat": 100.49,
+   "nye_vannaar_i_datasettet": 19290,
    "enheter_feilet": 0,
-   "slutt": ""
+   "slutt": "2026-10-11T17:22:16"
   },
   {
    "nr": "42",
@@ -422,8 +422,41 @@
    "n40": 77,
    "n60": 20,
    "droppet_n": 3,
-   "status": "venter",
-   "estimat_timer_nve": 170.97
+   "status": "ferdig",
+   "estimat_timer_nve": 170.97,
+   "start": "2026-10-11T17:22:56",
+   "droppet": [
+    {
+     "vatnlnr": 1063,
+     "navn": "Byglandsfjorden",
+     "areal_ha": 3365.7
+    },
+    {
+     "vatnlnr": 1068,
+     "navn": "Storvatnet (Blåsjø)",
+     "areal_ha": 3378.5
+    },
+    {
+     "vatnlnr": 24911,
+     "navn": "Svartevatnet",
+     "areal_ha": 3143.3
+    }
+   ],
+   "hoppet_over": 0,
+   "vann_i_kjoring": 1779,
+   "vannaar": 17790,
+   "estimat_timer_liste": 170.97,
+   "vannaar_komplett": 17790,
+   "klasse": {
+    "A": 6130,
+    "B": 4227,
+    "C": 5652,
+    "X": 1781
+   },
+   "brukt_timer_estimat": 170.97,
+   "nye_vannaar_i_datasettet": 17790,
+   "enheter_feilet": 0,
+   "slutt": "2026-10-11T18:39:06"
   },
   {
    "nr": "11",
@@ -433,8 +466,25 @@
    "n40": 58,
    "n60": 10,
    "droppet_n": 0,
-   "status": "venter",
-   "estimat_timer_nve": 97.72
+   "status": "ferdig",
+   "estimat_timer_nve": 97.72,
+   "start": "2026-10-11T18:39:29",
+   "droppet": [],
+   "hoppet_over": 0,
+   "vann_i_kjoring": 1026,
+   "vannaar": 10260,
+   "estimat_timer_liste": 97.72,
+   "vannaar_komplett": 10260,
+   "klasse": {
+    "A": 2049,
+    "B": 1862,
+    "C": 3315,
+    "X": 3034
+   },
+   "brukt_timer_estimat": 97.72,
+   "nye_vannaar_i_datasettet": 10260,
+   "enheter_feilet": 0,
+   "slutt": "2026-10-11T19:28:07"
   },
   {
    "nr": "46",
@@ -444,8 +494,36 @@
    "n40": 133,
    "n60": 29,
    "droppet_n": 2,
-   "status": "venter",
-   "estimat_timer_nve": 223.76
+   "status": "delvis",
+   "estimat_timer_nve": 223.76,
+   "start": "2026-10-11T19:29:04",
+   "droppet": [
+    {
+     "vatnlnr": 1734,
+     "navn": "Jølstravatnet",
+     "areal_ha": 3929.0
+    },
+    {
+     "vatnlnr": 1807,
+     "navn": "Hornindalsvatnet",
+     "areal_ha": 5078.0
+    }
+   ],
+   "hoppet_over": 49,
+   "vann_i_kjoring": 2306,
+   "vannaar": 23060,
+   "estimat_timer_liste": 218.93,
+   "vannaar_komplett": 21556,
+   "klasse": {
+    "A": 4387,
+    "B": 2899,
+    "C": 6089,
+    "X": 8181
+   },
+   "brukt_timer_estimat": 205.61,
+   "nye_vannaar_i_datasettet": 21556,
+   "enheter_feilet": 0,
+   "slutt": ""
   },
   {
    "nr": "15",
@@ -494,10 +572,10 @@
  ],
  "kvote": {
   "maaned": "2026-10",
-  "brukt_sek": 1674428.0,
+  "brukt_sek": 3419599.9,
   "budsjett_timer": 950.0,
   "eecu_sek_per_vannaar_20m": 30.0,
   "merknad": "Estimat, ikke avlest: 30 EECU-s per vann-år på 20 m (vindu 03-01–07-16), skalert med (20/piksel)^2 og vinduslengde. Stians eget forbruk før 11. okt 2026 (39,23 % = 58,8 t) ligger IKKE her.",
-  "brukt_timer_estimat": 465.12
+  "brukt_timer_estimat": 949.89
  }
 }
