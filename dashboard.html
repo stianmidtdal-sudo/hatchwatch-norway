@@ -5499,8 +5499,8 @@ function renderTodayScore(args) {
         foot: 'Data: MET Norway · NVE · modellens klekkedato. Scoren er ikke validert mot observasjoner ennå.'
     } : {
         label: 'Worth going today?', indic: 'Indicative · uncalibrated',
-        phase: 'Hatch phase', water: 'Water', weather: 'Weather', window: 'Fishing window',
-        go: 'Go tonight.', maybe: 'Maybe. Check again tomorrow.', no: 'Not yet.', over: 'The window has closed.', closed: 'The season has not opened.',
+        phase: 'Hatch phase', water: 'Water', weather: 'Weather', window: 'The evening, hour by hour',
+        go: 'Go tonight.', maybe: 'Maybe. Check again tomorrow.', no: 'Not yet.', over: 'This year’s hatch is over.', closed: 'The season has not opened.',
         underway: 'underway', soon: 'soon', notyet: 'not yet', done: 'done', nopred: 'no forecast',
         warm: 'warm enough', near: 'almost', cold: 'cold', nomeas: 'no reading',
         calm: 'calm', ok: 'usable', rough: 'rough', nowx: 'no forecast',
@@ -5530,13 +5530,13 @@ function renderTodayScore(args) {
             phaseScore = to <= 7 ? 35 : to <= 14 ? 25 : 10; phaseKey = to <= 14 ? 'soon' : 'coming';
             phaseTxt = no ? `Om ${to} dager (${fmt(onset)})` : `In ${to} days (${fmt(onset)})`; phasePill = T2.soon; phaseCls = to <= 7 ? 'mid' : 'bad';
         } else if (ds <= 3) {
-            phaseScore = 70; phaseKey = 'now'; phaseTxt = no ? `Dag ${ds + 1} av klekkingen · bygger seg opp` : `Day ${ds + 1} of the window · building`; phasePill = T2.underway; phaseCls = 'good';
+            phaseScore = 70; phaseKey = 'now'; phaseTxt = no ? `Dag ${ds + 1} av klekkingen · bygger seg opp` : `Day ${ds + 1} of the hatch · building`; phasePill = T2.underway; phaseCls = 'good';
         } else if (ds <= 14) {
-            phaseScore = 100; phaseKey = 'now'; phaseTxt = no ? `Dag ${ds + 1} av klekkingen` : `Day ${ds + 1} of the window`; phasePill = T2.underway; phaseCls = 'good';
+            phaseScore = 100; phaseKey = 'now'; phaseTxt = no ? `Dag ${ds + 1} av klekkingen` : `Day ${ds + 1} of the hatch`; phasePill = T2.underway; phaseCls = 'good';
         } else if (ds <= 21) {
             phaseScore = 60; phaseKey = 'now'; phaseTxt = no ? `Dag ${ds + 1} · etterslep` : `Day ${ds + 1} · tail end`; phasePill = T2.underway; phaseCls = 'mid';
         } else {
-            phaseScore = 15; phaseKey = 'done'; phaseTxt = no ? `Over. Modellen anslo start for ${ds} dager siden` : `Window closed ${ds - 21} days ago`; phasePill = T2.done; phaseCls = 'bad';
+            phaseScore = 15; phaseKey = 'done'; phaseTxt = no ? `Over. Modellen anslo start for ${ds} dager siden` : `Over. The model estimated the start ${ds} days ago`; phasePill = T2.done; phaseCls = 'bad';
         }
     }
     // Utenfor sesongen (over 21 d etter anslått start, eller før 1. april) skjules
@@ -5604,7 +5604,7 @@ function renderTodayScore(args) {
     if (phaseKey === 'done' || phaseKey === 'closed' || phaseKey === 'unknown') score = Math.min(score, 25);
     let verdict, expl;
     if (phaseKey === 'closed') { verdict = T2.closed; expl = no ? 'Prognosen åpner 1. april. Fram til da er scoren bare vann og vær.' : 'The forecast opens on 1 April. Until then the score is water and weather only.'; }
-    else if (phaseKey === 'done') { verdict = T2.over; expl = no ? 'Vulgata-klekkingen er over. Se etter spinnerfall og vespertina i skumringen.' : 'The vulgata window has closed. Look for spinner falls and vespertina at dusk.'; }
+    else if (phaseKey === 'done') { verdict = T2.over; expl = no ? 'Vulgata-klekkingen er over. Se etter spinnerfall og vespertina i skumringen.' : 'The vulgata hatch is over. Look for spinner falls and vespertina at dusk.'; }
     else if (score >= 65) { verdict = T2.go; expl = no ? 'Klekkingen er i gang, vannet er varmt nok og kvelden ser brukbar ut.' : 'The hatch is underway, the water is warm enough and the evening looks usable.'; }
     else if (score >= 40) {
         verdict = T2.maybe;
@@ -7569,8 +7569,8 @@ function renderSpeciesCalendar(isgangResult, vulgataDate, best) {
         const diff = Math.round((vulgataDate - today) / 86400000);
         if (diff > 14)      { st = 'coming'; line = no ? `<b>Om ${diff} dager.</b>` : `<b>In ${diff} days.</b>`; }
         else if (diff > 0)  { st = 'soon';   line = no ? `<b>Om ${diff} dager.</b>` : `<b>In ${diff} days.</b>`; }
-        else if (-diff <= 21) { st = 'now';  line = no ? `<b>Dag ${1 - diff} av klekkingen.</b> Vulgata er trolig i gang.` : `<b>Day ${1 - diff} of the window.</b> Vulgata is likely underway.`; }
-        else                { st = 'done';   line = no ? `Årets klekking er over. Modellen anslo start for ${-diff} dager siden.` : `The window closed ${-diff - 21} days ago.`; }
+        else if (-diff <= 21) { st = 'now';  line = no ? `<b>Dag ${1 - diff} av klekkingen.</b> Vulgata er trolig i gang.` : `<b>Day ${1 - diff} of the hatch.</b> Vulgata is likely underway.`; }
+        else                { st = 'done';   line = no ? `Årets klekking er over. Modellen anslo start for ${-diff} dager siden.` : `This year’s hatch is over. The model estimated the start ${-diff} days ago.`; }
     }
     const LBL = no ? { now: 'Pågår', soon: 'Snart', coming: 'På vei', done: 'Ferdig', unknown: 'Ingen prognose' }
                    : { now: 'Underway', soon: 'Soon', coming: 'Coming', done: 'Done', unknown: 'No forecast' };
@@ -9690,11 +9690,11 @@ if ('serviceWorker' in navigator) {
             klekkeImminent: 'Hatch starting soon',
             klekkeImminentDesc: '1-2 days before dual-trigger fires',
             spinnerfall: 'Spinner fall tonight',
-            spinnerfallDesc: 'When evening conditions match vulgata window',
-            stokkmaur: 'Carpenter ant window open',
-            stokkmaurDesc: 'Weather + calendar window for ant swarming',
+            spinnerfallDesc: 'When the evening conditions fit while vulgata is hatching',
+            stokkmaur: 'Carpenter ant swarm expected',
+            stokkmaurDesc: 'Weather and time of year fit an ant swarm',
             seasonstart: 'Season start',
-            seasonstartDesc: 'When the Vulgata window is about to open',
+            seasonstartDesc: 'When the vulgata hatch is getting close',
             save: 'Save', cancel: 'Cancel', testAll: 'Test all notifications',
             saving: 'Saving…', saved: 'Saved ✓', testing: 'Sending test push…',
             error: 'Error — try again',

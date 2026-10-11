@@ -1,0 +1,179 @@
+# Isgang for hele Norge i Google Earth Engine, kjørt hos GitHub i stedet for på
+# Stians PC: tools/research_analyser/G_gee/g2_gee_norge.py --norge --fortsett.
+# Hver kjøring tar opptil 330 min (tidsvakten i skriptet), lagrer framdrift og
+# rådata per enhet, og neste kjøring (hver 6. time) fortsetter der den slapp.
+# Kvotevakten (--budsjett-timer) nullstilles av skriptet ved månedsskifte.
+#
+# Hva som ligger hvor (se RAPPORT_G5.md):
+#   * i git (committes av jobben): norge/lett/*.csv (fylkesfilene uten passlista),
+#     isgang_norge_index.csv, norge_plan.json, rapport_norge.md
+#   * som workflow-artifact «gee-lager» (90 dager, de 5 nyeste beholdes): de
+#     FULLE fylkesfilene norge/*.json+*.csv, rådata data/, vannlister vann/ og
+#     kjorelogg_g2.json — for store for et offentlig repo, men --fortsett
+#     trenger dem. Hver kjøring henter forrige kjørings artifact før start.
+#   * første gang: release-asset gee-lager-seed/gee-lager.zip, lagd fra PC-en
+#     med g5_lager_til_github.py. Finnes verken artifact eller seed, stopper
+#     jobben (ellers ville alt bli hentet på nytt).
+#
+# Hemmeligheter (Settings → Secrets and variables → Actions):
+#   GEE_SERVICE_ACCOUNT_KEY = hele JSON-nøkkelen til servicekontoen
+#   GEE_PROJECT             = hatchwatch-isgang
+
+name: isgang-gee
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      fylke:
+        description: "Fylkesnr (f.eks. 34) for å kjøre ETT fylke utenom planen; tomt = følg norge_plan.json"
+        required: false
+        default: ""
+      maks_minutter:
+        description: "Tidsvakt: send ingen nye enheter etter så mange minutter"
+        required: false
+        default: "330"
+      uten_lager:
+        description: "true = start uten artifact/seed (alt hentes på nytt — bare med vilje)"
+        required: false
+        default: "false"
+
+concurrency:
+  group: isgang-gee
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  actions: write          # slette gamle artifacts
+
+env:
+  G: tools/research_analyser/G_gee
+
+jobs:
+  hent:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0        # full historikk, så «git pull --rebase» virker hvis Stian deployer samtidig
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Installer earthengine-api
+        run: python -m pip install --quiet earthengine-api
+
+      - name: Hent lageret (forrige kjørings artifact, ellers release-seed)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cd "$G"
+          if [ "${{ github.event.inputs.uten_lager }}" = "true" ]; then
+            echo "Starter UTEN lager (valgt for hånd)."
+            exit 0
+          fi
+          RUN=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?name=gee-lager&per_page=50" \
+                --jq '[.artifacts[] | select(.expired | not)] | sort_by(.created_at) | last | .workflow_run.id // empty')
+          if [ -n "$RUN" ]; then
+            gh run download "$RUN" -n gee-lager -D /tmp/lager
+            unzip -oq /tmp/lager/lager.zip -d .
+            echo "Lager hentet fra artifact gee-lager (kjøring $RUN)."
+          elif curl -fsSL -o /tmp/lager.zip "https://github.com/$GITHUB_REPOSITORY/releases/download/gee-lager-seed/gee-lager.zip"; then
+            unzip -oq /tmp/lager.zip -d .
+            echo "Lager hentet fra release gee-lager-seed (engangs-såing fra PC-en)."
+          else
+            echo "FEIL: fant verken artifact «gee-lager» eller release «gee-lager-seed». Kjør g5_lager_til_github.py på PC-en først" >&2
+            echo "(se RAPPORT_G5.md), eller start med uten_lager=true hvis alt virkelig skal hentes på nytt." >&2
+            exit 1
+          fi
+          echo "Fulle fylkesfiler:"; ls -l norge/*.json 2>/dev/null || true
+          echo "Rådata:"; ls -l data/ 2>/dev/null || true
+
+      - name: Hent og regn isgang i GEE
+        working-directory: tools/research_analyser/G_gee
+        env:
+          GEE_SERVICE_ACCOUNT_KEY: ${{ secrets.GEE_SERVICE_ACCOUNT_KEY }}
+          GEE_PROJECT: ${{ secrets.GEE_PROJECT }}
+          PYTHONIOENCODING: utf-8
+          PYTHONUNBUFFERED: "1"
+        run: |
+          set -uo pipefail
+          MIN="${{ github.event.inputs.maks_minutter || '330' }}"
+          FYLKE="${{ github.event.inputs.fylke }}"
+          rc=0
+          if [ -n "$FYLKE" ]; then
+            python g2_gee_norge.py --fylke "$FYLKE" --fortsett --parallell 4 --budsjett-timer 950 --maks-minutter "$MIN" || rc=$?
+          else
+            python g2_gee_norge.py --norge --fortsett --parallell 4 --budsjett-timer 950 --maks-minutter "$MIN" || rc=$?
+          fi
+          case "$rc" in
+            0) echo "Skriptet ble ferdig (kode 0).";;
+            3) echo "Stoppet av kvotevakten (kode 3) — fortsetter neste måned.";;
+            4) echo "Stoppet av tidsvakten (kode 4) — fortsetter neste kjøring.";;
+            *) echo "Skriptet feilet med kode $rc." >&2; exit "$rc";;
+          esac
+
+      - name: Bygg indexfila og de lette fylkesfilene (--samle)
+        if: always()
+        working-directory: tools/research_analyser/G_gee
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python g2_gee_norge.py --samle
+
+      - name: Lagre resultatet i repoet
+        if: always()
+        run: |
+          set -euo pipefail
+          git config user.name "isgang-gee"
+          git config user.email "actions@users.noreply.github.com"
+          for p in "$G/norge/lett" "$G/norge_plan.json" "$G/rapport_norge.md" "$G/isgang_norge_index.csv"; do
+            if [ -e "$p" ]; then git add -A -- "$p"; fi
+          done
+          if git diff --cached --quiet; then
+            echo "Ingen endringer."
+            exit 0
+          fi
+          if [ "$(git diff --cached --name-only)" = "$G/rapport_norge.md" ]; then
+            echo "Bare tidsstempelet i rapport_norge.md endret — committer ikke."
+            git reset -q
+            exit 0
+          fi
+          git commit -m "isgang-gee: $(date -u +%F) $(date -u +%H:%M) UTC"
+          git pull --rebase --autostash origin main
+          git push
+
+      - name: Pakk lageret (fulle fylkesfiler, rådata, vannlister)
+        if: always()
+        working-directory: tools/research_analyser/G_gee
+        run: |
+          set -euo pipefail
+          rm -f /tmp/lager.zip
+          zip -qr /tmp/lager.zip norge data vann -x 'norge/lett/*' 'norge/*.tmp'
+          if [ -f kjorelogg_g2.json ]; then zip -q /tmp/lager.zip kjorelogg_g2.json; fi
+          ls -l /tmp/lager.zip
+
+      - name: Last opp lageret som artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gee-lager
+          path: /tmp/lager.zip
+          retention-days: 90
+          compression-level: 0
+          if-no-files-found: error
+
+      - name: Rydd gamle artifacts (behold de 5 nyeste)
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?name=gee-lager&per_page=100" \
+            --jq '[.artifacts[] | select(.expired | not)] | sort_by(.created_at) | reverse | .[5:] | .[].id' \
+          | while read -r id; do
+              gh api --method DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$id" && echo "Slettet artifact $id"
+            done

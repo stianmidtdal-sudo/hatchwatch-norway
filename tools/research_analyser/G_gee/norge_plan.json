@@ -1,0 +1,296 @@
+{
+ "opprettet": "2026-10-11T09:05:57",
+ "min_ha": 10.0,
+ "maks_ha": 3000.0,
+ "aar": [
+  2017,
+  2026
+ ],
+ "vindu": [
+  "02-01",
+  "07-16"
+ ],
+ "piksel": "20 m <= 150 ha, 40 m 150-600 ha, 60 m > 600 ha",
+ "rekkefolge": [
+  "03",
+  "32",
+  "31",
+  "33",
+  "39",
+  "40",
+  "34",
+  "50",
+  "42",
+  "11",
+  "46",
+  "15",
+  "18",
+  "55",
+  "56"
+ ],
+ "fylker": [
+  {
+   "nr": "03",
+   "navn": "Oslo",
+   "n": 31,
+   "n20": 25,
+   "n40": 6,
+   "n60": 0,
+   "droppet_n": 0,
+   "status": "ferdig",
+   "estimat_timer_nve": 2.66,
+   "start": "2026-10-11T09:05:58",
+   "droppet": [],
+   "hoppet_over": 29,
+   "vann_i_kjoring": 2,
+   "vannaar": 20,
+   "estimat_timer_liste": 0.05,
+   "vannaar_komplett": 20,
+   "klasse": {
+    "A": 2,
+    "B": 7,
+    "C": 11,
+    "X": 0
+   },
+   "brukt_timer_estimat": 0.05,
+   "nye_vannaar_i_datasettet": 20,
+   "enheter_feilet": 0,
+   "slutt": "2026-10-11T09:07:25"
+  },
+  {
+   "nr": "32",
+   "navn": "Akershus",
+   "n": 297,
+   "n20": 274,
+   "n40": 16,
+   "n60": 5,
+   "droppet_n": 2,
+   "status": "ferdig",
+   "estimat_timer_nve": 27.96,
+   "start": "2026-10-11T09:07:27",
+   "droppet": [
+    {
+     "vatnlnr": 113,
+     "navn": "Øyeren",
+     "areal_ha": 7309.3
+    },
+    {
+     "vatnlnr": 141,
+     "navn": "Hurdalssjøen",
+     "areal_ha": 3320.3
+    }
+   ],
+   "hoppet_over": 69,
+   "vann_i_kjoring": 226,
+   "vannaar": 2260,
+   "estimat_timer_liste": 21.26,
+   "vannaar_komplett": 2260,
+   "klasse": {
+    "A": 949,
+    "B": 544,
+    "C": 678,
+    "X": 89
+   },
+   "brukt_timer_estimat": 21.26,
+   "nye_vannaar_i_datasettet": 2260,
+   "enheter_feilet": 0,
+   "slutt": "2026-10-11T09:34:16"
+  },
+  {
+   "nr": "31",
+   "navn": "Østfold",
+   "n": 146,
+   "n20": 127,
+   "n40": 9,
+   "n60": 9,
+   "droppet_n": 1,
+   "status": "ferdig",
+   "estimat_timer_nve": 13.07,
+   "start": "2026-10-11T09:34:17",
+   "droppet": [
+    {
+     "vatnlnr": 291,
+     "navn": "Vansjø",
+     "areal_ha": 3557.7
+    }
+   ],
+   "hoppet_over": 37,
+   "vann_i_kjoring": 108,
+   "vannaar": 1080,
+   "estimat_timer_liste": 9.63,
+   "vannaar_komplett": 1080,
+   "klasse": {
+    "A": 270,
+    "B": 307,
+    "C": 357,
+    "X": 146
+   },
+   "brukt_timer_estimat": 1.22,
+   "nye_vannaar_i_datasettet": 1080,
+   "enheter_feilet": 0,
+   "slutt": "2026-10-11T09:54:16"
+  },
+  {
+   "nr": "33",
+   "navn": "Buskerud",
+   "n": 847,
+   "n20": 776,
+   "n40": 51,
+   "n60": 17,
+   "droppet_n": 3,
+   "status": "kjører",
+   "estimat_timer_nve": 79.35,
+   "start": "2026-10-11T09:54:24",
+   "droppet": [
+    {
+     "vatnlnr": 514,
+     "navn": "Sperillen",
+     "areal_ha": 3732.1
+    },
+    {
+     "vatnlnr": 521,
+     "navn": "Krøderen",
+     "areal_ha": 4390.6
+    },
+    {
+     "vatnlnr": 522,
+     "navn": "Tyrifjorden",
+     "areal_ha": 13656.0
+    }
+   ],
+   "hoppet_over": 37,
+   "vann_i_kjoring": 807,
+   "vannaar": 8070,
+   "estimat_timer_liste": 75.8
+  },
+  {
+   "nr": "39",
+   "navn": "Vestfold",
+   "n": 52,
+   "n20": 43,
+   "n40": 8,
+   "n60": 1,
+   "droppet_n": 0,
+   "status": "venter",
+   "estimat_timer_nve": 4.53
+  },
+  {
+   "nr": "40",
+   "navn": "Telemark",
+   "n": 1144,
+   "n20": 1045,
+   "n40": 73,
+   "n60": 18,
+   "droppet_n": 8,
+   "status": "venter",
+   "estimat_timer_nve": 106.91
+  },
+  {
+   "nr": "34",
+   "navn": "Innlandet",
+   "n": 1730,
+   "n20": 1561,
+   "n40": 124,
+   "n60": 36,
+   "droppet_n": 9,
+   "status": "venter",
+   "estimat_timer_nve": 160.18
+  },
+  {
+   "nr": "50",
+   "navn": "Trøndelag",
+   "n": 2037,
+   "n20": 1857,
+   "n40": 124,
+   "n60": 48,
+   "droppet_n": 8,
+   "status": "venter",
+   "estimat_timer_nve": 190.02
+  },
+  {
+   "nr": "42",
+   "navn": "Agder",
+   "n": 1782,
+   "n20": 1682,
+   "n40": 77,
+   "n60": 20,
+   "droppet_n": 3,
+   "status": "venter",
+   "estimat_timer_nve": 170.97
+  },
+  {
+   "nr": "11",
+   "navn": "Rogaland",
+   "n": 1026,
+   "n20": 958,
+   "n40": 58,
+   "n60": 10,
+   "droppet_n": 0,
+   "status": "venter",
+   "estimat_timer_nve": 97.72
+  },
+  {
+   "nr": "46",
+   "navn": "Vestland",
+   "n": 2357,
+   "n20": 2193,
+   "n40": 133,
+   "n60": 29,
+   "droppet_n": 2,
+   "status": "venter",
+   "estimat_timer_nve": 223.76
+  },
+  {
+   "nr": "15",
+   "navn": "Møre og Romsdal",
+   "n": 744,
+   "n20": 703,
+   "n40": 36,
+   "n60": 5,
+   "droppet_n": 0,
+   "status": "venter",
+   "estimat_timer_nve": 71.52
+  },
+  {
+   "nr": "18",
+   "navn": "Nordland",
+   "n": 1991,
+   "n20": 1766,
+   "n40": 184,
+   "n60": 37,
+   "droppet_n": 4,
+   "status": "venter",
+   "estimat_timer_nve": 182.27
+  },
+  {
+   "nr": "55",
+   "navn": "Troms",
+   "n": 1163,
+   "n20": 1098,
+   "n40": 48,
+   "n60": 16,
+   "droppet_n": 1,
+   "status": "venter",
+   "estimat_timer_nve": 111.58
+  },
+  {
+   "nr": "56",
+   "navn": "Finnmark",
+   "n": 3760,
+   "n20": 3585,
+   "n40": 154,
+   "n60": 19,
+   "droppet_n": 2,
+   "status": "venter",
+   "estimat_timer_nve": 363.88
+  }
+ ],
+ "kvote": {
+  "maaned": "2026-10",
+  "brukt_sek": 225884.5,
+  "budsjett_timer": 950.0,
+  "eecu_sek_per_vannaar_20m": 30.0,
+  "merknad": "Estimat, ikke avlest: 30 EECU-s per vann-år på 20 m (vindu 03-01–07-16), skalert med (20/piksel)^2 og vinduslengde. Stians eget forbruk før 11. okt 2026 (39,23 % = 58,8 t) ligger IKKE her.",
+  "brukt_timer_estimat": 62.75
+ }
+}

@@ -1,7 +1,11 @@
 # Satellitt-isgang i skyen: henter Sentinel-2-data fra Copernicus for alle vann
 # i områdene i tools/isgang/sky/plan.json, regner isgang-intervall per vann og
-# år, og lagrer resultatet i repoet. Kjører hver natt; stopper selv ved
-# tidsbudsjett (5,25 t) eller månedens kvotetak. Se tools/isgang/sky_hent.py.
+# år, og lagrer resultatet i repoet. Se tools/isgang/sky_hent.py.
+#
+# NATTKJØRINGEN ER SKRUDD AV 2026-10-11 (Stian): historikken hentes nå i
+# Google Earth Engine (tools/research_analyser/G_gee/g2_gee_norge.py), som gir
+# identiske intervaller på sekunder i stedet for netter. Jobben kan fortsatt
+# startes manuelt (workflow_dispatch). Sesongavlesning 2027 planlegges i GEE.
 #
 # Hemmeligheter som må ligge i repoet (Settings → Secrets and variables →
 # Actions): CDSE_CLIENT_ID og CDSE_CLIENT_SECRET (Copernicus Data Space).
@@ -9,8 +13,8 @@
 name: isgang-satellitt
 
 on:
-  schedule:
-    - cron: "0 21 * * *"      # 21:00 UTC = 23:00 norsk sommertid / 22:00 vintertid
+  # schedule:
+  #   - cron: "0 21 * * *"    # skrudd av 2026-10-11 — se merknad øverst
   workflow_dispatch:
     inputs:
       omraade:

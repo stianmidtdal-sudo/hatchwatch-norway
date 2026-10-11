@@ -1,0 +1,17 @@
+# Hemmeligheter og lokale ting
+ee_prosjekt.txt
+__pycache__/
+*.log
+*.zip
+
+# Lageret som er for stort for et offentlig repo — GitHub-jobben (isgang_gee.yml)
+# bærer det som workflow-artifact «gee-lager» mellom kjøringene (se RAPPORT_G5.md).
+# I git ligger bare norge/lett/*.csv (uten passlista), isgang_norge_index.csv,
+# norge_plan.json og rapport_norge.md.
+data/
+vann/
+norge/*.json
+norge/*.csv
+norge/*.tmp
+kjorelogg_g2.json
+isgang_norge_for_deling_*
