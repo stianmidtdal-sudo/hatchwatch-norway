@@ -138,7 +138,7 @@
    "n40": 51,
    "n60": 17,
    "droppet_n": 3,
-   "status": "kjører",
+   "status": "ferdig",
    "estimat_timer_nve": 79.35,
    "start": "2026-10-11T09:54:24",
    "droppet": [
@@ -161,7 +161,18 @@
    "hoppet_over": 37,
    "vann_i_kjoring": 807,
    "vannaar": 8070,
-   "estimat_timer_liste": 75.8
+   "estimat_timer_liste": 75.8,
+   "vannaar_komplett": 8070,
+   "klasse": {
+    "A": 2445,
+    "B": 2021,
+    "C": 3017,
+    "X": 587
+   },
+   "brukt_timer_estimat": 44.87,
+   "nye_vannaar_i_datasettet": 8070,
+   "enheter_feilet": 0,
+   "slutt": "2026-10-11T09:22:53"
   },
   {
    "nr": "39",
@@ -171,8 +182,25 @@
    "n40": 8,
    "n60": 1,
    "droppet_n": 0,
-   "status": "venter",
-   "estimat_timer_nve": 4.53
+   "status": "ferdig",
+   "estimat_timer_nve": 4.53,
+   "start": "2026-10-11T09:22:56",
+   "droppet": [],
+   "hoppet_over": 0,
+   "vann_i_kjoring": 52,
+   "vannaar": 520,
+   "estimat_timer_liste": 4.53,
+   "vannaar_komplett": 520,
+   "klasse": {
+    "A": 242,
+    "B": 125,
+    "C": 102,
+    "X": 51
+   },
+   "brukt_timer_estimat": 4.53,
+   "nye_vannaar_i_datasettet": 520,
+   "enheter_feilet": 0,
+   "slutt": "2026-10-11T09:29:16"
   },
   {
    "nr": "40",
@@ -182,8 +210,66 @@
    "n40": 73,
    "n60": 18,
    "droppet_n": 8,
-   "status": "venter",
-   "estimat_timer_nve": 106.91
+   "status": "ferdig",
+   "estimat_timer_nve": 106.91,
+   "start": "2026-10-11T09:29:54",
+   "droppet": [
+    {
+     "vatnlnr": 2,
+     "navn": "Tinnsjå",
+     "areal_ha": 5156.1
+    },
+    {
+     "vatnlnr": 3,
+     "navn": "Møsvatn",
+     "areal_ha": 7909.7
+    },
+    {
+     "vatnlnr": 6,
+     "navn": "Norsjø",
+     "areal_ha": 5511.5
+    },
+    {
+     "vatnlnr": 8,
+     "navn": "Kviteseidvatnet",
+     "areal_ha": 3662.0
+    },
+    {
+     "vatnlnr": 9,
+     "navn": "Totak",
+     "areal_ha": 3726.4
+    },
+    {
+     "vatnlnr": 75,
+     "navn": "Gøystavatnet",
+     "areal_ha": 3146.2
+    },
+    {
+     "vatnlnr": 1267,
+     "navn": "Nisser",
+     "areal_ha": 7646.9
+    },
+    {
+     "vatnlnr": 1274,
+     "navn": "Fyresvatnet",
+     "areal_ha": 4979.5
+    }
+   ],
+   "hoppet_over": 31,
+   "vann_i_kjoring": 1105,
+   "vannaar": 11050,
+   "estimat_timer_liste": 104.03,
+   "vannaar_komplett": 11050,
+   "klasse": {
+    "A": 4257,
+    "B": 2711,
+    "C": 3301,
+    "X": 781
+   },
+   "brukt_timer_estimat": 104.03,
+   "nye_vannaar_i_datasettet": 11050,
+   "enheter_feilet": 0,
+   "slutt": "2026-10-11T10:50:01"
   },
   {
    "nr": "34",
@@ -193,8 +279,71 @@
    "n40": 124,
    "n60": 36,
    "droppet_n": 9,
-   "status": "venter",
-   "estimat_timer_nve": 160.18
+   "status": "ferdig",
+   "estimat_timer_nve": 160.18,
+   "start": "2026-10-11T10:50:49",
+   "droppet": [
+    {
+     "vatnlnr": 118,
+     "navn": "Mjøsa",
+     "areal_ha": 36928.0
+    },
+    {
+     "vatnlnr": 120,
+     "navn": "Storsjøen",
+     "areal_ha": 4272.4
+    },
+    {
+     "vatnlnr": 125,
+     "navn": "Storsjøen",
+     "areal_ha": 4809.6
+    },
+    {
+     "vatnlnr": 146,
+     "navn": "Bygdin",
+     "areal_ha": 4016.0
+    },
+    {
+     "vatnlnr": 162,
+     "navn": "Vesle Ossjøen",
+     "areal_ha": 4363.5
+    },
+    {
+     "vatnlnr": 523,
+     "navn": "Randsfjorden",
+     "areal_ha": 14068.6
+    },
+    {
+     "vatnlnr": 1348,
+     "navn": "Femunden",
+     "areal_ha": 20383.7
+    },
+    {
+     "vatnlnr": 1573,
+     "navn": "Tyin",
+     "areal_ha": 3320.8
+    },
+    {
+     "vatnlnr": 150891,
+     "navn": "Aursjøen",
+     "areal_ha": 3690.1
+    }
+   ],
+   "hoppet_over": 14,
+   "vann_i_kjoring": 1707,
+   "vannaar": 17070,
+   "estimat_timer_liste": 158.93,
+   "vannaar_komplett": 17070,
+   "klasse": {
+    "A": 5743,
+    "B": 4003,
+    "C": 5286,
+    "X": 2038
+   },
+   "brukt_timer_estimat": 158.93,
+   "nye_vannaar_i_datasettet": 17070,
+   "enheter_feilet": 0,
+   "slutt": "2026-10-11T13:11:25"
   },
   {
    "nr": "50",
@@ -204,8 +353,66 @@
    "n40": 124,
    "n60": 48,
    "droppet_n": 8,
-   "status": "venter",
-   "estimat_timer_nve": 190.02
+   "status": "delvis",
+   "estimat_timer_nve": 190.02,
+   "start": "2026-10-11T13:12:23",
+   "droppet": [
+    {
+     "vatnlnr": 114,
+     "navn": "Aursunden",
+     "areal_ha": 4640.2
+    },
+    {
+     "vatnlnr": 696,
+     "navn": "Tunnsjøen",
+     "areal_ha": 10053.0
+    },
+    {
+     "vatnlnr": 698,
+     "navn": "Namsvatnet",
+     "areal_ha": 3953.5
+    },
+    {
+     "vatnlnr": 723,
+     "navn": "Salsvatnet",
+     "areal_ha": 4496.2
+    },
+    {
+     "vatnlnr": 892,
+     "navn": "Selbusjøen",
+     "areal_ha": 5818.0
+    },
+    {
+     "vatnlnr": 893,
+     "navn": "Nesjøen",
+     "areal_ha": 6482.9
+    },
+    {
+     "vatnlnr": 930,
+     "navn": "Snåsavatnet",
+     "areal_ha": 12217.4
+    },
+    {
+     "vatnlnr": 1131,
+     "navn": "Limingen",
+     "areal_ha": 9327.1
+    }
+   ],
+   "hoppet_over": 100,
+   "vann_i_kjoring": 1929,
+   "vannaar": 19290,
+   "estimat_timer_liste": 180.83,
+   "vannaar_komplett": 9416,
+   "klasse": {
+    "A": 2562,
+    "B": 2263,
+    "C": 4003,
+    "X": 588
+   },
+   "brukt_timer_estimat": 90.02,
+   "nye_vannaar_i_datasettet": 9416,
+   "enheter_feilet": 0,
+   "slutt": ""
   },
   {
    "nr": "42",
@@ -287,10 +494,10 @@
  ],
  "kvote": {
   "maaned": "2026-10",
-  "brukt_sek": 225884.5,
+  "brukt_sek": 1674428.0,
   "budsjett_timer": 950.0,
   "eecu_sek_per_vannaar_20m": 30.0,
   "merknad": "Estimat, ikke avlest: 30 EECU-s per vann-år på 20 m (vindu 03-01–07-16), skalert med (20/piksel)^2 og vinduslengde. Stians eget forbruk før 11. okt 2026 (39,23 % = 58,8 t) ligger IKKE her.",
-  "brukt_timer_estimat": 62.75
+  "brukt_timer_estimat": 465.12
  }
 }
