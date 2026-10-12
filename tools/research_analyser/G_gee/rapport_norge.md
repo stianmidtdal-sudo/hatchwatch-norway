@@ -1,8 +1,8 @@
 # Isgang for hele Norge i GEE (g2) — framdrift per fylke
 
-Oppdatert 2026-10-11T21:38. Vindu 02-01–07-16, 2017–2026, vann >= 10 ha, vann over 3000 ha droppet. Piksel 20 m <= 150 ha, 40 m 150-600 ha, 60 m > 600 ha. Referansenettets vann-år (644 vann, 20 m, vindu 03-01–07-16) beholdes uendret; vann som alt lå inne for alle årene hentes ikke på nytt.
+Oppdatert 2026-10-12T03:35. Vindu 02-01–07-16, 2017–2026, vann >= 10 ha, vann over 3000 ha droppet. Piksel 20 m <= 150 ha, 40 m 150-600 ha, 60 m > 600 ha. Referansenettets vann-år (644 vann, 20 m, vindu 03-01–07-16) beholdes uendret; vann som alt lå inne for alle årene hentes ikke på nytt.
 
-Kvote denne måneden (2026-10): brukt **949.9 EECU-t (estimat)** av budsjett 950 t. Estimat, ikke avlest: 30 EECU-s per vann-år på 20 m (vindu 03-01–07-16), skalert med (20/piksel)^2 og vinduslengde. Stians eget forbruk før 11. okt 2026 (39,23 % = 58,8 t) ligger IKKE her.
+Kvote denne måneden (2026-10): brukt **950.0 EECU-t (estimat)** av budsjett 950 t. Estimat, ikke avlest: 30 EECU-s per vann-år på 20 m (vindu 03-01–07-16), skalert med (20/piksel)^2 og vinduslengde. Stians eget forbruk før 11. okt 2026 (39,23 % = 58,8 t) ligger IKKE her.
 
 | nr | Fylke | Status | Vann NVE | Droppet > maks | Alt i datasettet | I kjøringen | Vann-år komplette / i alt | A | B | C | X | Estimat EECU-t (NVE) | Brukt EECU-t (estimat) | Start | Slutt |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -16,12 +16,12 @@ Kvote denne måneden (2026-10): brukt **949.9 EECU-t (estimat)** av budsjett 950
 | 50 | Trøndelag | ferdig | 2037 | 8 | 1006 | 1023 | 10230 / 10230 | 471 | 313 | 550 | 8896 | 190.0 | 100.5 | 2026-10-11T13:12 | 2026-10-11T17:22 |
 | 42 | Agder | ferdig | 1782 | 3 | 0 | 1779 | 17790 / 17790 | 6130 | 4227 | 5652 | 1781 | 171.0 | 171.0 | 2026-10-11T17:22 | 2026-10-11T18:39 |
 | 11 | Rogaland | ferdig | 1026 | 0 | 0 | 1026 | 10260 / 10260 | 2049 | 1862 | 3315 | 3034 | 97.7 | 97.7 | 2026-10-11T18:39 | 2026-10-11T19:28 |
-| 46 | Vestland | delvis | 2357 | 2 | 49 | 2306 | 21556 / 23060 | 4387 | 2899 | 6089 | 8181 | 223.8 | 205.6 | 2026-10-11T19:29 |  |
-| 15 | Møre og Romsdal | venter | 744 | 0 |  |  |  |  |  |  |  | 71.5 |  |  |  |
-| 18 | Nordland | venter | 1991 | 4 |  |  |  |  |  |  |  | 182.3 |  |  |  |
-| 55 | Troms | venter | 1163 | 1 |  |  |  |  |  |  |  | 111.6 |  |  |  |
-| 56 | Finnmark | venter | 3760 | 2 |  |  |  |  |  |  |  | 363.9 |  |  |  |
-| | **Sum** | | 19107 | 43 | | | | | | | | 1806.4 | 909.7 | | |
+| 46 | Vestland | ferdig | 2357 | 2 | 2355 | 0 |  |  |  |  |  | 223.8 | 205.6 | 2026-10-11T19:29 | 2026-10-12T03:34 |
+| 15 | Møre og Romsdal | ferdig | 744 | 0 | 744 | 0 |  |  |  |  |  | 71.5 |  | 2026-10-12T03:34 | 2026-10-12T03:34 |
+| 18 | Nordland | ferdig | 1991 | 4 | 1987 | 0 |  |  |  |  |  | 182.3 |  | 2026-10-12T03:34 | 2026-10-12T03:34 |
+| 55 | Troms | ferdig | 1163 | 1 | 1105 | 57 | 570 / 570 | 0 | 0 | 0 | 570 | 111.6 | 0.0 | 2026-10-12T03:34 | 2026-10-12T03:34 |
+| 56 | Finnmark | delvis | 3760 | 2 | 176 | 3582 | 0 / 35820 | 0 | 0 | 0 | 0 | 363.9 | 0.1 | 2026-10-12T03:35 |  |
+| | **Sum** | | 19107 | 43 | | | | | | | | 1806.4 | 909.8 | | |
 
 Droppede vann (> 3000 ha):
 
@@ -63,9 +63,16 @@ Droppede vann (> 3000 ha):
 | Agder | 24911 | Svartevatnet | 3143 |
 | Vestland | 1734 | Jølstravatnet | 3929 |
 | Vestland | 1807 | Hornindalsvatnet | 5078 |
+| Nordland | 501 | Røsvatnet | 21805 |
+| Nordland | 778 | Storglomvatnet | 4730 |
+| Nordland | 813 | Bállávrre | 4084 |
+| Nordland | 45359 | Storakersvatnet | 4224 |
+| Troms | 2396 | Altevatnet | 7952 |
+| Finnmark | 2279 | Iešjávri | 6819 |
+| Finnmark | 2441 | Vaggetem | 3417 |
 
 Lageret (fra 11. okt 2026): én fil per fylke i `norge/isgang_<fylkesnr>_<navn>.json` og `.csv` (samme skjema som det gamle `isgang_norge.json/.csv`; grensesjøer uten kommnr i `isgang_00_uten_fylke`), pluss den lette samlefila `isgang_norge_index.csv` (vatnLnr, navn, fylke, aar, status, lo, hi, midt, bredde_d, klasse — uten passlista). **Kartet og modellen leser `isgang_norge_index.csv`.** Den oppdateres etter hvert fylke; bygg den på nytt med `python g2_gee_norge.py --samle` (ingen innlogging).
 
-Gjenstår: Vestland (delvis), Møre og Romsdal (venter), Nordland (venter), Troms (venter), Finnmark (venter) (ca. 953 EECU-t etter NVE-tellingen).
+Gjenstår: Finnmark (delvis) (ca. 364 EECU-t etter NVE-tellingen).
 
 Gjenoppta (fra tools\research_analyser\G_gee): `python g2_gee_norge.py --norge --fortsett --parallell 4 --budsjett-timer 950`. Kvoteboka nullstilles automatisk når kalendermåneden skifter.

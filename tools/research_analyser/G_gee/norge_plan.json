@@ -494,7 +494,7 @@
    "n40": 133,
    "n60": 29,
    "droppet_n": 2,
-   "status": "delvis",
+   "status": "ferdig",
    "estimat_timer_nve": 223.76,
    "start": "2026-10-11T19:29:04",
    "droppet": [
@@ -509,21 +509,16 @@
      "areal_ha": 5078.0
     }
    ],
-   "hoppet_over": 49,
-   "vann_i_kjoring": 2306,
-   "vannaar": 23060,
-   "estimat_timer_liste": 218.93,
-   "vannaar_komplett": 21556,
-   "klasse": {
-    "A": 4387,
-    "B": 2899,
-    "C": 6089,
-    "X": 8181
-   },
+   "hoppet_over": 2355,
+   "vann_i_kjoring": 0,
+   "vannaar": 0,
+   "estimat_timer_liste": 0.0,
+   "vannaar_komplett": 0,
+   "klasse": {},
    "brukt_timer_estimat": 205.61,
    "nye_vannaar_i_datasettet": 21556,
    "enheter_feilet": 0,
-   "slutt": ""
+   "slutt": "2026-10-12T03:34:20"
   },
   {
    "nr": "15",
@@ -533,8 +528,17 @@
    "n40": 36,
    "n60": 5,
    "droppet_n": 0,
-   "status": "venter",
-   "estimat_timer_nve": 71.52
+   "status": "ferdig",
+   "estimat_timer_nve": 71.52,
+   "start": "2026-10-12T03:34:21",
+   "droppet": [],
+   "hoppet_over": 744,
+   "vann_i_kjoring": 0,
+   "vannaar": 0,
+   "estimat_timer_liste": 0.0,
+   "slutt": "2026-10-12T03:34:21",
+   "vannaar_komplett": 0,
+   "klasse": {}
   },
   {
    "nr": "18",
@@ -544,8 +548,38 @@
    "n40": 184,
    "n60": 37,
    "droppet_n": 4,
-   "status": "venter",
-   "estimat_timer_nve": 182.27
+   "status": "ferdig",
+   "estimat_timer_nve": 182.27,
+   "start": "2026-10-12T03:34:22",
+   "droppet": [
+    {
+     "vatnlnr": 501,
+     "navn": "Røsvatnet",
+     "areal_ha": 21804.9
+    },
+    {
+     "vatnlnr": 778,
+     "navn": "Storglomvatnet",
+     "areal_ha": 4730.2
+    },
+    {
+     "vatnlnr": 813,
+     "navn": "Bállávrre",
+     "areal_ha": 4083.9
+    },
+    {
+     "vatnlnr": 45359,
+     "navn": "Storakersvatnet",
+     "areal_ha": 4224.2
+    }
+   ],
+   "hoppet_over": 1987,
+   "vann_i_kjoring": 0,
+   "vannaar": 0,
+   "estimat_timer_liste": 0.0,
+   "slutt": "2026-10-12T03:34:22",
+   "vannaar_komplett": 0,
+   "klasse": {}
   },
   {
    "nr": "55",
@@ -555,8 +589,31 @@
    "n40": 48,
    "n60": 16,
    "droppet_n": 1,
-   "status": "venter",
-   "estimat_timer_nve": 111.58
+   "status": "ferdig",
+   "estimat_timer_nve": 111.58,
+   "start": "2026-10-12T03:34:23",
+   "droppet": [
+    {
+     "vatnlnr": 2396,
+     "navn": "Altevatnet",
+     "areal_ha": 7951.7
+    }
+   ],
+   "hoppet_over": 1105,
+   "vann_i_kjoring": 57,
+   "vannaar": 570,
+   "estimat_timer_liste": 5.41,
+   "vannaar_komplett": 570,
+   "klasse": {
+    "A": 0,
+    "B": 0,
+    "C": 0,
+    "X": 570
+   },
+   "brukt_timer_estimat": 0.0,
+   "nye_vannaar_i_datasettet": 567,
+   "enheter_feilet": 0,
+   "slutt": "2026-10-12T03:34:31"
   },
   {
    "nr": "56",
@@ -566,16 +623,44 @@
    "n40": 154,
    "n60": 19,
    "droppet_n": 2,
-   "status": "venter",
-   "estimat_timer_nve": 363.88
+   "status": "delvis",
+   "estimat_timer_nve": 363.88,
+   "start": "2026-10-12T03:35:48",
+   "droppet": [
+    {
+     "vatnlnr": 2279,
+     "navn": "Iešjávri",
+     "areal_ha": 6819.2
+    },
+    {
+     "vatnlnr": 2441,
+     "navn": "Vaggetem",
+     "areal_ha": 3417.0
+    }
+   ],
+   "hoppet_over": 176,
+   "vann_i_kjoring": 3582,
+   "vannaar": 35820,
+   "estimat_timer_liste": 346.6,
+   "vannaar_komplett": 0,
+   "klasse": {
+    "A": 0,
+    "B": 0,
+    "C": 0,
+    "X": 0
+   },
+   "brukt_timer_estimat": 0.09,
+   "nye_vannaar_i_datasettet": 0,
+   "enheter_feilet": 0,
+   "slutt": ""
   }
  ],
  "kvote": {
   "maaned": "2026-10",
-  "brukt_sek": 3419599.9,
+  "brukt_sek": 3419911.7,
   "budsjett_timer": 950.0,
   "eecu_sek_per_vannaar_20m": 30.0,
   "merknad": "Estimat, ikke avlest: 30 EECU-s per vann-år på 20 m (vindu 03-01–07-16), skalert med (20/piksel)^2 og vinduslengde. Stians eget forbruk før 11. okt 2026 (39,23 % = 58,8 t) ligger IKKE her.",
-  "brukt_timer_estimat": 949.89
+  "brukt_timer_estimat": 949.98
  }
 }
