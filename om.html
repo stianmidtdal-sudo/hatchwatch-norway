@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Om HatchWatch · HatchWatch</title>
     <meta name="theme-color" content="#0b1418">
-    <meta name="description" content="Om HatchWatch — åpen prediksjonsmodell for klekking av døgnfluer i norske vassdrag.">
+    <meta name="description" content="Om HatchWatch: klekking, isgang og fiskeforhold for fluefiskere i hele Norge.">
     <link rel="icon" type="image/png" sizes="32x32" href="/logos/favicon-32.png?v=2">
     <link rel="icon" type="image/png" sizes="64x64" href="/logos/favicon-64.png?v=2">
     <link rel="apple-touch-icon" href="/logos/apple-touch-icon-180.png">
@@ -156,47 +156,74 @@
 <main>
     <div class="hero-section">
         <h1 data-i18n="h1">Om HatchWatch</h1>
-        <div class="tagline" data-i18n="tagline">Klekkeprognoser for fluefiskere</div>
+        <div class="tagline" data-i18n="tagline">Klekking, isgang og fiskeforhold for fluefiskere i hele Norge</div>
     </div>
 
+    <!-- Skrevet på nytt 2026-10-14 (Stian). Ingen kilde for laksedataene, bare «flere års data». -->
     <div class="body-grid">
         <div>
-            <p data-i18n="p1">HatchWatch er en åpen prediksjonsmodell for klekking av døgnfluer i norske vassdrag og stillevann. Modellen kombinerer luft- og vanntemperatur-historikk, isgang-observasjoner, snødybde og kalibrerte terskler per lokasjon for å estimere når klekkingen for vulgata, marginata, vespertina og andre sentrale arter starter.</p>
+            <p data-i18n="p1">HatchWatch anslår når døgnfluer og vårfluer klekker i norske vann og elver. Kartet viser over 19 000 vann med isgang fra satellitt, og lakseelvene med når fisken pleier å komme. Alt er bygget for én ting: at du skal vite når det er verdt å dra ut.</p>
 
-            <p data-i18n-html="p2">Sentralt i modellen står <em>varmesum-prinsippet</em> (Growing Degree Days): nymfens utviklingstempo styres direkte av temperatur, og når akkumulert varme siden 1. januar overstiger en arts- og lokasjonspesifikk terskel, er nymfen klar for overflateoppstigning. Som supplering brukes en <em>dual-trigger</em>-betingelse på vanntemperatur (typisk 12°C), som fanger opp år der lufta er varm før vannet rekker å varmes opp. Klekkedatoen anslås som den første dagen begge krav er oppfylt samtidig.</p>
+            <h2 data-i18n="typerH">To typer prognoser</h2>
+            <p data-i18n-html="typer1"><b>Steder med egen prognose (rundt 20).</b> Her bruker vi målt luft- og vanntemperatur fra stasjoner. Klekkingen starter den første dagen to krav er oppfylt samtidig: varmen siden 1. januar har nådd en terskel, og vannet har nådd en viss temperatur. Der vi har observasjoner fra flere år, er terskelen kalibrert mot dem. I Kautokeino har modellen typisk bommet med rundt 3 dager.</p>
+            <p data-i18n-html="typer2"><b>Alle andre vann.</b> Hvert vann har sin egen side med vær hentet for akkurat det stedet, justert for høyden.</p>
+            <ul>
+                <li data-i18n-html="art1"><b>Vulgata</b> starter når varmen siden 1. april har nådd et fast nivå. Der den er testet (Østlandet og Kautokeino), bommer den typisk med rundt 5 dager.</li>
+                <li data-i18n-html="art2"><b>Marginata</b> starter når isen har gått og våren har gitt nok varme, <b>vespertina</b> en uke senere.</li>
+                <li data-i18n-html="art3"><b>Grandis</b> regnes på samme måte som vulgata, med et høyere nivå. Den er bare sjekket mot artsfunn, ikke mot klekkestart, så den er et grovt anslag.</li>
+                <li data-i18n-html="art4"><b>Skjoldkreps og marflo</b> vises der de er funnet, med periodene fra norsk forskning på Hardangervidda.</li>
+            </ul>
+            <p data-i18n="funnet">Vi sier alltid tydelig om en art er funnet i vannet eller ikke. Står det «Ikke registrert her», gjelder anslaget bare hvis arten faktisk finnes der.</p>
 
-            <p data-i18n="p3">For dager fram i tid blandes faktiske målinger med MET sitt 10-dagers langtidsvarsel, og deretter 10-årssnittet for resten av sesongen. Etter hvert som faktiske målinger kommer inn dag for dag, erstatter de antagelsene — og prognosen konvergerer mot en stadig sikrere dato.</p>
+            <h2 data-i18n="isH">Isgang fra satellitt</h2>
+            <p data-i18n="isP">Vi leser isgangen fra Sentinel-2-bilder for hvert vann over 10 hektar, år for år tilbake til 2017. Om våren sjekkes hvert vann annenhver dag. Typisk bom er 4–5 dager mot målt isgang; skyer kan gjøre tidsrommet lengre. Før satellitten har sett isen gå, anslår vi isgangen ut fra hvor mye varme akkurat det vannet pleier å trenge.</p>
 
-            <h2 data-i18n="betterH">Forbedring over tid</h2>
-            <p data-i18n="betterP">Modellen er ikke statisk. Hver gang en kalibrert lokasjon får inn en ny verifisert klekkeobservasjon, justeres terskelverdiene. Dette gjør at HatchWatch blir mer presis for hvert år som går — særlig for lokasjoner som blir aktivt rapportert til. Det er også grunnen til at innsendte observasjoner er så verdifulle.</p>
+            <h2 data-i18n="spinH">Spinnerfall og forhold</h2>
+            <p data-i18n="spinP">Spinnerfall-vakta ser på kveldsværet (vind, vindkast, temperatur, skyer, regn, fuktighet og trykk) de ukene vulgata er i sesong. Den bygger på fluefiskelitteratur og er ikke kalibrert mot observasjoner ennå.</p>
+
+            <h2 data-i18n="laksH">Laks</h2>
+            <p data-i18n="laksP">For lakseelvene viser vi når fisken typisk kommer gjennom sesongen, ut fra flere års data, og vannføring og vanntemperatur fra NVE der det finnes en målestasjon.</p>
+
+            <h2 data-i18n="turH">På tur</h2>
+            <p data-i18n="turP">Turkartet viser Kartverkets topografiske kart med merkede stier, og parkering, bommer og gapahuker fra OpenStreetMap. Du kan tegne en tur, se høydeprofil og turtid, lagre den og dele den. Vannsidene viser dybdekart der NVE har loddet vannet, og snødybden i fjellet om våren.</p>
         </div>
 
         <div>
+            <h2 data-i18n="uncH">Usikkerhet</h2>
+            <p data-i18n="uncP">Tenk på prognosen som en værmelding. Tidlig i sesongen er usikkerheten større, fordi mer av været ligger foran oss. Etter hvert som målingene kommer inn, krymper den. Naturen er likevel uforutsigbar, så bruk HatchWatch som veiledning, ikke fasit.</p>
+
+            <h2 data-i18n="betterH">Bedre for hvert år</h2>
+            <p data-i18n-html="betterP">Hver vinter kalibrerer vi tersklene mot observasjonene fra sesongen som gikk. Det er derfor hver melding om klekking er så verdifull, særlig når du skriver hvilket vann og hvilken dato. <a href="/observasjon.html">Meld klekking her.</a></p>
+
             <h2 data-i18n="sourcesH">Datakilder</h2>
             <ul>
-                <li data-i18n-html="src1"><b>MET Norge (Frost API)</b> — historiske luft- og snødata, pluss 10-dagers værvarsel</li>
-                <li data-i18n-html="src2"><b>NVE (HydAPI)</b> — vanntemperatur og vannføring fra hydrologiske stasjoner</li>
-                <li data-i18n-html="src3"><b>Sentinel Hub</b> — isgang-observasjoner via satellittbilder</li>
-                <li data-i18n-html="src4"><b>OFA</b> — Oslomarka Fiskeadministrasjons referansedata for Nordmarka-vann</li>
-                <li data-i18n-html="src5"><b>Brukerobservasjoner</b> — klekkeobservasjoner fra fluefiskere rundt om i landet (<a href="/observasjon.html">bidra med dine her</a>)</li>
+                <li data-i18n-html="src1"><b>MET Norge</b>: målt vær og værvarsel for stedene med egen prognose</li>
+                <li data-i18n-html="src2"><b>Open-Meteo</b> (ERA5 og værmodeller): vær ved hvert enkelt vann</li>
+                <li data-i18n-html="src3"><b>NVE</b>: vanntemperatur og vannføring, innsjødatabasen og dybdekart</li>
+                <li data-i18n-html="src4"><b>seNorge</b> (NVE og MET): snødybde</li>
+                <li data-i18n-html="src5"><b>Copernicus Sentinel-2</b> via Google Earth Engine: isgang, behandlet av HatchWatch</li>
+                <li data-i18n-html="src6"><b>Artsdatabanken</b> via GBIF: artsfunn per vann</li>
+                <li data-i18n-html="src7"><b>Kartverket</b>: turkart, turruter og høydedata</li>
+                <li data-i18n-html="src8"><b>OpenStreetMap</b> og OpenFreeMap: bakgrunnskart, parkering og gapahuker</li>
+                <li data-i18n-html="src9"><b>Miljødirektoratet</b>: lakseførende elver</li>
+                <li data-i18n-html="src10"><b>Oslomarka Fiskeadministrasjon (OFA)</b>: vulgata-vann og utsettinger i Nordmarka</li>
+                <li data-i18n-html="src11"><b>Forskning</b>: blant annet Qvenild m.fl. (skjoldkreps og marflo), Brittain (døgnfluer) og Gullefors (vårfluer)</li>
+                <li data-i18n-html="src12"><b>Fluefiskere</b>: klekkeobservasjoner fra hele landet (<a href="/observasjon.html">bidra med dine her</a>)</li>
             </ul>
-            <p data-i18n="daily">Værdata oppdateres daglig.</p>
-
-            <h2 data-i18n="uncH">Usikkerhet</h2>
-            <p data-i18n="uncP">Tenk på klekkeprognosen som en værmelding: tidlig i sesongen er usikkerheten større, fordi mer av vær- og vannutviklingen ligger fram i tid. Etter hvert som faktiske målinger kommer inn, krymper estimatet og treffsikkerheten øker. For godt dokumenterte lokasjoner treffer modellen typisk innenfor noen få dager. Men naturen er uforutsigbar — bruk verktøyet som veiledning, ikke fasit.</p>
 
             <h2 data-i18n="builtH">Bygget av</h2>
-            <p data-i18n="builtP">Stian Midtdal. Tilbakemeldinger, observasjoner og forslag mottas med stor takk — det er reelle observasjoner som forbedrer modellen mest. Bruk lenken nederst i menyen.</p>
+            <p data-i18n="builtP">Stian Midtdal, som et hobbyprosjekt. Tilbakemeldinger og observasjoner mottas med stor takk.</p>
         </div>
     </div>
 
     <div class="disclaimer" data-i18n-html="disclaimer">
-        <b>En modell er en hjelpemiddel, ikke en fasit.</b> Klekking varierer fra lokasjon til lokasjon og fra år til år. Vær og lokale forhold på selve dagen kan både framskynde og utsette en klekking. HatchWatch er ment som et utgangspunkt for planlegging — ikke en garanti for fisk.
+        <b>En modell er et hjelpemiddel, ikke en fasit.</b> Klekking varierer fra vann til vann og fra år til år, og været på selve dagen kan både framskynde og utsette den. HatchWatch er et utgangspunkt for planlegging, ikke en garanti for fisk.
     </div>
 
     <div class="cta-row">
-            <a href="/" class="cta-btn" data-i18n="ctaLoc">Se lokasjoner</a>
+            <a href="/" class="cta-btn" data-i18n="ctaLoc">Til kartet</a>
             <a href="/artikler.html" class="cta-btn secondary" data-i18n="ctaArt">Les artikler</a>
+            <a href="/observasjon.html" class="cta-btn secondary" data-i18n="ctaObs">Meld klekking</a>
             <a href="https://tally.so/r/EkBErN" class="cta-btn secondary" data-i18n="ctaFb">Send tilbakemelding</a>
             <a href="/personvern.html" class="cta-btn secondary" data-i18n="ctaPriv">Personvern</a>
         </div>
@@ -209,25 +236,45 @@
     if (window.HW_LANG !== 'en') return;
     var EN = {
         navHome: 'Front page', navNotif: 'Notifications', navArticles: 'Articles', navFeedback: 'Send feedback',
-        h1: 'About HatchWatch', tagline: 'Hatch forecasts for fly fishers',
-        p1: 'HatchWatch is an open prediction model for mayfly hatches in Norwegian rivers and lakes. It combines air and water temperature history, ice-out observations, snow depth and calibrated thresholds for each location to estimate when the hatch starts for vulgata, marginata, vespertina and other key species.',
-        p2: 'At the heart of the model is the <em>heat sum principle</em> (growing degree days): how fast a nymph develops is driven by temperature, and once the heat accumulated since 1 January passes a threshold specific to the species and the location, the nymph is ready to rise. On top of that sits a <em>dual trigger</em> on water temperature (typically 12 °C), which catches the years when the air is warm before the water has caught up. The hatch date is the first day both conditions are met at the same time.',
-        p3: 'For days ahead, the model blends real measurements with MET Norway’s 10-day forecast, and then the 10-year average for the rest of the season. As real measurements come in day by day, they replace the assumptions, and the forecast settles on an ever more certain date.',
-        betterH: 'Getting better over time',
-        betterP: 'The model is not fixed. Every time a calibrated location gets a new verified hatch observation, the thresholds are adjusted. That is why HatchWatch gets more accurate every year, especially for locations people report from. It is also why reported observations are so valuable.',
-        sourcesH: 'Data sources',
-        src1: '<b>MET Norway (Frost API)</b>: historical air and snow data, plus the 10-day forecast',
-        src2: '<b>NVE (HydAPI)</b>: water temperature and flow from hydrological stations',
-        src3: '<b>Sentinel Hub</b>: ice-out observations from satellite images',
-        src4: '<b>OFA</b>: reference data from the Oslomarka fisheries association for lakes in Nordmarka',
-        src5: '<b>User observations</b>: hatch reports from fly fishers around the country (<a href="/observasjon.html">add yours here</a>)',
-        daily: 'Weather data is updated daily.',
+        h1: 'About HatchWatch', tagline: 'Hatches, ice-out and fishing conditions for fly fishers all over Norway',
+        p1: 'HatchWatch estimates when mayflies and caddis hatch in Norwegian lakes and rivers. The map shows more than 19,000 lakes with ice-out from satellite, and the salmon rivers with when the fish usually arrive. It is all built for one thing: so you know when it is worth heading out.',
+        typerH: 'Two kinds of forecast',
+        typer1: '<b>Places with their own forecast (about 20).</b> Here we use measured air and water temperature from stations. The hatch starts on the first day two conditions are met at once: the warmth since 1 January has reached a threshold, and the water has reached a certain temperature. Where we have observations from several years, the threshold is calibrated against them. In Kautokeino the model has typically been off by about 3 days.',
+        typer2: '<b>All other lakes.</b> Every lake has its own page with weather fetched for exactly that spot, adjusted for altitude.',
+        art1: '<b>Vulgata</b> starts when the warmth since 1 April reaches a fixed level. Where it has been tested (eastern Norway and Kautokeino), it is typically off by about 5 days.',
+        art2: '<b>Marginata</b> starts when the ice has gone and spring has given enough warmth, <b>vespertina</b> a week later.',
+        art3: '<b>Grandis</b> is worked out the same way as vulgata, with a higher level. It has only been checked against species records, not against hatch start, so it is a rough estimate.',
+        art4: '<b>Tadpole shrimp and freshwater shrimp</b> are shown where they have been found, with the periods from Norwegian research on Hardangervidda.',
+        funnet: 'We always say clearly whether a species has been found in the lake. If it says “Not recorded here”, the estimate only applies if the species actually lives there.',
+        isH: 'Ice-out from satellite',
+        isP: 'We read ice-out from Sentinel-2 images for every lake over 10 hectares, year by year back to 2017. In spring every lake is checked every other day. The typical error is 4–5 days against measured ice-out; clouds can make the period longer. Before the satellite has seen the ice go, we estimate ice-out from how much warmth that particular lake usually needs.',
+        spinH: 'Spinner fall and conditions',
+        spinP: 'The spinner fall watch looks at the evening weather (wind, gusts, temperature, cloud, rain, humidity and pressure) in the weeks vulgata is in season. It is based on fly fishing literature and is not yet calibrated against observations.',
+        laksH: 'Salmon',
+        laksP: 'For the salmon rivers we show when the fish typically arrive through the season, based on several years of data, and flow and water temperature from NVE where there is a gauging station.',
+        turH: 'Out and about',
+        turP: 'The hiking map shows the Norwegian Mapping Authority’s topographic map with marked trails, and parking, gates and shelters from OpenStreetMap. You can draw a trip, see the elevation profile and walking time, save it and share it. The lake pages show depth maps where NVE has surveyed the lake, and the snow depth in the mountains in spring.',
         uncH: 'Uncertainty',
-        uncP: 'Think of the hatch forecast as a weather forecast: early in the season the uncertainty is bigger, because more of the weather and water development is still ahead. As real measurements come in, the estimate narrows and the accuracy improves. For well-documented locations the model typically lands within a few days. But nature is unpredictable. Use the tool as guidance, not as fact.',
+        uncP: 'Think of the forecast as a weather forecast. Early in the season the uncertainty is bigger, because more of the weather is still ahead. As the measurements come in, it narrows. Nature is still unpredictable, so use HatchWatch as guidance, not as fact.',
+        betterH: 'Better every year',
+        betterP: 'Every winter we calibrate the thresholds against the observations from the season that has passed. That is why every hatch report is so valuable, especially when you write which lake and which date. <a href="/observasjon.html">Report a hatch here.</a>',
+        sourcesH: 'Data sources',
+        src1: '<b>MET Norway</b>: measured weather and forecasts for the places with their own forecast',
+        src2: '<b>Open-Meteo</b> (ERA5 and weather models): weather at each individual lake',
+        src3: '<b>NVE</b>: water temperature and flow, the lake database and depth maps',
+        src4: '<b>seNorge</b> (NVE and MET): snow depth',
+        src5: '<b>Copernicus Sentinel-2</b> via Google Earth Engine: ice-out, processed by HatchWatch',
+        src6: '<b>Artsdatabanken</b> via GBIF: species records per lake',
+        src7: '<b>Norwegian Mapping Authority</b>: hiking map, trails and elevation data',
+        src8: '<b>OpenStreetMap</b> and OpenFreeMap: base map, parking and shelters',
+        src9: '<b>Norwegian Environment Agency</b>: salmon rivers',
+        src10: '<b>Oslomarka Fiskeadministrasjon (OFA)</b>: vulgata lakes and stocking in Nordmarka',
+        src11: '<b>Research</b>: among others Qvenild et al. (tadpole shrimp and freshwater shrimp), Brittain (mayflies) and Gullefors (caddis)',
+        src12: '<b>Fly fishers</b>: hatch reports from all over the country (<a href="/observasjon.html">add yours here</a>)',
         builtH: 'Built by',
-        builtP: 'Stian Midtdal. Feedback, observations and ideas are very welcome. Real observations are what improve the model most. Use the link at the bottom of the menu.',
-        disclaimer: '<b>A model is a tool, not an answer key.</b> Hatches vary from place to place and from year to year. The weather and local conditions on the day can bring a hatch forward or push it back. HatchWatch is meant as a starting point for planning, not a guarantee of fish.',
-        ctaLoc: 'See locations', ctaArt: 'Read articles', ctaFb: 'Send feedback', ctaPriv: 'Privacy'
+        builtP: 'Stian Midtdal, as a hobby project. Feedback and observations are very welcome.',
+        disclaimer: '<b>A model is a tool, not an answer key.</b> Hatches vary from lake to lake and from year to year, and the weather on the day can bring a hatch forward or push it back. HatchWatch is a starting point for planning, not a guarantee of fish.',
+        ctaLoc: 'To the map', ctaArt: 'Read articles', ctaObs: 'Report a hatch', ctaFb: 'Send feedback', ctaPriv: 'Privacy'
     };
     document.title = 'About HatchWatch · HatchWatch';
     document.querySelectorAll('[data-i18n]').forEach(function (el) { var v = EN[el.getAttribute('data-i18n')]; if (v) el.textContent = v; });
