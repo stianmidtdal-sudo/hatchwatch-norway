@@ -275,8 +275,8 @@ function render(e) {
     '<div class="row2"><a class="hw-btn primary" href="/?elv=' + encodeURIComponent(e.id) + '#laks">' + tx('Vis i kartet', 'Show on the map') + '</a>' +
     (e.url ? '<a class="hw-btn ghost" href="' + esc(e.url) + '" target="_blank" rel="noopener">' + tx('Lakseregisteret', 'Salmon register') + '</a>' : '') + '</div></div>';
 
-  h += '<p class="note">' + tx('Elv og lakseførende strekning: Lakseregisteret (Miljødirektoratet).' + (k ? ' Fangstkurve: laksebørsene til Elveguiden og Inatur, sammenstilt av HatchWatch (år ' + esc(k.aar.replace(/,/g, ', ')) + '). Vannføring og vanntemperatur: NVE.' : ''),
-                           'River and anadromous stretch: Norwegian Environment Agency salmon register.' + (k ? ' Catch curve: Elveguiden and Inatur catch reports, compiled by HatchWatch (years ' + esc(k.aar.replace(/,/g, ', ')) + '). Flow and water temperature: NVE.' : '')) + '</p>';
+  h += '<p class="note">' + tx('Elv og lakseførende strekning: Lakseregisteret (Miljødirektoratet).' + (k ? ' Fangstkurve: data sammenstilt av HatchWatch (år ' + esc(k.aar.replace(/,/g, ', ')) + '). Vannføring og vanntemperatur: NVE.' : ''),
+                           'River and anadromous stretch: Norwegian Environment Agency salmon register.' + (k ? ' Catch curve: data compiled by HatchWatch (years ' + esc(k.aar.replace(/,/g, ', ')) + '). Flow and water temperature: NVE.' : '')) + '</p>';
   main.innerHTML = h;
   miniMap(e);
   if (k) water(e, season);

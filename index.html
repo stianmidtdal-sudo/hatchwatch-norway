@@ -45,12 +45,17 @@
   .modeseg button { padding: 8px 0; border-radius: 9px; font-weight: 500; font-size: 14px; color: var(--hw-fg-2); }
   .modeseg button.on { background: var(--hw-bg-2); color: var(--hw-fg); box-shadow: 0 1px 2px rgba(0,0,0,.25); }
   .searchrow { display: flex; gap: 8px; align-items: center; }
-  /* PC: merket øverst til venstre, bryter og søk på samme rad (2026-10-14, Stian) */
+  /* PC (2026-10-14, Stian): merket alene øverst til venstre, et hakk større. Søket midtstilt
+     øverst, bryteren Tørrflue | Laksefiske midtstilt rett under. */
+  .brandrow .wm { font-size: 25px; }
+  .brandrow .hw-fly { width: 42px !important; }
   @media (min-width: 760px) {
-    .maptop { flex-direction: row; align-items: center; max-width: none; margin: 0; gap: 14px; }
-    .brandrow { flex: none; margin-right: 6px; }
-    .modeseg { width: 240px; flex: none; }
-    .searchrow { flex: 0 1 520px; }
+    .maptop { align-items: center; max-width: none; margin: 0; }
+    .brandrow { position: absolute; left: 4px; top: 4px; }
+    .brandrow .wm { font-size: 28px; }
+    .brandrow .hw-fly { width: 48px !important; }
+    .searchrow { order: 1; width: min(520px, calc(100vw - 540px)); min-width: 260px; }
+    .modeseg { order: 2; width: 260px; }
   }
   .search { flex: 1; position: relative; }
   .search-in { display: flex; align-items: center; gap: 8px; background: color-mix(in srgb, var(--hw-bg-2) 94%, transparent); backdrop-filter: blur(8px); border: 1px solid var(--hw-line); border-radius: 999px; padding: 9px 12px; color: var(--hw-fg-3); }
@@ -397,7 +402,7 @@ map.on('movestart', function (e) { if (e.originalEvent) userMoved = true; });
 function foldAttrib() { var a = document.querySelector('.maplibregl-ctrl-attrib'); if (a) a.classList.remove('maplibregl-compact-show'); }
 map.once('idle', foldAttrib); setTimeout(foldAttrib, 1500);
 function fitNorway() {
-  var w = window.innerWidth, top = w >= 760 ? 70 : 150, sh = document.getElementById('scrub').offsetHeight || 190;
+  var w = window.innerWidth, top = w >= 760 ? 115 : 155, sh = document.getElementById('scrub').offsetHeight || 190;
   // Stor skjerm: skyveren ligger nede til høyre, så Norge får hele høyden og holder seg til venstre for den
   // Venstre 230 på stor skjerm: plass til forklaringen. Mobil: plass til forklaringsraden over skyveren.
   var pad = w >= 1100 ? { top: top, bottom: 20, left: 230, right: 470 }
@@ -820,7 +825,7 @@ function openRiver(id, props, keep) {
     var k = e.kurve;
     big.innerHTML = tx('Uke ', 'Week ') + (k.beste_uke || '–') + '<span>' + tx('beste uke i snitt', 'best week on average') + '</span>';
     line.innerHTML = tx('Halve fangsten pleier å være tatt rundt <b>' + dmTxt(k.halv) + '</b>. ', 'Half the catch is usually taken around <b>' + dmTxt(k.halv) + '</b>. ') +
-      tx('Bygger på ' + k.n_aar + ' år med fangstrapporter.', 'Based on ' + k.n_aar + ' years of catch reports.');
+      tx('Bygger på ' + k.n_aar + ' år med data.', 'Based on ' + k.n_aar + ' years of data.');
     shExtra.innerHTML = kurveSvg(e, day) + '<div class="arter"><div class="note">' + tx('Gull er de tre beste ukene i snitt. Streken er valgt dato.', 'Gold marks the three best weeks on average. The line is the chosen date.') + '</div></div>';
   } else {
     big.innerHTML = '<span style="margin:0;font-size:15px">' + tx('Ingen fangstkurve ennå', 'No catch curve yet') + '</span>';
