@@ -33,7 +33,7 @@
   .maplibregl-ctrl-attrib a { color: var(--hw-fg-2) !important; }
   .maplibregl-ctrl-attrib-button { filter: invert(.8); }
   /* Kildeknappen: mobil over zoomknappene til høyre, PC nede til venstre under forklaringen */
-  .maplibregl-ctrl-bottom-right { bottom: calc(var(--scrub-h, 190px) + 152px); }
+  .maplibregl-ctrl-bottom-right { bottom: calc(var(--scrub-h, 190px) + 196px); }
   .maplibregl-ctrl-bottom-left { bottom: 6px; }
 
   /* ── Topp: merke, bryter, søk ── */
@@ -90,8 +90,24 @@
   .zoomctl #lagBtn { display: grid; place-items: center; }
   .zoomctl #lagBtn svg { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linejoin: round; }
   .zoomctl #lagBtn.on { color: var(--hw-hatch); border-color: color-mix(in srgb, var(--hw-hatch) 55%, transparent); }
-  .lagvalg { position: absolute; right: 58px; bottom: calc(var(--scrub-h, 190px) + 108px); z-index: 24; display: none; gap: 8px; padding: 8px; border-radius: 14px; background: var(--hw-bg-2); border: 1px solid var(--hw-line); box-shadow: var(--hw-shadow); }
+  .lagvalg { position: absolute; right: 58px; bottom: calc(var(--scrub-h, 190px) + 152px); z-index: 24; display: none; gap: 8px; padding: 8px; border-radius: 14px; background: var(--hw-bg-2); border: 1px solid var(--hw-line); box-shadow: var(--hw-shadow); }
   .lagvalg.open { display: flex; }
+  /* Avstandsmåling (2026-10-14): panel der skyveren står mens man måler */
+  .zoomctl #maalBtn { display: grid; place-items: center; }
+  .zoomctl #maalBtn svg { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; }
+  .zoomctl #maalBtn.on { color: var(--hw-hatch); border-color: color-mix(in srgb, var(--hw-hatch) 55%, transparent); }
+  .maal { position: absolute; left: 12px; right: 12px; bottom: 12px; z-index: 23; max-width: 560px; margin: 0 auto; display: none; background: color-mix(in srgb, var(--hw-bg-2) 95%, transparent); backdrop-filter: blur(8px); border: 1px solid var(--hw-line); border-radius: 16px; padding: 12px 14px; }
+  .maal.open { display: block; }
+  @media (min-width: 760px) { .maal { left: auto; right: 12px; width: 440px; margin: 0; } }
+  .maal .topp { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .maal .tot { font-family: var(--hw-display); font-weight: 800; font-size: 26px; letter-spacing: -.02em; line-height: 1.1; }
+  .maal .hint { font-size: 13px; color: var(--hw-fg-2); margin-top: 2px; }
+  .maal .knapper { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+  .maal .knapper button { padding: 7px 12px; border-radius: 999px; border: 1px solid var(--hw-line); font-size: 13px; color: var(--hw-fg); }
+  .maal .knapper button:disabled { opacity: .4; }
+  .maal svg.profil { width: 100%; height: auto; display: block; margin-top: 10px; }
+  .maal svg.profil text { font-family: var(--hw-mono); font-size: 10px; fill: var(--hw-fg-3); }
+  .maal .pinfo { font-size: 12.5px; color: var(--hw-fg-2); margin-top: 4px; }
   body.kart-tur .brandrow { background: color-mix(in srgb, var(--hw-bg) 88%, transparent); backdrop-filter: blur(6px); border-radius: 12px; padding: 4px 12px 4px 6px; }
   .lagvalg button { width: 84px; text-align: center; font-size: 12.5px; color: var(--hw-fg-2); }
   .lagvalg button i { display: block; height: 56px; border-radius: 10px; margin-bottom: 5px; border: 2px solid transparent; }
@@ -192,12 +208,25 @@
 
   <div class="legend" id="legend" aria-hidden="true"></div>
 
+  <div class="maal" id="maalPanel" aria-live="polite">
+    <div class="topp">
+      <div><div class="tot" id="maalTot">0 m</div><div class="hint" id="maalHint">Trykk i kartet for å sette punkter.</div></div>
+      <button class="hw-btn ghost" type="button" id="maalFerdig">Ferdig</button>
+    </div>
+    <div class="knapper">
+      <button type="button" id="maalAngre" disabled>Angre</button>
+      <button type="button" id="maalNull" disabled>Nullstill</button>
+      <button type="button" id="maalHoyde" disabled>Høydeprofil</button>
+    </div>
+    <div id="maalProfil"></div>
+  </div>
   <div class="lagvalg" id="lagValg" role="dialog" aria-label="Kartlag">
     <button type="button" class="std" data-lag="standard"><i></i><span id="lagStdTxt">Standard</span></button>
     <button type="button" class="tur" data-lag="tur"><i></i><span id="lagTurTxt">Turkart</span></button>
   </div>
   <div class="zoomctl">
     <button id="lagBtn" type="button" aria-label="Kartlag" title="Kartlag"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg></button>
+    <button id="maalBtn" type="button" aria-label="Mål avstand" title="Mål avstand"><svg viewBox="0 0 24 24"><path d="M3 17L17 3l4 4L7 21z"/><path d="M7 13l2 2M10 10l2 2M13 7l2 2"/></svg></button>
     <button id="zin" aria-label="Zoom inn">+</button>
     <button id="zout" aria-label="Zoom ut">−</button>
   </div>
@@ -304,6 +333,11 @@ function tx(no, en) { return EN ? en : no; }
   document.getElementById('elvClose').setAttribute('aria-label', 'Close');
   document.getElementById('play').setAttribute('aria-label', 'Play');
   document.getElementById('lagTurTxt').textContent = 'Hiking map';
+  document.getElementById('maalBtn').setAttribute('aria-label', 'Measure distance'); document.getElementById('maalBtn').title = 'Measure distance';
+  document.getElementById('maalFerdig').textContent = 'Done';
+  document.getElementById('maalAngre').textContent = 'Undo';
+  document.getElementById('maalNull').textContent = 'Clear';
+  document.getElementById('maalHoyde').textContent = 'Elevation profile';
   document.getElementById('lagBtn').setAttribute('aria-label', 'Map layers'); document.getElementById('lagBtn').title = 'Map layers';
   document.getElementById('lagValg').setAttribute('aria-label', 'Map layers');
 })();
@@ -400,7 +434,7 @@ var style = {
   glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
   sources: {
     omt: { type: 'vector', url: 'https://tiles.openfreemap.org/planet' },
-    hw: { type: 'vector', url: 'pmtiles://' + location.origin + DATA + 'hatchwatch.pmtiles', promoteId: { vann: 'vatnlnr', laks: 'vassdrag' } }
+    hw: { type: 'vector', url: 'pmtiles://' + location.origin + DATA + 'hatchwatch.pmtiles', promoteId: { vann: 'vatnlnr', laks: 'vassdrag', vannpunkt: 'vatnlnr' } }
   },
   layers: [
     { id: 'bg', type: 'background', paint: { 'background-color': C.land } },
@@ -455,6 +489,12 @@ map.on('load', function () {
 
   map.addLayer({ id: 'vann-fill', type: 'fill', source: 'hw', 'source-layer': 'vann', paint: { 'fill-color': lakeColor(), 'fill-opacity': 0.92 } });
   map.addLayer({ id: 'vann-line', type: 'line', source: 'hw', 'source-layer': 'vann', paint: { 'line-color': ['case', ['boolean', ['feature-state', 'sel'], false], '#f2b84b', '#0b1418'], 'line-width': ['case', ['boolean', ['feature-state', 'sel'], false], 2.5, 0.3] } });
+  // Prikk per vann (Turkart): samme isgangfarger som vannflatene og forklaringen, mørk kant, gull når valgt
+  map.addLayer({ id: 'vann-punkt', type: 'circle', source: 'hw', 'source-layer': 'vannpunkt', minzoom: 9, layout: { visibility: 'none' }, paint: {
+    'circle-color': lakeColor(),
+    'circle-radius': ['interpolate', ['linear'], ['zoom'], 9, 3.5, 12, 5.5, 15, 7],
+    'circle-stroke-color': ['case', ['boolean', ['feature-state', 'sel'], false], '#f2b84b', '#0b1418'],
+    'circle-stroke-width': ['case', ['boolean', ['feature-state', 'sel'], false], 3, 1.5] } });
   map.addLayer({ id: 'laks-glow', type: 'line', source: 'hw', 'source-layer': 'laks', layout: { 'line-cap': 'round', 'line-join': 'round', visibility: 'none' }, paint: { 'line-color': laksColor(), 'line-opacity': ['case', ['>=', ['coalesce', ['feature-state', 'k'], 0], 3], 0.35, 0], 'line-width': ['interpolate', ['linear'], ['zoom'], 5, 6, 14, 16], 'line-blur': 4 } });
   map.addLayer({ id: 'laks-line', type: 'line', source: 'hw', 'source-layer': 'laks', layout: { 'line-cap': 'round', 'line-join': 'round', visibility: 'none' }, paint: { 'line-color': laksColor(), 'line-width': ['interpolate', ['linear'], ['zoom'], 5, ['case', ['boolean', ['feature-state', 'sel'], false], 4, 1.6], 14, ['case', ['boolean', ['feature-state', 'sel'], false], 9, 5]] } });
   map.addLayer({ id: 'laks-hit', type: 'line', source: 'hw', 'source-layer': 'laks', layout: { visibility: 'none' }, paint: { 'line-color': '#000', 'line-opacity': 0, 'line-width': 18 } });
@@ -482,6 +522,7 @@ map.on('load', function () {
   });
   map.on('click', onMapClick);
   leggTilTurkart();   // skjult til brukeren velger Turkart (applyMode → applyKartlag)
+  leggTilMaalLag();   // avstandsmåling (tom til brukeren måler)
 
   map.resize();   // bunnbaren (hw-shell.js) krymper kartet etter at det ble laget
   applyMode();    // før tilpasningen: modusen bestemmer høyden på skyveren
@@ -522,6 +563,7 @@ map.on('load', function () {
 });
 
 function onMapClick(e) {
+  if (maaling) { maalLeggTil([e.lngLat.lng, e.lngLat.lat]); return; }   // målemodus: trykk = nytt punkt
   var pad = 8, box = [[e.point.x - pad, e.point.y - pad], [e.point.x + pad, e.point.y + pad]];
   var c = map.queryRenderedFeatures(box, { layers: ['loc-cluster'] })[0];
   if (c && mode === 'flue') {
@@ -534,7 +576,13 @@ function onMapClick(e) {
     var r = map.queryRenderedFeatures(box, { layers: ['laks-hit'] })[0];
     if (r) { openRiver(r.properties.vassdrag, r.properties); return; }
   } else {
+    // Vannflaten er usynlig på Turkart, men kan fortsatt trykkes på; prikken peker til samme vann
     var v = map.queryRenderedFeatures(e.point, { layers: ['vann-fill'] })[0];
+    if (!v && map.getLayoutProperty('vann-punkt', 'visibility') === 'visible') {
+      var pk = map.queryRenderedFeatures(box, { layers: ['vann-punkt'] })[0];
+      if (pk) v = map.queryRenderedFeatures(map.project(pk.geometry.coordinates), { layers: ['vann-fill'] })
+                    .filter(function (f) { return f.properties.vatnlnr === pk.properties.vatnlnr; })[0];
+    }
     if (v) { openLake(v); return; }
   }
   closeSheet();
@@ -550,8 +598,12 @@ function applyIce() {
   if (!map.getSource('hw')) return;
   var d = ISG[iceYear] || {};
   map.removeFeatureState({ source: 'hw', sourceLayer: 'vann' });
-  for (var id in d) map.setFeatureState({ source: 'hw', sourceLayer: 'vann', id: +id }, { isg: d[id][0] });
-  if (sel && sel.kind === 'lake') map.setFeatureState({ source: 'hw', sourceLayer: 'vann', id: sel.id }, { sel: true });
+  map.removeFeatureState({ source: 'hw', sourceLayer: 'vannpunkt' });
+  for (var id in d) {
+    map.setFeatureState({ source: 'hw', sourceLayer: 'vann', id: +id }, { isg: d[id][0] });
+    map.setFeatureState({ source: 'hw', sourceLayer: 'vannpunkt', id: +id }, { isg: d[id][0] });
+  }
+  if (sel && sel.kind === 'lake') settVannSel(sel.id, true);
   paintIce();
   // Isgangteksten gjør skyveren høyere: tilpass Norge på nytt hvis ingen har rørt kartet ennå
   syncScrubHeight();
@@ -568,6 +620,7 @@ function paintIce() {
   s.textContent = EN ? 'Ice-out ' + iceYear + ': ' + nf(open) + ' of ' + nf(tot) + ' lakes with satellite data are ice-free on this date'
                      : 'Isgang ' + iceYear + ': ' + nf(open) + ' av ' + nf(tot) + ' vann med satellittdata er isfrie denne datoen';
   if (map.getLayer('vann-fill')) map.setPaintProperty('vann-fill', 'fill-color', lakeColor());
+  if (map.getLayer('vann-punkt')) map.setPaintProperty('vann-punkt', 'circle-color', lakeColor());
 }
 function paintYears() {
   var y = document.getElementById('years');
@@ -654,10 +707,154 @@ function applyKartlag() {
   map.setLayoutProperty('kv-topo', 'visibility', tur ? 'visible' : 'none');
   map.setLayoutProperty('kv-tur', 'visibility', tur ? 'visible' : 'none');
   STANDARD_LAG.forEach(function (id) { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', tur ? 'none' : 'visible'); });
-  // Turkartet har egne vann: isgangfargene legges halvgjennomsiktig over (Tørrflue), og ikke i Laksefiske
-  map.setPaintProperty('vann-fill', 'fill-opacity', tur ? (mode === 'flue' ? 0.5 : 0) : 0.92);
-  map.setPaintProperty('vann-line', 'line-opacity', tur && mode !== 'flue' ? 0 : 1);
+  // Turkartet har egne vann med Kartverkets strandlinje. Vår vannflate blir usynlig (men kan fortsatt
+  // trykkes på), og vann med data vises som prikker farget etter isgang. Helt utzoomet (under z9, der
+  // prikkene ikke vises) ligger isgangfargene svakt over som før. Valgt vann får gull omriss.
+  var flue = mode === 'flue';
+  map.setPaintProperty('vann-fill', 'fill-opacity', tur ? (flue ? ['interpolate', ['linear'], ['zoom'], 8.5, 0.5, 9.2, 0] : 0) : 0.92);
+  map.setPaintProperty('vann-line', 'line-opacity', tur ? ['case', ['boolean', ['feature-state', 'sel'], false], 1, 0] : 1);
+  map.setLayoutProperty('vann-punkt', 'visibility', tur && flue ? 'visible' : 'none');
 }
+function settVannSel(id, paa) {
+  map.setFeatureState({ source: 'hw', sourceLayer: 'vann', id: id }, { sel: paa });
+  map.setFeatureState({ source: 'hw', sourceLayer: 'vannpunkt', id: id }, { sel: paa });
+}
+
+// ═══ AVSTANDSMÅLING OG HØYDEPROFIL (2026-10-14) ═══
+// Trykk punkt for punkt (som Norgeskart Friluftsliv); streken og summen oppdateres underveis, hver
+// delstrekning får sin lengde. Høydeprofil: inntil 100 punkter langs streken fra Kartverkets høyde-API
+// (ws.geonorge.no/hoydedata, maks 50 punkter per kall). Mens man måler åpner ikke trykk noen kort.
+var maaling = false, maalPunkter = [];
+function maalFmt(m) {
+  if (m < 1000) return Math.round(m) + ' m';
+  var km = m / 1000, s = km.toFixed(km < 10 ? 2 : 1);
+  return (EN ? s : s.replace('.', ',')) + ' km';
+}
+function maalLengde(a, b) { return haversine(a[1], a[0], b[1], b[0]) * 1000; }
+function maalTotal() { var s = 0; for (var i = 1; i < maalPunkter.length; i++) s += maalLengde(maalPunkter[i - 1], maalPunkter[i]); return s; }
+function maalGeo() {
+  var f = [];
+  if (maalPunkter.length >= 2) f.push({ type: 'Feature', properties: { k: 'linje' }, geometry: { type: 'LineString', coordinates: maalPunkter } });
+  maalPunkter.forEach(function (p, i) { f.push({ type: 'Feature', properties: { k: 'punkt', forste: i === 0 ? 1 : 0 }, geometry: { type: 'Point', coordinates: p } }); });
+  for (var i = 1; i < maalPunkter.length && maalPunkter.length > 2; i++) {
+    var a = maalPunkter[i - 1], b = maalPunkter[i];
+    f.push({ type: 'Feature', properties: { k: 'etikett', t: maalFmt(maalLengde(a, b)) }, geometry: { type: 'Point', coordinates: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2] } });
+  }
+  return { type: 'FeatureCollection', features: f };
+}
+function leggTilMaalLag() {
+  map.addSource('maal', { type: 'geojson', data: maalGeo() });
+  map.addLayer({ id: 'maal-kant', type: 'line', source: 'maal', filter: ['==', ['get', 'k'], 'linje'], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#0b1418', 'line-width': 6, 'line-opacity': 0.85 } });
+  map.addLayer({ id: 'maal-linje', type: 'line', source: 'maal', filter: ['==', ['get', 'k'], 'linje'], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#f2b84b', 'line-width': 3 } });
+  map.addLayer({ id: 'maal-punkt', type: 'circle', source: 'maal', filter: ['==', ['get', 'k'], 'punkt'], paint: { 'circle-radius': ['case', ['==', ['get', 'forste'], 1], 6.5, 5], 'circle-color': ['case', ['==', ['get', 'forste'], 1], '#f2b84b', '#ffffff'], 'circle-stroke-color': '#0b1418', 'circle-stroke-width': 2 } });
+  map.addLayer({ id: 'maal-etikett', type: 'symbol', source: 'maal', filter: ['==', ['get', 'k'], 'etikett'], layout: { 'text-field': ['get', 't'], 'text-font': ['Noto Sans Bold'], 'text-size': 11, 'text-offset': [0, -1], 'text-allow-overlap': true }, paint: { 'text-color': '#ffffff', 'text-halo-color': '#0b1418', 'text-halo-width': 2 } });
+}
+function maalTegn() {
+  var s = map.getSource('maal'); if (s) s.setData(maalGeo());
+  var n = maalPunkter.length;
+  document.getElementById('maalTot').textContent = maalFmt(maalTotal());
+  document.getElementById('maalHint').textContent = n === 0 ? tx('Trykk i kartet for å sette punkter.', 'Tap the map to add points.')
+    : n === 1 ? tx('Trykk der streken skal gå videre.', 'Tap where the line should continue.')
+    : tx(n + ' punkter · fortsett å trykke for å legge til', n + ' points · keep tapping to add more');
+  document.getElementById('maalAngre').disabled = n === 0;
+  document.getElementById('maalNull').disabled = n === 0;
+  document.getElementById('maalHoyde').disabled = n < 2;
+  document.getElementById('maalProfil').innerHTML = '';
+}
+function maalLeggTil(p) { maalPunkter.push(p); maalTegn(); }
+function maalStart() {
+  if (maaling) return maalSlutt();
+  maaling = true; maalPunkter = [];
+  closeSheet(); stopPlay();
+  document.getElementById('maalBtn').classList.add('on');
+  document.getElementById('maalPanel').classList.add('open');
+  document.getElementById('scrub').classList.add('hidden');
+  document.getElementById('lagValg').classList.remove('open');
+  map.getCanvas().style.cursor = 'crosshair';
+  maalTegn();
+}
+function maalSlutt() {
+  maaling = false; maalPunkter = [];
+  var s = map.getSource('maal'); if (s) s.setData(maalGeo());
+  document.getElementById('maalBtn').classList.remove('on');
+  document.getElementById('maalPanel').classList.remove('open');
+  document.getElementById('scrub').classList.remove('hidden');
+  map.getCanvas().style.cursor = '';
+}
+// Høyder for en liste [lon, lat]. open-meteo (Copernicus 90 m) svarer på et øyeblikk og vises først;
+// Kartverket (10 m terrengmodell) hentes samtidig og erstatter profilen hvis det svarer innen 45 s
+// (API-et var målt svært tregt 14.10.2026: 20–40 s og tidsavbrudd). vis(res) kalles for hvert svar,
+// res = { z: [...], kilde: 'kartverket' | 'openmeteo' }. Kartverket vinner alltid når det kommer.
+function hentHoyder(pkt, vis) {
+  var rund = function (x) { return Math.round(x * 1e5) / 1e5; };
+  var fikkKv = false;
+  var kv = function () {
+    var ctl = window.AbortController ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctl) ctl.abort(); }, 45000);
+    var bunter = [];
+    for (var j = 0; j < pkt.length; j += 50) bunter.push(pkt.slice(j, j + 50));
+    return Promise.all(bunter.map(function (bu) {
+      var q = JSON.stringify(bu.map(function (p) { return [rund(p[0]), rund(p[1])]; }));
+      return fetch('https://ws.geonorge.no/hoydedata/v1/punkt?koordsys=4258&punkter=' + encodeURIComponent(q), ctl ? { signal: ctl.signal } : {})
+        .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); });
+    })).then(function (svar) {
+      clearTimeout(timer);
+      var z = [].concat.apply([], svar.map(function (s) { return (s.punkter || []).map(function (p) { return p.z; }); }));
+      if (z.length !== pkt.length || z.some(function (x) { return x == null; })) throw new Error('mangler');
+      return { z: z, kilde: 'kartverket' };
+    }, function (e) { clearTimeout(timer); throw e; });
+  };
+  var om = function () {
+    return fetch('https://api.open-meteo.com/v1/elevation?latitude=' + pkt.map(function (p) { return rund(p[1]); }).join(',') + '&longitude=' + pkt.map(function (p) { return rund(p[0]); }).join(','))
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (j) { if (!j.elevation || j.elevation.length !== pkt.length) throw new Error('mangler'); return { z: j.elevation, kilde: 'openmeteo' }; });
+  };
+  var a = om().then(function (r) { if (!fikkKv) vis(r); return true; }).catch(function () { return false; });
+  var b = kv().then(function (r) { fikkKv = true; vis(r); return true; }).catch(function () { return false; });
+  return Promise.all([a, b]).then(function (x) { if (!x[0] && !x[1]) throw new Error('ingen høyder'); });
+}
+// Høydeprofil: jevnt fordelte punkter langs streken (lineært i grader — godt nok på turavstander)
+function maalHoyde() {
+  var tot = maalTotal(); if (maalPunkter.length < 2 || !tot) return;
+  var N = Math.max(2, Math.min(100, Math.round(tot / 25) + 1)), ut = [];
+  for (var k = 0; k < N; k++) {
+    var maal = tot * k / (N - 1), acc = 0;
+    for (var i = 1; i < maalPunkter.length; i++) {
+      var a = maalPunkter[i - 1], b = maalPunkter[i], l = maalLengde(a, b);
+      if (acc + l >= maal || i === maalPunkter.length - 1) { var t = l ? Math.min(1, (maal - acc) / l) : 0; ut.push({ d: maal, p: [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t] }); break; }
+      acc += l;
+    }
+  }
+  var boks = document.getElementById('maalProfil');
+  boks.innerHTML = '<div class="pinfo">' + tx('Henter høyder…', 'Fetching heights…') + '</div>';
+  var mine = maalPunkter.slice();                 // ignorer svar hvis streken er endret i mellomtiden
+  hentHoyder(ut.map(function (u) { return u.p; }), function (res) {
+    if (!maaling || JSON.stringify(mine) !== JSON.stringify(maalPunkter)) return;
+    var z = res.z, kilde = res.kilde;
+    var opp = 0, ned = 0;
+    for (var i = 1; i < z.length; i++) { var dz = z[i] - z[i - 1]; if (dz > 0) opp += dz; else ned -= dz; }
+    var lo = Math.min.apply(null, z), hi = Math.max.apply(null, z), W = 400, H = 90, L = 34;
+    var y = function (v) { return 6 + (H - 12) * (1 - (v - lo) / Math.max(1, hi - lo)); };
+    var x = function (d) { return L + (W - L - 4) * d / tot; };
+    var sti = ut.map(function (u, i) { return (i ? 'L' : 'M') + x(u.d).toFixed(1) + ',' + y(z[i]).toFixed(1); }).join('');
+    var svg = '<svg class="profil" viewBox="0 0 ' + W + ' ' + (H + 14) + '" role="img" aria-label="' + tx('Høydeprofil', 'Elevation profile') + '">' +
+      '<path d="' + sti + 'L' + x(tot).toFixed(1) + ',' + H + 'L' + L + ',' + H + 'Z" fill="rgba(242,184,75,.18)"/>' +
+      '<path d="' + sti + '" fill="none" stroke="#f2b84b" stroke-width="2"/>' +
+      '<text x="' + (L - 4) + '" y="' + (y(hi) + 4) + '" text-anchor="end">' + Math.round(hi) + '</text>' +
+      '<text x="' + (L - 4) + '" y="' + (y(lo) + 4) + '" text-anchor="end">' + Math.round(lo) + '</text>' +
+      '<text x="' + L + '" y="' + (H + 12) + '">0</text><text x="' + (W - 4) + '" y="' + (H + 12) + '" text-anchor="end">' + maalFmt(tot) + '</text></svg>';
+    var kildeTxt = kilde === 'kartverket' ? tx('Høyder: Kartverket', 'Heights: Kartverket') : tx('Høyder: Copernicus via open-meteo (grovere; byttes til Kartverket hvis det svarer)', 'Heights: Copernicus via open-meteo (coarser; replaced by Kartverket if it answers)');
+    boks.innerHTML = svg + '<div class="pinfo">' + (EN ? 'Up ' + Math.round(opp) + ' m · down ' + Math.round(ned) + ' m · highest ' + Math.round(hi) + ' m a.s.l. · '
+                                                    : 'Opp ' + Math.round(opp) + ' m · ned ' + Math.round(ned) + ' m · høyest ' + Math.round(hi) + ' moh · ') + kildeTxt + '</div>';
+  }).catch(function () {
+    boks.innerHTML = '<div class="pinfo">' + tx('Fikk ikke hentet høyder akkurat nå.', 'Could not fetch heights right now.') + '</div>';
+  });
+}
+document.getElementById('maalBtn').addEventListener('click', function (e) { e.stopPropagation(); maalStart(); });
+document.getElementById('maalFerdig').addEventListener('click', maalSlutt);
+document.getElementById('maalAngre').addEventListener('click', function () { maalPunkter.pop(); maalTegn(); });
+document.getElementById('maalNull').addEventListener('click', function () { maalPunkter = []; maalTegn(); });
+document.getElementById('maalHoyde').addEventListener('click', maalHoyde);
 document.getElementById('lagBtn').addEventListener('click', function (e) { e.stopPropagation(); document.getElementById('lagValg').classList.toggle('open'); });
 document.getElementById('lagValg').addEventListener('click', function (e) {
   var b = e.target.closest('button[data-lag]'); if (!b) return;
@@ -764,10 +961,10 @@ function calText(l) {
 }
 function uncOf(l) { return l.unc || DEFAULT_UNC; }
 function setSel(next) {
-  if (sel && sel.kind === 'lake') map.setFeatureState({ source: 'hw', sourceLayer: 'vann', id: sel.id }, { sel: false });
+  if (sel && sel.kind === 'lake') settVannSel(sel.id, false);
   if (sel && sel.kind === 'river') map.setFeatureState({ source: 'hw', sourceLayer: 'laks', id: sel.id }, { sel: false });
   sel = next;
-  if (sel && sel.kind === 'lake') map.setFeatureState({ source: 'hw', sourceLayer: 'vann', id: sel.id }, { sel: true });
+  if (sel && sel.kind === 'lake') settVannSel(sel.id, true);
   if (sel && sel.kind === 'river') map.setFeatureState({ source: 'hw', sourceLayer: 'laks', id: sel.id }, { sel: true });
   updLocs();
 }

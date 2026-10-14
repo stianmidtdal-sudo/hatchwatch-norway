@@ -256,6 +256,12 @@ def bygg_fliser(laks):
             "elv": p.get("elvenavn") or "", "vassdrag": p.get("vassdragsNR") or "",
             "nasjonalt": 1 if p.get("nasjonaltLaksevassdrag") == "Ja" else 0, "url": p.get("lakseregURL") or ""}))
     print(f"vann lest: {len(vann)}")
+    # Punktlag «vannpunkt» (2026-10-14): ett punkt inne i hvert vann (representative_point av den
+    # uforenklede formen). Turkartet viser vannene som prikker i stedet for vår egen vannflate, så
+    # Kartverkets strandlinje får stå alene. Fra z8.
+    PUNKT_MINZ = 8
+    punkter = [(g.representative_point(), {"vatnlnr": p["vatnlnr"], "ha": p["ha"]}) for g, p in vann]
+    tre_p = STRtree([g for g, _ in punkter])
 
     # Hvilke vann som vises på lave zoomnivåer (resten dukker opp når du zoomer inn)
     def min_ha(z):
@@ -309,6 +315,13 @@ def bygg_fliser(laks):
                     feats.append({"geometry": c, "properties": p})
                 if feats:
                     lag.append({"name": "laks", "features": feats})
+            if z >= PUNKT_MINZ:
+                # bare punkter inne i selve flisa (ikke kantbufferen), så hvert vann får én prikk
+                tb0 = box(b.left, b.bottom, b.right, b.top)
+                idx = tre_p.query(tb0, predicate="intersects")
+                feats = [{"geometry": punkter[i][0], "properties": punkter[i][1], "id": punkter[i][1]["vatnlnr"]} for i in idx]
+                if feats:
+                    lag.append({"name": "vannpunkt", "features": feats})
             if not lag:
                 continue
             data = mapbox_vector_tile.encode(lag, default_options={
@@ -334,6 +347,7 @@ def bygg_fliser(laks):
             "vector_layers": [
                 {"id": "vann", "fields": {"vatnlnr": "Number", "navn": "String", "moh": "Number", "ha": "Number", "kommune": "String"}, "minzoom": MINZ, "maxzoom": MAXZ},
                 {"id": "laks", "fields": {"elv": "String", "vassdrag": "String", "nasjonalt": "Number", "url": "String"}, "minzoom": MINZ, "maxzoom": MAXZ},
+                {"id": "vannpunkt", "fields": {"vatnlnr": "Number", "ha": "Number"}, "minzoom": PUNKT_MINZ, "maxzoom": MAXZ},
             ],
         })
     mb = os.path.getsize(path) / 1e6
