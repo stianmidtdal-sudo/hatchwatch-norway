@@ -393,6 +393,10 @@ function lagreVarsler(navn) {
 //   Isgang før satellittdatoen finnes: graddager fra 1. mars mot vannets egen terskel (midtverdien av
 //                varmesummen ved isgang tidligere år). J3: ±8 d varslet 14 d før, ±6 d en uke før.
 var T_VULG = 450, T_MARG = 200;   // 200: null skjevhet mot 11 egne startobs (J5); 175 (J2, spredte funn) kom 3 d for tidlig
+// Grandis (Phryganea grandis), 2026-10-14 (Stian «kjør»): samme varmesum fra 1. april, terskel 525 (analyse K i
+// tools/research_analyser/K_grandis/RAPPORT_K.md: 5 % av 110 sted-år med voksenfunn før start; tidlig kant ca. 570
+// uansett periode/høyde/landsdel). Ikke testet mot klekkestart → ingen ±-tall; fjell og nord nesten ikke testet.
+var T_GRAND = 525;
 function ymd(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 function doyOf(d) { return Math.floor((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - Date.UTC(d.getFullYear(), 0, 1)) / 86400000) + 1; }
 // Været mellomlagres i nettleseren i 6 timer per vann (maks 5 vann), så gjentatte besøk ikke bruker av
@@ -534,6 +538,12 @@ function klekking(v, w) {
   else if (g450) rows += '<div class="art"><b>Vulgata</b><span class="d">' + fmt(S, g450.n) + ' <small style="font-size:12px;color:var(--hw-fg-2)">±5 d</small></span><span class="s"><i>Ephemera vulgata</i> · ' + tx('start på klekkingen', 'start of the hatch') + ' · ' + etikett(g450.maalt) + (middels ? ' · ' + tx('store vann kan ligge etter', 'large lakes can lag behind') : '') + '</span>' +
     (senIs ? '<span class="s" style="color:var(--hw-hatch)">' + tx('Isen går sent her. Vulgata kommer trolig senere enn luftvarmen tilsier, men hvor mye er ikke testet ennå.', 'The ice goes late here. Vulgata probably comes later than the air warmth suggests, but by how much is not tested yet.') + '</span>' : '') +
     '<span class="s">' + tilstede(v, 'Ephemera vulgata', 'vulgata') + '</span></div>';
+  // Grandis: samme varmesum som vulgata, terskel 525. Skjult i store vann av samme grunn som vulgata.
+  var gGrand = naar(s, 91, T_GRAND);
+  if (stor) rows += '<div class="art muted"><b>Grandis</b><span class="d">–</span><span class="s"><i>Phryganea grandis</i> · ' + tx('Store, dype vann varmes opp mye senere enn luften. Vi viser ikke anslag for vann over 30 km².', 'Large, deep lakes warm up much later than the air. We show no estimate for lakes over 30 km².') + '</span><span class="s">' + tilstede(v, 'Phryganea grandis', 'grandis') + '</span></div>';
+  else if (gGrand) rows += '<div class="art"><b>Grandis</b><span class="d">' + tx('fra ca. ', 'from about ') + fmt(S, gGrand.n) + '</span><span class="s"><i>Phryganea grandis</i> · ' + tx('flyr omtrent fra denne datoen, mest sent på kvelden og om natten', 'flies from about this date, mostly late evening and at night') + ' · ' + etikett(gGrand.maalt) + '</span>' +
+    '<span class="s">' + tx('Grovt anslag fra artsfunn, ikke testet mot klekkestart.', 'Rough estimate from species records, not tested against hatch start.') + ((v.moh > 500 || v.lat >= 63) ? ' ' + tx('Fjell og nord er nesten ikke testet, og her kan den komme tidligere.', 'Mountains and the north are barely tested, and it may come earlier here.') : '') + '</span>' +
+    '<span class="s">' + tilstede(v, 'Phryganea grandis', 'grandis') + '</span></div>';
   // Byttedyr (2026-10-14): skjoldkreps og marflo, BARE der Artsdatabanken har funn. Kilder: Qvenild m.fl. 2018
   // (Fauna norvegica 38): klekker ved isgang, i ørretmager fra ca. 400 døgngrader i vannet etter isgang, flest
   // ved 800–900 (midten av aug–midten av sep på Hardangervidda); Qvenild & Hesthagen 2019: funn 27. juli–2. okt.
@@ -556,8 +566,8 @@ function klekking(v, w) {
   rows += vulgataRow(v);
   h += '<div class="arts">' + rows + '</div>';
   if (krepsdyr) h += '<p class="note">' + tx('Skjoldkreps og marflo vises bare der Artsdatabanken har funn. Kilder: Qvenild m.fl. 2018 og 2020, Qvenild og Hesthagen 2019 (Fauna norvegica, Hardangervidda). Fem uker etter isgang er vår grove omregning av varmen skjoldkrepsen trenger.', 'Tadpole shrimp and freshwater shrimp are only shown where Artsdatabanken has records. Sources: Qvenild et al. 2018 and 2020, Qvenild and Hesthagen 2019 (Fauna norvegica, Hardangervidda). Five weeks after ice-out is our rough conversion of the warmth the tadpole shrimp needs.') + '</p>';
-  h += '<p class="note">' + tx('Slik regner vi: marginata starter når isen har gått og våren har gitt nok varme, vespertina en uke senere. Vulgata starter når varmesummen fra 1. april har nådd et fast nivå. Temperaturen er luft ved vannet, skalert til vannets høyde. For vulgata bommer modellen typisk med rundt 5 dager der den er testet (Østlandet og Kautokeino); for marginata og vespertina er den bare sjekket mot spredte artsfunn. Vannene der vi har en kalibrert prognose, har egen side.',
-                               'How we work it out: marginata starts when the ice has gone and spring has given enough warmth, vespertina a week later. Vulgata starts when the warmth sum from 1 April reaches a fixed level. Temperature is air at the lake, scaled to its altitude. For vulgata the model typically misses by about 5 days where it has been tested (eastern Norway and Kautokeino); for marginata and vespertina it has only been checked against scattered species records. Lakes with a calibrated forecast have their own page.') + '</p>';
+  h += '<p class="note">' + tx('Slik regner vi: marginata starter når isen har gått og våren har gitt nok varme, vespertina en uke senere. Vulgata starter når varmesummen fra 1. april har nådd et fast nivå, grandis når den har nådd et høyere nivå. Temperaturen er luft ved vannet, skalert til vannets høyde. For vulgata bommer modellen typisk med rundt 5 dager der den er testet (Østlandet og Kautokeino); for marginata og vespertina er den bare sjekket mot spredte artsfunn. Vannene der vi har en kalibrert prognose, har egen side.',
+                               'How we work it out: marginata starts when the ice has gone and spring has given enough warmth, vespertina a week later. Vulgata starts when the warmth sum from 1 April reaches a fixed level, grandis when it reaches a higher one. Temperature is air at the lake, scaled to its altitude. For vulgata the model typically misses by about 5 days where it has been tested (eastern Norway and Kautokeino); for marginata and vespertina it has only been checked against scattered species records. Lakes with a calibrated forecast have their own page.') + '</p>';
   el.className = ''; el.innerHTML = h;
 }
 
