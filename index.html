@@ -33,7 +33,8 @@
   .maplibregl-ctrl-attrib a { color: var(--hw-fg-2) !important; }
   .maplibregl-ctrl-attrib-button { filter: invert(.8); }
   /* Kildeknappen: mobil over zoomknappene til høyre, PC nede til venstre under forklaringen */
-  .maplibregl-ctrl-bottom-right { bottom: calc(var(--scrub-h, 190px) + 196px); }
+  .maplibregl-ctrl-bottom-right { bottom: calc(var(--scrub-h, 190px) + 240px); }
+  .maplibregl-ctrl-geolocate { display: none !important; }   /* vår egen knapp (gpsBtn) styrer kontrollen */
   .maplibregl-ctrl-bottom-left { bottom: 6px; }
 
   /* ── Topp: merke, bryter, søk ── */
@@ -90,7 +91,7 @@
   .zoomctl #lagBtn { display: grid; place-items: center; }
   .zoomctl #lagBtn svg { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linejoin: round; }
   .zoomctl #lagBtn.on { color: var(--hw-hatch); border-color: color-mix(in srgb, var(--hw-hatch) 55%, transparent); }
-  .lagvalg { position: absolute; right: 58px; bottom: calc(var(--scrub-h, 190px) + 152px); z-index: 24; display: none; gap: 8px; padding: 8px; border-radius: 14px; background: var(--hw-bg-2); border: 1px solid var(--hw-line); box-shadow: var(--hw-shadow); }
+  .lagvalg { position: absolute; right: 58px; bottom: calc(var(--scrub-h, 190px) + 196px); z-index: 24; display: none; gap: 8px; padding: 8px; border-radius: 14px; background: var(--hw-bg-2); border: 1px solid var(--hw-line); box-shadow: var(--hw-shadow); }
   .lagvalg.open { display: flex; }
   /* Skjul tidsskyveren (2026-10-14, Stian: tar mye plass på mobil): krysset gjør den om til en liten
      knapp nede til venstre; trykk på knappen åpner den igjen. Valget huskes (hw_skyver). */
@@ -103,6 +104,11 @@
   body.skyver-liten .scrubmini { display: inline-flex; }
   @media (min-width: 760px) { .scrubmini { left: auto; right: 12px; } }
   /* Avstandsmåling (2026-10-14): panel der skyveren står mens man måler */
+  .zoomctl #gpsBtn { display: grid; place-items: center; }
+  .zoomctl #gpsBtn svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linejoin: round; }
+  .zoomctl #gpsBtn.on { color: #4aa3ff; border-color: color-mix(in srgb, #4aa3ff 55%, transparent); }
+  .zoomctl #gpsBtn.on svg { fill: currentColor; }
+  .zoomctl #gpsBtn.venter { opacity: .6; }
   .zoomctl #maalBtn { display: grid; place-items: center; }
   .zoomctl #maalBtn svg { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; }
   .zoomctl #maalBtn.on { color: var(--hw-hatch); border-color: color-mix(in srgb, var(--hw-hatch) 55%, transparent); }
@@ -110,6 +116,11 @@
   .maal.open { display: block; }
   @media (min-width: 760px) { .maal { left: auto; right: 12px; width: 440px; margin: 0; } }
   .maal .topp { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .maal .topp-h { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+  .maal .topp-h .hw-btn { padding: 8px 16px; font-size: 14px; }
+  .maal .topp-h .hw-btn:disabled { opacity: .4; cursor: default; }
+  .maal .lukk { width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; color: var(--hw-fg-2); margin-left: 6px; }
+  .maal .lukk svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
   .maal .tot { font-family: var(--hw-display); font-weight: 800; font-size: 26px; letter-spacing: -.02em; line-height: 1.1; }
   .maal .hint { font-size: 13px; color: var(--hw-fg-2); margin-top: 2px; }
   .maal .knapper { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
@@ -227,13 +238,18 @@
   <div class="maal" id="maalPanel" aria-live="polite">
     <div class="topp">
       <div><div class="tot" id="maalTot">0 m</div><div class="hint" id="maalHint">Trykk i kartet for å sette punkter.</div></div>
-      <button class="hw-btn ghost" type="button" id="maalFerdig">Ferdig</button>
+      <div class="topp-h">
+        <button class="hw-btn primary" type="button" id="maalLagre" disabled>Lagre</button>
+        <button class="lukk" type="button" id="maalFerdig" aria-label="Lukk" title="Lukk"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
     </div>
     <div class="knapper">
       <button type="button" id="maalAngre" disabled>Angre</button>
       <button type="button" id="maalNull" disabled>Nullstill</button>
       <button type="button" id="maalHoyde" disabled>Turprofil</button>
+      <button type="button" id="maalDel" disabled>Del</button>
     </div>
+    <div class="pinfo" id="maalStatus"></div>
     <div id="maalProfil"></div>
   </div>
   <div class="lagvalg" id="lagValg" role="dialog" aria-label="Kartlag">
@@ -242,7 +258,8 @@
   </div>
   <div class="zoomctl">
     <button id="lagBtn" type="button" aria-label="Kartlag" title="Kartlag"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg></button>
-    <button id="maalBtn" type="button" aria-label="Mål avstand" title="Mål avstand"><svg viewBox="0 0 24 24"><path d="M3 17L17 3l4 4L7 21z"/><path d="M7 13l2 2M10 10l2 2M13 7l2 2"/></svg></button>
+    <button id="gpsBtn" type="button" aria-label="Vis hvor jeg er" title="Vis hvor jeg er"><svg viewBox="0 0 24 24"><path d="M3.5 11.2L20.5 3.5l-7.7 17-2.1-7.4z"/></svg></button>
+    <button id="maalBtn" type="button" aria-label="Lag tur og mål avstand" title="Lag tur og mål avstand"><svg viewBox="0 0 24 24"><path d="M3 17L17 3l4 4L7 21z"/><path d="M7 13l2 2M10 10l2 2M13 7l2 2"/></svg></button>
     <button id="zin" aria-label="Zoom inn">+</button>
     <button id="zout" aria-label="Zoom ut">−</button>
   </div>
@@ -267,7 +284,7 @@
     <div class="grab"></div>
     <div class="row between">
       <div class="grow"><h2 id="shName"></h2><div class="hw-small hw-muted" id="shSub"></div></div>
-      <button class="hw-iconbtn fav" id="shFav" type="button" aria-label="Legg til i Mine vann"><svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.7-9.3-9A5.2 5.2 0 0 1 12 6.6a5.2 5.2 0 0 1 9.3 4.9c-1.8 4.3-9.3 9-9.3 9z"/></svg></button>
+      <button class="hw-iconbtn fav" id="shFav" type="button" aria-label="Legg til i favoritter"><svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.7-9.3-9A5.2 5.2 0 0 1 12 6.6a5.2 5.2 0 0 1 9.3 4.9c-1.8 4.3-9.3 9-9.3 9z"/></svg></button>
     </div>
     <div class="hw-eyebrow gold" id="shEye" style="margin-top:10px"></div>
     <div class="big" id="shBig"></div>
@@ -341,7 +358,7 @@ function tx(no, en) { return EN ? en : no; }
   document.getElementById('tickMay').textContent = 'May';
   document.getElementById('modeFlue').textContent = 'Dry fly';
   document.getElementById('modeLaks').textContent = 'Salmon';
-  document.getElementById('shFav').setAttribute('aria-label', 'Add to My waters');
+  document.getElementById('shFav').setAttribute('aria-label', 'Add to favourites');
   document.getElementById('shOpen').textContent = 'Open the forecast';
   document.getElementById('shClose').textContent = 'Close';
   document.getElementById('sesongTitle').textContent = 'Norway right now';
@@ -354,11 +371,14 @@ function tx(no, en) { return EN ? en : no; }
   document.getElementById('scrubLukk').setAttribute('aria-label', 'Hide the time slider'); document.getElementById('scrubLukk').title = 'Hide';
   document.getElementById('scrubMini').setAttribute('aria-label', 'Show the time slider');
   document.getElementById('scrubMiniTxt').textContent = 'Today';
-  document.getElementById('maalBtn').setAttribute('aria-label', 'Measure distance'); document.getElementById('maalBtn').title = 'Measure distance';
-  document.getElementById('maalFerdig').textContent = 'Done';
+  document.getElementById('maalBtn').setAttribute('aria-label', 'Plan a trip and measure distance'); document.getElementById('maalBtn').title = 'Plan a trip and measure distance';
+  document.getElementById('maalFerdig').setAttribute('aria-label', 'Close'); document.getElementById('maalFerdig').title = 'Close';
   document.getElementById('maalAngre').textContent = 'Undo';
   document.getElementById('maalNull').textContent = 'Clear';
   document.getElementById('maalHoyde').textContent = 'Trip profile';
+  document.getElementById('maalLagre').textContent = 'Save';
+  document.getElementById('maalDel').textContent = 'Share';
+  document.getElementById('gpsBtn').setAttribute('aria-label', 'Show where I am'); document.getElementById('gpsBtn').title = 'Show where I am';
   document.getElementById('lagBtn').setAttribute('aria-label', 'Map layers'); document.getElementById('lagBtn').title = 'Map layers';
   document.getElementById('lagValg').setAttribute('aria-label', 'Map layers');
 })();
@@ -562,6 +582,7 @@ map.on('load', function () {
   map.resize();   // bunnbaren (hw-shell.js) krymper kartet etter at det ble laget
   applyMode();    // før tilpasningen: modusen bestemmer høyden på skyveren
   fitNorway();
+  apneTurFraLenke();   // /?tur=… (delt eller lagret tur) åpner målemodus med streken
   // Årene kommer fra isgang_meta.json (vårmodusen legger til inneværende år når satellitten har data)
   fetch(DATA + 'isgang_meta.json').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
     .then(function (m) {
@@ -732,7 +753,29 @@ function leggTilTurkart() {
     tiles: ['https://wms.geonorge.no/skwms1/wms.friluftsruter2?service=WMS&version=1.3.0&request=GetMap&layers=Fotrute,Ruteinfopunkt&styles=&format=image/png&transparent=true&crs=EPSG:3857&width=256&height=256&bbox={bbox-epsg-3857}'] });
   map.addLayer({ id: 'kv-topo', type: 'raster', source: 'kv-topo', layout: { visibility: 'none' } }, 'vann-fill');
   map.addLayer({ id: 'kv-tur', type: 'raster', source: 'kv-tur', minzoom: 9, layout: { visibility: 'none' } }, 'vann-navn');
+  // Dybdekart (2026-10-14): NVEs dybdekoter og loddpunkter (Innsjødatabase2) fra zoom 12, i begge kartlagene.
+  // Finnes digitalt for ca. 530 vann; de andre har bare PDF (lenke på vannsiden). NVE tegner bare under 1:160 000.
+  // Standard: bare kotene (loddpunktene ble for mye oppå isgangfargen). Turkart: koter og loddpunkter.
+  var nveWms = function (lag) { return 'https://kart.nve.no/enterprise/services/Innsjodatabase2/MapServer/WMSServer?service=WMS&version=1.3.0&request=GetMap&layers=' + lag + '&styles=&format=image/png&transparent=true&crs=EPSG:3857&width=256&height=256&bbox={bbox-epsg-3857}'; };
+  map.addSource('nve-dybde', { type: 'raster', tileSize: 256, minzoom: 12, attribution: tx('Dybdekart: <a href="https://www.nve.no/" target="_blank" rel="noopener">NVE</a>', 'Depth maps: <a href="https://www.nve.no/" target="_blank" rel="noopener">NVE</a>'), tiles: [nveWms('DybdeKurve')] });
+  map.addSource('nve-lodd', { type: 'raster', tileSize: 256, minzoom: 12, tiles: [nveWms('DybdePunkt')] });
+  map.addLayer({ id: 'nve-dybde', type: 'raster', source: 'nve-dybde', minzoom: 12 }, 'vann-navn');
+  map.addLayer({ id: 'nve-lodd', type: 'raster', source: 'nve-lodd', minzoom: 13, layout: { visibility: 'none' } }, 'vann-navn');
+  // Adkomst (2026-10-14): parkering, bommer og gapahuker fra OpenStreetMap (poi-laget i OpenFreeMap)
+  var poi = function (kl) { return ['==', ['get', 'class'], kl]; };
+  map.addLayer({ id: 'tur-p', type: 'circle', source: 'omt', 'source-layer': 'poi', minzoom: 12.5, filter: poi('parking'), layout: { visibility: 'none' },
+    paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 12.5, 6, 16, 9], 'circle-color': '#2563a8', 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 1.5 } }, 'loc-cluster');
+  map.addLayer({ id: 'tur-p-txt', type: 'symbol', source: 'omt', 'source-layer': 'poi', minzoom: 12.5, filter: poi('parking'),
+    layout: { visibility: 'none', 'text-field': 'P', 'text-font': ['Noto Sans Bold'], 'text-size': ['interpolate', ['linear'], ['zoom'], 12.5, 9, 16, 12], 'text-allow-overlap': true },
+    paint: { 'text-color': '#ffffff' } }, 'loc-cluster');
+  map.addLayer({ id: 'tur-bom', type: 'symbol', source: 'omt', 'source-layer': 'poi', minzoom: 13.5, filter: ['in', ['get', 'class'], ['literal', ['lift_gate', 'gate']]],
+    layout: { visibility: 'none', 'text-field': tx('bom', 'gate'), 'text-font': ['Noto Sans Bold'], 'text-size': 10.5, 'text-allow-overlap': false },
+    paint: { 'text-color': '#c0392b', 'text-halo-color': '#ffffff', 'text-halo-width': 1.6 } }, 'loc-cluster');
+  map.addLayer({ id: 'tur-gapahuk', type: 'symbol', source: 'omt', 'source-layer': 'poi', minzoom: 14, filter: poi('shelter'),
+    layout: { visibility: 'none', 'text-field': tx('gapahuk', 'shelter'), 'text-font': ['Noto Sans Italic'], 'text-size': 10.5 },
+    paint: { 'text-color': '#6b4a1f', 'text-halo-color': '#ffffff', 'text-halo-width': 1.6 } }, 'loc-cluster');
 }
+var TUR_ADKOMST = ['tur-p', 'tur-p-txt', 'tur-bom', 'tur-gapahuk', 'nve-lodd'];
 function applyKartlag() {
   var tur = KARTLAG === 'tur';
   document.body.classList.toggle('kart-tur', tur);   // mørk bakgrunn bak logoen på det lyse turkartet
@@ -741,6 +784,7 @@ function applyKartlag() {
   if (!map.getLayer('kv-topo')) return;
   map.setLayoutProperty('kv-topo', 'visibility', tur ? 'visible' : 'none');
   map.setLayoutProperty('kv-tur', 'visibility', tur ? 'visible' : 'none');
+  TUR_ADKOMST.forEach(function (id) { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', tur ? 'visible' : 'none'); });
   STANDARD_LAG.forEach(function (id) { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', tur ? 'none' : 'visible'); });
   // Turkartet har egne vann med Kartverkets strandlinje. Vår vannflate blir usynlig (men kan fortsatt
   // trykkes på), og vann med data vises som prikker farget etter isgang. Helt utzoomet (under z9, der
@@ -759,7 +803,7 @@ function settVannSel(id, paa) {
 // Trykk punkt for punkt (som Norgeskart Friluftsliv); streken og summen oppdateres underveis, hver
 // delstrekning får sin lengde. Høydeprofil: inntil 100 punkter langs streken fra Kartverkets høyde-API
 // (ws.geonorge.no/hoydedata, maks 50 punkter per kall). Mens man måler åpner ikke trykk noen kort.
-var maaling = false, maalPunkter = [];
+var maaling = false, maalPunkter = [], turNavn = '';
 function maalFmt(m) {
   if (m < 1000) return Math.round(m) + ' m';
   var km = m / 1000, s = km.toFixed(km < 10 ? 2 : 1);
@@ -794,13 +838,16 @@ function maalTegn() {
   document.getElementById('maalAngre').disabled = n === 0;
   document.getElementById('maalNull').disabled = n === 0;
   document.getElementById('maalHoyde').disabled = n < 2;
+  oppdaterLagre();
+  document.getElementById('maalDel').disabled = n < 2;
   document.getElementById('maalProfil').innerHTML = '';
+  document.getElementById('maalStatus').textContent = turNavn ? tx('Tur: ', 'Trip: ') + turNavn : '';
   sisteTur = null;
 }
 function maalLeggTil(p) { maalPunkter.push(p); maalTegn(); }
-function maalStart() {
-  if (maaling) return maalSlutt();
-  maaling = true; maalPunkter = [];
+function maalStart(punkter, navn) {
+  if (maaling && !punkter) return maalLukk();
+  maaling = true; maalPunkter = punkter ? punkter.slice() : []; turNavn = navn || '';
   closeSheet(); stopPlay();
   document.getElementById('maalBtn').classList.add('on');
   document.getElementById('maalPanel').classList.add('open');
@@ -809,8 +856,21 @@ function maalStart() {
   map.getCanvas().style.cursor = 'crosshair';
   maalTegn();
 }
+// Lagre-knappen øverst viser «Lagret» (og er avslått) når akkurat denne streken ligger i hw_turer.
+function turErLagret() { if (maalPunkter.length < 2) return false; var k = kodPolylinje(maalPunkter); return getTurer().some(function (t) { return t.tur === k; }); }
+function oppdaterLagre() {
+  var b = document.getElementById('maalLagre'), lagret = turErLagret();
+  b.disabled = maalPunkter.length < 2 || lagret;
+  b.textContent = lagret ? tx('Lagret', 'Saved') : tx('Lagre', 'Save');
+}
+// Krysset (og linjalknappen) lukker. Er det en ulagret tur med minst to punkter, spør vi først,
+// så et feiltrykk ikke sletter streken (Stian 14.10.2026: «Ferdig» var for lett å treffe).
+function maalLukk() {
+  if (maalPunkter.length >= 2 && !turErLagret() && !window.confirm(tx('Lukke uten å lagre turen?', 'Close without saving the trip?'))) return;
+  maalSlutt();
+}
 function maalSlutt() {
-  maaling = false; maalPunkter = [];
+  maaling = false; maalPunkter = []; turNavn = '';
   var s = map.getSource('maal'); if (s) s.setData(maalGeo());
   document.getElementById('maalBtn').classList.remove('on');
   document.getElementById('maalPanel').classList.remove('open');
@@ -916,8 +976,86 @@ function maalHoyde() {
     boks.innerHTML = '<div class="pinfo">' + tx('Fikk ikke hentet høyder akkurat nå.', 'Could not fetch heights right now.') + '</div>';
   });
 }
+// ═══ LAGRE OG DELE TURER (2026-10-14) ═══
+// En tur = punktene i streken, kodet som Google-polylinje (presisjon 5, ~1 m) så lenka blir kort:
+//   /?tur=<kode>&navn=<navn>  — åpner målemodus med streken. Mine turer: localStorage hw_turer
+//   [{id, navn, tur (kode), m (meter), dato}], vist i skallets «Mine vann»-panel under «Mine turer».
+function kodPolylinje(pkt) {
+  var ut = '', pl = 0, pn = 0;
+  function enc(v) { v = v < 0 ? ~(v << 1) : v << 1; var s = ''; while (v >= 0x20) { s += String.fromCharCode((0x20 | (v & 0x1f)) + 63); v >>= 5; } return s + String.fromCharCode(v + 63); }
+  pkt.forEach(function (p) { var lat = Math.round(p[1] * 1e5), lon = Math.round(p[0] * 1e5); ut += enc(lat - pl) + enc(lon - pn); pl = lat; pn = lon; });
+  return ut;
+}
+function dekodPolylinje(s) {
+  var i = 0, lat = 0, lon = 0, ut = [];
+  function dec() { var r = 0, sh = 0, b; do { b = s.charCodeAt(i++) - 63; r |= (b & 0x1f) << sh; sh += 5; } while (b >= 0x20 && i <= s.length); return (r & 1) ? ~(r >> 1) : (r >> 1); }
+  while (i < s.length) { lat += dec(); lon += dec(); ut.push([lon / 1e5, lat / 1e5]); }
+  return ut;
+}
+function turLenke() {
+  return location.origin + '/?tur=' + encodeURIComponent(kodPolylinje(maalPunkter)) + (turNavn ? '&navn=' + encodeURIComponent(turNavn) : '');
+}
+function getTurer() { try { var x = JSON.parse(localStorage.getItem('hw_turer') || '[]'); return Array.isArray(x) ? x : []; } catch (e) { return []; } }
+function maalLagre() {
+  if (maalPunkter.length < 2) return;
+  var forslag = turNavn || (tx('Tur ', 'Trip ') + fmtDoy(YEAR, TODAY_DOY) + ' · ' + maalFmt(maalTotal()));
+  var navn = window.prompt(tx('Navn på turen', 'Name of the trip'), forslag);
+  if (navn == null) return;
+  navn = navn.trim().slice(0, 60) || forslag;
+  var kode = kodPolylinje(maalPunkter), turer = getTurer().filter(function (t) { return t.tur !== kode; });
+  turer.unshift({ id: Date.now().toString(36), navn: navn, tur: kode, m: Math.round(maalTotal()), dato: ymdLokal(TODAY) });
+  try { localStorage.setItem('hw_turer', JSON.stringify(turer.slice(0, 50))); } catch (e) {}
+  turNavn = navn; oppdaterLagre();
+  document.getElementById('maalStatus').textContent = tx('Lagret under Favoritter: ', 'Saved under Favourites: ') + navn;
+}
+function maalDel() {
+  if (maalPunkter.length < 2) return;
+  var url = turLenke(), st = document.getElementById('maalStatus');
+  var tekst = (turNavn || tx('Tur', 'Trip')) + ' · ' + maalFmt(maalTotal()) + ' · HatchWatch';
+  if (navigator.share) { navigator.share({ title: tekst, text: tekst, url: url }).catch(function () {}); return; }
+  var ok = function () { st.textContent = tx('Lenke kopiert. Lim den inn i en melding.', 'Link copied. Paste it into a message.'); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(ok, function () { st.textContent = url; });
+  else st.textContent = url;
+}
+function ymdLokal(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+// Åpne en delt eller lagret tur fra lenka
+function apneTurFraLenke() {
+  var q = new URLSearchParams(location.search), kode = q.get('tur');
+  if (!kode) return false;
+  var pkt = dekodPolylinje(kode).filter(function (p) { return isFinite(p[0]) && isFinite(p[1]) && Math.abs(p[1]) <= 90; });
+  if (pkt.length < 2) return false;
+  maalStart(pkt, (q.get('navn') || '').slice(0, 60));
+  var lo = [Infinity, Infinity], hi = [-Infinity, -Infinity];
+  pkt.forEach(function (p) { lo = [Math.min(lo[0], p[0]), Math.min(lo[1], p[1])]; hi = [Math.max(hi[0], p[0]), Math.max(hi[1], p[1])]; });
+  var wide = window.innerWidth >= 760;
+  map.fitBounds([lo, hi], { padding: wide ? { top: 130, bottom: 60, left: 60, right: 480 } : { top: 160, bottom: 260, left: 40, right: 60 }, maxZoom: 15, duration: 0 });
+  userMoved = true;
+  history.replaceState(null, '', '/' + location.hash);
+  return true;
+}
+document.getElementById('maalLagre').addEventListener('click', maalLagre);
+document.getElementById('maalDel').addEventListener('click', maalDel);
+
+// ═══ HER ER JEG (2026-10-14) ═══
+// MapLibres GeolocateControl (blå prikk, nøyaktighetsring, retning), styrt fra vår egen knapp.
+// Retning på iPhone krever tillatelse til kompass, som må spørres om ved et trykk.
+var geo = new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: true, showUserHeading: true, showAccuracyCircle: true });
+map.addControl(geo, 'top-left');
+geo.on('trackuserlocationstart', function () { var b = document.getElementById('gpsBtn'); b.classList.add('on'); b.classList.remove('venter'); });
+geo.on('trackuserlocationend', function () { var b = document.getElementById('gpsBtn'); if (geo._watchState === 'OFF') b.classList.remove('on'); });
+geo.on('geolocate', function () { document.getElementById('gpsBtn').classList.remove('venter'); });
+geo.on('error', function () { var b = document.getElementById('gpsBtn'); b.classList.remove('on', 'venter'); b.title = tx('Posisjon ikke tilgjengelig', 'Location unavailable'); });
+document.getElementById('gpsBtn').addEventListener('click', function () {
+  var b = this;
+  if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function') {
+    DeviceOrientationEvent.requestPermission().catch(function () {});
+  }
+  if (!b.classList.contains('on')) b.classList.add('venter');
+  userMoved = true;
+  if (!geo.trigger()) b.classList.remove('venter');
+});
 document.getElementById('maalBtn').addEventListener('click', function (e) { e.stopPropagation(); maalStart(); });
-document.getElementById('maalFerdig').addEventListener('click', maalSlutt);
+document.getElementById('maalFerdig').addEventListener('click', maalLukk);
 document.getElementById('maalAngre').addEventListener('click', function () { maalPunkter.pop(); maalTegn(); });
 document.getElementById('maalNull').addEventListener('click', function () { maalPunkter = []; maalTegn(); });
 document.getElementById('maalHoyde').addEventListener('click', maalHoyde);
@@ -1069,7 +1207,7 @@ function fillSheet(id) {
     line.innerHTML = txt + '<br>' + stars(l.cal || 0) + '<span class="hw-eyebrow">' + calText(l) + '</span>';
   }
   shExtra.innerHTML = '';
-  shFav.style.display = ''; shFav.classList.toggle('on', isFav(id)); shFav.setAttribute('aria-label', tx('Legg til i Mine vann', 'Add to My waters'));
+  shFav.style.display = ''; shFav.classList.toggle('on', isFav(id)); shFav.setAttribute('aria-label', tx('Legg til i favoritter', 'Add to favourites'));
   shOpen.style.display = ''; shOpen.textContent = tx('Åpne prognosen', 'Open the forecast');
   shOpen.setAttribute('href', '/dashboard.html?loc=' + encodeURIComponent(id));
 }
@@ -1119,7 +1257,7 @@ function openLake(f, keep) {
   var near = best && bd < 40 ? '<div class="note" style="margin-top:10px">' + tx('Vulgata: nærmeste klekkeprognose er ', 'Vulgata: the nearest hatch forecast is ') +
     '<a href="/dashboard.html?loc=' + encodeURIComponent(best.id) + '" style="color:var(--hw-water)">' + best.name + '</a>, ' + Math.round(bd) + ' km.</div>' : '';
   shExtra.innerHTML = yrs + marg + near;
-  shFav.style.display = ''; shFav.classList.toggle('on', isVannFav(id)); shFav.setAttribute('aria-label', tx('Legg til i Mine vann', 'Add to My waters'));
+  shFav.style.display = ''; shFav.classList.toggle('on', isVannFav(id)); shFav.setAttribute('aria-label', tx('Legg til i favoritter', 'Add to favourites'));
   shOpen.style.display = ''; shOpen.textContent = tx('Åpne vannet', 'Open the lake');
   shOpen.setAttribute('href', '/vann.html?id=' + encodeURIComponent(id));
   if (!keep) showSheet();

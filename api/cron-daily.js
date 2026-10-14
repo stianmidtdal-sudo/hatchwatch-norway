@@ -30,14 +30,15 @@
 
 import { redis, k, hashEndpoint } from '../lib/redis.js';
 import { sendPush, buildPayload } from '../lib/push.js';
-import { hentVann, regnVann, datoTekst, finnes, doyOf } from '../lib/vannmodell.js';
+import { hentVann, regnVann, datoTekst, finnes, doyOf, spinnerfallSjanse, SPINNER_HOY } from '../lib/vannmodell.js';
 
 // Maks antall subs vi prosesserer i én kjøring — beskytt mot timeout.
 const MAX_SUBS_PER_RUN = 200;
 // Vannvarsler (2026-10-14): nøkkel «vann:<NVE-id>» i sub.locations, triggere under. Modellen regnes
 // én gang per vann per kjøring (lib/vannmodell.js, speiler vann.html). Hvert varsel sendes én gang
 // per sesong per vann. Maks antall vann vi regner per kjøring (open-meteo + tidsgrense).
-const VANN_TRIGGERS = ['isgang', 'marginata', 'vulgata'];
+// spinnerfall (2026-10-14): kan komme hver kveld i vulgata-sesongen, så den har dagsnøkkel i stedet for sesongnøkkel.
+const VANN_TRIGGERS = ['isgang', 'marginata', 'vulgata', 'spinnerfall'];
 const MAX_VANN_PER_RUN = 80;
 
 export default async function handler(req, res) {
@@ -154,9 +155,26 @@ async function handleVann(r, hash, sub, locId, triggers, stats, vannCache) {
     for (const trigger of triggers) {
         if (!VANN_TRIGGERS.includes(trigger)) continue;
         const sesongKey = k.notif(hash, trigger, locId);
-        if ((await r.get(sesongKey)) === `sesong-${m.S}`) continue;
+        const sendtFor = await r.get(sesongKey);
+        if (trigger === 'spinnerfall' ? sendtFor === osloDato() : sendtFor === `sesong-${m.S}`) continue;
         let payload = null;
-        if (trigger === 'isgang' && m.isgang && m.isgang.sat) {
+        if (trigger === 'spinnerfall') {
+            // Bare der modellen har en vulgata-start (ikke store innsjøer), og bare 0–21 dager etter den.
+            if (!m.vulgata) continue;
+            const dager = iDag - m.vulgata;
+            if (dager < 0 || dager > 21) continue;
+            if (rec.kveld === undefined) rec.kveld = await hentKveld(v.lat, v.lon);
+            const w = rec.kveld && rec.kveld[osloDato()];
+            const p = spinnerfallSjanse(w, dager);
+            if (p < SPINNER_HOY) continue;
+            const her = finnes(v, 'Ephemera vulgata', 'vulgata');
+            payload = {
+                title: en ? `${navn}: spinner fall tonight?` : `${navn}: spinnerfall i kveld?`,
+                body: (en ? `Calm, mild evening (19–22: ${w.wind} m/s, ${Math.round(w.temp)} °C), and the model puts vulgata in season. Chance ${Math.round(p * 100)} %.`
+                          : `Rolig og mild kveld (19–22: ${String(w.wind).replace('.', ',')} m/s, ${Math.round(w.temp)} °C), og modellen anslår at vulgata er i sesong. Sjanse ${Math.round(p * 100)} %.`)
+                    + (her ? (en ? ' The species has been found here.' : ' Arten er funnet her.') : (en ? ' Only applies if the species lives in the lake.' : ' Gjelder bare hvis arten finnes i vannet.')),
+            };
+        } else if (trigger === 'isgang' && m.isgang && m.isgang.sat) {
             payload = {
                 title: en ? `${navn}: the ice is out` : `${navn}: isen har gått`,
                 body: (en ? `The satellite saw ice-out on ${datoTekst(m.S, m.isgang.doy, true)}.` : `Satellitten så isgangen ${datoTekst(m.S, m.isgang.doy)}.`)
@@ -184,7 +202,8 @@ async function handleVann(r, hash, sub, locId, triggers, stats, vannCache) {
         if (result.ok) {
             stats.sent++;
             stats.byTrigger['vann-' + trigger] = (stats.byTrigger['vann-' + trigger] || 0) + 1;
-            await r.set(sesongKey, `sesong-${m.S}`, { ex: 200 * 86400 });
+            if (trigger === 'spinnerfall') await r.set(sesongKey, osloDato(), { ex: 22 * 3600 });
+            else await r.set(sesongKey, `sesong-${m.S}`, { ex: 200 * 86400 });
         } else if (result.expired) {
             stats.expired++;
             await r.del(k.sub(hash));
@@ -273,26 +292,21 @@ async function evaluateTrigger(trigger, locId) {
         }
 
         case 'spinnerfall': {
-            // Aktiv kun i vulgata-sesongen (mai-juli)
-            const m = new Date().getMonth();  // 4=mai, 5=juni, 6=juli
-            if (m < 4 || m > 6) return { fire: false };
-            // Sjekk om dagens kvelds-skår er grønn via /api/spinnerfall.
-            // Vi trenger lat/lon per lokasjon. Hardkodet liste her.
+            // Rettet 2026-10-14: koden ventet { evenings: [{date, score}] }, men /api/spinnerfall gir
+            // { 'YYYY-MM-DD': {wind, temp, ...} } uten skår, så varselet kunne aldri gå. Nå regnes samme
+            // sannsynlighet som dashboardets spinnerfall-kort (lib/vannmodell.js) mot lagret vulgata-prognose.
             const ll = LOC_LATLON[locId];
             if (!ll) return { fire: false };
-            try {
-                const url = `${getBaseUrl()}/api/spinnerfall?lat=${ll.lat}&lon=${ll.lon}`;
-                const resp = await fetch(url);
-                if (!resp.ok) return { fire: false };
-                const data = await resp.json();
-                // Forventet shape: { evenings: [{date, score, ...}, ...] }
-                // Skår > 0.7 (justerbar) = grønn nok til å varsle
-                const today = (data.evenings || []).find(e => e.date === new Date().toISOString().slice(0, 10));
-                if (!today || (today.score ?? 0) < 0.7) return { fire: false };
-                return { fire: true, data: { info: `Skår ${Math.round(today.score * 100)}/100.` } };
-            } catch (e) {
-                return { fire: false };
-            }
+            const cur = await r.get(k.pred(locId, 'vulgata'));
+            if (!cur || !cur.predDoy) return { fire: false };
+            if (cur.predDate && String(cur.predDate).slice(0, 4) !== osloDato().slice(0, 4)) return { fire: false };   // fjorårets prognose
+            const dager = dayOfYear(new Date()) - cur.predDoy;
+            if (dager < 0 || dager > 21) return { fire: false };
+            const kveld = await hentKveld(ll.lat, ll.lon);
+            const w = kveld && kveld[osloDato()];
+            const p = spinnerfallSjanse(w, dager);
+            if (p < SPINNER_HOY) return { fire: false };
+            return { fire: true, data: { info: `Kveld 19–22: ${String(w.wind).replace('.', ',')} m/s, ${Math.round(w.temp)} °C. Sjanse ${Math.round(p * 100)} %.` } };
         }
 
         case 'stokkmaur': {
@@ -396,6 +410,21 @@ function formatNorwegianDate(isoStr) {
     const months = ['jan','feb','mar','apr','mai','jun','jul','aug','sep','okt','nov','des'];
     const d = new Date(isoStr);
     return `${d.getDate()}. ${months[d.getMonth()]}`;
+}
+
+// Dagens dato i Oslo (YYYY-MM-DD) — nøklene fra /api/spinnerfall er Oslo-datoer.
+function osloDato() {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Oslo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+}
+
+// Kveldsvær (19–22) per dato fra /api/spinnerfall, eller null.
+async function hentKveld(lat, lon) {
+    try {
+        const resp = await fetch(`${getBaseUrl()}/api/spinnerfall?lat=${lat}&lon=${lon}`);
+        return resp.ok ? await resp.json() : null;
+    } catch (e) {
+        return null;
+    }
 }
 
 function getBaseUrl() {

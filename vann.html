@@ -91,7 +91,7 @@
 <header class="top">
   <a class="back" href="/" id="backLink"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span id="backTxt">Kart</span></a>
   <a class="brand" href="/" aria-label="HatchWatch"><span class="hw-fly" style="width:26px;color:var(--hw-hatch)" aria-hidden="true"></span><span>Hatch<b>Watch</b></span></a>
-  <button class="hw-iconbtn fav" id="fav" type="button" aria-label="Legg til i Mine vann"><svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.7-9.3-9A5.2 5.2 0 0 1 12 6.6a5.2 5.2 0 0 1 9.3 4.9c-1.8 4.3-9.3 9-9.3 9z"/></svg></button>
+  <button class="hw-iconbtn fav" id="fav" type="button" aria-label="Legg til i favoritter"><svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.7-9.3-9A5.2 5.2 0 0 1 12 6.6a5.2 5.2 0 0 1 9.3 4.9c-1.8 4.3-9.3 9-9.3 9z"/></svg></button>
 </header>
 
 <main class="wrap" id="main">
@@ -181,13 +181,18 @@ function render(v) {
     var valgt = (getPrefs().triggers['vann:' + ID]) || [];
     var rad = function (t, tittel, tekst) { return '<label><input type="checkbox" data-t="' + t + '"' + (valgt.indexOf(t) >= 0 ? ' checked' : '') + '><div><b>' + tittel + '</b><span>' + tekst + '</span></div></label>'; };
     h += '<div class="card varsel" id="varselCard"><h2>' + tx('Varsler for dette vannet', 'Notifications for this lake') + '</h2>' +
-      '<p class="lead">' + tx('Vi sender bare når noe skjer, og hvert varsel bare én gang per sesong.', 'We only send when something happens, and each notification just once per season.') + '</p>' +
+      '<p class="lead">' + tx('Vi sender bare når noe skjer. Isgang, marginata og vulgata kommer én gang per sesong.', 'We only send when something happens. Ice-out, marginata and vulgata come once per season.') + '</p>' +
       rad('isgang', tx('Isen har gått', 'The ice is out'), tx('Når satellitten ser isgangen i år.', 'When the satellite sees this year\'s ice-out.')) +
       rad('marginata', tx('Marginata nærmer seg', 'Marginata soon'), tx('Noen dager før modellens anslåtte start.', 'A few days before the model\'s estimated start.')) +
       rad('vulgata', tx('Vulgata nærmer seg', 'Vulgata soon'), tx('Noen dager før modellens anslåtte start.', 'A few days before the model\'s estimated start.')) +
+      // Spinnerfall (2026-10-14): bare der vi anslår vulgata (ikke over 3000 ha). Samme kveldsmodell som dashboardet.
+      (v.ha > 3000 ? '' : rad('spinnerfall', tx('Spinnerfall i kveld', 'Spinner fall tonight'), tx('Om morgenen, de kveldene været passer og modellen anslår at vulgata er i sesong (opptil tre uker etter start).', 'In the morning, on evenings when the weather fits and the model puts vulgata in season (up to three weeks after the start).'))) +
       '<div class="row2"><button class="hw-btn primary" type="button" id="varselLagre">' + tx('Lagre varsler', 'Save notifications') + '</button></div>' +
       '<div class="status" id="varselStatus"></div></div>';
   }
+
+  // ── Snø ved vannet (2026-10-14): seNorge via /api/nve?gts=sd ──
+  h += '<div class="card" id="snoCard"><h2>' + tx('Snø ved vannet', 'Snow at the lake') + '</h2><div id="sno" class="skel">' + tx('Henter snødata…', 'Fetching snow data…') + '</div></div>';
 
   // ── Isgang år for år ──
   if (years.length) {
@@ -200,6 +205,9 @@ function render(v) {
   // ── Arter ──
   h += '<div class="card"><h2>' + tx('Registrerte arter', 'Recorded species') + '</h2>' + arterHtml(v.arter) + '</div>';
 
+  // ── Dybde (2026-10-14): NVEs dybdekart, bare for de ca. 686 vannene som er loddet ──
+  h += '<div class="card" id="dybdeCard" style="display:none"><h2>' + tx('Dybde', 'Depth') + '</h2><div id="dybde"></div></div>';
+
   // ── Kart ──
   h += '<div class="card"><h2>' + tx('Kart', 'Map') + '</h2><div id="mini"></div><div class="row2"><a class="hw-btn primary" href="/?vann=' + ID + '">' + tx('Vis i kartet', 'Show on the map') + '</a></div></div>';
   h += '<p class="note">' + tx('Vann: NVE Innsjødatabase. Isgang: Sentinel-2 via Google Earth Engine, HatchWatch. Arter: Artsdatabanken via GBIF.', 'Lake: NVE lake database. Ice-out: Sentinel-2 via Google Earth Engine, HatchWatch. Species: Artsdatabanken via GBIF.') + '</p>';
@@ -209,6 +217,98 @@ function render(v) {
   var lagre = document.getElementById('varselLagre');
   if (lagre) lagre.addEventListener('click', function () { lagreVarsler(navn); });
   hentVaer(v).then(function (w) { klekking(v, w); }).catch(function () { klekking(v, null); });
+  hentSno(v);
+  visDybde();
+}
+
+// ═══ DYBDE (2026-10-14) ═══
+// data/kart/dybde.json (bygg_kart.py dybde, fra NVE Innsjødatabase2 lag 4):
+// {vatnlnr: [maksdyp_m, middeldyp_m, oppmålt_år, pdf, ekvidistanse_m, digitale_koter 0/1]}.
+// Digitale koter vises i kartet (forsiden og minikartet) rett fra NVEs WMS; de andre har bare PDF.
+var NVE_WMS = 'https://kart.nve.no/enterprise/services/Innsjodatabase2/MapServer/WMSServer?service=WMS&version=1.3.0&request=GetMap&styles=&format=image/png&transparent=true&crs=EPSG:3857&width=256&height=256&bbox={bbox-epsg-3857}&layers=';
+var dybdeP = fetch('/data/kart/dybde.json').then(function (r) { return r.ok ? r.json() : {}; }).then(function (j) { return j[String(ID)] || null; }).catch(function () { return null; });
+function dm(x) { return EN ? String(Math.round(x * 10) / 10) : String(Math.round(x * 10) / 10).replace('.', ','); }
+function visDybde() {
+  dybdeP.then(function (d) {
+    if (!d || !d[0]) return;
+    var maks = d[0], mid = d[1], aar = d[2], pdf = d[3], ekv = d[4], dig = d[5] === 1;
+    var h = '<div class="hero" style="margin-top:8px"><div class="stat"><div class="k">' + tx('Største dyp', 'Max depth') + '</div><div class="v water">' + dm(maks) + '<small>m</small></div></div>' +
+      (mid ? '<div class="stat"><div class="k">' + tx('Middeldyp', 'Mean depth') + '</div><div class="v">' + dm(mid) + '<small>m</small></div></div>' : '') + '</div>';
+    var linje = [];
+    if (aar) linje.push(tx('Loddet ' + aar, 'Surveyed ' + aar));
+    if (ekv) linje.push(tx('koter for hver ' + dm(ekv) + ' m', 'contours every ' + dm(ekv) + ' m'));
+    if (linje.length) { var s = linje.join(', '); h += '<p class="lead">' + s.charAt(0).toUpperCase() + s.slice(1) + '.</p>'; }
+    h += '<div class="row2">' + (pdf ? '<a class="hw-btn ghost" href="https://gis3.nve.no/dybdekart/' + encodeURIComponent(pdf) + '" target="_blank" rel="noopener">' + tx('Dybdekart (PDF)', 'Depth map (PDF)') + '</a>' : '') +
+      (dig ? '<a class="hw-btn ghost" href="/?vann=' + ID + '">' + tx('Se kotene i kartet', 'See the contours on the map') + '</a>' : '') + '</div>';
+    h += '<p class="note">' + tx('NVE, Innsjødatabasen. ' + (dig ? 'Kotene vises i kartet når du zoomer inn. ' : '') + 'Gamle loddinger og varierende vannstand kan gi avvik.', 'NVE lake database. ' + (dig ? 'The contours show on the map when you zoom in. ' : '') + 'Old surveys and changing water levels can give differences.') + '</p>';
+    document.getElementById('dybde').innerHTML = h;
+    document.getElementById('dybdeCard').style.display = '';
+  });
+}
+
+// ═══ SNØ (2026-10-14) ═══
+// seNorge snødybde (NVE/MET, 1 km rutenett) for ruta vannet ligger i, siste fem vintre. Viser snødybde nå
+// (vinter/vår) og dagen snøen gikk i år, i fjor og vanligvis. Nyttig for fjellvann tidlig i sesongen.
+var API_BASE = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'https://www.hatchwatch.no' : '';
+function tilUtm33(lat, lon) {
+  // WGS84/ETRS89 → UTM sone 33N (EPSG:25833). Standard Transverse Mercator-utvikling (cm-nøyaktig).
+  var a = 6378137, f = 1 / 298.257222101, k0 = 0.9996, lon0 = 15 * Math.PI / 180;
+  var e2 = f * (2 - f), ep2 = e2 / (1 - e2), r = Math.PI / 180, phi = lat * r, lam = lon * r;
+  var N = a / Math.sqrt(1 - e2 * Math.sin(phi) * Math.sin(phi)), T = Math.tan(phi) * Math.tan(phi), C = ep2 * Math.cos(phi) * Math.cos(phi), A = Math.cos(phi) * (lam - lon0);
+  var M = a * ((1 - e2 / 4 - 3 * e2 * e2 / 64 - 5 * e2 * e2 * e2 / 256) * phi - (3 * e2 / 8 + 3 * e2 * e2 / 32 + 45 * e2 * e2 * e2 / 1024) * Math.sin(2 * phi)
+          + (15 * e2 * e2 / 256 + 45 * e2 * e2 * e2 / 1024) * Math.sin(4 * phi) - (35 * e2 * e2 * e2 / 3072) * Math.sin(6 * phi));
+  var x = k0 * N * (A + (1 - T + C) * A * A * A / 6 + (5 - 18 * T + T * T + 72 * C - 58 * ep2) * Math.pow(A, 5) / 120) + 500000;
+  var y = k0 * (M + N * Math.tan(phi) * (A * A / 2 + (5 - T + 9 * C + 4 * C * C) * Math.pow(A, 4) / 24 + (61 - 58 * T + T * T + 600 * C - 330 * ep2) * Math.pow(A, 6) / 720));
+  return [Math.round(x), Math.round(y)];
+}
+function snofriDag(serie, aar) {
+  // serie: { 'YYYY-MM-DD': cm }. Dagen etter siste dag med snø (>= 1 cm) mellom 1. feb og 31. juli.
+  var siste = null, slutt = null;
+  for (var d = new Date(aar, 1, 1); d.getMonth() <= 6; d.setDate(d.getDate() + 1)) {
+    var v = serie[ymd(d)];
+    if (v == null) continue;
+    slutt = new Date(d);
+    if (v >= 1) siste = new Date(d);
+  }
+  if (!siste) return { ingen: true };
+  if (slutt && +siste === +slutt) return { ligger: true };     // snøen ligger fortsatt ved siste dag med data
+  var n = new Date(siste); n.setDate(n.getDate() + 1);
+  return { doy: doyOf(n) };
+}
+function hentSno(v) {
+  var el = document.getElementById('sno'); if (!el) return;
+  var xy = tilUtm33(v.lat, v.lon), igaar = new Date(TODAY); igaar.setDate(igaar.getDate() - 1);
+  var start = (YEAR - 5) + '-01-01';
+  fetch(API_BASE + '/api/nve?gts=sd&x=' + xy[0] + '&y=' + xy[1] + '&start=' + start + '&end=' + ymd(igaar))
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function (j) {
+      var serie = {}, d0 = new Date(YEAR - 5, 0, 1);
+      (j.Data || []).forEach(function (val, i) { if (val !== j.NoDataValue && val != null) { var d = new Date(d0); d.setDate(d.getDate() + i); serie[ymd(d)] = val; } });
+      var naa = serie[ymd(igaar)];
+      var aar = [], h = '';
+      for (var y = YEAR - 5; y <= YEAR; y++) aar.push({ y: y, r: snofriDag(serie, y) });
+      var tidligere = aar.filter(function (a) { return a.y < YEAR && a.r.doy; }).map(function (a) { return a.r.doy; });
+      var vanlig = tidligere.length >= 3 ? Math.round(median(tidligere)) : null;
+      var iaar = aar[aar.length - 1].r, ifjor = aar[aar.length - 2].r;
+      if (aar.every(function (a) { return a.r.ingen; })) {
+        h = '<p class="lead">' + tx('Lite eller ingen snø i ruta rundt vannet de siste vintrene.', 'Little or no snow in the grid cell around the lake in recent winters.') + '</p>';
+      } else {
+        var mnd = TODAY.getMonth();
+        if (naa != null && naa >= 1 && mnd <= 6) h += '<div class="hero" style="margin-top:8px"><div class="stat"><div class="k">' + tx('Snødybde nå', 'Snow depth now') + '</div><div class="v">' + Math.round(naa) + '<small>cm</small></div><div class="s">' + tx('modellert for ruta', 'modelled for the grid cell') + '</div></div>' +
+          (vanlig ? '<div class="stat"><div class="k">' + tx('Snøen går vanligvis', 'Snow usually gone') + '</div><div class="v">' + fmt(YEAR, vanlig) + '</div><div class="s">' + tx('midtverdi siste vintre', 'median of recent winters') + '</div></div>' : '') + '</div>';
+        var linjer = [];
+        if (iaar.doy) linjer.push(tx('Snøen gikk ved vannet <b>' + fmt(YEAR, iaar.doy) + '</b> i år', 'The snow was gone at the lake on <b>' + fmt(YEAR, iaar.doy) + '</b> this year'));
+        else if (iaar.ligger && mnd <= 6) linjer.push(tx('Snøen ligger fortsatt', 'The snow is still lying'));
+        if (ifjor.doy) linjer.push(tx('i fjor ' + fmt(YEAR - 1, ifjor.doy), 'last year ' + fmt(YEAR - 1, ifjor.doy)));
+        if (vanlig && !(naa != null && naa >= 1 && mnd <= 6)) linjer.push(tx('vanligvis ' + fmt(YEAR, vanlig), 'usually ' + fmt(YEAR, vanlig)));
+        if (linjer.length) { var s = linjer.join(', '); h += '<p class="lead">' + s.charAt(0).toUpperCase() + s.slice(1) + '.</p>'; }
+      }
+      var hoydeNote = j.Altitude != null && v.moh != null && Math.abs(j.Altitude - v.moh) > 100
+        ? tx(' Ruta ligger i snitt på ' + j.Altitude + ' moh, vannet på ' + v.moh + ' moh, så snøen ved selve vannet kan avvike.', ' The grid cell averages ' + j.Altitude + ' m, the lake is at ' + v.moh + ' m, so snow at the lake itself may differ.') : '';
+      h += '<p class="note">' + tx('seNorge (NVE og MET): modellert snødybde i et rutenett på 1 × 1 km.', 'seNorge (NVE and MET): modelled snow depth on a 1 × 1 km grid.') + hoydeNote + '</p>';
+      el.className = ''; el.innerHTML = h;
+    })
+    .catch(function () { el.className = ''; el.innerHTML = '<p class="lead">' + tx('Fikk ikke hentet snødata akkurat nå.', 'Could not fetch snow data right now.') + '</p>'; });
 }
 
 // ═══ MINE VANN OG VARSLER (2026-10-14) ═══
@@ -229,7 +329,7 @@ function settFav(paa, navn) {
 }
 function favOppsett(navn) {
   var b = document.getElementById('fav'); if (!b) return;
-  if (EN) b.setAttribute('aria-label', 'Add to My waters');
+  if (EN) b.setAttribute('aria-label', 'Add to favourites');
   b.classList.toggle('on', erFav());
   b.onclick = function () { settFav(!erFav(), navn); b.classList.toggle('on', erFav()); };
 }
@@ -275,7 +375,7 @@ function lagreVarsler(navn) {
     if (!r.ok) throw new Error(tx('Serverfeil ', 'Server error ') + r.status);
     try { localStorage.setItem('hw_notif_prefs', JSON.stringify(prefs)); } catch (e) {}
     if (valgte.length && !erFav()) { settFav(true, navn); var b = document.getElementById('fav'); if (b) b.classList.add('on'); }
-    st.textContent = valgte.length ? tx('Lagret. Vannet ligger også i Mine vann.', 'Saved. The lake is also in My waters.') : tx('Varslene for vannet er slått av.', 'Notifications for the lake are off.');
+    st.textContent = valgte.length ? tx('Lagret. Vannet ligger også i Favoritter.', 'Saved. The lake is also in Favourites.') : tx('Varslene for vannet er slått av.', 'Notifications for the lake are off.');
   }).catch(function (e) {
     st.className = 'status feil';
     st.textContent = e.message === 'PERMISSION_DENIED' ? tx('Du må tillate varsler i innstillingene på telefonen eller i nettleseren.', 'You need to allow notifications in your phone or browser settings.') : tx('Noe gikk galt: ', 'Something went wrong: ') + e.message;
@@ -434,8 +534,28 @@ function klekking(v, w) {
   else if (g450) rows += '<div class="art"><b>Vulgata</b><span class="d">' + fmt(S, g450.n) + ' <small style="font-size:12px;color:var(--hw-fg-2)">±5 d</small></span><span class="s"><i>Ephemera vulgata</i> · ' + tx('start på klekkingen', 'start of the hatch') + ' · ' + etikett(g450.maalt) + (middels ? ' · ' + tx('store vann kan ligge etter', 'large lakes can lag behind') : '') + '</span>' +
     (senIs ? '<span class="s" style="color:var(--hw-hatch)">' + tx('Isen går sent her. Vulgata kommer trolig senere enn luftvarmen tilsier, men hvor mye er ikke testet ennå.', 'The ice goes late here. Vulgata probably comes later than the air warmth suggests, but by how much is not tested yet.') + '</span>' : '') +
     '<span class="s">' + tilstede(v, 'Ephemera vulgata', 'vulgata') + '</span></div>';
+  // Byttedyr (2026-10-14): skjoldkreps og marflo, BARE der Artsdatabanken har funn. Kilder: Qvenild m.fl. 2018
+  // (Fauna norvegica 38): klekker ved isgang, i ørretmager fra ca. 400 døgngrader i vannet etter isgang, flest
+  // ved 800–900 (midten av aug–midten av sep på Hardangervidda); Qvenild & Hesthagen 2019: funn 27. juli–2. okt.
+  // «Isgang + 5 uker» er vår grove omregning av 400 døgngrader (Hardangervidda: isgang sent i juni → ca. 1. aug).
+  // Marflo: lever 1–2 år, alltid tilgjengelig, grunt og vegetasjonsrikt ned til ca. 5 m (Dahl 1915/1930 via
+  // Qvenild m.fl. 2020). Ingen norsk kilde tidfester en topp for marflo, så vi viser ingen.
+  var harArt = function (latin) { return (v.arter || []).some(function (a) { return a[0] === latin; }); };
+  var krepsdyr = false;
+  if (harArt('Lepidurus arcticus')) {
+    krepsdyr = true;
+    var sept30 = Math.round((new Date(S, 8, 30) - new Date(S, 0, 0)) / 864e5), lsStart = ig ? ig.n + 35 : null;
+    rows += '<div class="art"><b>' + tx('Skjoldkreps', 'Tadpole shrimp') + '</b><span class="d">' + (lsStart && lsStart < sept30 - 14 ? fmtRange(S, lsStart, sept30) : tx('aug–sep', 'Aug–Sep')) + '</span><span class="s"><i>Lepidurus arcticus</i> · ' +
+      tx('klekker ved isgang og blir viktig ørretmat rundt fem uker senere, mest fra midten av august til midten av september på Hardangervidda. Kommer senere, eller knapt, i kalde somre', 'hatches at ice-out and becomes important trout food about five weeks later, mostly mid-August to mid-September on Hardangervidda. Comes later, or barely, in cold summers') + ' · ' + tx('grovt anslag', 'rough estimate') + '</span><span class="s">' + tilstede(v, 'Lepidurus arcticus', '') + '</span></div>';
+  }
+  if (harArt('Gammarus lacustris')) {
+    krepsdyr = true;
+    rows += '<div class="art"><b>' + tx('Marflo', 'Freshwater shrimp') + '</b><span class="d">' + tx('hele sesongen', 'all season') + '</span><span class="s"><i>Gammarus lacustris</i> · ' +
+      tx('lever ett til to år, så den finnes også før insektene kommer. Langs land i grunne områder med vegetasjon, ned til rundt 5 m', 'lives one to two years, so it is there before the insects come too. Along the shore in shallow, vegetated areas, down to about 5 m') + '</span><span class="s">' + tilstede(v, 'Gammarus lacustris', '') + '</span></div>';
+  }
   rows += vulgataRow(v);
   h += '<div class="arts">' + rows + '</div>';
+  if (krepsdyr) h += '<p class="note">' + tx('Skjoldkreps og marflo vises bare der Artsdatabanken har funn. Kilder: Qvenild m.fl. 2018 og 2020, Qvenild og Hesthagen 2019 (Fauna norvegica, Hardangervidda). Fem uker etter isgang er vår grove omregning av varmen skjoldkrepsen trenger.', 'Tadpole shrimp and freshwater shrimp are only shown where Artsdatabanken has records. Sources: Qvenild et al. 2018 and 2020, Qvenild and Hesthagen 2019 (Fauna norvegica, Hardangervidda). Five weeks after ice-out is our rough conversion of the warmth the tadpole shrimp needs.') + '</p>';
   h += '<p class="note">' + tx('Slik regner vi: marginata starter når isen har gått og våren har gitt nok varme, vespertina en uke senere. Vulgata starter når varmesummen fra 1. april har nådd et fast nivå. Temperaturen er luft ved vannet, skalert til vannets høyde. For vulgata bommer modellen typisk med rundt 5 dager der den er testet (Østlandet og Kautokeino); for marginata og vespertina er den bare sjekket mot spredte artsfunn. Vannene der vi har en kalibrert prognose, har egen side.',
                                'How we work it out: marginata starts when the ice has gone and spring has given enough warmth, vespertina a week later. Vulgata starts when the warmth sum from 1 April reaches a fixed level. Temperature is air at the lake, scaled to its altitude. For vulgata the model typically misses by about 5 days where it has been tested (eastern Norway and Kautokeino); for marginata and vespertina it has only been checked against scattered species records. Lakes with a calibrated forecast have their own page.') + '</p>';
   el.className = ''; el.innerHTML = h;
@@ -510,6 +630,15 @@ function miniMap(v) {
     }
   });
   map.addControl(new maplibregl.AttributionControl({ compact: true, customAttribution: 'NVE' }));
+  // Dybdekoter fra NVE oppå vannet når de finnes digitalt (2026-10-14)
+  dybdeP.then(function (d) {
+    if (!d || d[5] !== 1) return;
+    var leggTil = function () {
+      map.addSource('nve-dybde', { type: 'raster', tileSize: 256, tiles: [NVE_WMS + 'DybdeKurve'] });
+      map.addLayer({ id: 'nve-dybde', type: 'raster', source: 'nve-dybde' }, 'navn');
+    };
+    if (map.isStyleLoaded()) leggTil(); else map.once('load', leggTil);
+  });
   var fold = function () { var a = document.querySelector('#mini .maplibregl-ctrl-attrib'); if (a) a.classList.remove('maplibregl-compact-show'); };
   map.once('load', fold); setTimeout(fold, 1500);
 }

@@ -7,6 +7,7 @@ Bygger kartdata for det nye HatchWatch-kartet (MapLibre).
   python tools/kart/bygg_kart.py arter      # bare artsfunn per vann
   python tools/kart/bygg_kart.py elver      # bare elvedata (laksesidene)
   python tools/kart/bygg_kart.py vann       # bare vannsidene (isgang + arter per vann; kjøres også av isgang/arter)
+  python tools/kart/bygg_kart.py dybde      # bare dybdekart-tabellen fra NVE (data/kart/dybde.json)
   python tools/kart/bygg_kart.py isgang-lokal  # GitHub-jobben isgang-gee: fylkesfilene fra disk, bytter bare isgangen
                                                # i vannfilene (ingen geojson/shapely). Jobben EIER isgang_*.json og
                                                # vann/*.json i repoet; deploy_now.py laster dem bare opp første gang.
@@ -434,8 +435,38 @@ def oppdater_vann_isgang():
     print(f"vann: isgang oppdatert, {endret} vann endret")
 
 
+# ── Dybdekart (2026-10-14) ───────────────────────────────────────────────
+# NVE Innsjødatabase2 lag 4 «Dybdekart» (686 vann). Bare tabellen; selve kotene vises rett fra NVEs
+# WMS (lag DybdeKurve/DybdePunkt) på kartet. PDF-ene ligger på https://gis3.nve.no/dybdekart/<pdf>.
+# dybde.json = {vatnlnr: [maksdyp_m, middeldyp_m|null, oppmålt_år|null, pdf|null, ekvidistanse_m|null, digitale_koter 0/1]}
+# Digitale koter (lag 3 «Innsjo_ved_dybdemaling», ca. 528 vann) vises i kartet; resten har bare PDF.
+DYBDE_URL = "https://kart.nve.no/enterprise/rest/services/Innsjodatabase2/MapServer/{}/query"
+
+
+def bygg_dybde():
+    q = {"where": "1=1", "returnGeometry": "false", "f": "json", "resultRecordCount": 5000}
+    j = hent(DYBDE_URL.format(4), dict(q, outFields="vatnlnr,maksdyp_m,middeldyp_m,oppmaltaar,pdf1,ekvidistanse_m"))
+    digital = {f["attributes"].get("vatnlnr") for f in hent(DYBDE_URL.format(3), dict(q, outFields="vatnlnr")).get("features", [])}
+    pos = lambda x: x if isinstance(x, (int, float)) and x > 0 else None
+    ut = {}
+    for f in j.get("features", []):
+        a = f["attributes"]
+        if not a.get("vatnlnr"):
+            continue
+        ut[str(a["vatnlnr"])] = [pos(a.get("maksdyp_m")), pos(a.get("middeldyp_m")), pos(a.get("oppmaltaar")),
+                                 (a.get("pdf1") or "").strip() or None, pos(a.get("ekvidistanse_m")),
+                                 1 if a["vatnlnr"] in digital else 0]
+    if len(ut) < 500:
+        raise SystemExit(f"dybde: bare {len(ut)} vann fra NVE — avbryter (forventet ca. 686)")
+    with open(os.path.join(OUT, "dybde.json"), "w", encoding="utf-8") as fh:
+        json.dump(ut, fh, separators=(",", ":"))
+    print(f"dybde: {len(ut)} vann med dybdekart, {os.path.getsize(os.path.join(OUT, 'dybde.json')) // 1024} kB")
+
+
 if __name__ == "__main__":
     hva = sys.argv[1] if len(sys.argv) > 1 else "alt"
+    if hva in ("alt", "dybde"):
+        bygg_dybde()
     if hva in ("alt", "isgang"):
         bygg_isgang()
     if hva == "isgang-lokal":          # GitHub-jobben isgang-gee: les fylkesfilene på disk, bytt bare isgangen

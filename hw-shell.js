@@ -8,7 +8,7 @@
 //  Dashboard har fortsatt egen variant med side-spesifikke kroker; den
 //  flyttes hit når Sesongen bygges (steg 4).
 //
-//  Faner (godkjent 1. okt 2026): Kart · Sesong · Mine vann · Meny.
+//  Faner (godkjent 1. okt 2026): Kart · Sesong · Favoritter (het «Mine vann» til 14.10.2026) · Meny.
 //  Observasjon er en handling: rad i menyen + knapp inne på vannet.
 //
 //  Kroker (valgfrie) via window.HW_SHELL før skriptet kjører:
@@ -57,7 +57,7 @@
   // overstyre via cfg.lang. Uten hw-lang.js: norsk.
   var EN = (cfg.lang || window.HW_LANG) === 'en';
   var S = EN ? {
-    map: 'Map', season: 'Season', fav: 'My waters', menu: 'Menu', close: 'Close', nav: 'Main navigation',
+    map: 'Map', season: 'Season', fav: 'Favourites', menu: 'Menu', close: 'Close', nav: 'Main navigation',
     obs: 'Report a hatch', obsSub: 'Seen a hatch? It makes the model better.',
     notif: 'Notifications', notifSub: 'Hatch, spinner fall, ants · push',
     articles: 'Articles', articlesSub: 'Mayflies, spinner fall, ants',
@@ -65,9 +65,9 @@
     about: 'About HatchWatch', aboutSub: 'The model, data sources, stations',
     feedback: 'Send feedback', feedbackSub: 'Beta · we read everything',
     lang: 'Norsk', langSub: 'Switch to Norwegian',
-    empty: '<b>No waters yet.</b><br>Tap the heart on a water in the map or at the top of a forecast, and your waters gather here. Your notifications follow this list.'
+    empty: '<b>No favourites yet.</b><br>Tap the heart on a water in the map or at the top of a forecast, and your waters gather here. Trips you save with the ruler in the map also end up here. Your notifications follow the waters.'
   } : {
-    map: 'Kart', season: 'Sesong', fav: 'Mine vann', menu: 'Meny', close: 'Lukk', nav: 'Hovednavigasjon',
+    map: 'Kart', season: 'Sesong', fav: 'Favoritter', menu: 'Meny', close: 'Lukk', nav: 'Hovednavigasjon',
     obs: 'Meld observasjon', obsSub: 'Så du klekking? Det gjør modellen bedre.',
     notif: 'Varsler', notifSub: 'Klekking, spinnerfall, stokkmaur · push',
     articles: 'Artikler', articlesSub: 'Døgnfluer, spinnerfall, stokkmaur',
@@ -75,7 +75,7 @@
     about: 'Om HatchWatch', aboutSub: 'Modellen, datakildene, stasjonene',
     feedback: 'Send tilbakemelding', feedbackSub: 'Beta · vi leser alt',
     lang: 'English', langSub: 'Bytt til engelsk',
-    empty: '<b>Ingen vann ennå.</b><br>Trykk hjertet på et vann i kartet eller øverst på prognosen, så samler vannene dine seg her. Varslene dine følger denne lista.'
+    empty: '<b>Ingen favoritter ennå.</b><br>Trykk hjertet på et vann i kartet eller øverst på prognosen, så samler vannene dine seg her. Turer du lagrer med linjalen i kartet havner også her. Varslene dine følger vannene.'
   };
 
   function row(href, icon, title, sub, extra) {
@@ -152,8 +152,8 @@
   }
   function renderFavs() {
     var list = document.getElementById('hwbFavList');
-    var f = favs(), e = elvFavs(), vf = vannFavs();
-    if (!f.length && !e.length && !vf.length) {
+    var f = favs(), e = elvFavs(), vf = vannFavs(), tu = turer();
+    if (!f.length && !e.length && !vf.length && !tu.length) {
       list.innerHTML = '<div class="hwp-empty">' + S.empty + '</div>';
       return;
     }
@@ -168,7 +168,21 @@
         return row('/elv.html?id=' + encodeURIComponent(x.id), RIVER, esc(x.navn || x.id), EN ? 'Salmon river' : 'Lakseelv');
       }).join('');
     }
+    if (tu.length) {
+      html += '<div class="hwp-sec">' + (EN ? 'My trips' : 'Mine turer') + '</div>' + tu.map(function (t) {
+        var km = t.m >= 1000 ? (t.m / 1000).toFixed(1).replace('.', EN ? '.' : ',') + ' km' : t.m + ' m';
+        var href = '/?tur=' + encodeURIComponent(t.tur) + '&navn=' + encodeURIComponent(t.navn || '');
+        var dato = /^\d{4}-\d{2}-\d{2}$/.test(t.dato || '') ? (+t.dato.slice(8)) + '.' + (+t.dato.slice(5, 7)) + '.' + t.dato.slice(0, 4) : '';
+        return '<div class="hwp-tur">' + row(href, TUR, esc(t.navn || (EN ? 'Trip' : 'Tur')), km + (dato ? ' · ' + dato : '')) +
+          '<button type="button" class="hwp-fjern" data-tur="' + esc(t.id) + '" aria-label="' + (EN ? 'Remove trip' : 'Fjern turen') + '">×</button></div>';
+      }).join('');
+    }
     list.innerHTML = html;
+  }
+  // Mine turer (2026-10-14): lagret fra avstandsmålingen på kartet, localStorage hw_turer
+  var TUR = '<svg viewBox="0 0 24 24"><circle cx="5" cy="18" r="2"/><circle cx="19" cy="6" r="2"/><path d="M7 17c4-1 3-6 6-7s3-2 4-3"/></svg>';
+  function turer() {
+    try { var v = JSON.parse(localStorage.getItem('hw_turer') || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; }
   }
 
   mount.querySelectorAll('a.hwb').forEach(function (a) {
@@ -178,6 +192,13 @@
     });
   });
   document.getElementById('hwbFav').addEventListener('click', function () { renderFavs(); open('hwbFavPanel', 'fav'); });
+  document.getElementById('hwbFavList').addEventListener('click', function (ev) {
+    var b = ev.target.closest('.hwp-fjern'); if (!b) return;
+    ev.preventDefault();
+    var id = b.getAttribute('data-tur');
+    try { localStorage.setItem('hw_turer', JSON.stringify(turer().filter(function (t) { return t.id !== id; }))); } catch (e) {}
+    renderFavs();
+  });
   document.getElementById('hwbMenu').addEventListener('click', function () { open('hwbMenuPanel', 'menu'); });
   document.getElementById('hwbNotif').addEventListener('click', function (e) {
     if (typeof cfg.onNotif === 'function' && cfg.onNotif()) { e.preventDefault(); closeAll(); }
