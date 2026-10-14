@@ -6998,11 +6998,82 @@ function predictIsgangHybrid(airData, alpha, beta, hist) {
     };
 }
 
+// ── Graddagmodell for isgang (2026-10-14, Stian «kjør») ───────────────────
+// Isen går når varmesummen (døgnmiddel, base 0) fra 1. mars når stedets egen
+// terskel = midtverdien av varmesummen fra 1. mars til observert isgang i kjente
+// år. Framover brukes klimasnittet for datoen (buildDoyAvgTemp, som før).
+// Grunnlag: tools/research_analyser/J_offset (J3/J4): i hold-ett-år-ute på 701
+// vann-år slo den Stefan/klima-50/50-modellen under ved alle varseltider
+// (7,8 mot 9,3 d varslet 14 d før; 6,5 mot 7,4 d en uke før). Samme modell som
+// vannsidene (vann.html). Stefan-hybriden er beholdt som reserve.
+function varmesumFraMars(airData, year, tilIso) {
+    var s = 0, n = 0;
+    for (var d = new Date(year, 2, 1); isoDate(d) <= tilIso; d.setDate(d.getDate() + 1)) {
+        var v = airData[isoDate(d)];
+        if (v == null) continue;
+        s += Math.max(0, v); n++;
+    }
+    return { s: s, n: n };
+}
+function predictIsgangGraddag(airData, hist) {
+    var terskler = [];
+    for (var yr in hist) {
+        var y = parseInt(yr, 10), ds = hist[yr];
+        if (y >= YEAR || !ds) continue;
+        var dager = Math.round((parseDate(ds) - new Date(y, 2, 1)) / 86400000) + 1;
+        if (dager <= 0) continue;
+        var r = varmesumFraMars(airData, y, ds);
+        if (r.n >= dager * 0.9) terskler.push(r.s);      // bare år med nesten komplette temperaturdata
+    }
+    if (terskler.length < 2) return null;
+    terskler.sort(function (a, b) { return a - b; });
+    var m = terskler.length;
+    var terskel = m % 2 ? terskler[(m - 1) / 2] : (terskler[m / 2 - 1] + terskler[m / 2]) / 2;
+    var avgTemp = buildDoyAvgTemp(airData);
+    var today = new Date(); today.setHours(0, 0, 0, 0);
+    var s = 0;
+    for (var d = new Date(YEAR, 2, 1); d.getMonth() <= 6; d.setDate(d.getDate() + 1)) {
+        var v = d <= today ? airData[isoDate(d)] : null;
+        if (v == null) v = avgTemp[doy(d)];
+        if (v == null) continue;
+        s += Math.max(0, v);
+        if (s >= terskel) return { date: new Date(d), terskel: Math.round(terskel), n: m };
+    }
+    return null;
+}
+
+// Marginata (2026-10-14, Stian «kjør»): start = senest av isgang + 14 og dagen
+// varmesummen fra 1. april (base 0) når 200. Der isen går tidlig (kyst/lavland,
+// Østmarka i varme år), styrer varmen; ellers isgangen som før. Grunnlag J1/J2/J5:
+// 200 gir 2,2 d snittavvik og null skjevhet mot 11 egne startobservasjoner.
+// Vespertina følger en uke etter marginata, som før.
+var MARGINATA_VARMESUM = 200;
+function marginataStart(airData, isgangDate) {
+    var fraIs = new Date(isgangDate); fraIs.setDate(fraIs.getDate() + 14);
+    var avgTemp = buildDoyAvgTemp(airData);
+    var today = new Date(); today.setHours(0, 0, 0, 0);
+    var s = 0;
+    for (var d = new Date(YEAR, 3, 1); d.getMonth() <= 7; d.setDate(d.getDate() + 1)) {
+        var v = d <= today ? airData[isoDate(d)] : null;
+        if (v == null) v = avgTemp[doy(d)];
+        if (v == null) continue;
+        s += Math.max(0, v);
+        if (s >= MARGINATA_VARMESUM) return d > fraIs ? new Date(d) : fraIs;
+    }
+    return fraIs;
+}
+
 // Resolve the best isgang date for the species calendar.
 // Priority: 1. Observed this year (isgangHistory[YEAR])
-//           2. Hybrid prediction (Stefan + climate-adjusted median, 50/50 blend)
+//           2. Graddagmodell (fra 2026-10-14), reserve: hybrid (Stefan + klima, 50/50)
 //           3. Fallback chain: snowFree+12d / fromDate / back-calc / hist.mean
+// Legger også på margStart (marginataStart) på resultatet.
 function resolveIsgang(airData, fromDate, snowFree, vulgataDate) {
+    var r = resolveIsgangInner(airData, fromDate, snowFree, vulgataDate);
+    if (r && r.date) r.margStart = marginataStart(airData, r.date);
+    return r;
+}
+function resolveIsgangInner(airData, fromDate, snowFree, vulgataDate) {
     // 2026-05-04: For lokasjoner med altitudeAdjustable + ofaLakes (nordmarka_dyn),
     // sjekk om det valgte vannet har sin egen isgangHistory. Hvis ja, bruk den —
     // ellers fall tilbake til LOC.isgangHistory (default-vann, typisk Katnosa).
@@ -7017,8 +7088,12 @@ function resolveIsgang(airData, fromDate, snowFree, vulgataDate) {
         return { date: parseDate(hist[YEAR]), source: 'observed (Sentinel Hub)', observed: true };
     }
 
-    // 2 — hybrid prediksjon (Stefan + klima)
+    // 2 — graddagmodell (fra 2026-10-14); hybrid (Stefan + klima) bare som reserve
     if (hist && Object.keys(hist).length >= 3) {
+        var gd = predictIsgangGraddag(airData, hist);
+        if (gd) {
+            return { date: gd.date, source: 'graddager fra 1. mars, terskel ' + gd.terskel + ' (n=' + gd.n + ' år)', calibrated: true };
+        }
         var cal = calibrateIceModel(hist, airData);
         if (cal) {
             var hy = predictIsgangHybrid(airData, cal.alpha, cal.beta, hist);
@@ -7537,9 +7612,9 @@ function renderSeasonExplain(args) {
 // v3-hero (2026-10-01): svaret først. Dato i displayskrift, usikkerheten som
 // bånd på en tidslinje med i dag-strek, artstidslinje under, metode som liten
 // linje. `best` kommer fra renderConvergence (samme kandidat som før: dato,
-// usikkerhet og metode-tekst). Artsdatoene er UENDRET: mygg = isgang,
-// marginata = isgang +14/+17/+21, vespertina = +21/+28/+35, vulgata = anker
-// +7 topp, +14 slutt. Finnmark/Troms/Nordland (komprimert sesong) får bare
+// usikkerhet og metode-tekst). Artsdatoer: mygg = isgang; marginata = senest av
+// isgang + 14 og varmesum fra 1. april >= 200, topp +3, slutt +7 (fra 2026-10-14);
+// vespertina = marginata + 7/+14/+21; vulgata = anker, +7 topp, +14 slutt. Finnmark/Troms/Nordland (komprimert sesong) får bare
 // vulgata-vinduet, som før.
 function renderSpeciesCalendar(isgangResult, vulgataDate, best) {
     const grid = document.getElementById('speciesCalendar');
@@ -7634,11 +7709,13 @@ function renderSpeciesCalendar(isgangResult, vulgataDate, best) {
     if (compressed) {
         speciesHtml = `<div class="hero-method">${t('shortSeason')}</div>`;
     } else if (isgangDate) {
+        // Marginata-start: senest av isgang + 14 og varmesum fra 1. april >= 200 (resolveIsgang → margStart)
+        const mA = doy((isgangResult && isgangResult.margStart) || dOff(isgangDate, 14));
         const rows = [
             { key: 'mygg', name: no ? 'Mygg' : 'Midge', sub: no ? 'fra isgang' : 'from ice-out', a: doy(isgangDate), p: null, b: A1 },
-            { key: 'marg', name: 'Marginata', sub: no ? 'isgang +14' : 'ice-out +14', a: doy(dOff(isgangDate, 14)), p: doy(dOff(isgangDate, 17)), b: doy(dOff(isgangDate, 21)) },
+            { key: 'marg', name: 'Marginata', sub: no ? 'isgang og varme' : 'ice-out and warmth', a: mA, p: mA + 3, b: mA + 7 },
             { key: 'vulg', name: 'Vulgata · Grandis', sub: no ? 'varmesum + vanntemp' : 'GDD + water temp', a: vDoy, p: vDoy != null ? vDoy + 7 : null, b: vDoy != null ? vDoy + 14 : null },
-            { key: 'vesp', name: 'Vespertina', sub: no ? 'isgang +21' : 'ice-out +21', a: doy(dOff(isgangDate, 21)), p: doy(dOff(isgangDate, 28)), b: doy(dOff(isgangDate, 35)) },
+            { key: 'vesp', name: 'Vespertina', sub: no ? 'en uke etter marginata' : 'a week after marginata', a: mA + 7, p: mA + 14, b: mA + 21 },
         ];
         const rh = 26, top = 8, L = 82, H = top + rows.length * rh + 24;
         let s = `<svg class="tl" viewBox="0 0 ${WPX} ${H}" role="img" aria-label="${no ? 'Artstidslinje' : 'Species timeline'}">`;
@@ -10170,7 +10247,7 @@ if ('serviceWorker' in navigator) {
         var nveId = LOC.nveWaterTempStation || LOC.nveStation;
         if (nveId) rows.push([no ? 'Vann' : 'Water', (LOC.waterStationName || '') + ' · ' + nveId + ' · NVE HydAPI']);
         rows.push([no ? 'Vær' : 'Weather', 'MET Norway (yr.no) · ' + LOC.lat + '°N ' + LOC.lon + '°Ø']);
-        rows.push([no ? 'Isgang' : 'Ice-out', no ? 'Sentinel-observasjoner der de finnes, ellers hybrid ismodell (Stefan + klimajustert median)' : 'Sentinel observations where available, otherwise hybrid ice model']);
+        rows.push([no ? 'Isgang' : 'Ice-out', no ? 'Sentinel-observasjoner der de finnes, ellers graddager fra 1. mars mot stedets egen terskel' : 'Sentinel observations where available, otherwise degree days from 1 March against the site\'s own threshold']);
         rows.push([no ? 'Høyde' : 'Altitude', (typeof getCurrentAltitude === 'function' ? getCurrentAltitude(LOC) : LOC.altitude) + ' moh']);
         src.innerHTML = '<table class="hw-src"><tbody>' + rows.map(function (r) { return '<tr><th>' + r[0] + '</th><td>' + r[1] + '</td></tr>'; }).join('') + '</tbody></table>' +
             '<p class="hero-method" style="margin-top:8px">' + (no ? 'Oppdateres hver morgen. Prognoser lagres når noen åpner vannet.' : 'Updated every morning. Forecasts are stored when someone opens the water.') + '</p>';

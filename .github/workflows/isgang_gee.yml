@@ -96,6 +96,29 @@ jobs:
           echo "Fulle fylkesfiler:"; ls -l norge/*.json 2>/dev/null || true
           echo "Rådata:"; ls -l data/ 2>/dev/null || true
 
+      # 2026-10-14: vårmodus (g6_sesong.py) — årets isgang mens sesongen pågår (15. mars–25. juli,
+      # høyst annenhver dag). Hele måneder hentes én gang for alle vann; resten av inneværende måned
+      # hentes på nytt bare for vann uten sikker isgang ennå. Samme metode, kvotebok og tidsvakt som g2.
+      # Feiler den, fortsetter jobben som før. Minuttene den brukte trekkes fra tidsvakten under.
+      - name: Vårmodus — årets isgang (g6_sesong.py)
+        if: github.event.inputs.fylke == '' || github.event.inputs.fylke == null
+        working-directory: tools/research_analyser/G_gee
+        env:
+          GEE_SERVICE_ACCOUNT_KEY: ${{ secrets.GEE_SERVICE_ACCOUNT_KEY }}
+          GEE_PROJECT: ${{ secrets.GEE_PROJECT }}
+          PYTHONIOENCODING: utf-8
+          PYTHONUNBUFFERED: "1"
+        run: |
+          set -uo pipefail
+          rc=0
+          python g6_sesong.py --parallell 4 --budsjett-timer 950 --maks-minutter 150 || rc=$?
+          case "$rc" in
+            0) echo "Vårmodus ferdig (eller ingenting å gjøre).";;
+            3) echo "Vårmodus stoppet av kvotevakten.";;
+            4) echo "Vårmodus stoppet av tidsvakten — fortsetter neste kjøring.";;
+            *) echo "Vårmodus feilet med kode $rc — fortsetter med resten av jobben." >&2;;
+          esac
+
       - name: Hent og regn isgang i GEE
         working-directory: tools/research_analyser/G_gee
         env:
@@ -106,6 +129,8 @@ jobs:
         run: |
           set -uo pipefail
           MIN="${{ github.event.inputs.maks_minutter || '330' }}"
+          MIN=$(( MIN - ${SESONG_MIN:-0} ))          # vårmodus har brukt av den samme 6-timersrammen
+          if [ "$MIN" -lt 20 ]; then MIN=20; fi
           FYLKE="${{ github.event.inputs.fylke }}"
           rc=0
           if [ -n "$FYLKE" ]; then
