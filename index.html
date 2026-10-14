@@ -32,7 +32,9 @@
   .maplibregl-ctrl-attrib { background: color-mix(in srgb, var(--hw-bg) 80%, transparent) !important; color: var(--hw-fg-3) !important; font-size: 10px; }
   .maplibregl-ctrl-attrib a { color: var(--hw-fg-2) !important; }
   .maplibregl-ctrl-attrib-button { filter: invert(.8); }
-  .maplibregl-ctrl-bottom-left { bottom: calc(var(--scrub-h, 190px) + 16px); }
+  /* Kildeknappen: mobil over zoomknappene til høyre, PC nede til venstre under forklaringen */
+  .maplibregl-ctrl-bottom-right { bottom: calc(var(--scrub-h, 190px) + 104px); }
+  .maplibregl-ctrl-bottom-left { bottom: 6px; }
 
   /* ── Topp: merke, bryter, søk ── */
   .maptop { position: absolute; left: 12px; right: 12px; top: calc(env(safe-area-inset-top, 0px) + 10px); z-index: 22; display: flex; flex-direction: column; gap: 8px; max-width: 560px; margin: 0 auto; }
@@ -43,10 +45,12 @@
   .modeseg button { padding: 8px 0; border-radius: 9px; font-weight: 500; font-size: 14px; color: var(--hw-fg-2); }
   .modeseg button.on { background: var(--hw-bg-2); color: var(--hw-fg); box-shadow: 0 1px 2px rgba(0,0,0,.25); }
   .searchrow { display: flex; gap: 8px; align-items: center; }
+  /* PC: merket øverst til venstre, bryter og søk på samme rad (2026-10-14, Stian) */
   @media (min-width: 760px) {
-    .maptop { flex-direction: row; align-items: center; max-width: 900px; }
+    .maptop { flex-direction: row; align-items: center; max-width: none; margin: 0; gap: 14px; }
+    .brandrow { flex: none; margin-right: 6px; }
     .modeseg { width: 240px; flex: none; }
-    .searchrow { flex: 1; }
+    .searchrow { flex: 0 1 520px; }
   }
   .search { flex: 1; position: relative; }
   .search-in { display: flex; align-items: center; gap: 8px; background: color-mix(in srgb, var(--hw-bg-2) 94%, transparent); backdrop-filter: blur(8px); border: 1px solid var(--hw-line); border-radius: 999px; padding: 9px 12px; color: var(--hw-fg-3); }
@@ -65,8 +69,12 @@
   .hit-empty { padding: 12px 14px; color: var(--hw-fg-2); font-size: 13px; }
 
   /* ── Legende + zoom ── */
-  .legend { position: absolute; left: 12px; top: calc(env(safe-area-inset-top, 0px) + 150px); z-index: 18; display: flex; flex-direction: column; gap: 4px; pointer-events: none; }
-  @media (min-width: 760px) { .legend { top: calc(env(safe-area-inset-top, 0px) + 66px); } }
+  /* Forklaringen nede til venstre (2026-10-14, Stian). Mobil: én rad rett over skyveren som kan
+     skyves sidelengs. PC: kolonne nede til venstre (skyveren ligger til høyre). */
+  .legend { position: absolute; left: 12px; right: 62px; bottom: calc(var(--scrub-h, 190px) + 18px); z-index: 18; display: flex; flex-direction: row; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+  .legend::-webkit-scrollbar { display: none; }
+  .legend .hw-chip { flex: none; }
+  @media (min-width: 760px) { .legend { right: auto; bottom: 52px; flex-direction: column; overflow: visible; pointer-events: none; } }
   .legend .hw-chip { background: color-mix(in srgb, var(--hw-bg) 85%, transparent); backdrop-filter: blur(6px); }
   .legend .hw-chip i.ice { background: #c9dde6; } .legend .hw-chip i.open { background: var(--hw-water); } .legend .hw-chip i.nod { background: #2a5361; }
   .legend .hw-chip i.line { border-radius: 2px; width: 14px; height: 4px; }
@@ -278,6 +286,11 @@ var MON = EN ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 function doyOf(d) { return Math.floor((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - Date.UTC(d.getFullYear(), 0, 1)) / 86400000) + 1; }
 function dateOfDoy(year, n) { return new Date(year, 0, n); }
 function fmtDoy(year, n) { var d = dateOfDoy(year, n); return EN ? d.getDate() + ' ' + MON[d.getMonth()] : d.getDate() + '. ' + MON[d.getMonth()]; }
+function rangeDoy(year, a, b) {   // «15.–22. april», eller «28. april–5. mai» over månedsskifte
+  var da = dateOfDoy(year, a), db = dateOfDoy(year, b);
+  if (da.getMonth() !== db.getMonth()) return fmtDoy(year, a) + '–' + fmtDoy(year, b);
+  return EN ? da.getDate() + '–' + db.getDate() + ' ' + MON[db.getMonth()] : da.getDate() + '.–' + db.getDate() + '. ' + MON[db.getMonth()];
+}
 function shortDoy(year, n) { var d = dateOfDoy(year, n); return EN ? d.getDate() + ' ' + MON[d.getMonth()].slice(0, 3) : d.getDate() + '. ' + MON[d.getMonth()].slice(0, 3); }
 var MOH = tx('moh', 'm a.s.l.');
 var TODAY = new Date(); TODAY.setHours(0, 0, 0, 0);
@@ -328,7 +341,6 @@ try { var m0 = localStorage.getItem('hw_kartmodus'); if (m0 === 'laks' || m0 ===
 if (location.hash === '#laks') mode = 'laks';
 var iceYear = ICE_YEARS[ICE_YEARS.length - 1];
 var ISG = {};                   // år → { vatnlnr: [doy, bredde, klasse] }
-var ARTER = null;               // vatnlnr → [[art, gruppe, funn, siste, sikker, norsk]]
 var ELVER = null;               // vassdragsnr → elv
 var playing = null;
 function byId(id) { for (var i = 0; i < LOCS.length; i++) if (LOCS[i].id === id) return LOCS[i]; return null; }
@@ -379,7 +391,7 @@ var style = {
 var map = new maplibregl.Map({ container: 'gl', style: style, center: [15, 65], zoom: 4, attributionControl: false, maxZoom: 16, minZoom: 3, dragRotate: false, pitchWithRotate: false, touchPitch: false,
   preserveDrawingBuffer: /^(localhost|127\.0\.0\.1)$/.test(location.hostname) });   // bare lokalt: gjør skjermbilder mulig i test
 map.touchZoomRotate.disableRotation();
-map.addControl(new maplibregl.AttributionControl({ compact: true, customAttribution: tx('Vann: NVE · Laks: Miljødirektoratet · Isgang: Sentinel-2 (HatchWatch) · Arter: Artsdatabanken/GBIF · Stedsnavn: Kartverket · Kart: © OpenStreetMap, OpenFreeMap', 'Lakes: NVE · Salmon: Norwegian Environment Agency · Ice-out: Sentinel-2 (HatchWatch) · Species: Artsdatabanken/GBIF · Place names: Kartverket · Map: © OpenStreetMap, OpenFreeMap') }), 'bottom-left');
+map.addControl(new maplibregl.AttributionControl({ compact: true, customAttribution: tx('Vann: NVE · Laks: Miljødirektoratet · Isgang: Sentinel-2 (HatchWatch) · Arter: Artsdatabanken/GBIF · Stedsnavn: Kartverket · Kart: © OpenStreetMap, OpenFreeMap', 'Lakes: NVE · Salmon: Norwegian Environment Agency · Ice-out: Sentinel-2 (HatchWatch) · Species: Artsdatabanken/GBIF · Place names: Kartverket · Map: © OpenStreetMap, OpenFreeMap') }), window.innerWidth >= 760 ? 'bottom-left' : 'bottom-right');
 var userMoved = false, iceFitted = false;
 map.on('movestart', function (e) { if (e.originalEvent) userMoved = true; });
 function foldAttrib() { var a = document.querySelector('.maplibregl-ctrl-attrib'); if (a) a.classList.remove('maplibregl-compact-show'); }
@@ -387,7 +399,9 @@ map.once('idle', foldAttrib); setTimeout(foldAttrib, 1500);
 function fitNorway() {
   var w = window.innerWidth, top = w >= 760 ? 70 : 150, sh = document.getElementById('scrub').offsetHeight || 190;
   // Stor skjerm: skyveren ligger nede til høyre, så Norge får hele høyden og holder seg til venstre for den
-  var pad = w >= 1100 ? { top: top, bottom: 20, left: 20, right: 470 } : { top: top, bottom: sh + 20, left: 10, right: 10 };
+  // Venstre 230 på stor skjerm: plass til forklaringen. Mobil: plass til forklaringsraden over skyveren.
+  var pad = w >= 1100 ? { top: top, bottom: 20, left: 230, right: 470 }
+                      : { top: top, bottom: sh + (w >= 760 ? 20 : 56), left: 10, right: 10 };
   map.fitBounds([[4.6, 57.9], [31.2, 71.2]], { padding: pad, duration: 0 });
 }
 function syncScrubHeight() { document.getElementById('map').style.setProperty('--scrub-h', (document.getElementById('scrub').offsetHeight || 190) + 'px'); }
@@ -445,6 +459,19 @@ map.on('load', function () {
   applyMode();    // før tilpasningen: modusen bestemmer høyden på skyveren
   fitNorway();
   loadIceYear(iceYear).then(applyIce);
+  // /?vann=<vatnlnr> (fra vannsiden): fly til vannet og åpne kortet
+  var vid = parseInt(new URLSearchParams(location.search).get('vann'), 10);
+  if (vid) fetch(DATA + 'vann/' + (vid % 64) + '.json').then(function (r) { return r.json(); }).then(function (d) {
+    var v = d[String(vid)]; if (!v) return;
+    if (mode !== 'flue') { mode = 'flue'; applyMode(); }
+    map.jumpTo({ center: [v.lon, v.lat], zoom: v.ha > 2000 ? 10 : v.ha > 300 ? 11.5 : 13, offset: sheetOffset() });
+    var opened = false, tryOpen = function () {
+      if (opened) return;
+      var f = map.querySourceFeatures('hw', { sourceLayer: 'vann', filter: ['==', ['get', 'vatnlnr'], vid] })[0];
+      if (f) { opened = true; openLake(f); history.replaceState(null, '', '/'); }
+    };
+    map.once('idle', tryOpen); setTimeout(tryOpen, 2500);
+  }).catch(function () {});
   loadElver().then(function () {
     applyLaks();
     // /?elv=<vassdragsnr>#laks (fra elvesiden): fly til elva og åpne kortet
@@ -494,7 +521,7 @@ function applyIce() {
   paintIce();
   // Isgangteksten gjør skyveren høyere: tilpass Norge på nytt hvis ingen har rørt kartet ennå
   syncScrubHeight();
-  if (!iceFitted) { iceFitted = true; if (!userMoved && !sel && !new URLSearchParams(location.search).get('elv')) fitNorway(); }
+  if (!iceFitted) { iceFitted = true; var qs = new URLSearchParams(location.search); if (!userMoved && !sel && !qs.get('elv') && !qs.get('vann')) fitNorway(); }
   ICE_YEARS.forEach(function (y) { loadIceYear(y); });   // resten i bakgrunnen, til vannkortets årsrad
 }
 function paintIce() {
@@ -722,30 +749,7 @@ shFav.addEventListener('click', function () {
   else if (sel.kind === 'river') { var e = ELVER && ELVER[sel.id]; toggleElvFav(sel.id, e ? e.navn : sel.id); this.classList.toggle('on', isElvFav(sel.id)); }
 });
 
-// Vann: isgang + artsfunn + nærmeste prognose
-var KEY_SPECIES = ['Ephemera vulgata', 'Ephemera danica', 'Leptophlebia marginata', 'Leptophlebia vespertina', 'Siphlonurus lacustris', 'Siphlonurus aestivalis', 'Ephemerella aurivillii', 'Heptagenia dalecarlica', 'Phryganea grandis', 'Phryganea bipunctata', 'Lepidurus arcticus', 'Gammarus lacustris'];
-function loadArter() {
-  if (ARTER) return Promise.resolve(ARTER);
-  return fetch(DATA + 'arter.json').then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }).then(function (d) { ARTER = d; return d; });
-}
-function arterHtml(id) {
-  var list = ARTER && ARTER[id];
-  var head = '<div class="hw-eyebrow">' + tx('Registrerte arter', 'Recorded species') + '</div>';
-  if (!list || !list.length) return '<div class="arter">' + head + '<div class="note">' + tx('Ingen artsbestemte funn av døgnfluer, vårfluer, marflo eller skjoldkreps koblet til dette vannet ennå.', 'No identified mayfly, caddis, Gammarus or tadpole shrimp records linked to this lake yet.') + '</div></div>';
-  var grp = { d: tx('Døgnfluer', 'Mayflies'), v: tx('Vårfluer', 'Caddis'), m: tx('Marflo', 'Gammarus'), s: tx('Skjoldkreps', 'Tadpole shrimp'), a: tx('Annet', 'Other') };
-  var by = {};
-  list.forEach(function (x) { (by[x[1]] = by[x[1]] || []).push(x); });
-  var html = '';
-  ['d', 'v', 'm', 's', 'a'].forEach(function (g) {
-    if (!by[g]) return;
-    var items = by[g].slice().sort(function (a, b) { var ka = KEY_SPECIES.indexOf(a[0]) >= 0 ? 0 : 1, kb = KEY_SPECIES.indexOf(b[0]) >= 0 ? 0 : 1; return ka - kb || b[2] - a[2]; });
-    var shown = items.slice(0, 10);
-    html += '<div style="margin-top:8px"><span class="hw-small">' + grp[g] + ' · ' + items.length + '</span><div class="list">' +
-      shown.map(function (x) { return '<span class="sp' + (KEY_SPECIES.indexOf(x[0]) >= 0 ? ' key' : '') + '" title="' + x[2] + tx(' funn, sist ', ' records, last ') + (x[3] || '–') + '">' + x[0] + '</span>'; }).join('') +
-      (items.length > shown.length ? '<span class="sp">+' + (items.length - shown.length) + '</span>' : '') + '</div></div>';
-  });
-  return '<div class="arter">' + head + html + '<div class="note">' + tx('Artsdatabanken via GBIF. Registrert betyr at minst ett funn er koblet til vannet, ikke at arten sikkert finnes der. Fravær betyr ikke at arten mangler.', 'Artsdatabanken via GBIF. Recorded means at least one record is linked to the lake, not that the species is surely there. Absence does not mean it is missing.') + '</div></div>';
-}
+// Vann: lite kort med isgang og anslag; arter, år for år og forklaring ligger på vannsiden (vann.html)
 function openLake(f, keep) {
   var p = f.properties, id = p.vatnlnr, rec = (ISG[iceYear] || {})[id];
   if (!keep) setSel({ kind: 'lake', id: id, f: f }); else sel.f = f;
@@ -769,16 +773,18 @@ function openLake(f, keep) {
                                  : tx('Skyer eller manglende bilder ga ingen sikker dato dette året, eller vannet er ikke behandlet ennå.', 'Clouds or missing images gave no reliable date this year, or the lake has not been processed yet.');
   }
   var yrs = '<div class="yrs">' + ICE_YEARS.map(function (y) { var r = (ISG[y] || {})[id]; return '<div class="' + (y === iceYear ? 'cur' : '') + '">' + String(y).slice(2) + '<b>' + (r ? shortDoy(y, r[0]) : '–') + '</b></div>'; }).join('') + '</div>';
-  shExtra.innerHTML = yrs + (ARTER ? arterHtml(id) : '<div class="arter"><div class="note">' + tx('Henter artsfunn…', 'Loading species…') + '</div></div>');
-  if (!ARTER) loadArter().then(function () { if (sel && sel.kind === 'lake' && sel.id === id) openLake(f, true); });
-  // Nærmeste HatchWatch-prognose
+  // Smakebit på anslaget (samme faste forskyvninger som dashboardet og vannsiden); resten på vannsiden
+  var marg = rec ? '<div class="arter"><div class="hw-eyebrow">' + tx('Anslått fra isgangen', 'Estimated from ice-out') + '</div><div class="line" style="margin-top:4px">' +
+    'Marginata <b>' + rangeDoy(iceYear, rec[0] + 14, rec[0] + 21) + '</b> · Vespertina <b>' + rangeDoy(iceYear, rec[0] + 21, rec[0] + 35) + '</b></div></div>' : '';
+  // Nærmeste HatchWatch-prognose som lenke i kortet
   var best = null, bd = 1e9, pt = f.geometry && f.geometry.coordinates ? centroid(f.geometry) : null;
   if (pt) LOCS.forEach(function (l) { var d = haversine(pt[1], pt[0], l.lat, l.lon); if (d < bd) { bd = d; best = l; } });
+  var near = best && bd < 40 ? '<div class="note" style="margin-top:10px">' + tx('Vulgata: nærmeste klekkeprognose er ', 'Vulgata: the nearest hatch forecast is ') +
+    '<a href="/dashboard.html?loc=' + encodeURIComponent(best.id) + '" style="color:var(--hw-water)">' + best.name + '</a>, ' + Math.round(bd) + ' km.</div>' : '';
+  shExtra.innerHTML = yrs + marg + near;
   shFav.style.display = 'none';
-  if (best && bd < 40) {
-    shOpen.style.display = ''; shOpen.textContent = tx('Klekkeprognose: ', 'Hatch forecast: ') + best.name + ' · ' + Math.round(bd) + ' km';
-    shOpen.setAttribute('href', '/dashboard.html?loc=' + encodeURIComponent(best.id));
-  } else shOpen.style.display = 'none';
+  shOpen.style.display = ''; shOpen.textContent = tx('Åpne vannet', 'Open the lake');
+  shOpen.setAttribute('href', '/vann.html?id=' + encodeURIComponent(id));
   if (!keep) showSheet();
 }
 function centroid(g) {
@@ -815,7 +821,7 @@ function openRiver(id, props, keep) {
     big.innerHTML = tx('Uke ', 'Week ') + (k.beste_uke || '–') + '<span>' + tx('beste uke i snitt', 'best week on average') + '</span>';
     line.innerHTML = tx('Halve fangsten pleier å være tatt rundt <b>' + dmTxt(k.halv) + '</b>. ', 'Half the catch is usually taken around <b>' + dmTxt(k.halv) + '</b>. ') +
       tx('Bygger på ' + k.n_aar + ' år med fangstrapporter.', 'Based on ' + k.n_aar + ' years of catch reports.');
-    shExtra.innerHTML = kurveSvg(e, day) + '<div class="arter"><div class="note">' + tx('Gull er de tre beste ukene i snitt. Streken er valgt dato. Kilde: laksebørsene til Elveguiden og Inatur, sammenstilt av HatchWatch.', 'Gold marks the three best weeks on average. The line is the chosen date. Source: Elveguiden and Inatur catch reports, compiled by HatchWatch.') + '</div></div>';
+    shExtra.innerHTML = kurveSvg(e, day) + '<div class="arter"><div class="note">' + tx('Gull er de tre beste ukene i snitt. Streken er valgt dato.', 'Gold marks the three best weeks on average. The line is the chosen date.') + '</div></div>';
   } else {
     big.innerHTML = '<span style="margin:0;font-size:15px">' + tx('Ingen fangstkurve ennå', 'No catch curve yet') + '</span>';
     line.innerHTML = tx('Vi har fangstkurve for de 30 elvene med mest laks. Flere kommer.', 'We have catch curves for the 30 rivers with the most salmon. More are coming.');
@@ -1026,6 +1032,8 @@ fetch(API_BASE + '/api/predictions')
 
 paintYears(); paintScrub(); syncScrubHeight();
 window.addEventListener('resize', syncScrubHeight);
+// Skyveren endrer høyde når tekstene kommer inn; forklaring, zoom og kildeknapp følger etter
+if (window.ResizeObserver) new ResizeObserver(syncScrubHeight).observe(document.getElementById('scrub'));
 if (location.hash === '#sesong') { if (mode === 'laks') openElvPanel(); else openSesong(); }
 </script>
 <script src="/hw-shell.js"></script>

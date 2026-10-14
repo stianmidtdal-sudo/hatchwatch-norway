@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Vann — HatchWatch</title>
+<meta name="theme-color" content="#0b1418">
+<meta name="description" content="Isgang fra satellitt, anslått klekking og registrerte arter for norske vann.">
+<link rel="icon" type="image/png" sizes="32x32" href="/logos/favicon-32.png?v=2">
+<link rel="apple-touch-icon" href="/logos/apple-touch-icon-180.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="stylesheet" href="/hw.css">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<script src="/hw-lang.js"></script>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
+<style>
+  /* ═══ VANNSIDE (2026-10-14) ═══
+     Landingsside per vann: /vann.html?id=<vatnlnr fra NVE Innsjødatabase>.
+     Data: /data/kart/vann/<vatnlnr % 64>.json (bygges av tools/kart/bygg_kart.py vann):
+     navn, moh, ha, kommune, punkt, isgang per år fra satellitt, artsfunn.
+     Marginata og vespertina anslås fra isgangen med de samme faste forskyvningene som
+     dashboardet bruker (ikke kalibrert, merket som anslag). */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { min-height: 100vh; }
+  .top { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: calc(env(safe-area-inset-top, 0px) + 10px) 16px 10px; background: color-mix(in srgb, var(--hw-bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--hw-line); }
+  .back { display: inline-flex; align-items: center; gap: 6px; color: var(--hw-fg-2); text-decoration: none; font-size: 14px; min-width: 70px; }
+  .back svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .top .brand { display: flex; align-items: center; gap: 6px; color: var(--hw-fg); text-decoration: none; font-family: var(--hw-display); font-weight: 700; font-size: 17px; letter-spacing: -.02em; }
+  .top .brand b { color: var(--hw-hatch); font-weight: 700; }
+  .top .spacer { min-width: 70px; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 18px 16px 40px; }
+  h1 { font-family: var(--hw-display); font-weight: 800; font-size: 34px; letter-spacing: -.03em; line-height: 1.05; margin-top: 6px; }
+  .sub { color: var(--hw-fg-2); font-size: 14px; margin-top: 6px; }
+  .card { background: var(--hw-bg-2); border: 1px solid var(--hw-line); border-radius: 18px; padding: 16px; margin-top: 14px; }
+  .card h2 { font-family: var(--hw-display); font-weight: 700; font-size: 18px; letter-spacing: -.01em; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .card .lead { font-size: 14.5px; color: var(--hw-fg-2); line-height: 1.55; margin-top: 6px; }
+  .card .lead b { color: var(--hw-fg); font-weight: 600; }
+  .note { font-size: 12.5px; color: var(--hw-fg-3); line-height: 1.5; margin-top: 10px; }
+  .note a, .lead a { color: var(--hw-water); }
+  .hero { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+  .stat { background: var(--hw-bg-2); border: 1px solid var(--hw-line); border-radius: 16px; padding: 14px; }
+  .stat .k { font-family: var(--hw-mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--hw-fg-3); }
+  .stat .v { font-family: var(--hw-display); font-weight: 800; font-size: 28px; letter-spacing: -.03em; line-height: 1.05; margin-top: 6px; }
+  .stat .v.water { color: var(--hw-water); }
+  .stat .v small { font-family: var(--hw-mono); font-weight: 500; font-size: 12px; color: var(--hw-fg-2); letter-spacing: 0; margin-left: 4px; }
+  .stat .s { font-size: 12.5px; color: var(--hw-fg-2); margin-top: 4px; line-height: 1.4; }
+  .arts { display: grid; gap: 10px; margin-top: 12px; }
+  .art { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: baseline; padding: 12px; border-radius: 14px; background: var(--hw-bg-3); }
+  .art b { font-family: var(--hw-display); font-weight: 700; font-size: 17px; }
+  .art .d { font-family: var(--hw-display); font-weight: 800; font-size: 18px; color: var(--hw-hatch); text-align: right; }
+  .art .s { grid-column: 1 / -1; font-size: 12.5px; color: var(--hw-fg-2); }
+  .art.muted .d { color: var(--hw-fg-2); }
+  svg.yrs { width: 100%; max-width: 520px; height: auto; display: block; margin: 12px auto 0; }
+  svg.yrs text { font-family: var(--hw-mono); font-size: 12px; fill: var(--hw-fg-3); }
+  svg.yrs .iv { stroke: var(--hw-water); stroke-width: 3; stroke-linecap: round; opacity: .45; }
+  svg.yrs .pt { fill: var(--hw-water); stroke: var(--hw-bg-2); stroke-width: 2; }
+  svg.yrs .pt.cur { fill: var(--hw-hatch); }
+  svg.yrs .med { stroke: var(--hw-fg-3); stroke-dasharray: 3 3; }
+  svg.yrs .grid { stroke: var(--hw-line); }
+  .splist { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+  .sp { font-size: 12.5px; padding: 4px 9px; border-radius: 999px; background: var(--hw-bg-3); color: var(--hw-fg-2); }
+  .sp i { font-style: italic; }
+  .sp.key { color: var(--hw-hatch); background: var(--hw-hatch-soft); }
+  .grp { margin-top: 12px; }
+  .grp .hw-eyebrow { margin-bottom: 2px; }
+  .maplibregl-ctrl-attrib { background: color-mix(in srgb, var(--hw-bg) 80%, transparent) !important; color: var(--hw-fg-3) !important; font-size: 10px; }
+  .maplibregl-ctrl-attrib a { color: var(--hw-fg-2) !important; }
+  .maplibregl-ctrl-attrib-button { filter: invert(.8); }
+  #mini { height: 240px; border-radius: 14px; overflow: hidden; margin-top: 12px; background: #13242b; }
+  .row2 { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .skel { color: var(--hw-fg-3); font-size: 13.5px; margin-top: 10px; }
+  .miss { text-align: center; padding: 60px 16px; color: var(--hw-fg-2); }
+  @media (max-width: 420px) { h1 { font-size: 30px; } .stat .v { font-size: 24px; } }
+</style>
+</head>
+<body class="hw-dark">
+
+<header class="top">
+  <a class="back" href="/" id="backLink"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span id="backTxt">Kart</span></a>
+  <a class="brand" href="/" aria-label="HatchWatch"><span class="hw-fly" style="width:26px;color:var(--hw-hatch)" aria-hidden="true"></span><span>Hatch<b>Watch</b></span></a>
+  <span class="spacer"></span>
+</header>
+
+<main class="wrap" id="main">
+  <div class="skel" id="loading">Laster vannet…</div>
+</main>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+//  VANNSIDE — isgang fra satellitt, marginata/vespertina anslått fra isgangen,
+//  registrerte arter, nærmeste klekkeprognose og kart.
+//  Ordlyd: «modellen anslo», aldri «det klekket». Vi ser isgang fra satellitt,
+//  ikke klekking.
+// ═══════════════════════════════════════════════════════════════════
+var EN = window.HW_LANG === 'en';
+function tx(no, en) { return EN ? en : no; }
+if (EN) { document.documentElement.lang = 'en'; document.getElementById('backTxt').textContent = 'Map'; document.getElementById('loading').textContent = 'Loading the lake…'; }
+var MON = EN ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] : ['jan', 'feb', 'mars', 'april', 'mai', 'juni', 'juli', 'aug', 'sep', 'okt', 'nov', 'des'];
+var MOH = tx('moh', 'm a.s.l.');
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function num(v, d) { if (v == null || isNaN(v)) return '–'; var s = (+v).toFixed(d == null ? 0 : d); return EN ? s : s.replace('.', ','); }
+function dateOf(year, doy) { return new Date(year, 0, doy); }
+function fmt(year, doy) { var d = dateOf(year, doy); return EN ? d.getDate() + ' ' + MON[d.getMonth()] : d.getDate() + '. ' + MON[d.getMonth()]; }
+function fmtRange(year, a, b) {
+  var da = dateOf(year, a), db = dateOf(year, b);
+  if (da.getMonth() === db.getMonth()) return EN ? da.getDate() + '–' + db.getDate() + ' ' + MON[db.getMonth()] : da.getDate() + '.–' + db.getDate() + '. ' + MON[db.getMonth()];
+  return fmt(year, a) + '–' + fmt(year, b);
+}
+function haversine(a, b, c, d) { var R = 6371, t = Math.PI / 180, x = (c - a) * t, y = (d - b) * t, h = Math.sin(x / 2) * Math.sin(x / 2) + Math.cos(a * t) * Math.cos(c * t) * Math.sin(y / 2) * Math.sin(y / 2); return 2 * R * Math.asin(Math.sqrt(h)); }
+var TODAY = new Date(); TODAY.setHours(0, 0, 0, 0);
+var YEAR = TODAY.getFullYear();
+var ID = parseInt(new URLSearchParams(location.search).get('id'), 10);
+var GRUPPER = 64;   // samme som VANN_GRUPPER i tools/kart/bygg_kart.py
+
+// Samme faste forskyvninger fra isgang som dashboardet (start / topp / slutt i dager etter isgang).
+// Ikke kalibrert per vann. Vises ikke som tall på siden (Stian 2026-10-01: ikke «isgang +14»).
+var ARTER_FRA_ISGANG = [
+  { navn: 'Marginata', latin: 'Leptophlebia marginata', a: 14, p: 17, b: 21 },
+  { navn: 'Vespertina', latin: 'Leptophlebia vespertina', a: 21, p: 28, b: 35 }
+];
+// HatchWatch-lokasjonene (samme som forsiden) for «nærmeste klekkeprognose»
+var LOCS = [
+  ['kautokeino', 'Kautokeino', 69.010, 23.040], ['alta', 'Alta', 69.970, 23.270], ['porsanger', 'Porsanger', 70.070, 25.000],
+  ['bardu', 'Bardu', 69.036, 18.820], ['mo_i_rana', 'Mo i Rana', 66.360, 14.692], ['borgefjell', 'Børgefjell', 65.109, 14.090],
+  ['roros', 'Røros', 62.570, 11.390], ['trondheim', 'Trondheim', 63.483, 10.812], ['rena', 'Rena', 61.135, 11.650],
+  ['romeriksasen', 'Romeriksåsen', 60.156, 10.892], ['nordmarka_dyn', 'Nordmarka', 59.940, 10.720], ['finnemarka', 'Finnemarka', 59.855, 10.303],
+  ['ostmarka', 'Østmarka', 59.700, 11.170], ['vestfjella', 'Vestfjella', 59.300, 11.660], ['hardangervidda', 'Hardangervidda', 60.139, 8.547],
+  ['bergen', 'Bergen', 60.500, 5.700]
+];
+var KEY_SPECIES = ['Ephemera vulgata', 'Ephemera danica', 'Leptophlebia marginata', 'Leptophlebia vespertina', 'Siphlonurus lacustris', 'Siphlonurus aestivalis', 'Ephemerella aurivillii', 'Heptagenia dalecarlica', 'Phryganea grandis', 'Phryganea bipunctata', 'Lepidurus arcticus', 'Gammarus lacustris'];
+
+var main = document.getElementById('main');
+if (!ID) main.innerHTML = '<div class="miss">' + tx('Mangler vann.', 'No lake given.') + ' <a href="/">' + tx('Til kartet', 'To the map') + '</a></div>';
+else fetch('/data/kart/vann/' + (ID % GRUPPER) + '.json').then(function (r) { return r.json(); }).then(function (d) {
+  var v = d[String(ID)];
+  if (!v) { main.innerHTML = '<div class="miss"><h1 style="font-size:24px">' + tx('Fant ikke vannet', 'Lake not found') + '</h1><p class="lead" style="margin-top:10px"><a href="/">' + tx('Tilbake til kartet', 'Back to the map') + '</a></p></div>'; return; }
+  render(v);
+}).catch(function () { main.innerHTML = '<div class="miss">' + tx('Klarte ikke å laste vannet.', 'Could not load the lake.') + '</div>'; });
+
+function median(a) { var s = a.slice().sort(function (x, y) { return x - y; }), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; }
+
+function render(v) {
+  var navn = v.navn || tx('Navnløst vann', 'Unnamed lake');
+  document.title = navn + ' — HatchWatch';
+  var isg = v.isg || {}, years = Object.keys(isg).map(Number).sort(), h = '';
+  var ly = years.length ? years[years.length - 1] : null;          // siste år med satellittdato
+  var med = years.length >= 3 ? Math.round(median(years.map(function (y) { return isg[y][0]; }))) : null;
+
+  h += '<div class="hw-eyebrow gold">' + tx('Vann', 'Lake') + (v.kommune ? ' · ' + esc(v.kommune) : '') + '</div>';
+  h += '<h1>' + esc(navn) + '</h1>';
+  h += '<div class="sub">' + [v.moh != null ? v.moh + ' ' + MOH : '', num(v.ha, v.ha < 100 ? 1 : 0) + ' ha'].filter(Boolean).join(' · ') + '</div>';
+
+  // ── Isgang, hovedtall ──
+  if (ly) {
+    var r = isg[ly], half = r[1] != null ? Math.max(1, Math.round(r[1] / 2)) : null;
+    var diff = med != null ? r[0] - med : null;
+    var cmp = diff == null ? '' : Math.abs(diff) <= 2 ? tx('omtrent som vanlig', 'about as usual')
+            : diff < 0 ? tx(-diff + ' dager tidligere enn vanlig', -diff + ' days earlier than usual') : tx(diff + ' dager senere enn vanlig', diff + ' days later than usual');
+    h += '<div class="hero">' +
+      '<div class="stat"><div class="k">' + tx('Isgang ', 'Ice-out ') + ly + '</div><div class="v water">' + fmt(ly, r[0]) + (half ? '<small>±' + half + ' d</small>' : '') + '</div><div class="s">' + (cmp ? cmp.charAt(0).toUpperCase() + cmp.slice(1) + '.' : tx('Satellittanslag.', 'Satellite estimate.')) + '</div></div>' +
+      '<div class="stat"><div class="k">' + tx('Vanlig isgang', 'Usual ice-out') + '</div><div class="v">' + (med != null ? fmt(ly, med) : '–') + '</div><div class="s">' + (med != null ? tx('midtverdi for ' + years.length + ' år', 'median of ' + years.length + ' years') : tx('for få år ennå', 'too few years yet')) + '</div></div>' +
+      '</div>';
+  }
+
+  // ── Klekking anslått fra isgangen ──
+  h += '<div class="card"><h2>' + tx('Klekking anslått fra isgangen', 'Hatch estimated from ice-out') + '<span class="hw-chip soon"><i></i>' + tx('Anslag', 'Estimate') + '</span></h2>';
+  if (ly) {
+    var thisYear = isg[YEAR], ref = thisYear ? YEAR : ly, rv = isg[ref][0];
+    if (!thisYear) h += '<p class="lead">' + tx('Isgangen for ' + YEAR + ' er ikke registrert ennå. Anslaget kommer når satellitten ser at isen har gått. Under står anslaget for ' + ly + '.', 'Ice-out for ' + YEAR + ' is not recorded yet. The estimate comes when the satellite sees the ice has gone. Below is the estimate for ' + ly + '.') + '</p>';
+    else h += '<p class="lead">' + tx('Ut fra isgangen ' + fmt(ref, rv) + ' gir modellen disse periodene for ' + ref + '.', 'From the ice-out on ' + fmt(ref, rv) + ', the model gives these periods for ' + ref + '.') + '</p>';
+    h += '<div class="arts">' + ARTER_FRA_ISGANG.map(function (a) {
+      return '<div class="art"><b>' + a.navn + '</b><span class="d">' + fmtRange(ref, rv + a.a, rv + a.b) + '</span><span class="s"><i>' + a.latin + '</i> · ' + tx('topp rundt ', 'peak around ') + fmt(ref, rv + a.p) + '</span></div>';
+    }).join('') + vulgataRow(v) + '</div>';
+    h += '<p class="note">' + tx('Marginata og vespertina følger isgangen tett, så modellen regner dem fra isgangdatoen med faste forskyvninger. Forskyvningene er de samme for alle vann og er lite testet: av to fiskerapporter vi har sjekket mot, traff én i Nordmarka, mens én på Ringerike kom tidligere enn modellen. Satellittdatoen har i tillegg en egen usikkerhet (± over). Bruk periodene som en pekepinn, ikke en fasit.',
+                                 'Marginata and vespertina follow ice-out closely, so the model works them out from the ice-out date with fixed offsets. The offsets are the same for every lake and little tested: of two angler reports we checked against, one in Nordmarka matched, while one at Ringerike came earlier than the model. The satellite date has its own uncertainty as well (± above). Use the periods as a pointer, not a verdict.') + '</p>';
+  } else {
+    h += '<p class="lead">' + (v.ha > 3000 ? tx('Vannet er for stort for satellittmetoden, så vi har ingen isgangdato og kan ikke anslå marginata og vespertina her.', 'The lake is too large for the satellite method, so we have no ice-out date and cannot estimate marginata and vespertina here.')
+                                            : tx('Vi har ingen sikker isgangdato fra satellitt for dette vannet ennå, så vi kan ikke anslå marginata og vespertina.', 'We have no reliable satellite ice-out date for this lake yet, so we cannot estimate marginata and vespertina.')) + '</p>';
+    h += '<div class="arts">' + vulgataRow(v) + '</div>';
+  }
+  h += '</div>';
+
+  // ── Isgang år for år ──
+  if (years.length) {
+    h += '<div class="card"><h2>' + tx('Isgang år for år', 'Ice-out year by year') + '</h2>' +
+      '<p class="lead">' + tx('Punktet er midt i tidsrommet der satellitten så at isen gikk. Streken viser hvor langt tidsrommet var.', 'The dot is the middle of the period in which the satellite saw the ice go. The bar shows how long that period was.') + '</p>' +
+      yrsSvg(isg, years, med, ly) +
+      '<p class="note">' + tx('Sentinel-2-bilder, behandlet av HatchWatch. Skyer kan gi lange tidsrom. Typisk bom er 4–5 dager mot målt isgang.', 'Sentinel-2 images, processed by HatchWatch. Clouds can give long periods. Typical error is 4–5 days against measured ice-out.') + '</p></div>';
+  }
+
+  // ── Arter ──
+  h += '<div class="card"><h2>' + tx('Registrerte arter', 'Recorded species') + '</h2>' + arterHtml(v.arter) + '</div>';
+
+  // ── Kart ──
+  h += '<div class="card"><h2>' + tx('Kart', 'Map') + '</h2><div id="mini"></div><div class="row2"><a class="hw-btn primary" href="/?vann=' + ID + '">' + tx('Vis i kartet', 'Show on the map') + '</a></div></div>';
+  h += '<p class="note">' + tx('Vann: NVE Innsjødatabase. Isgang: Sentinel-2 via Google Earth Engine, HatchWatch. Arter: Artsdatabanken via GBIF.', 'Lake: NVE lake database. Ice-out: Sentinel-2 via Google Earth Engine, HatchWatch. Species: Artsdatabanken via GBIF.') + '</p>';
+  main.innerHTML = h;
+  miniMap(v);
+}
+
+function vulgataRow(v) {
+  var best = null, bd = 1e9;
+  LOCS.forEach(function (l) { var d = haversine(v.lat, v.lon, l[2], l[3]); if (d < bd) { bd = d; best = l; } });
+  if (best && bd < 40) return '<div class="art muted"><b>Vulgata</b><span class="d"><a href="/dashboard.html?loc=' + best[0] + '" style="color:inherit">' + tx('Se prognosen', 'See forecast') + '</a></span><span class="s"><i>Ephemera vulgata</i> · ' + tx('nærmeste klekkeprognose er ' + best[1] + ', ' + Math.round(bd) + ' km unna. Vulgata følger varmen, ikke isgangen.', 'the nearest hatch forecast is ' + best[1] + ', ' + Math.round(bd) + ' km away. Vulgata follows warmth, not ice-out.') + '</span></div>';
+  return '<div class="art muted"><b>Vulgata</b><span class="d">–</span><span class="s"><i>Ephemera vulgata</i> · ' + tx('ingen klekkeprognose i nærheten ennå. Vulgata følger varmen, ikke isgangen.', 'no hatch forecast nearby yet. Vulgata follows warmth, not ice-out.') + '</span></div>';
+}
+
+function yrsSvg(isg, years, med, ly) {
+  var lo = Infinity, hi = -Infinity;
+  years.forEach(function (y) { var r = isg[y], w = (r[1] || 0) / 2; lo = Math.min(lo, r[0] - w); hi = Math.max(hi, r[0] + w); });
+  lo = Math.floor(lo - 4); hi = Math.ceil(hi + 4);
+  var W = 420, H = 170, L = 66, B = 20, n = years.length, cw = (W - L - 10) / n;   // smal viewBox: lesbar tekst på mobil
+  var y = function (d) { return 8 + (H - 16) * (d - lo) / Math.max(1, hi - lo); };   // tidlig øverst
+  var s = '<svg class="yrs" viewBox="0 0 ' + W + ' ' + (H + B) + '" role="img" aria-label="' + tx('Isgang per år', 'Ice-out per year') + '">';
+  // datolinjer: 1. og 15. i hver måned i spennet
+  for (var m = 2; m <= 7; m++) [1, 15].forEach(function (dd) {
+    var doy = Math.round((Date.UTC(2021, m, dd) - Date.UTC(2021, 0, 1)) / 86400000) + 1;
+    if (doy > lo && doy < hi) s += '<line class="grid" x1="' + L + '" x2="' + (W - 10) + '" y1="' + y(doy) + '" y2="' + y(doy) + '"/><text x="' + (L - 6) + '" y="' + (y(doy) + 3) + '" text-anchor="end">' + (EN ? dd + ' ' + MON[m] : dd + '. ' + MON[m].slice(0, 3)) + '</text>';
+  });
+  if (med != null) s += '<line class="med" x1="' + L + '" x2="' + (W - 10) + '" y1="' + y(med) + '" y2="' + y(med) + '"/>';
+  years.forEach(function (yy, i) {
+    var r = isg[yy], cx = L + cw * i + cw / 2, w = (r[1] || 0) / 2;
+    if (w) s += '<line class="iv" x1="' + cx + '" x2="' + cx + '" y1="' + y(r[0] - w) + '" y2="' + y(r[0] + w) + '"/>';
+    s += '<circle class="pt' + (yy === ly ? ' cur' : '') + '" cx="' + cx + '" cy="' + y(r[0]) + '" r="5.5"><title>' + yy + ': ' + fmt(yy, r[0]) + (w ? ' ±' + Math.max(1, Math.round(w)) + ' d' : '') + '</title></circle>';
+    s += '<text x="' + cx + '" y="' + (H + 14) + '" text-anchor="middle">' + String(yy).slice(2) + '</text>';
+  });
+  return s + '</svg>' + (med != null ? '<div class="note" style="margin-top:4px">' + tx('Stiplet linje: vanlig isgang (midtverdi).', 'Dashed line: usual ice-out (median).') + '</div>' : '');
+}
+
+function arterHtml(list) {
+  if (!list || !list.length) return '<p class="lead">' + tx('Ingen artsbestemte funn av døgnfluer, vårfluer, marflo eller skjoldkreps er koblet til dette vannet ennå. Det betyr ikke at de mangler, bare at ingen har registrert dem her.', 'No identified mayfly, caddis, Gammarus or tadpole shrimp records are linked to this lake yet. That does not mean they are missing, only that nobody has recorded them here.') + '</p>';
+  var grp = { d: tx('Døgnfluer', 'Mayflies'), v: tx('Vårfluer', 'Caddis'), m: tx('Marflo', 'Gammarus'), s: tx('Skjoldkreps', 'Tadpole shrimp'), a: tx('Annet', 'Other') }, by = {};
+  list.forEach(function (x) { (by[x[1]] = by[x[1]] || []).push(x); });
+  var h = '';
+  ['d', 'v', 'm', 's', 'a'].forEach(function (g) {
+    if (!by[g]) return;
+    var items = by[g].slice().sort(function (a, b) { var ka = KEY_SPECIES.indexOf(a[0]) >= 0 ? 0 : 1, kb = KEY_SPECIES.indexOf(b[0]) >= 0 ? 0 : 1; return ka - kb || b[2] - a[2]; });
+    h += '<div class="grp"><div class="hw-eyebrow">' + grp[g] + ' · ' + items.length + '</div><div class="splist">' + items.map(function (x) {
+      var no = !EN && x[5] ? esc(x[5]) + ' · ' : '';
+      return '<span class="sp' + (KEY_SPECIES.indexOf(x[0]) >= 0 ? ' key' : '') + '" title="' + x[2] + tx(' funn, sist ', ' records, last ') + (x[3] || '–') + '">' + no + '<i>' + esc(x[0]) + '</i></span>';
+    }).join('') + '</div></div>';
+  });
+  return h + '<p class="note">' + tx('Artsdatabanken via GBIF. Registrert betyr at minst ett funn er koblet til vannet, ikke at arten sikkert finnes der i dag. Gull er arter som er viktige for fluefiske.', 'Artsdatabanken via GBIF. Recorded means at least one record is linked to the lake, not that the species is surely there today. Gold marks species that matter for fly fishing.') + '</p>';
+}
+
+function miniMap(v) {
+  if (!window.maplibregl || v.lat == null) { var m = document.getElementById('mini'); if (m) m.style.display = 'none'; return; }
+  var protocol = new pmtiles.Protocol(); maplibregl.addProtocol('pmtiles', protocol.tile);
+  var map = new maplibregl.Map({
+    container: 'mini', interactive: false, attributionControl: false,
+    preserveDrawingBuffer: /^(localhost|127\.0\.0\.1)$/.test(location.hostname),
+    center: [v.lon, v.lat], zoom: v.ha > 2000 ? 9.5 : v.ha > 300 ? 11 : v.ha > 60 ? 12.3 : 13.3,
+    style: {
+      version: 8, glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
+      sources: { omt: { type: 'vector', url: 'https://tiles.openfreemap.org/planet' }, hw: { type: 'vector', url: 'pmtiles://' + location.origin + '/data/kart/hatchwatch.pmtiles' } },
+      layers: [
+        { id: 'bg', type: 'background', paint: { 'background-color': '#13242b' } },
+        { id: 'wood', type: 'fill', source: 'omt', 'source-layer': 'landcover', filter: ['==', ['get', 'class'], 'wood'], paint: { 'fill-color': '#152a2f' } },
+        { id: 'water', type: 'fill', source: 'omt', 'source-layer': 'water', paint: { 'fill-color': '#081217' } },
+        { id: 'vann', type: 'fill', source: 'hw', 'source-layer': 'vann', paint: { 'fill-color': '#24434f' } },
+        { id: 'dette', type: 'fill', source: 'hw', 'source-layer': 'vann', filter: ['==', ['get', 'vatnlnr'], ID], paint: { 'fill-color': '#5cc6e8' } },
+        { id: 'dette-kant', type: 'line', source: 'hw', 'source-layer': 'vann', filter: ['==', ['get', 'vatnlnr'], ID], paint: { 'line-color': '#f2b84b', 'line-width': 2 } },
+        { id: 'road', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 9, filter: ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'minor', 'track']]], paint: { 'line-color': '#29424a', 'line-width': 1 } },
+        { id: 'navn', type: 'symbol', source: 'hw', 'source-layer': 'vann', filter: ['!=', ['get', 'navn'], ''], layout: { 'text-field': ['get', 'navn'], 'text-font': ['Noto Sans Italic'], 'text-size': 11 }, paint: { 'text-color': '#8fb6c3', 'text-halo-color': '#0b1418', 'text-halo-width': 1.4 } }
+      ]
+    }
+  });
+  map.addControl(new maplibregl.AttributionControl({ compact: true, customAttribution: 'NVE' }));
+  var fold = function () { var a = document.querySelector('#mini .maplibregl-ctrl-attrib'); if (a) a.classList.remove('maplibregl-compact-show'); };
+  map.once('load', fold); setTimeout(fold, 1500);
+}
+</script>
+<script src="/hw-shell.js" defer></script>
+</body>
+</html>
