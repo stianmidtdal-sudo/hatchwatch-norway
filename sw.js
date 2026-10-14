@@ -7,7 +7,7 @@
 //
 // Innført 2026-05-19.
 
-const CACHE_VERSION = 'hw-v32';  // v32: «window» ut av de engelske tekstene (Stian) (2026-10-09).  // v31: generell modell som kandidatrad i kalibreringspanelet (?calib=1) (2026-10-09).  // v30: engelsk på forside, varsler, om + felles språkvalg hw-lang.js (2026-10-08).  // v29: satellitt-isgang 2026 for ti lokasjoner (2026-10-06).  // v24: personvern.html + lenke fra om.html (2026-10-01).  // v19: historikk opp, emojier ut.  // v18: varsler i iPhone-appen (APNs via Capacitor) i dashboard + varsler (2026-10-01)
+const CACHE_VERSION = 'hw-v33';  // v33: ekte kart på forsiden (MapLibre + PMTiles), Tørrflue | Laksefiske, elv.html, Mine elver; Range-forespørsler slippes forbi (2026-10-14).  // v32: «window» ut av de engelske tekstene (Stian) (2026-10-09).  // v31: generell modell som kandidatrad i kalibreringspanelet (?calib=1) (2026-10-09).  // v30: engelsk på forside, varsler, om + felles språkvalg hw-lang.js (2026-10-08).  // v29: satellitt-isgang 2026 for ti lokasjoner (2026-10-06).  // v24: personvern.html + lenke fra om.html (2026-10-01).  // v19: historikk opp, emojier ut.  // v18: varsler i iPhone-appen (APNs via Capacitor) i dashboard + varsler (2026-10-01)
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const API_CACHE = `${CACHE_VERSION}-api`;
 const VENDOR_CACHE = `${CACHE_VERSION}-vendor`;
@@ -16,6 +16,7 @@ const SHELL_URLS = [
     '/',
     '/index.html',
     '/dashboard.html',
+    '/elv.html',
     '/artikler.html',
     '/om.html',
     '/personvern.html',
@@ -92,6 +93,10 @@ self.addEventListener('fetch', (event) => {
     // Bare håndtere GET; alt annet (POST til Tally osv) går rett til nett
     if (req.method !== 'GET') return;
     const url = req.url;
+
+    // Kartfliser (PMTiles) hentes med Range-forespørsler og svarer 206. Cache API
+    // tar ikke delsvar, så de må gå rett til nett (ellers knekker kartet). 2026-10-14.
+    if (req.headers.has('range') || /\.pmtiles(\?|$)/.test(url)) return;
 
     // API → network-first
     if (API_HOST_PATTERNS.some((re) => re.test(url))) {

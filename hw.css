@@ -178,4 +178,5 @@ body.hw-has-bar { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 78px);
 .hwp-row .chev { color: var(--hw-fg-3); }
 .hwp-empty { margin: 8px 0; padding: 20px 16px; border: 1px dashed var(--hw-line); border-radius: var(--hw-radius); color: var(--hw-fg-2); font-size: 14px; line-height: 1.6; }
 .hwp-empty b { color: var(--hw-fg); }
+.hwp-sec { margin: 18px 0 2px; font-family: var(--hw-mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--hw-fg-3); }
 .hwp-foot { margin-top: 18px; font-family: var(--hw-mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--hw-fg-3); }

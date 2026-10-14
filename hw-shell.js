@@ -139,17 +139,30 @@
     closeAll();
     if (!wasOpen) { p.classList.add('open'); setActive(tab); }
   }
+  // Mine elver (2026-10-14): lakseelver lagres som {id, navn} i hw_elv_favs
+  // (hjertet på elvesiden og i elvekortet på kartet). Egen seksjon under vannene.
+  function elvFavs() {
+    try { var v = JSON.parse(localStorage.getItem('hw_elv_favs') || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; }
+  }
+  var RIVER = '<svg viewBox="0 0 24 24"><path d="M4 4c4 2 2 6 6 8s2 6 6 8"/><path d="M10 4c4 2 2 6 6 8s2 6 6 8"/></svg>';
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function renderFavs() {
     var list = document.getElementById('hwbFavList');
-    var f = favs();
-    if (!f.length) {
+    var f = favs(), e = elvFavs();
+    if (!f.length && !e.length) {
       list.innerHTML = '<div class="hwp-empty">' + S.empty + '</div>';
       return;
     }
-    list.innerHTML = f.map(function (id) {
+    var html = f.map(function (id) {
       var sub = typeof cfg.favSub === 'function' ? (cfg.favSub(id) || '') : '';
       return row('/dashboard.html?loc=' + encodeURIComponent(id), ICON.drop, NAMES[id] || id, sub);
     }).join('');
+    if (e.length) {
+      html += '<div class="hwp-sec">' + (EN ? 'My rivers' : 'Mine elver') + '</div>' + e.map(function (x) {
+        return row('/elv.html?id=' + encodeURIComponent(x.id), RIVER, esc(x.navn || x.id), EN ? 'Salmon river' : 'Lakseelv');
+      }).join('');
+    }
+    list.innerHTML = html;
   }
 
   mount.querySelectorAll('a.hwb').forEach(function (a) {

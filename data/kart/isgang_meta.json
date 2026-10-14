@@ -1,0 +1,48 @@
+{
+ "aar": [
+  2017,
+  2018,
+  2019,
+  2020,
+  2021,
+  2022,
+  2023,
+  2024,
+  2025,
+  2026
+ ],
+ "vann_med_data": 14188,
+ "rader_lest": 154880,
+ "per_aar": {
+  "2017": 7881,
+  "2018": 13685,
+  "2019": 12897,
+  "2020": 9431,
+  "2021": 12929,
+  "2022": 10692,
+  "2023": 10799,
+  "2024": 12268,
+  "2025": 11499,
+  "2026": 12846
+ },
+ "kilde": "Sentinel-2 via Google Earth Engine (HatchWatch, låst metode), midt i observert intervall",
+ "bygget": "2026-10-14T12:34:32",
+ "fylkesfiler": [
+  "isgang_00_uten_fylke.csv",
+  "isgang_03_oslo.csv",
+  "isgang_11_rogaland.csv",
+  "isgang_15_more_og_romsdal.csv",
+  "isgang_18_nordland.csv",
+  "isgang_31_ostfold.csv",
+  "isgang_32_akershus.csv",
+  "isgang_33_buskerud.csv",
+  "isgang_34_innlandet.csv",
+  "isgang_39_vestfold.csv",
+  "isgang_40_telemark.csv",
+  "isgang_42_agder.csv",
+  "isgang_46_vestland.csv",
+  "isgang_50_trondelag.csv",
+  "isgang_55_troms.csv",
+  "isgang_56_finnmark.csv"
+ ]
+}

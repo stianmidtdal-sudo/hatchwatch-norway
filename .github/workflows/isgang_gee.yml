@@ -57,6 +57,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: main             # ALLTID toppen av main ved jobbstart — en planlagt kjøring som har stått i kø
+                                # bak forrige kjøring låser seg ellers til SHA-en fra køtidspunktet, og
+                                # «git pull --rebase» får konflikt i jobbens egne filer (skjedde 2026-10-12)
           fetch-depth: 0        # full historikk, så «git pull --rebase» virker hvis Stian deployer samtidig
 
       - uses: actions/setup-python@v5
@@ -143,7 +146,9 @@ jobs:
             exit 0
           fi
           git commit -m "isgang-gee: $(date -u +%F) $(date -u +%H:%M) UTC"
-          git pull --rebase --autostash origin main
+          # -X theirs under rebase = behold JOBBENS versjon ved konflikt: filene er alltid en komplett
+          # regenerering fra det nyeste mellomlageret, så jobbens versjon er den riktige.
+          git pull --rebase --autostash -X theirs origin main
           git push
 
       - name: Pakk lageret (fulle fylkesfiler, rådata, vannlister)

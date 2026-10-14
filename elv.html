@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Lakseelv — HatchWatch</title>
+<meta name="theme-color" content="#0b1418">
+<meta name="description" content="Fangstkurve, vannføring og barometer for norske lakseelver.">
+<link rel="icon" type="image/png" sizes="32x32" href="/logos/favicon-32.png?v=2">
+<link rel="apple-touch-icon" href="/logos/apple-touch-icon-180.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="stylesheet" href="/hw.css">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<script src="/hw-lang.js"></script>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
+<style>
+  /* ═══ ELVESIDE (2026-10-14) ═══
+     Landingsside per lakseelv: /elv.html?id=<vassdragsnr fra Lakseregisteret>.
+     Data: /data/kart/elver.json (bygges av tools/kart/bygg_kart.py fra Lakseregisteret +
+     aggregerte tall fra laksedata-analysen H; rådata ligger utenfor repoet).
+     Rekkefølge etter verdivurderingen: fangstkurve, vannet nå, barometer, kart. */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { min-height: 100vh; }
+  .top { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: calc(env(safe-area-inset-top, 0px) + 10px) 16px 10px; background: color-mix(in srgb, var(--hw-bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--hw-line); }
+  .back { display: inline-flex; align-items: center; gap: 6px; color: var(--hw-fg-2); text-decoration: none; font-size: 14px; }
+  .back svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .top .brand { display: flex; align-items: center; gap: 6px; color: var(--hw-fg); text-decoration: none; font-family: var(--hw-display); font-weight: 700; font-size: 17px; letter-spacing: -.02em; }
+  .top .brand b { color: var(--hw-hatch); font-weight: 700; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 18px 16px 40px; }
+  h1 { font-family: var(--hw-display); font-weight: 800; font-size: 34px; letter-spacing: -.03em; line-height: 1.05; margin-top: 6px; }
+  .sub { color: var(--hw-fg-2); font-size: 14px; margin-top: 6px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .card { background: var(--hw-bg-2); border: 1px solid var(--hw-line); border-radius: 18px; padding: 16px; margin-top: 14px; }
+  .card h2 { font-family: var(--hw-display); font-weight: 700; font-size: 18px; letter-spacing: -.01em; }
+  .card .lead { font-size: 14.5px; color: var(--hw-fg-2); line-height: 1.55; margin-top: 6px; }
+  .card .lead b { color: var(--hw-fg); font-weight: 600; }
+  .note { font-size: 12.5px; color: var(--hw-fg-3); line-height: 1.5; margin-top: 10px; }
+  .note a, .lead a { color: var(--hw-water); }
+  .hero { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+  .stat { background: var(--hw-bg-2); border: 1px solid var(--hw-line); border-radius: 16px; padding: 14px; }
+  .stat .k { font-family: var(--hw-mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--hw-fg-3); }
+  .stat .v { font-family: var(--hw-display); font-weight: 800; font-size: 28px; letter-spacing: -.03em; line-height: 1.05; margin-top: 6px; }
+  .stat .v.gold { color: var(--hw-hatch); }
+  .stat .s { font-size: 12.5px; color: var(--hw-fg-2); margin-top: 4px; line-height: 1.4; }
+  svg.kurve { width: 100%; height: auto; display: block; margin-top: 12px; }
+  svg.kurve .bar { fill: var(--hw-far); }
+  svg.kurve .bar.top { fill: var(--hw-hatch); }
+  svg.kurve .wh { stroke: var(--hw-fg-3); stroke-width: 1; }
+  svg.kurve .today { stroke: var(--hw-fg); stroke-width: 1.5; stroke-dasharray: 3 3; }
+  svg.kurve text { font-family: var(--hw-mono); font-size: 10px; fill: var(--hw-fg-3); }
+  svg.kurve text.tl { fill: var(--hw-fg); }
+  .legendrow { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 8px; font-size: 12px; color: var(--hw-fg-2); }
+  .legendrow i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+  .now { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+  .now .big { font-family: var(--hw-display); font-weight: 800; font-size: 34px; letter-spacing: -.03em; line-height: 1; }
+  .now .rel { font-family: var(--hw-mono); font-size: 13px; color: var(--hw-fg-2); }
+  svg.band { width: 100%; height: auto; display: block; margin-top: 12px; }
+  svg.band text { font-family: var(--hw-mono); font-size: 10px; fill: var(--hw-fg-3); }
+  .baro { display: flex; align-items: center; gap: 14px; margin-top: 12px; }
+  .baro .lamp { width: 54px; height: 54px; border-radius: 50%; flex: none; box-shadow: 0 0 0 6px color-mix(in srgb, currentColor 18%, transparent); background: currentColor; }
+  .baro .lamp.g { color: #5fbf7a; } .baro .lamp.y { color: #e8c547; } .baro .lamp.r { color: #e0655a; } .baro .lamp.n { color: var(--hw-far); }
+  .baro .what { font-family: var(--hw-display); font-weight: 800; font-size: 24px; letter-spacing: -.02em; }
+  .baro .why { font-size: 13.5px; color: var(--hw-fg-2); line-height: 1.45; margin-top: 2px; }
+  .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+  .facts div { background: var(--hw-bg-3); border-radius: 12px; padding: 10px; text-align: center; }
+  .facts b { display: block; font-family: var(--hw-display); font-weight: 800; font-size: 20px; }
+  .facts span { font-size: 11.5px; color: var(--hw-fg-2); }
+  .maplibregl-ctrl-attrib { background: color-mix(in srgb, var(--hw-bg) 80%, transparent) !important; color: var(--hw-fg-3) !important; font-size: 10px; }
+  .maplibregl-ctrl-attrib a { color: var(--hw-fg-2) !important; }
+  .maplibregl-ctrl-attrib-button { filter: invert(.8); }
+  #mini { height: 240px; border-radius: 14px; overflow: hidden; margin-top: 12px; background: #13242b; }
+  .row2 { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .skel { color: var(--hw-fg-3); font-size: 13.5px; margin-top: 10px; }
+  .miss { text-align: center; padding: 60px 16px; color: var(--hw-fg-2); }
+  @media (max-width: 420px) { h1 { font-size: 30px; } .stat .v { font-size: 24px; } }
+</style>
+</head>
+<body class="hw-dark">
+
+<header class="top">
+  <a class="back" href="/#laks" id="backLink"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span id="backTxt">Kart</span></a>
+  <a class="brand" href="/" aria-label="HatchWatch"><span class="hw-fly" style="width:26px;color:var(--hw-hatch)" aria-hidden="true"></span><span>Hatch<b>Watch</b></span></a>
+  <button class="hw-iconbtn fav" id="fav" type="button" aria-label="Legg til i Mine elver"><svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.7-9.3-9A5.2 5.2 0 0 1 12 6.6a5.2 5.2 0 0 1 9.3 4.9c-1.8 4.3-9.3 9-9.3 9z"/></svg></button>
+</header>
+
+<main class="wrap" id="main">
+  <div class="skel" id="loading">Laster elva…</div>
+</main>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+//  ELVESIDE — alt tegnes fra elver.json + levende NVE-data via /api/nve.
+//  Ordlyd: tallene beskriver tidligere år. Barometeret vises bare i elvene
+//  der det besto hold-ut-testen («ja»), med forbehold der svaret var usikkert.
+// ═══════════════════════════════════════════════════════════════════
+var EN = window.HW_LANG === 'en';
+function tx(no, en) { return EN ? en : no; }
+if (EN) { document.documentElement.lang = 'en'; document.getElementById('backTxt').textContent = 'Map'; document.getElementById('fav').setAttribute('aria-label', 'Add to My rivers'); document.getElementById('loading').textContent = 'Loading the river…'; }
+var MON = EN ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] : ['jan', 'feb', 'mars', 'april', 'mai', 'juni', 'juli', 'aug', 'sep', 'okt', 'nov', 'des'];
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function num(v, d) { if (v == null || isNaN(v)) return '–'; var s = (+v).toFixed(d == null ? 0 : d); return EN ? s : s.replace('.', ','); }
+function dmTxt(s) { var p = String(s).split('.'); var d = +p[0], m = +p[1]; return EN ? d + ' ' + MON[m - 1] : d + '. ' + MON[m - 1]; }
+function rangeTxt(s) { var p = String(s).split('–'); return p.length === 2 ? dmTxt(p[0]) + '–' + dmTxt(p[1]) : esc(s); }
+function dateTxt(d) { return EN ? d.getDate() + ' ' + MON[d.getMonth()] : d.getDate() + '. ' + MON[d.getMonth()]; }
+function ymd(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function doyOf(d) { return Math.floor((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - Date.UTC(d.getFullYear(), 0, 1)) / 86400000) + 1; }
+// «90–300 %», «over 110 %», «under 14 °C» → [fra, til]
+function rangeNums(s) {
+  s = String(s || ''); var f = function (x) { return parseFloat(x.replace(',', '.')); };
+  var m = s.match(/([\d.,]+)\s*[–-]\s*([\d.,]+)/); if (m) return [f(m[1]), f(m[2])];
+  m = s.match(/over\s*([\d.,]+)/); if (m) return [f(m[1]), Infinity];
+  m = s.match(/under\s*([\d.,]+)/); if (m) return [0, f(m[1])];
+  return null;
+}
+function dager(n) { var r = Math.max(1, Math.round(n)); return r + (r === 1 ? tx(' dag', ' day') : tx(' dager', ' days')); }
+var TODAY = new Date(); TODAY.setHours(0, 0, 0, 0);
+var API_BASE = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'https://www.hatchwatch.no' : '';
+var ID = new URLSearchParams(location.search).get('id') || '';
+
+// Mine elver
+function getElvFavs() { try { var v = JSON.parse(localStorage.getItem('hw_elv_favs') || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
+function isElvFav(id) { return getElvFavs().some(function (x) { return x.id === id; }); }
+function toggleElvFav(id, navn) { var f = getElvFavs(), i = -1; f.forEach(function (x, j) { if (x.id === id) i = j; }); if (i >= 0) f.splice(i, 1); else f.push({ id: id, navn: navn }); try { localStorage.setItem('hw_elv_favs', JSON.stringify(f)); } catch (e) {} }
+
+// Uka i kurven som dekker en dato (kurven bruker dag+måned)
+function weekIdx(k, d) {
+  var md = (d.getMonth() + 1) * 100 + d.getDate();
+  for (var i = 0; i < k.uker.length; i++) {
+    var a = String(k.uker[i][1]).split('.'), b = String(k.uker[i][2]).split('.');
+    if (md >= (+a[1]) * 100 + (+a[0]) && md <= (+b[1]) * 100 + (+b[0])) return i;
+  }
+  return -1;
+}
+function inSeason(k, d) {
+  if (!k || !k.uker.length) return null;
+  var a = String(k.uker[0][1]).split('.'), b = String(k.uker[k.uker.length - 1][2]).split('.');
+  var md = (d.getMonth() + 1) * 100 + d.getDate();
+  return md >= (+a[1]) * 100 + (+a[0]) && md <= (+b[1]) * 100 + (+b[0]);
+}
+
+// ── NVE ──
+function fetchNVE(param, station, start, end) {
+  var url = API_BASE + '/api/nve?parameter=' + param + '&start=' + ymd(start) + '&end=' + ymd(end) + '&station=' + encodeURIComponent(station);
+  return fetch(url).then(function (r) { if (!r.ok) throw new Error('NVE ' + r.status); return r.json(); }).then(function (js) {
+    var out = [];
+    (js.data || []).forEach(function (s) {
+      (s.observations || []).forEach(function (o) {
+        if (o.value == null || o.value <= -100 || o.value > 9000) return;
+        if (o.correction === 3 || o.correction === 9) return;
+        if (param === 1003 && o.value > 30) return;
+        out.push({ d: new Date((o.time || '').slice(0, 10) + 'T00:00:00'), v: o.value });
+      });
+    });
+    out.sort(function (a, b) { return a.d - b.d; });
+    return out;
+  });
+}
+// Vannføring nå: siste måling, endring over 3 døgn (ln), og prosent av normalen for datoen
+// (snitt for samme dato ±7 dager de 10 foregående årene; kan avvike litt fra normalen analysen brukte).
+function flowNow(series) {
+  if (!series.length) return null;
+  var last = series[series.length - 1], d0 = last.d;
+  var back = null;
+  for (var i = series.length - 1; i >= 0; i--) { if ((d0 - series[i].d) / 86400000 >= 3) { back = series[i]; break; } }
+  var dq3 = back && back.v > 0 && last.v > 0 && (d0 - back.d) / 86400000 <= 5 ? Math.log(last.v / back.v) : null;
+  var t = doyOf(d0), sum = 0, n = 0, yrs = {};
+  series.forEach(function (o) {
+    if (o.d.getFullYear() >= d0.getFullYear() && (d0 - o.d) / 86400000 < 300) return;
+    var dd = Math.abs(doyOf(o.d) - t); dd = Math.min(dd, 365 - dd);
+    if (dd <= 7) { sum += o.v; n++; yrs[o.d.getFullYear()] = 1; }
+  });
+  var ny = Object.keys(yrs).length;
+  var normal = ny >= 3 && n ? sum / n : null;
+  return { q: last.v, d: d0, dq3: dq3, normal: normal, qrel: normal ? last.v / normal : null, nyr: ny };
+}
+
+// ── Tre-nivå-regelen (analyse H) ──
+//  Rødt: under 50 % av normal uten at vannet stiger (endring over 3 døgn < 0,2), vann ≥ 20 °C, eller over flomgrensen.
+//  Grønt: ikke rødt, og innenfor beste spenn (% av normal) eller kraftig stigende (≥ 0,5), og vann under 18 °C.
+//  Gult: resten.
+function treNivaa(e, f, wt) {
+  if (!f || f.qrel == null) return { n: 'n', why: tx('Mangler vannføring for i dag.', 'No flow reading for today.') };
+  var v = e.vann || {}, sp = rangeNums(v.spenn_pst), pst = f.qrel * 100;
+  var stig = f.dq3 != null && f.dq3 >= 0.5;
+  if (f.qrel < 0.5 && (f.dq3 == null || f.dq3 < 0.2)) return { n: 'r', why: tx('Lite vann (under halvparten av normalt), og det stiger ikke.', 'Low water (under half of normal), and it is not rising.') };
+  if (wt != null && wt >= 20) return { n: 'r', why: tx('Vannet er 20 °C eller varmere.', 'The water is 20 °C or warmer.') };
+  if (v.flom_pst != null && pst >= v.flom_pst) return { n: 'r', why: tx('Over flomgrensen for elva.', 'Above the river’s flood limit.') };
+  var inn = sp && pst >= sp[0] && pst <= sp[1];
+  if ((inn || stig) && (wt == null || wt < 18)) return { n: 'g', why: inn ? tx('Vannføringen er innenfor elvas beste spenn.', 'The flow is within the river’s best range.') : tx('Vannet stiger kraftig.', 'The water is rising sharply.') };
+  var why = wt != null && wt >= 18 ? tx('Vannet er varmt (18 °C eller mer).', 'The water is warm (18 °C or more).') : tx('Vannføringen er utenfor elvas beste spenn.', 'The flow is outside the river’s best range.');
+  return { n: 'y', why: why };
+}
+
+// ── Tegning ──
+function kurveSvg(k) {
+  var u = k.uker, n = u.length, W = 640, H = 170, L = 34, B = 34, iw = W - L - 8, bw = iw / n;
+  var max = Math.max.apply(null, u.map(function (x) { return Math.max(x[3] || 0, x[5] || 0); })) || 1;
+  var top3 = u.map(function (x) { return x[3] || 0; }).slice().sort(function (a, b) { return b - a; })[Math.min(2, n - 1)];
+  var y = function (v) { return 8 + (H - 8) * (1 - v / max); };
+  var s = '<svg class="kurve" viewBox="0 0 ' + W + ' ' + (H + B) + '" role="img" aria-label="' + tx('Andel av sesongfangsten per uke', 'Share of the season catch per week') + '">';
+  [0, 0.5, 1].forEach(function (f) { var v = max * f; s += '<text x="' + (L - 6) + '" y="' + (y(v) + 3) + '" text-anchor="end">' + num(v * 100, v * 100 < 10 && v > 0 ? 1 : 0) + ' %</text><line x1="' + L + '" x2="' + (W - 8) + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="var(--hw-line)" stroke-width="1"/>'; });
+  var lastMon = -1;
+  u.forEach(function (x, i) {
+    var cx = L + i * bw, h = Math.max(1, (H - 8) * (x[3] || 0) / max);
+    s += '<rect class="bar' + ((x[3] || 0) >= top3 && x[3] > 0 ? ' top' : '') + '" x="' + (cx + 2) + '" y="' + (H - h) + '" width="' + Math.max(2, bw - 4) + '" height="' + h + '" rx="2"><title>' + tx('Uke ', 'Week ') + x[0] + ' (' + rangeTxt(x[1] + '–' + x[2]) + '): ' + num((x[3] || 0) * 100, 1) + ' %</title></rect>';
+    if (x[5] > 0) s += '<line class="wh" x1="' + (cx + bw / 2) + '" x2="' + (cx + bw / 2) + '" y1="' + y(x[4] || 0) + '" y2="' + y(x[5]) + '"/>';
+    var m = +String(x[1]).split('.')[1];
+    if (m !== lastMon) { s += '<text x="' + (cx + 2) + '" y="' + (H + 26) + '">' + MON[m - 1] + '</text>'; lastMon = m; }
+    if (i % 2 === 0) s += '<text x="' + (cx + bw / 2) + '" y="' + (H + 12) + '" text-anchor="middle">' + x[0] + '</text>';
+  });
+  var ti = weekIdx(k, TODAY);
+  if (ti >= 0) { var tx_ = L + ti * bw + bw / 2; s += '<line class="today" x1="' + tx_ + '" x2="' + tx_ + '" y1="0" y2="' + H + '"/><text class="tl" x="' + (tx_ + 4) + '" y="10">' + tx('i dag', 'today') + '</text>'; }
+  return s + '</svg>';
+}
+function bandSvg(v, f) {
+  var sp = rangeNums(v.spenn_pst), lav = v.lav_pst, flom = v.flom_pst;
+  var maxP = Math.max(250, sp ? (isFinite(sp[1]) ? sp[1] * 1.15 : sp[0] * 1.8) : 0, flom ? flom * 1.15 : 0, f && f.qrel ? f.qrel * 115 : 0);
+  var W = 640, H = 46, L = 8, iw = W - 16, x = function (p) { return L + iw * Math.min(1, Math.max(0, p / maxP)); };
+  var s = '<svg class="band" viewBox="0 0 ' + W + ' ' + (H + 18) + '" role="img" aria-label="' + tx('Vannføring i prosent av normalt', 'Flow as percent of normal') + '">';
+  s += '<rect x="' + L + '" y="14" width="' + iw + '" height="16" rx="8" fill="var(--hw-bg-3)"/>';
+  if (lav) s += '<rect x="' + L + '" y="14" width="' + (x(lav) - L) + '" height="16" rx="8" fill="#e0655a" opacity=".55"/>';
+  if (flom) s += '<rect x="' + x(flom) + '" y="14" width="' + (L + iw - x(flom)) + '" height="16" rx="8" fill="#e0655a" opacity=".55"/>';
+  if (sp) s += '<rect x="' + x(sp[0]) + '" y="14" width="' + (x(sp[1]) - x(sp[0])) + '" height="16" fill="#5fbf7a" opacity=".85"/>';
+  [0, 100, 200, 300, 400, 500].forEach(function (p) { if (p <= maxP) s += '<text x="' + x(p) + '" y="' + (H + 12) + '" text-anchor="middle">' + p + ' %</text>'; });
+  if (f && f.qrel != null) s += '<circle cx="' + x(f.qrel * 100) + '" cy="22" r="8" fill="var(--hw-fg)" stroke="var(--hw-bg)" stroke-width="3"/><text x="' + x(f.qrel * 100) + '" y="9" text-anchor="middle" style="fill:var(--hw-fg)">' + tx('nå', 'now') + '</text>';
+  return s + '</svg>';
+}
+
+// ── Side ──
+var main = document.getElementById('main');
+fetch('/data/kart/elver.json').then(function (r) { return r.json(); }).then(function (d) {
+  var e = (d.elver || {})[ID];
+  if (!e) { main.innerHTML = '<div class="miss"><h1 style="font-size:24px">' + tx('Fant ikke elva', 'River not found') + '</h1><p class="lead" style="margin-top:10px"><a href="/#laks">' + tx('Tilbake til kartet', 'Back to the map') + '</a></p></div>'; return; }
+  render(e);
+}).catch(function () { main.innerHTML = '<div class="miss">' + tx('Klarte ikke å laste elvedata.', 'Could not load river data.') + '</div>'; });
+
+function render(e) {
+  document.title = e.navn + ' — HatchWatch';
+  var fav = document.getElementById('fav');
+  fav.classList.toggle('on', isElvFav(e.id));
+  fav.addEventListener('click', function () { toggleElvFav(e.id, e.navn); fav.classList.toggle('on', isElvFav(e.id)); });
+  var k = e.kurve, v = e.vann, t = e.temp, b = e.barometer;
+  var season = k ? inSeason(k, TODAY) : null;
+  var h = '';
+  h += '<div class="hw-eyebrow gold">' + tx('Lakseelv', 'Salmon river') + (e.region ? ' · ' + esc(e.region.replace(/\s*\(.*\)$/, '')) : '') + '</div>';
+  h += '<h1>' + esc(e.navn) + '</h1>';
+  h += '<div class="sub">' + [esc(e.kommuner), e.km ? tx('lakseførende ', 'anadromous ') + num(e.km, 1) + ' km' : ''].filter(Boolean).join(' · ') + '</div>';
+  h += '<div class="chips">' + (e.nasjonalt ? '<span class="hw-chip now"><i></i>' + tx('Nasjonalt laksevassdrag', 'National salmon river') + '</span>' : '') + (k ? '<span class="hw-chip soon"><i></i>' + tx('Fangstkurve fra ', 'Catch curve from ') + k.n_aar + tx(' år', ' years') + '</span>' : '') + '</div>';
+
+  if (k) {
+    var top = k.beste_uke_topp3 != null ? Math.round(k.beste_uke_topp3 * k.n_aar) : null;
+    h += '<div class="hero">' +
+      '<div class="stat"><div class="k">' + tx('Beste uke i snitt', 'Best week on average') + '</div><div class="v gold">' + tx('Uke ', 'Week ') + k.beste_uke + '</div><div class="s">' + rangeTxt(k.beste_uke_dato) + (top != null ? tx(' · blant de 3 beste i ' + top + ' av ' + k.n_aar + ' år', ' · among the 3 best in ' + top + ' of ' + k.n_aar + ' years') : '') + '</div></div>' +
+      '<div class="stat"><div class="k">' + tx('Halve fangsten', 'Half the catch') + '</div><div class="v">' + dmTxt(k.halv) + '</div><div class="s">' + tx('pleier å være tatt rundt denne datoen', 'is usually taken around this date') + '</div></div>' +
+      '</div>';
+    h += '<div class="card"><h2>' + tx('Fangst gjennom sesongen', 'Catch through the season') + '</h2>' +
+      '<p class="lead">' + tx('Andel av sesongfangsten per uke, snitt for ' + k.n_aar + ' år. ', 'Share of the season catch per week, average of ' + k.n_aar + ' years. ') +
+      tx('Halve fangsten pleier å være tatt rundt <b>' + dmTxt(k.halv) + '</b>. Bom under ' + dager(k.bom50) + ' i halvparten av årene, under ' + dager(k.bom90) + ' i 9 av 10.',
+         'Half the catch is usually taken around <b>' + dmTxt(k.halv) + '</b>. Off by less than ' + dager(k.bom50) + ' in half the years, less than ' + dager(k.bom90) + ' in 9 of 10.') +
+      (k.tidligst && k.senest ? tx(' Tidligst ' + dmTxt(k.tidligst) + ', senest ' + dmTxt(k.senest) + '.', ' Earliest ' + dmTxt(k.tidligst) + ', latest ' + dmTxt(k.senest) + '.') : '') + '</p>' +
+      kurveSvg(k) +
+      '<div class="legendrow"><span><i style="background:var(--hw-hatch)"></i>' + tx('De tre beste ukene', 'The three best weeks') + '</span><span><i style="background:var(--hw-far)"></i>' + tx('Andre uker', 'Other weeks') + '</span><span><i style="background:var(--hw-fg-3);width:2px"></i>' + tx('Spenn i 8 av 10 år', 'Range in 8 of 10 years') + '</span></div>' +
+      '<p class="note">' + tx('Tallene beskriver tidligere år, ikke en prognose. Fangst er ikke fisk: når forholdene er dårlige, fisker færre. Ingen vårmåling slo kurven da det ble testet.', 'The numbers describe past years, not a forecast. Catch is not fish: when conditions are poor, fewer people fish. No spring measurement beat the curve when this was tested.') + '</p></div>';
+  } else {
+    h += '<div class="card"><h2>' + tx('Fangstkurve', 'Catch curve') + '</h2><p class="lead">' + tx('Vi har fangstkurve for de 30 elvene med mest laks. Denne elva er ikke blant dem ennå.', 'We have catch curves for the 30 rivers with the most salmon. This river is not among them yet.') + '</p></div>';
+  }
+
+  // Vannet nå (bare analyserte elver med måler)
+  if (k) h += '<div class="card" id="vannCard"><h2>' + tx('Vannet nå', 'The water now') + '</h2><div id="vannBody" class="skel">' + tx('Henter vannføring fra NVE…', 'Fetching flow from NVE…') + '</div></div>';
+  var baroOk = b && /^(ja|usikkert)/.test(b.status || '');
+  if (baroOk) h += '<div class="card"><h2>' + tx('Barometer', 'Barometer') + '</h2><div id="baroBody" class="skel">' + tx('Regner…', 'Working…') + '</div></div>';
+
+  h += '<div class="card"><h2>' + tx('Kart', 'Map') + '</h2><div id="mini"></div>' +
+    '<div class="row2"><a class="hw-btn primary" href="/?elv=' + encodeURIComponent(e.id) + '#laks">' + tx('Vis i kartet', 'Show on the map') + '</a>' +
+    (e.url ? '<a class="hw-btn ghost" href="' + esc(e.url) + '" target="_blank" rel="noopener">' + tx('Lakseregisteret', 'Salmon register') + '</a>' : '') + '</div></div>';
+
+  h += '<p class="note">' + tx('Elv og lakseførende strekning: Lakseregisteret (Miljødirektoratet).' + (k ? ' Fangstkurve: laksebørsene til Elveguiden og Inatur, sammenstilt av HatchWatch (år ' + esc(k.aar.replace(/,/g, ', ')) + '). Vannføring og vanntemperatur: NVE.' : ''),
+                           'River and anadromous stretch: Norwegian Environment Agency salmon register.' + (k ? ' Catch curve: Elveguiden and Inatur catch reports, compiled by HatchWatch (years ' + esc(k.aar.replace(/,/g, ', ')) + '). Flow and water temperature: NVE.' : '')) + '</p>';
+  main.innerHTML = h;
+  miniMap(e);
+  if (k) water(e, season);
+}
+
+function water(e, season) {
+  var v = e.vann || {}, t = e.temp || {}, b = e.barometer || {};
+  var body = document.getElementById('vannBody');
+  var showFlow = v.stasjon && !/^for svak/.test(v.spenn_pst_status || '');
+  var showTemp = t.stasjon && t.status && !/^for svak/.test(t.status);
+  var end = new Date(TODAY), start = new Date(TODAY); start.setFullYear(start.getFullYear() - 10); start.setDate(start.getDate() - 10);
+  var tStart = new Date(TODAY); tStart.setDate(tStart.getDate() - 20);
+  var pf = v.stasjon ? fetchNVE(1001, v.stasjon, start, end).then(flowNow).catch(function () { return null; }) : Promise.resolve(null);
+  var pt = t.stasjon ? fetchNVE(1003, t.stasjon, tStart, end).then(function (s) { return s.length ? s[s.length - 1] : null; }).catch(function () { return null; }) : Promise.resolve(null);
+  Promise.all([pf, pt]).then(function (r) {
+    var f = r[0], wt = r[1], h = '';
+    var closed = season === false ? '<p class="note" style="margin-top:4px">' + tx('Fisket er stengt nå. Tallene viser vannet slik det er i dag.', 'Fishing is closed now. The numbers show the water as it is today.') + '</p>' : '';
+    if (!v.stasjon) h += '<p class="lead">' + tx('Ingen vannføringsmåler er knyttet til elva ennå.', 'No flow gauge is linked to this river yet.') + '</p>';
+    else if (!showFlow) h += '<p class="lead">' + tx('Vannføringen viste ingen tydelig sammenheng med fangsten i denne elva, så vi viser ikke noe beste spenn.', 'Flow showed no clear link to the catch in this river, so we do not show a best range.') + '</p>';
+    else if (!f) h += '<p class="lead">' + tx('Fikk ikke hentet vannføring fra NVE akkurat nå.', 'Could not fetch flow from NVE right now.') + '</p>';
+    else {
+      var old = (TODAY - f.d) / 86400000 > 2;
+      var trend = f.dq3 == null ? '' : f.dq3 >= 0.5 ? tx('stiger kraftig', 'rising sharply') : f.dq3 >= 0.2 ? tx('stiger', 'rising') : f.dq3 <= -0.2 ? tx('synker', 'falling') : tx('stabilt', 'steady');
+      h += closed + '<div class="now"><span class="big">' + num(f.q, f.q < 10 ? 1 : 0) + ' m³/s</span><span class="rel">' + (f.qrel != null ? '= ' + num(f.qrel * 100) + tx(' % av normalt for datoen', ' % of normal for the date') : '') + (trend ? ' · ' + trend : '') + '</span></div>';
+      if (old) h += '<p class="note" style="margin-top:4px">' + tx('Siste måling ', 'Latest reading ') + dateTxt(f.d) + '.</p>';
+      h += bandSvg(v, f);
+      h += '<div class="legendrow"><span><i style="background:#5fbf7a"></i>' + tx('Beste spenn: ', 'Best range: ') + esc(v.spenn_pst) + ' (' + esc((v.spenn_m3s || '').replace('m3/s', 'm³/s')) + ')</span>' + (v.lav_pst || v.flom_pst ? '<span><i style="background:#e0655a"></i>' + tx('Lavvann', 'Low water') + (v.flom_pst ? tx(' og flom', ' and flood') : '') + '</span>' : '') + '</div>';
+      var notes = [];
+      if (v.kilde === 'nabo') notes.push(tx('Vannet måles i et nabovassdrag (NVE-stasjon ' + esc(v.stasjon) + '), ikke i elva selv.', 'The water is measured in a neighbouring river (NVE station ' + esc(v.stasjon) + '), not in the river itself.'));
+      if (/^svak/.test(v.spenn_pst_status || '')) notes.push(tx('Sammenhengen med fangsten er svak i denne elva. Les spennet med forbehold.', 'The link to the catch is weak in this river. Read the range with caution.'));
+      notes.push(tx('Normalt = snitt for datoen de ' + f.nyr + ' foregående årene ved samme måler.', 'Normal = average for the date over the ' + f.nyr + ' previous years at the same gauge.'));
+      h += '<p class="note">' + notes.join(' ') + '</p>';
+    }
+    if (wt && showTemp) {
+      h += '<div class="facts"><div><b>' + num(wt.v, 1) + ' °C</b><span>' + tx('vanntemperatur', 'water temperature') + '</span></div><div><b>' + esc(t.spenn) + '</b><span>' + tx('beste spenn i snitt', 'best range on average') + '</span></div><div><b>' + dateTxt(wt.d) + '</b><span>' + tx('målt', 'measured') + '</span></div></div>';
+      if (/^svak/.test(t.status)) h += '<p class="note">' + tx('Temperaturen har svak sammenheng med fangsten her. Mest nyttig over 18 °C.', 'Temperature has a weak link to the catch here. Most useful above 18 °C.') + '</p>';
+    }
+    body.className = ''; body.innerHTML = h;
+
+    var bb = document.getElementById('baroBody');
+    if (bb) {
+      // Regelen bruker bare ferske målinger (høyst 3 døgn gamle)
+      var fersk = function (o) { return o && (TODAY - o.d) / 86400000 <= 3; };
+      var r3 = fersk(f) ? treNivaa(e, f, fersk(wt) ? wt.v : null) : { n: 'n', why: f ? tx('Siste vannføring er fra ' + dateTxt(f.d) + ', for gammel til å dømme på.', 'The latest flow reading is from ' + dateTxt(f.d) + ', too old to judge.') : tx('Mangler vannføring for i dag.', 'No flow reading for today.') };
+      var name = { g: tx('Grønt', 'Green'), y: tx('Gult', 'Yellow'), r: tx('Rødt', 'Red'), n: tx('Ingen dom', 'No call') }[r3.n];
+      var hb = '<div class="baro"><div class="lamp ' + r3.n + '"></div><div><div class="what">' + name + '</div><div class="why">' + r3.why + '</div></div></div>';
+      if (season === false) hb += '<p class="note">' + tx('Fisket er stengt nå. Barometeret gjelder i sesongen.', 'Fishing is closed now. The barometer applies in season.') + '</p>';
+      hb += '<div class="facts"><div><b style="color:#5fbf7a">' + num(b.groenn, 1) + '×</b><span>' + tx('grønne dager', 'green days') + '</span></div><div><b style="color:#e8c547">' + num(b.gul, 1) + '×</b><span>' + tx('gule dager', 'yellow days') + '</span></div><div><b style="color:#e0655a">' + num(b.roed, 1) + '×</b><span>' + tx('røde dager', 'red days') + '</span></div></div>';
+      hb += '<p class="note">' + tx('Fangst mot normalt for datoen i tidligere år i denne elva. Regelen bruker vannet i dag: rødt er lite vann som ikke stiger, vann 20 °C eller mer, eller flom. Grønt er beste spenn eller kraftig stigende vann, og vann under 18 °C. Den er sjekket mot tidligere år, ikke testet som varsel.',
+                                   'Catch against normal for the date in past years in this river. The rule uses today’s water: red is low water that is not rising, water at 20 °C or more, or flood. Green is the best range or sharply rising water, with water under 18 °C. It has been checked against past years, not tested as a forecast.') +
+        (/^usikkert/.test(b.status) ? ' <b>' + tx('Med forbehold: testen ga et usikkert svar i denne elva.', 'With caution: the test gave an uncertain answer in this river.') + '</b>' : '') + '</p>';
+      bb.className = ''; bb.innerHTML = hb;
+    }
+  });
+}
+
+function miniMap(e) {
+  if (!window.maplibregl || e.lat == null) { var m = document.getElementById('mini'); if (m) m.style.display = 'none'; return; }
+  var protocol = new pmtiles.Protocol(); maplibregl.addProtocol('pmtiles', protocol.tile);
+  var map = new maplibregl.Map({
+    container: 'mini', interactive: false, attributionControl: false,
+    preserveDrawingBuffer: /^(localhost|127\.0\.0\.1)$/.test(location.hostname),
+    style: {
+      version: 8, glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
+      sources: { omt: { type: 'vector', url: 'https://tiles.openfreemap.org/planet' }, hw: { type: 'vector', url: 'pmtiles://' + location.origin + '/data/kart/hatchwatch.pmtiles' } },
+      layers: [
+        { id: 'bg', type: 'background', paint: { 'background-color': '#13242b' } },
+        { id: 'wood', type: 'fill', source: 'omt', 'source-layer': 'landcover', filter: ['==', ['get', 'class'], 'wood'], paint: { 'fill-color': '#152a2f' } },
+        { id: 'water', type: 'fill', source: 'omt', 'source-layer': 'water', paint: { 'fill-color': '#081217' } },
+        { id: 'vann', type: 'fill', source: 'hw', 'source-layer': 'vann', paint: { 'fill-color': '#24434f' } },
+        { id: 'road', type: 'line', source: 'omt', 'source-layer': 'transportation', filter: ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary', 'secondary']]], paint: { 'line-color': '#36525a', 'line-width': 1 } },
+        { id: 'laks', type: 'line', source: 'hw', 'source-layer': 'laks', layout: { 'line-cap': 'round' }, paint: { 'line-color': '#4a5f63', 'line-width': 2 } },
+        { id: 'denne', type: 'line', source: 'hw', 'source-layer': 'laks', filter: ['==', ['get', 'vassdrag'], e.id], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#f2b84b', 'line-width': 4 } },
+        { id: 'steder', type: 'symbol', source: 'omt', 'source-layer': 'place', filter: ['in', ['get', 'class'], ['literal', ['city', 'town', 'village']]], layout: { 'text-field': ['coalesce', ['get', 'name:nb'], ['get', 'name']], 'text-font': ['Noto Sans Regular'], 'text-size': 11 }, paint: { 'text-color': '#9db0b0', 'text-halo-color': '#0b1418', 'text-halo-width': 1.4 } }
+      ]
+    },
+    bounds: [[Math.min(e.lon, e.lon2 || e.lon) - 0.05, Math.min(e.lat, e.lat2 || e.lat) - 0.03], [Math.max(e.lon, e.lon2 || e.lon) + 0.05, Math.max(e.lat, e.lat2 || e.lat) + 0.03]],
+    fitBoundsOptions: { padding: 24, maxZoom: 12 }
+  });
+  map.addControl(new maplibregl.AttributionControl({ compact: true, customAttribution: 'Miljødirektoratet · NVE' }));
+  var fold = function () { var a = document.querySelector('#mini .maplibregl-ctrl-attrib'); if (a) a.classList.remove('maplibregl-compact-show'); };
+  map.once('load', fold); setTimeout(fold, 1500);
+}
+</script>
+<script src="/hw-shell.js" defer></script>
+</body>
+</html>
