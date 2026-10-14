@@ -127,13 +127,28 @@ jobs:
           PYTHONIOENCODING: utf-8
         run: python g2_gee_norge.py --samle
 
+      # 2026-10-14: kartet og vannsidene på hatchwatch.no oppdateres i samme commit, så nye
+      # isgangdatoer kommer ut uten at noen kjører noe på PC-en. Bytter bare isgangen i
+      # data/kart/isgang_*.json og data/kart/vann/*.json; sperre i skriptet stopper hvis
+      # fylkesfilene plutselig har færre vann enn før. Feil her stopper ikke resten av jobben.
+      - name: Oppdater kartdata (data/kart) fra fylkesfilene
+        if: always()
+        continue-on-error: true
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python tools/kart/bygg_kart.py isgang-lokal
+
       - name: Lagre resultatet i repoet
         if: always()
         run: |
           set -euo pipefail
           git config user.name "isgang-gee"
           git config user.email "actions@users.noreply.github.com"
-          for p in "$G/norge/lett" "$G/norge_plan.json" "$G/rapport_norge.md" "$G/isgang_norge_index.csv"; do
+          for p in "$G/norge/lett" "$G/norge_plan.json" "$G/rapport_norge.md" "$G/isgang_norge_index.csv" \
+                   data/kart/isgang_meta.json data/kart/vann; do
+            if [ -e "$p" ]; then git add -A -- "$p"; fi
+          done
+          for p in data/kart/isgang_*.json; do
             if [ -e "$p" ]; then git add -A -- "$p"; fi
           done
           if git diff --cached --quiet; then

@@ -29,7 +29,13 @@
   .back svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .top .brand { display: flex; align-items: center; gap: 6px; color: var(--hw-fg); text-decoration: none; font-family: var(--hw-display); font-weight: 700; font-size: 17px; letter-spacing: -.02em; }
   .top .brand b { color: var(--hw-hatch); font-weight: 700; }
-  .top .spacer { min-width: 70px; }
+  .varsel label { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--hw-line); cursor: pointer; }
+  .varsel label:last-of-type { border-bottom: 0; }
+  .varsel input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--hw-hatch); flex: none; }
+  .varsel b { display: block; font-weight: 600; font-size: 15px; }
+  .varsel span { font-size: 12.5px; color: var(--hw-fg-2); }
+  .varsel .status { font-size: 13px; margin-top: 8px; min-height: 1.3em; color: #5fbf7a; }
+  .varsel .status.feil { color: #e0655a; }
   .wrap { max-width: 720px; margin: 0 auto; padding: 18px 16px 40px; }
   h1 { font-family: var(--hw-display); font-weight: 800; font-size: 34px; letter-spacing: -.03em; line-height: 1.05; margin-top: 6px; }
   .sub { color: var(--hw-fg-2); font-size: 14px; margin-top: 6px; }
@@ -85,7 +91,7 @@
 <header class="top">
   <a class="back" href="/" id="backLink"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span id="backTxt">Kart</span></a>
   <a class="brand" href="/" aria-label="HatchWatch"><span class="hw-fly" style="width:26px;color:var(--hw-hatch)" aria-hidden="true"></span><span>Hatch<b>Watch</b></span></a>
-  <span class="spacer"></span>
+  <button class="hw-iconbtn fav" id="fav" type="button" aria-label="Legg til i Mine vann"><svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.7-9.3-9A5.2 5.2 0 0 1 12 6.6a5.2 5.2 0 0 1 9.3 4.9c-1.8 4.3-9.3 9-9.3 9z"/></svg></button>
 </header>
 
 <main class="wrap" id="main">
@@ -165,7 +171,23 @@ function render(v) {
 
   // ── Klekking: regnes ut fra været ved vannet (fylles inn når været er hentet) ──
   h += '<div class="card" id="klekkCard"><h2>' + tx('Klekking', 'Hatch') + '<span class="hw-chip soon"><i></i>' + tx('Anslag', 'Estimate') + '</span></h2>' +
-       '<div id="klekk" class="skel">' + tx('Henter været ved vannet…', 'Fetching the weather at the lake…') + '</div></div>';
+       '<div id="klekk" class="skel">' + tx('Henter været ved vannet…', 'Fetching the weather at the lake…') + '</div>' +
+       // Meld klekking her: skjemaet får vannets ID, så meldingen kobles til satellittisgangen for akkurat dette vannet
+       '<div class="row2"><a class="hw-btn ghost" href="/observasjon.html?vann=' + ID + '&navn=' + encodeURIComponent(navn) + (v.moh != null ? '&moh=' + v.moh : '') + '">' + tx('Meld klekking her', 'Report a hatch here') + '</a></div>' +
+       '<p class="note" style="margin-top:6px">' + tx('Så du klekking i dette vannet? Én melding med dato gjør anslagene bedre for alle.', 'Saw a hatch in this lake? One report with a date makes the estimates better for everyone.') + '</p></div>';
+
+  // ── Varsler for vannet (2026-10-14) ──
+  if (pushStottet()) {
+    var valgt = (getPrefs().triggers['vann:' + ID]) || [];
+    var rad = function (t, tittel, tekst) { return '<label><input type="checkbox" data-t="' + t + '"' + (valgt.indexOf(t) >= 0 ? ' checked' : '') + '><div><b>' + tittel + '</b><span>' + tekst + '</span></div></label>'; };
+    h += '<div class="card varsel" id="varselCard"><h2>' + tx('Varsler for dette vannet', 'Notifications for this lake') + '</h2>' +
+      '<p class="lead">' + tx('Vi sender bare når noe skjer, og hvert varsel bare én gang per sesong.', 'We only send when something happens, and each notification just once per season.') + '</p>' +
+      rad('isgang', tx('Isen har gått', 'The ice is out'), tx('Når satellitten ser isgangen i år.', 'When the satellite sees this year\'s ice-out.')) +
+      rad('marginata', tx('Marginata nærmer seg', 'Marginata soon'), tx('Noen dager før modellens anslåtte start.', 'A few days before the model\'s estimated start.')) +
+      rad('vulgata', tx('Vulgata nærmer seg', 'Vulgata soon'), tx('Noen dager før modellens anslåtte start.', 'A few days before the model\'s estimated start.')) +
+      '<div class="row2"><button class="hw-btn primary" type="button" id="varselLagre">' + tx('Lagre varsler', 'Save notifications') + '</button></div>' +
+      '<div class="status" id="varselStatus"></div></div>';
+  }
 
   // ── Isgang år for år ──
   if (years.length) {
@@ -183,7 +205,81 @@ function render(v) {
   h += '<p class="note">' + tx('Vann: NVE Innsjødatabase. Isgang: Sentinel-2 via Google Earth Engine, HatchWatch. Arter: Artsdatabanken via GBIF.', 'Lake: NVE lake database. Ice-out: Sentinel-2 via Google Earth Engine, HatchWatch. Species: Artsdatabanken via GBIF.') + '</p>';
   main.innerHTML = h;
   miniMap(v);
+  favOppsett(navn);
+  var lagre = document.getElementById('varselLagre');
+  if (lagre) lagre.addEventListener('click', function () { lagreVarsler(navn); });
   hentVaer(v).then(function (w) { klekking(v, w); }).catch(function () { klekking(v, null); });
+}
+
+// ═══ MINE VANN OG VARSLER (2026-10-14) ═══
+// Mine vann: localStorage hw_vann_favs = [{id, navn}] (vises i skallets «Mine vann»).
+// Varsler: samme hw_notif_prefs som dashboardet ({triggers: {stedId: [...], 'vann:<id>': [...]}}), og hele
+// lista sendes til /api/push?action=subscribe hver gang (som dashboardet), så de ikke overskriver hverandre.
+// cron-daily.js regner vannet med lib/vannmodell.js og sender isgang/marginata/vulgata én gang per sesong.
+var VAPID_PUBLIC = 'BDuIQlsFE48rDc_wEer_M6X4HyQd3CD2-4YWcLhKC0cqM9sAYU6fx70nR4PVaueA3T3sfG_c2AEFxn7ETpoLhus';   // samme som dashboard.html
+var NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform() && window.Capacitor.Plugins && window.Capacitor.Plugins.PushNotifications);
+function pushStottet() { return NATIVE || ('serviceWorker' in navigator && 'PushManager' in window); }
+function getPrefs() { try { return JSON.parse(localStorage.getItem('hw_notif_prefs')) || { triggers: {} }; } catch (e) { return { triggers: {} }; } }
+function getVannFavs() { try { var x = JSON.parse(localStorage.getItem('hw_vann_favs') || '[]'); return Array.isArray(x) ? x : []; } catch (e) { return []; } }
+function erFav() { return getVannFavs().some(function (x) { return x.id === ID; }); }
+function settFav(paa, navn) {
+  var f = getVannFavs().filter(function (x) { return x.id !== ID; });
+  if (paa) f.push({ id: ID, navn: navn });
+  try { localStorage.setItem('hw_vann_favs', JSON.stringify(f)); } catch (e) {}
+}
+function favOppsett(navn) {
+  var b = document.getElementById('fav'); if (!b) return;
+  if (EN) b.setAttribute('aria-label', 'Add to My waters');
+  b.classList.toggle('on', erFav());
+  b.onclick = function () { settFav(!erFav(), navn); b.classList.toggle('on', erFav()); };
+}
+function b64(s) { var p = '='.repeat((4 - s.length % 4) % 4), r = atob((s + p).replace(/-/g, '+').replace(/_/g, '/')), a = new Uint8Array(r.length); for (var i = 0; i < r.length; i++) a[i] = r.charCodeAt(i); return a; }
+function nativeToken() {
+  var PN = window.Capacitor.Plugins.PushNotifications;
+  return PN.checkPermissions().then(function (p) { return p.receive === 'granted' ? p : PN.requestPermissions(); }).then(function (p) {
+    if (p.receive !== 'granted') throw new Error('PERMISSION_DENIED');
+    return new Promise(function (resolve, reject) {
+      var t = setTimeout(function () { var x = localStorage.getItem('hw_apns_token'); if (x) resolve(x); else reject(new Error(tx('Fikk ikke svar fra Apple', 'No answer from Apple'))); }, 15000);
+      PN.addListener('registration', function (r) { clearTimeout(t); try { localStorage.setItem('hw_apns_token', r.value); } catch (e) {} resolve(r.value); });
+      PN.addListener('registrationError', function () { clearTimeout(t); reject(new Error('APNs')); });
+      PN.register();
+    });
+  });
+}
+function subPayload() {
+  if (NATIVE) return nativeToken().then(function (t) { return { platform: 'ios', token: t }; });
+  return navigator.serviceWorker.register('/sw.js').then(function () { return navigator.serviceWorker.ready; }).then(function (reg) {
+    return reg.pushManager.getSubscription().then(function (sub) {
+      if (sub) return sub;
+      return (Notification.permission === 'granted' ? Promise.resolve('granted') : Notification.requestPermission()).then(function (perm) {
+        if (perm !== 'granted') throw new Error('PERMISSION_DENIED');
+        return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64(VAPID_PUBLIC) });
+      });
+    });
+  }).then(function (sub) { return { subscription: sub.toJSON() }; });
+}
+function lagreVarsler(navn) {
+  var st = document.getElementById('varselStatus');
+  var valgte = Array.prototype.map.call(document.querySelectorAll('#varselCard input:checked'), function (c) { return c.getAttribute('data-t'); });
+  var prefs = getPrefs(); prefs.triggers = prefs.triggers || {};
+  prefs.triggers['vann:' + ID] = valgte;
+  var noenAktive = Object.keys(prefs.triggers).some(function (k) { return (prefs.triggers[k] || []).length > 0; });
+  st.className = 'status'; st.textContent = tx('Lagrer…', 'Saving…');
+  var lang = EN ? 'en' : 'no';
+  var jobb = noenAktive
+    ? subPayload().then(function (p) { return fetch('/api/push?action=subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({}, p, { locations: prefs.triggers, lang: lang })) }); })
+    : (NATIVE ? Promise.resolve(localStorage.getItem('hw_apns_token')).then(function (t) { return t ? { platform: 'ios', token: t } : null; })
+              : navigator.serviceWorker.getRegistration('/').then(function (reg) { return reg ? reg.pushManager.getSubscription() : null; }).then(function (s) { return s ? { endpoint: s.endpoint } : null; }))
+      .then(function (u) { return u ? fetch('/api/push?action=unsubscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(u) }) : { ok: true }; });
+  jobb.then(function (r) {
+    if (!r.ok) throw new Error(tx('Serverfeil ', 'Server error ') + r.status);
+    try { localStorage.setItem('hw_notif_prefs', JSON.stringify(prefs)); } catch (e) {}
+    if (valgte.length && !erFav()) { settFav(true, navn); var b = document.getElementById('fav'); if (b) b.classList.add('on'); }
+    st.textContent = valgte.length ? tx('Lagret. Vannet ligger også i Mine vann.', 'Saved. The lake is also in My waters.') : tx('Varslene for vannet er slått av.', 'Notifications for the lake are off.');
+  }).catch(function (e) {
+    st.className = 'status feil';
+    st.textContent = e.message === 'PERMISSION_DENIED' ? tx('Du må tillate varsler i innstillingene på telefonen eller i nettleseren.', 'You need to allow notifications in your phone or browser settings.') : tx('Noe gikk galt: ', 'Something went wrong: ') + e.message;
+  });
 }
 
 // ═══ VÆR OG MODELLER (2026-10-14, analyse J1–J3 i tools/research_analyser/J_offset) ═══
@@ -191,12 +287,12 @@ function render(v) {
 // etterslep) og de siste dagene fra varselmodellen; deretter 16 døgns varsel; resten av sesongen =
 // snittet for datoen de 5 foregående årene.
 //   Vulgata:     varmesum fra 1. april (base 0) >= 450 (kandidatmodellen K2, ±5 d der den er testet)
-//   Marginata:   start = senest av isgang + 14 og dagen varmesum fra 1. april >= 175; topp +3, slutt +7
+//   Marginata:   start = senest av isgang + 14 og dagen varmesum fra 1. april >= 200; topp +3, slutt +7
 //                (J2: der isen går tidlig, styrer varmen; der den går om våren, stemmer isgang + 14)
 //   Vespertina:  marginata + 7; topp +14, slutt +21 (samme avstand som før)
 //   Isgang før satellittdatoen finnes: graddager fra 1. mars mot vannets egen terskel (midtverdien av
 //                varmesummen ved isgang tidligere år). J3: ±8 d varslet 14 d før, ±6 d en uke før.
-var T_VULG = 450, T_MARG = 175;
+var T_VULG = 450, T_MARG = 200;   // 200: null skjevhet mot 11 egne startobs (J5); 175 (J2, spredte funn) kom 3 d for tidlig
 function ymd(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 function doyOf(d) { return Math.floor((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - Date.UTC(d.getFullYear(), 0, 1)) / 86400000) + 1; }
 // Været mellomlagres i nettleseren i 6 timer per vann (maks 5 vann), så gjentatte besøk ikke bruker av
@@ -321,10 +417,10 @@ function klekking(v, w) {
   else if (ig && ig.prognose) h += '<p class="lead">' + tx('Satellitten har ikke sett isgangen for ' + S + ' ennå. Modellen anslår at isen går rundt <b>' + fmt(S, ig.n) + '</b>, ut fra hvor mye varme som pleier å trengs i dette vannet og varmen hittil i år. To uker i forveien bommer den typisk med en uke.', 'The satellite has not seen ice-out for ' + S + ' yet. The model estimates the ice goes around <b>' + fmt(S, ig.n) + '</b>, from how much warmth this lake usually needs and the warmth so far this year. Two weeks ahead it typically misses by a week.') + '</p>';
   var rows = '';
   // Marginata og vespertina
-  var g175 = naar(s, 91, T_MARG);
-  if (ig && g175) {
-    var ms = Math.max(ig.n + 14, g175.n), maalt = g175.maalt && (ig.sat || ms === g175.n);
-    var styrt = ms === g175.n ? tx('varmen styrer', 'warmth governs') : tx('isgangen styrer', 'ice-out governs');
+  var gMarg = naar(s, 91, T_MARG);
+  if (ig && gMarg) {
+    var ms = Math.max(ig.n + 14, gMarg.n), maalt = gMarg.maalt && (ig.sat || ms === gMarg.n);
+    var styrt = ms === gMarg.n ? tx('varmen styrer', 'warmth governs') : tx('isgangen styrer', 'ice-out governs');
     rows += '<div class="art"><b>Marginata</b><span class="d">' + fmtRange(S, ms, ms + 7) + '</span><span class="s"><i>Leptophlebia marginata</i> · ' + tx('topp rundt ', 'peak around ') + fmt(S, ms + 3) + ' · ' + styrt + ' · ' + etikett(maalt) + '</span><span class="s">' + tilstede(v, 'Leptophlebia marginata', 'marginata') + '</span></div>';
     rows += '<div class="art"><b>Vespertina</b><span class="d">' + fmtRange(S, ms + 7, ms + 21) + '</span><span class="s"><i>Leptophlebia vespertina</i> · ' + tx('topp rundt ', 'peak around ') + fmt(S, ms + 14) + ' · ' + etikett(maalt) + '</span><span class="s">' + tilstede(v, 'Leptophlebia vespertina', 'vespertina') + '</span></div>';
   } else {
@@ -333,7 +429,7 @@ function klekking(v, w) {
   // Vulgata
   var g450 = naar(s, 91, T_VULG);
   // Sen is: luftvarmen kan gi vulgata før marginata. Ikke testet hvor mye isen forsinker vulgata, så vi sier det i stedet for å regne
-  var senIs = g450 && ig && g175 && g450.n < Math.max(ig.n + 14, g175.n) + 7;
+  var senIs = g450 && ig && gMarg && g450.n < Math.max(ig.n + 14, gMarg.n) + 7;
   if (stor) rows += '<div class="art muted"><b>Vulgata</b><span class="d">–</span><span class="s"><i>Ephemera vulgata</i> · ' + tx('Store, dype vann varmes opp mye senere enn luften, så modellen bommer der med flere uker. Vi viser ikke anslag for vann over 30 km².', 'Large, deep lakes warm up much later than the air, so the model misses there by weeks. We show no estimate for lakes over 30 km².') + '</span><span class="s">' + tilstede(v, 'Ephemera vulgata', 'vulgata') + '</span></div>';
   else if (g450) rows += '<div class="art"><b>Vulgata</b><span class="d">' + fmt(S, g450.n) + ' <small style="font-size:12px;color:var(--hw-fg-2)">±5 d</small></span><span class="s"><i>Ephemera vulgata</i> · ' + tx('start på klekkingen', 'start of the hatch') + ' · ' + etikett(g450.maalt) + (middels ? ' · ' + tx('store vann kan ligge etter', 'large lakes can lag behind') : '') + '</span>' +
     (senIs ? '<span class="s" style="color:var(--hw-hatch)">' + tx('Isen går sent her. Vulgata kommer trolig senere enn luftvarmen tilsier, men hvor mye er ikke testet ennå.', 'The ice goes late here. Vulgata probably comes later than the air warmth suggests, but by how much is not tested yet.') + '</span>' : '') +

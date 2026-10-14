@@ -30,9 +30,15 @@
 
 import { redis, k, hashEndpoint } from '../lib/redis.js';
 import { sendPush, buildPayload } from '../lib/push.js';
+import { hentVann, regnVann, datoTekst, finnes, doyOf } from '../lib/vannmodell.js';
 
 // Maks antall subs vi prosesserer i én kjøring — beskytt mot timeout.
 const MAX_SUBS_PER_RUN = 200;
+// Vannvarsler (2026-10-14): nøkkel «vann:<NVE-id>» i sub.locations, triggere under. Modellen regnes
+// én gang per vann per kjøring (lib/vannmodell.js, speiler vann.html). Hvert varsel sendes én gang
+// per sesong per vann. Maks antall vann vi regner per kjøring (open-meteo + tidsgrense).
+const VANN_TRIGGERS = ['isgang', 'marginata', 'vulgata'];
+const MAX_VANN_PER_RUN = 80;
 
 export default async function handler(req, res) {
     // Tillat både GET (Vercel Cron / manuell test) og POST
@@ -54,6 +60,7 @@ export default async function handler(req, res) {
             byTrigger: {},
         };
 
+        const vannCache = new Map();   // NVE-id → { v, m } (eller null) for denne kjøringen
         for (const hash of subsToProcess) {
             try {
                 const sub = await r.get(k.sub(hash));
@@ -66,6 +73,11 @@ export default async function handler(req, res) {
 
                 for (const [locId, triggers] of Object.entries(sub.locations)) {
                     if (!Array.isArray(triggers) || triggers.length === 0) continue;
+                    if (locId.startsWith('vann:')) {
+                        const ut = await handleVann(r, hash, sub, locId, triggers, stats, vannCache);
+                        if (ut === 'expired') break;
+                        continue;
+                    }
 
                     for (const trigger of triggers) {
                         // Debounce-sjekk
@@ -107,6 +119,80 @@ export default async function handler(req, res) {
     } catch (err) {
         console.error('cron-daily error:', err);
         return res.status(500).json({ error: err.message });
+    }
+}
+
+// ── Vannvarsler ─────────────────────────────────────────────────────────────
+// isgang:    satellitten har sett isgangen i år (sendes én gang)
+// marginata: modellens start for marginata er 0–4 dager unna
+// vulgata:   modellens start for vulgata er 0–5 dager unna
+// Bare i sesongen (mars–august). Ordlyd: «modellen anslår», og «gjelder bare hvis arten finnes»
+// når arten ikke er registrert i vannet (samme merking som vannsiden).
+async function handleVann(r, hash, sub, locId, triggers, stats, vannCache) {
+    const idag = new Date();
+    const mnd = idag.getUTCMonth();
+    if (mnd < 2 || mnd > 7) return;
+    const id = parseInt(locId.slice(5), 10);
+    if (!id) return;
+    if (!vannCache.has(id)) {
+        if (vannCache.size >= MAX_VANN_PER_RUN) return;
+        let rec = null;
+        try {
+            const v = await hentVann(getBaseUrl(), id);
+            if (v) rec = { v, m: await regnVann(v, idag) };
+        } catch (e) {
+            stats.errors.push({ hash, locId, err: 'vannmodell: ' + e.message });
+        }
+        vannCache.set(id, rec);
+    }
+    const rec = vannCache.get(id);
+    if (!rec) return;
+    const { v, m } = rec;
+    const en = sub.lang === 'en';
+    const navn = v.navn || (en ? 'Your lake' : 'Vannet ditt');
+    const iDag = doyOf(idag);
+    for (const trigger of triggers) {
+        if (!VANN_TRIGGERS.includes(trigger)) continue;
+        const sesongKey = k.notif(hash, trigger, locId);
+        if ((await r.get(sesongKey)) === `sesong-${m.S}`) continue;
+        let payload = null;
+        if (trigger === 'isgang' && m.isgang && m.isgang.sat) {
+            payload = {
+                title: en ? `${navn}: the ice is out` : `${navn}: isen har gått`,
+                body: (en ? `The satellite saw ice-out on ${datoTekst(m.S, m.isgang.doy, true)}.` : `Satellitten så isgangen ${datoTekst(m.S, m.isgang.doy)}.`)
+                    + (m.marginata ? (en ? ` The model estimates marginata from around ${datoTekst(m.S, m.marginata, true)}.` : ` Modellen anslår marginata fra rundt ${datoTekst(m.S, m.marginata)}.`) : ''),
+            };
+        } else if ((trigger === 'marginata' || trigger === 'vulgata') && m[trigger]) {
+            const dager = m[trigger] - iDag, maks = trigger === 'marginata' ? 4 : 5;
+            if (dager >= 0 && dager <= maks) {
+                const art = trigger === 'marginata' ? 'Marginata' : 'Vulgata';
+                const latin = trigger === 'marginata' ? 'Leptophlebia marginata' : 'Ephemera vulgata';
+                const her = finnes(v, latin, trigger);
+                const naar = dager === 0 ? (en ? 'today' : 'i dag') : (en ? `in ${dager} day${dager === 1 ? '' : 's'}` : `om ${dager} dag${dager === 1 ? '' : 'er'}`);
+                payload = {
+                    title: en ? `${navn}: ${art} soon` : `${navn}: ${art} nærmer seg`,
+                    body: (en ? `The model estimates the start around ${datoTekst(m.S, m[trigger], true)} (${naar}).` : `Modellen anslår start rundt ${datoTekst(m.S, m[trigger])} (${naar}).`)
+                        + (her ? (en ? ' The species has been found here.' : ' Arten er funnet her.') : (en ? ' Only applies if the species lives in the lake.' : ' Gjelder bare hvis arten finnes i vannet.')),
+                };
+            }
+        }
+        if (!payload) continue;
+        payload.url = `/vann.html?id=${id}`;
+        payload.tag = `vann-${trigger}-${id}`;
+        const subscription = { endpoint: sub.endpoint, keys: sub.keys, platform: sub.platform, token: sub.token };
+        const result = await sendPush(subscription, payload);
+        if (result.ok) {
+            stats.sent++;
+            stats.byTrigger['vann-' + trigger] = (stats.byTrigger['vann-' + trigger] || 0) + 1;
+            await r.set(sesongKey, `sesong-${m.S}`, { ex: 200 * 86400 });
+        } else if (result.expired) {
+            stats.expired++;
+            await r.del(k.sub(hash));
+            await r.srem(k.subsAll, hash);
+            return 'expired';
+        } else {
+            stats.errors.push({ hash, trigger, locId, status: result.statusCode, err: result.error });
+        }
     }
 }
 

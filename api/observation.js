@@ -89,6 +89,8 @@ async function handleSubmit(req, res) {
         ts: new Date().toISOString(),
         type, date, insect, area,
         lake: clip(b.lake, 80),
+        // NVE-vannets ID når observasjonen er sendt fra vannsiden (2026-10-14) — kobler obs til satellittisgang
+        vatnlnr: /^\d{1,7}$/.test(String(b.vatnlnr || '')) ? parseInt(b.vatnlnr, 10) : null,
         altitude: b.altitude != null && b.altitude !== '' ? parseInt(b.altitude, 10) || null : null,
         observed: OBSERVED.includes(b.observed) ? b.observed : '',
         amount: AMOUNTS.includes(b.amount) ? b.amount : '',
@@ -133,7 +135,7 @@ async function handleList(req, res) {
     }).filter(Boolean);
 
     if ((req.query.format || '') === 'csv') {
-        const cols = ['ts', 'type', 'date', 'insect', 'area', 'lake', 'altitude',
+        const cols = ['ts', 'type', 'date', 'insect', 'area', 'lake', 'vatnlnr', 'altitude',
                       'observed', 'amount', 'name', 'email', 'comment'];
         const esc = v => `"${String(v == null ? '' : v).replace(/"/g, '""').replace(/\r?\n/g, ' ')}"`;
         const lines = [cols.join(';')];

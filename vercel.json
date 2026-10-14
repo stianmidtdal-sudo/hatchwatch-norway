@@ -7,6 +7,9 @@
     { "source": "/norway/dashboard.html",     "destination": "/dashboard.html" },
     { "source": "/norway/verify-stations.html","destination": "/verify-stations.html" }
   ],
+  "functions": {
+    "api/cron-daily.js": { "maxDuration": 60 }
+  },
   "crons": [
     {
       "path": "/api/cron-daily",

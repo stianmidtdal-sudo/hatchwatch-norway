@@ -146,16 +146,22 @@
   }
   var RIVER = '<svg viewBox="0 0 24 24"><path d="M4 4c4 2 2 6 6 8s2 6 6 8"/><path d="M10 4c4 2 2 6 6 8s2 6 6 8"/></svg>';
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  // Mine vann (2026-10-14): vilkårlige vann fra vannsiden lagres som {id, navn} i hw_vann_favs
+  function vannFavs() {
+    try { var v = JSON.parse(localStorage.getItem('hw_vann_favs') || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; }
+  }
   function renderFavs() {
     var list = document.getElementById('hwbFavList');
-    var f = favs(), e = elvFavs();
-    if (!f.length && !e.length) {
+    var f = favs(), e = elvFavs(), vf = vannFavs();
+    if (!f.length && !e.length && !vf.length) {
       list.innerHTML = '<div class="hwp-empty">' + S.empty + '</div>';
       return;
     }
     var html = f.map(function (id) {
       var sub = typeof cfg.favSub === 'function' ? (cfg.favSub(id) || '') : '';
       return row('/dashboard.html?loc=' + encodeURIComponent(id), ICON.drop, NAMES[id] || id, sub);
+    }).join('') + vf.map(function (x) {
+      return row('/vann.html?id=' + encodeURIComponent(x.id), ICON.drop, esc(x.navn || x.id), EN ? 'Ice-out and hatch' : 'Isgang og klekking');
     }).join('');
     if (e.length) {
       html += '<div class="hwp-sec">' + (EN ? 'My rivers' : 'Mine elver') + '</div>' + e.map(function (x) {

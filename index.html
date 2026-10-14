@@ -358,6 +358,10 @@ function toggleFav(id) { var f = getFavs(); var i = f.indexOf(id); if (i >= 0) f
 function getElvFavs() { try { return JSON.parse(localStorage.getItem('hw_elv_favs') || '[]'); } catch (e) { return []; } }
 function isElvFav(id) { return getElvFavs().some(function (x) { return x.id === id; }); }
 function toggleElvFav(id, navn) { var f = getElvFavs(); var i = -1; f.forEach(function (x, j) { if (x.id === id) i = j; }); if (i >= 0) f.splice(i, 1); else f.push({ id: id, navn: navn }); try { localStorage.setItem('hw_elv_favs', JSON.stringify(f)); } catch (e) {} }
+// Mine vann for vilkårlige vann (2026-10-14): {id, navn} i hw_vann_favs, samme som vannsiden
+function getVannFavs() { try { var x = JSON.parse(localStorage.getItem('hw_vann_favs') || '[]'); return Array.isArray(x) ? x : []; } catch (e) { return []; } }
+function isVannFav(id) { return getVannFavs().some(function (x) { return x.id === id; }); }
+function toggleVannFav(id, navn) { var f = getVannFavs(), had = f.some(function (x) { return x.id === id; }); f = f.filter(function (x) { return x.id !== id; }); if (!had) f.push({ id: id, navn: navn }); try { localStorage.setItem('hw_vann_favs', JSON.stringify(f)); } catch (e) {} }
 function haversine(a, b, c, d) {
   var R = 6371, toR = Math.PI / 180, dLat = (c - a) * toR, dLon = (d - b) * toR;
   var h = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(a * toR) * Math.cos(c * toR) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
@@ -747,6 +751,7 @@ shFav.addEventListener('click', function () {
   if (!sel) return;
   if (sel.kind === 'loc') { toggleFav(sel.id); this.classList.toggle('on', isFav(sel.id)); }
   else if (sel.kind === 'river') { var e = ELVER && ELVER[sel.id]; toggleElvFav(sel.id, e ? e.navn : sel.id); this.classList.toggle('on', isElvFav(sel.id)); }
+  else if (sel.kind === 'lake') { toggleVannFav(sel.id, (sel.f && sel.f.properties.navn) || String(sel.id)); this.classList.toggle('on', isVannFav(sel.id)); }
 });
 
 // Vann: lite kort med isgang og anslag; arter, år for år og forklaring ligger på vannsiden (vann.html)
@@ -781,7 +786,7 @@ function openLake(f, keep) {
   var near = best && bd < 40 ? '<div class="note" style="margin-top:10px">' + tx('Vulgata: nærmeste klekkeprognose er ', 'Vulgata: the nearest hatch forecast is ') +
     '<a href="/dashboard.html?loc=' + encodeURIComponent(best.id) + '" style="color:var(--hw-water)">' + best.name + '</a>, ' + Math.round(bd) + ' km.</div>' : '';
   shExtra.innerHTML = yrs + marg + near;
-  shFav.style.display = 'none';
+  shFav.style.display = ''; shFav.classList.toggle('on', isVannFav(id)); shFav.setAttribute('aria-label', tx('Legg til i Mine vann', 'Add to My waters'));
   shOpen.style.display = ''; shOpen.textContent = tx('Åpne vannet', 'Open the lake');
   shOpen.setAttribute('href', '/vann.html?id=' + encodeURIComponent(id));
   if (!keep) showSheet();

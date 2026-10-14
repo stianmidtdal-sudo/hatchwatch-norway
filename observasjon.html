@@ -349,6 +349,15 @@ var OBS_EN = window.HW_LANG === 'en';
             if (sel.options[i].value === area) { sel.value = area; break; }
         }
     }
+    // Fra vannsiden (2026-10-14): ?vann=<NVE-id>&navn=…&moh=… fyller ut vann og høyde, og
+    // vannets ID sendes med så observasjonen kan kobles til satellittisgangen for akkurat det vannet.
+    var vannId = /^\d{1,7}$/.test(qs.get('vann') || '') ? qs.get('vann') : '';
+    if (vannId) {
+        if (qs.get('navn')) document.getElementById('fLake').value = qs.get('navn').slice(0, 80);
+        if (/^\d{1,4}$/.test(qs.get('moh') || '')) document.getElementById('fAlt').value = qs.get('moh');
+        if (!area) document.getElementById('fArea').value = 'Annet (oppgi i kommentar)';
+        if (/^(Marginata|Vespertina|Vulgata|Grandis)$/.test(qs.get('art') || '')) document.getElementById('fInsect').value = qs.get('art');
+    }
     try {
         document.getElementById('fName').value = localStorage.getItem('hw_obs_name') || '';
         document.getElementById('fEmail').value = localStorage.getItem('hw_obs_email') || '';
@@ -365,6 +374,7 @@ var OBS_EN = window.HW_LANG === 'en';
             insect: document.getElementById('fInsect').value,
             area: document.getElementById('fArea').value,
             lake: document.getElementById('fLake').value,
+            vatnlnr: vannId,
             altitude: document.getElementById('fAlt').value,
             observed: document.getElementById('fObserved').value,
             amount: document.getElementById('fAmount').value,
