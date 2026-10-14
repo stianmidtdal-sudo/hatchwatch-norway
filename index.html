@@ -291,11 +291,6 @@ var MON = EN ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 function doyOf(d) { return Math.floor((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - Date.UTC(d.getFullYear(), 0, 1)) / 86400000) + 1; }
 function dateOfDoy(year, n) { return new Date(year, 0, n); }
 function fmtDoy(year, n) { var d = dateOfDoy(year, n); return EN ? d.getDate() + ' ' + MON[d.getMonth()] : d.getDate() + '. ' + MON[d.getMonth()]; }
-function rangeDoy(year, a, b) {   // «15.–22. april», eller «28. april–5. mai» over månedsskifte
-  var da = dateOfDoy(year, a), db = dateOfDoy(year, b);
-  if (da.getMonth() !== db.getMonth()) return fmtDoy(year, a) + '–' + fmtDoy(year, b);
-  return EN ? da.getDate() + '–' + db.getDate() + ' ' + MON[db.getMonth()] : da.getDate() + '.–' + db.getDate() + '. ' + MON[db.getMonth()];
-}
 function shortDoy(year, n) { var d = dateOfDoy(year, n); return EN ? d.getDate() + ' ' + MON[d.getMonth()].slice(0, 3) : d.getDate() + '. ' + MON[d.getMonth()].slice(0, 3); }
 var MOH = tx('moh', 'm a.s.l.');
 var TODAY = new Date(); TODAY.setHours(0, 0, 0, 0);
@@ -778,9 +773,8 @@ function openLake(f, keep) {
                                  : tx('Skyer eller manglende bilder ga ingen sikker dato dette året, eller vannet er ikke behandlet ennå.', 'Clouds or missing images gave no reliable date this year, or the lake has not been processed yet.');
   }
   var yrs = '<div class="yrs">' + ICE_YEARS.map(function (y) { var r = (ISG[y] || {})[id]; return '<div class="' + (y === iceYear ? 'cur' : '') + '">' + String(y).slice(2) + '<b>' + (r ? shortDoy(y, r[0]) : '–') + '</b></div>'; }).join('') + '</div>';
-  // Smakebit på anslaget (samme faste forskyvninger som dashboardet og vannsiden); resten på vannsiden
-  var marg = rec ? '<div class="arter"><div class="hw-eyebrow">' + tx('Anslått fra isgangen', 'Estimated from ice-out') + '</div><div class="line" style="margin-top:4px">' +
-    'Marginata <b>' + rangeDoy(iceYear, rec[0] + 14, rec[0] + 21) + '</b> · Vespertina <b>' + rangeDoy(iceYear, rec[0] + 21, rec[0] + 35) + '</b></div></div>' : '';
+  // Klekkeanslagene regnes ut fra været på vannsiden (vann.html); kortet peker dit
+  var marg = '<div class="arter"><div class="line" style="margin-top:0">' + tx('Åpne vannet for anslag på marginata, vespertina og vulgata, og hvilke arter som er funnet her.', 'Open the lake for estimates of marginata, vespertina and vulgata, and which species have been found here.') + '</div></div>';
   // Nærmeste HatchWatch-prognose som lenke i kortet
   var best = null, bd = 1e9, pt = f.geometry && f.geometry.coordinates ? centroid(f.geometry) : null;
   if (pt) LOCS.forEach(function (l) { var d = haversine(pt[1], pt[0], l.lat, l.lon); if (d < bd) { bd = d; best = l; } });

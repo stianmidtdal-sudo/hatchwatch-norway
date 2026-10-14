@@ -19,8 +19,9 @@
      Landingsside per vann: /vann.html?id=<vatnlnr fra NVE Innsjødatabase>.
      Data: /data/kart/vann/<vatnlnr % 64>.json (bygges av tools/kart/bygg_kart.py vann):
      navn, moh, ha, kommune, punkt, isgang per år fra satellitt, artsfunn.
-     Marginata og vespertina anslås fra isgangen med de samme faste forskyvningene som
-     dashboardet bruker (ikke kalibrert, merket som anslag). */
+     Klekkingen regnes i nettleseren fra været ved vannet (open-meteo): vulgata fra varmesum,
+     marginata/vespertina fra isgang OG varme (analyse J1–J3, 2026-10-14). Merket som anslag,
+     med «Funnet her / Ikke registrert her» per art (Artsdatabanken + OFAs vulgata-vann). */
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { min-height: 100vh; }
   .top { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: calc(env(safe-area-inset-top, 0px) + 10px) 16px 10px; background: color-mix(in srgb, var(--hw-bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--hw-line); }
@@ -51,6 +52,11 @@
   .art .d { font-family: var(--hw-display); font-weight: 800; font-size: 18px; color: var(--hw-hatch); text-align: right; }
   .art .s { grid-column: 1 / -1; font-size: 12.5px; color: var(--hw-fg-2); }
   .art.muted .d { color: var(--hw-fg-2); }
+  .art .s + .s { margin-top: 2px; }
+  .pres { display: inline-flex; align-items: center; gap: 5px; font-family: var(--hw-mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--hw-fg-3); margin-right: 4px; }
+  .pres i { width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid currentColor; }
+  .pres.ja { color: #5fbf7a; }
+  .pres.ja i { background: currentColor; }
   svg.yrs { width: 100%; max-width: 520px; height: auto; display: block; margin: 12px auto 0; }
   svg.yrs text { font-family: var(--hw-mono); font-size: 12px; fill: var(--hw-fg-3); }
   svg.yrs .iv { stroke: var(--hw-water); stroke-width: 3; stroke-linecap: round; opacity: .45; }
@@ -113,12 +119,6 @@ var YEAR = TODAY.getFullYear();
 var ID = parseInt(new URLSearchParams(location.search).get('id'), 10);
 var GRUPPER = 64;   // samme som VANN_GRUPPER i tools/kart/bygg_kart.py
 
-// Samme faste forskyvninger fra isgang som dashboardet (start / topp / slutt i dager etter isgang).
-// Ikke kalibrert per vann. Vises ikke som tall på siden (Stian 2026-10-01: ikke «isgang +14»).
-var ARTER_FRA_ISGANG = [
-  { navn: 'Marginata', latin: 'Leptophlebia marginata', a: 14, p: 17, b: 21 },
-  { navn: 'Vespertina', latin: 'Leptophlebia vespertina', a: 21, p: 28, b: 35 }
-];
 // HatchWatch-lokasjonene (samme som forsiden) for «nærmeste klekkeprognose»
 var LOCS = [
   ['kautokeino', 'Kautokeino', 69.010, 23.040], ['alta', 'Alta', 69.970, 23.270], ['porsanger', 'Porsanger', 70.070, 25.000],
@@ -163,23 +163,9 @@ function render(v) {
       '</div>';
   }
 
-  // ── Klekking anslått fra isgangen ──
-  h += '<div class="card"><h2>' + tx('Klekking anslått fra isgangen', 'Hatch estimated from ice-out') + '<span class="hw-chip soon"><i></i>' + tx('Anslag', 'Estimate') + '</span></h2>';
-  if (ly) {
-    var thisYear = isg[YEAR], ref = thisYear ? YEAR : ly, rv = isg[ref][0];
-    if (!thisYear) h += '<p class="lead">' + tx('Isgangen for ' + YEAR + ' er ikke registrert ennå. Anslaget kommer når satellitten ser at isen har gått. Under står anslaget for ' + ly + '.', 'Ice-out for ' + YEAR + ' is not recorded yet. The estimate comes when the satellite sees the ice has gone. Below is the estimate for ' + ly + '.') + '</p>';
-    else h += '<p class="lead">' + tx('Ut fra isgangen ' + fmt(ref, rv) + ' gir modellen disse periodene for ' + ref + '.', 'From the ice-out on ' + fmt(ref, rv) + ', the model gives these periods for ' + ref + '.') + '</p>';
-    h += '<div class="arts">' + ARTER_FRA_ISGANG.map(function (a) {
-      return '<div class="art"><b>' + a.navn + '</b><span class="d">' + fmtRange(ref, rv + a.a, rv + a.b) + '</span><span class="s"><i>' + a.latin + '</i> · ' + tx('topp rundt ', 'peak around ') + fmt(ref, rv + a.p) + '</span></div>';
-    }).join('') + vulgataRow(v) + '</div>';
-    h += '<p class="note">' + tx('Marginata og vespertina følger isgangen tett, så modellen regner dem fra isgangdatoen med faste forskyvninger. Forskyvningene er de samme for alle vann og er lite testet: av to fiskerapporter vi har sjekket mot, traff én i Nordmarka, mens én på Ringerike kom tidligere enn modellen. Satellittdatoen har i tillegg en egen usikkerhet (± over). Bruk periodene som en pekepinn, ikke en fasit.',
-                                 'Marginata and vespertina follow ice-out closely, so the model works them out from the ice-out date with fixed offsets. The offsets are the same for every lake and little tested: of two angler reports we checked against, one in Nordmarka matched, while one at Ringerike came earlier than the model. The satellite date has its own uncertainty as well (± above). Use the periods as a pointer, not a verdict.') + '</p>';
-  } else {
-    h += '<p class="lead">' + (v.ha > 3000 ? tx('Vannet er for stort for satellittmetoden, så vi har ingen isgangdato og kan ikke anslå marginata og vespertina her.', 'The lake is too large for the satellite method, so we have no ice-out date and cannot estimate marginata and vespertina here.')
-                                            : tx('Vi har ingen sikker isgangdato fra satellitt for dette vannet ennå, så vi kan ikke anslå marginata og vespertina.', 'We have no reliable satellite ice-out date for this lake yet, so we cannot estimate marginata and vespertina.')) + '</p>';
-    h += '<div class="arts">' + vulgataRow(v) + '</div>';
-  }
-  h += '</div>';
+  // ── Klekking: regnes ut fra været ved vannet (fylles inn når været er hentet) ──
+  h += '<div class="card" id="klekkCard"><h2>' + tx('Klekking', 'Hatch') + '<span class="hw-chip soon"><i></i>' + tx('Anslag', 'Estimate') + '</span></h2>' +
+       '<div id="klekk" class="skel">' + tx('Henter været ved vannet…', 'Fetching the weather at the lake…') + '</div></div>';
 
   // ── Isgang år for år ──
   if (years.length) {
@@ -197,13 +183,174 @@ function render(v) {
   h += '<p class="note">' + tx('Vann: NVE Innsjødatabase. Isgang: Sentinel-2 via Google Earth Engine, HatchWatch. Arter: Artsdatabanken via GBIF.', 'Lake: NVE lake database. Ice-out: Sentinel-2 via Google Earth Engine, HatchWatch. Species: Artsdatabanken via GBIF.') + '</p>';
   main.innerHTML = h;
   miniMap(v);
+  hentVaer(v).then(function (w) { klekking(v, w); }).catch(function () { klekking(v, null); });
 }
 
+// ═══ VÆR OG MODELLER (2026-10-14, analyse J1–J3 i tools/research_analyser/J_offset) ═══
+// Temperatur: open-meteo, skalert til vannets høyde (elevation=moh). Målt = ERA5-arkivet (ca. 5 døgn
+// etterslep) og de siste dagene fra varselmodellen; deretter 16 døgns varsel; resten av sesongen =
+// snittet for datoen de 5 foregående årene.
+//   Vulgata:     varmesum fra 1. april (base 0) >= 450 (kandidatmodellen K2, ±5 d der den er testet)
+//   Marginata:   start = senest av isgang + 14 og dagen varmesum fra 1. april >= 175; topp +3, slutt +7
+//                (J2: der isen går tidlig, styrer varmen; der den går om våren, stemmer isgang + 14)
+//   Vespertina:  marginata + 7; topp +14, slutt +21 (samme avstand som før)
+//   Isgang før satellittdatoen finnes: graddager fra 1. mars mot vannets egen terskel (midtverdien av
+//                varmesummen ved isgang tidligere år). J3: ±8 d varslet 14 d før, ±6 d en uke før.
+var T_VULG = 450, T_MARG = 175;
+function ymd(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function doyOf(d) { return Math.floor((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - Date.UTC(d.getFullYear(), 0, 1)) / 86400000) + 1; }
+// Været mellomlagres i nettleseren i 6 timer per vann (maks 5 vann), så gjentatte besøk ikke bruker av
+// open-meteos kvote (den gjelder per IP-adresse, og mobilnett deler ofte adresse).
+var VAER_CACHE_TIMER = 6;
+function hentVaer(v) {
+  var nokkel = 'hw_vaer_' + ID;
+  try {
+    var c = JSON.parse(localStorage.getItem(nokkel) || 'null');
+    if (c && Date.now() - c.ts < VAER_CACHE_TIMER * 3600000 && c.dag === ymd(TODAY)) return Promise.resolve(c.w);
+  } catch (e) {}
+  return hentVaerNett(v).then(function (w) {
+    try {
+      var liste = JSON.parse(localStorage.getItem('hw_vaer_liste') || '[]').filter(function (k) { return k !== nokkel; });
+      liste.push(nokkel);
+      while (liste.length > 5) localStorage.removeItem(liste.shift());
+      localStorage.setItem(nokkel, JSON.stringify({ ts: Date.now(), dag: ymd(TODAY), w: w }));
+      localStorage.setItem('hw_vaer_liste', JSON.stringify(liste));
+    } catch (e) {}
+    return w;
+  });
+}
+function hentVaerNett(v) {
+  var q ='?latitude=' + v.lat + '&longitude=' + v.lon + (v.moh != null ? '&elevation=' + v.moh : '') + '&daily=temperature_2m_mean&timezone=Europe%2FOslo';
+  var slutt = new Date(TODAY); slutt.setDate(slutt.getDate() - 5);
+  var start = new Date(YEAR - 6, 2, 1);
+  var j = function (r) { if (!r.ok) throw new Error(r.status); return r.json(); };
+  return Promise.all([
+    fetch('https://archive-api.open-meteo.com/v1/archive' + q + '&start_date=' + ymd(start) + '&end_date=' + ymd(slutt)).then(j),
+    fetch('https://api.open-meteo.com/v1/forecast' + q + '&past_days=10&forecast_days=16').then(j).catch(function () { return null; })
+  ]).then(function (r) {
+    var w = {}, today = ymd(TODAY);
+    [r[0], r[1]].forEach(function (src, i) {
+      if (!src || !src.daily) return;
+      src.daily.time.forEach(function (t, k) {
+        var x = src.daily.temperature_2m_mean[k];
+        if (x == null) return;
+        if (i === 0 || !w[t]) w[t] = { t: x, m: i === 0 || t < today };   // m = målt (ikke varsel)
+      });
+    });
+    return w;
+  });
+}
+// Sesongserie for år S fra 1. mars til 30. sept: målt/varslet der det finnes, ellers snitt for datoen
+function serie(w, S) {
+  var klima = {};
+  for (var y = S - 5; y < S; y++) {
+    for (var d = new Date(y, 2, 1); d.getMonth() <= 8; d.setDate(d.getDate() + 1)) {
+      var x = w[ymd(d)]; if (x) (klima[doyOf(d)] = klima[doyOf(d)] || []).push(x.t);
+    }
+  }
+  var s = [];
+  for (var d2 = new Date(S, 2, 1); d2.getMonth() <= 8; d2.setDate(d2.getDate() + 1)) {
+    var k = ymd(d2), n = doyOf(d2), x2 = w[k], kl = klima[n];
+    s.push({ n: n, t: x2 ? x2.t : kl ? kl.reduce(function (a, b) { return a + b; }, 0) / kl.length : null, kilde: x2 ? (x2.m ? 'm' : 'v') : 'k' });
+  }
+  return s;
+}
+// Første dag varmesummen fra startdag (dag i året) når terskelen; «maalt» = bare målte dager brukt
+function naar(s, fra, terskel) {
+  var sum = 0, maalt = true;
+  for (var i = 0; i < s.length; i++) {
+    if (s[i].n < fra) continue;
+    if (s[i].t == null) return null;
+    sum += Math.max(s[i].t, 0);
+    if (s[i].kilde !== 'm') maalt = false;
+    if (sum >= terskel) return { n: s[i].n, maalt: maalt };
+  }
+  return null;
+}
+function varmesumTil(s, fra, til) {
+  var sum = 0;
+  for (var i = 0; i < s.length; i++) { if (s[i].n >= fra && s[i].n <= til) sum += Math.max(s[i].t || 0, 0); }
+  return sum;
+}
+// Isgangprognose for år S når satellittdatoen mangler (J3)
+function isgangPrognose(v, w, S) {
+  var isg = v.isg || {}, aar = Object.keys(isg).map(Number);
+  if (aar.length < 4) return null;
+  var klima = median(aar.map(function (y) { return isg[y][0]; }));
+  if (klima < 91) return { n: Math.round(klima), tidlig: true };               // isen går vanligvis før april
+  var terskler = aar.filter(function (y) { return y >= S - 6 && y < S; }).map(function (y) { return varmesumTil(serie(w, y), 60, isg[y][0]); }).filter(function (x) { return x > 0; });
+  var s = serie(w, S);
+  if (terskler.length < 2) return { n: Math.round(klima), bareKlima: true };
+  // J3: ren graddagmodell slo både vanlig isgang og 50/50-blandingen (snittavvik 7,8 d varslet 14 d før)
+  var g = naar(s, 60, median(terskler));
+  return { n: g ? g.n : Math.round(klima), maalt: g && g.maalt };
+}
+
+function tilstede(v, latin, nokkel) {
+  var x = (v.arter || []).filter(function (a) { return a[0] === latin; })[0];
+  var ofa = v.bekreftet && v.bekreftet[nokkel] === 'ofa';
+  if (x || ofa) {
+    var deler = [];
+    if (ofa) deler.push(tx('OFA regner vannet blant de beste vulgata-vannene i Nordmarka', 'OFA counts the lake among the best vulgata lakes in Nordmarka'));
+    if (x) deler.push(tx('Artsdatabanken: ' + x[2] + ' funn' + (x[3] ? ', sist ' + x[3] : ''), 'Artsdatabanken: ' + x[2] + ' record' + (x[2] === 1 ? '' : 's') + (x[3] ? ', last ' + x[3] : '')));
+    return '<span class="pres ja"><i></i>' + tx('Funnet her', 'Found here') + '</span> ' + deler.join(' · ');
+  }
+  return '<span class="pres"><i></i>' + tx('Ikke registrert her', 'Not recorded here') + '</span> ' + tx('Anslaget gjelder bare hvis arten finnes i vannet.', 'The estimate only applies if the species lives in the lake.');
+}
+
+function klekking(v, w) {
+  var el = document.getElementById('klekk'); if (!el) return;
+  var isg = v.isg || {}, h = '';
+  var S = TODAY.getMonth() < 2 ? YEAR - 1 : YEAR;            // jan–feb: vis fjorårets sesong
+  var ferdig = S < YEAR || TODAY.getMonth() >= 9;
+  var stor = v.ha > 3000, middels = v.ha > 500;
+  if (!w) {
+    el.className = '';
+    el.innerHTML = '<p class="lead">' + tx('Fikk ikke hentet været ved vannet akkurat nå, så vi kan ikke regne ut klekkingen. Prøv igjen litt senere.', 'Could not fetch the weather at the lake right now, so we cannot work out the hatch. Try again a little later.') + '</p>';
+    return;
+  }
+  var s = serie(w, S), etikett = function (m) { return m ? tx('målt vær', 'measured weather') : tx('prognose', 'forecast'); };
+  // Isgang for sesongen
+  var ig = isg[S] ? { n: isg[S][0], sat: true, pm: isg[S][1] != null ? Math.max(1, Math.round(isg[S][1] / 2)) : null } : null;
+  var prog = !ig ? isgangPrognose(v, w, S) : null;
+  if (!ig && prog) ig = { n: prog.n, prognose: true, tidlig: prog.tidlig, maalt: prog.maalt };
+  // Linje om isgangen
+  if (ig && ig.sat) h += '<p class="lead">' + tx('Isen gikk ' + fmt(S, ig.n) + ' (satellitt). ', 'The ice went out on ' + fmt(S, ig.n) + ' (satellite). ') + (ferdig ? tx('Med været i ' + S + ' gir modellen dette:', 'With the weather in ' + S + ' the model gives this:') : tx('Med målt vær og varsel gir modellen dette:', 'With measured weather and the forecast the model gives this:')) + '</p>';
+  else if (ig && ig.tidlig) h += '<p class="lead">' + tx('Isen går vanligvis tidlig her, rundt ' + fmt(S, ig.n) + '. Da styrer varmen klekkingen mer enn isgangen.', 'The ice usually goes early here, around ' + fmt(S, ig.n) + '. Then warmth governs the hatch more than ice-out.') + '</p>';
+  else if (ig && ig.prognose && ferdig) h += '<p class="lead">' + tx('Satellitten fant ingen sikker isgangdato i ' + S + '. Ut fra varmen anslår modellen at isen gikk rundt <b>' + fmt(S, ig.n) + '</b>, med typisk en ukes usikkerhet.', 'The satellite found no reliable ice-out date in ' + S + '. From the warmth, the model estimates the ice went out around <b>' + fmt(S, ig.n) + '</b>, with typically a week of uncertainty.') + '</p>';
+  else if (ig && ig.prognose) h += '<p class="lead">' + tx('Satellitten har ikke sett isgangen for ' + S + ' ennå. Modellen anslår at isen går rundt <b>' + fmt(S, ig.n) + '</b>, ut fra hvor mye varme som pleier å trengs i dette vannet og varmen hittil i år. To uker i forveien bommer den typisk med en uke.', 'The satellite has not seen ice-out for ' + S + ' yet. The model estimates the ice goes around <b>' + fmt(S, ig.n) + '</b>, from how much warmth this lake usually needs and the warmth so far this year. Two weeks ahead it typically misses by a week.') + '</p>';
+  var rows = '';
+  // Marginata og vespertina
+  var g175 = naar(s, 91, T_MARG);
+  if (ig && g175) {
+    var ms = Math.max(ig.n + 14, g175.n), maalt = g175.maalt && (ig.sat || ms === g175.n);
+    var styrt = ms === g175.n ? tx('varmen styrer', 'warmth governs') : tx('isgangen styrer', 'ice-out governs');
+    rows += '<div class="art"><b>Marginata</b><span class="d">' + fmtRange(S, ms, ms + 7) + '</span><span class="s"><i>Leptophlebia marginata</i> · ' + tx('topp rundt ', 'peak around ') + fmt(S, ms + 3) + ' · ' + styrt + ' · ' + etikett(maalt) + '</span><span class="s">' + tilstede(v, 'Leptophlebia marginata', 'marginata') + '</span></div>';
+    rows += '<div class="art"><b>Vespertina</b><span class="d">' + fmtRange(S, ms + 7, ms + 21) + '</span><span class="s"><i>Leptophlebia vespertina</i> · ' + tx('topp rundt ', 'peak around ') + fmt(S, ms + 14) + ' · ' + etikett(maalt) + '</span><span class="s">' + tilstede(v, 'Leptophlebia vespertina', 'vespertina') + '</span></div>';
+  } else {
+    rows += '<div class="art muted"><b>Marginata · Vespertina</b><span class="d">–</span><span class="s">' + (stor ? tx('Vannet er for stort for satellittmetoden, så vi har ingen isgang å regne fra.', 'The lake is too large for the satellite method, so we have no ice-out to work from.') : tx('Vi har for få isgangdatoer fra satellitt for dette vannet ennå.', 'We have too few satellite ice-out dates for this lake yet.')) + '</span></div>';
+  }
+  // Vulgata
+  var g450 = naar(s, 91, T_VULG);
+  // Sen is: luftvarmen kan gi vulgata før marginata. Ikke testet hvor mye isen forsinker vulgata, så vi sier det i stedet for å regne
+  var senIs = g450 && ig && g175 && g450.n < Math.max(ig.n + 14, g175.n) + 7;
+  if (stor) rows += '<div class="art muted"><b>Vulgata</b><span class="d">–</span><span class="s"><i>Ephemera vulgata</i> · ' + tx('Store, dype vann varmes opp mye senere enn luften, så modellen bommer der med flere uker. Vi viser ikke anslag for vann over 30 km².', 'Large, deep lakes warm up much later than the air, so the model misses there by weeks. We show no estimate for lakes over 30 km².') + '</span><span class="s">' + tilstede(v, 'Ephemera vulgata', 'vulgata') + '</span></div>';
+  else if (g450) rows += '<div class="art"><b>Vulgata</b><span class="d">' + fmt(S, g450.n) + ' <small style="font-size:12px;color:var(--hw-fg-2)">±5 d</small></span><span class="s"><i>Ephemera vulgata</i> · ' + tx('start på klekkingen', 'start of the hatch') + ' · ' + etikett(g450.maalt) + (middels ? ' · ' + tx('store vann kan ligge etter', 'large lakes can lag behind') : '') + '</span>' +
+    (senIs ? '<span class="s" style="color:var(--hw-hatch)">' + tx('Isen går sent her. Vulgata kommer trolig senere enn luftvarmen tilsier, men hvor mye er ikke testet ennå.', 'The ice goes late here. Vulgata probably comes later than the air warmth suggests, but by how much is not tested yet.') + '</span>' : '') +
+    '<span class="s">' + tilstede(v, 'Ephemera vulgata', 'vulgata') + '</span></div>';
+  rows += vulgataRow(v);
+  h += '<div class="arts">' + rows + '</div>';
+  h += '<p class="note">' + tx('Slik regner vi: marginata starter når isen har gått og våren har gitt nok varme, vespertina en uke senere. Vulgata starter når varmesummen fra 1. april har nådd et fast nivå. Temperaturen er luft ved vannet, skalert til vannets høyde. For vulgata bommer modellen typisk med rundt 5 dager der den er testet (Østlandet og Kautokeino); for marginata og vespertina er den bare sjekket mot spredte artsfunn. Vannene der vi har en kalibrert prognose, har egen side.',
+                               'How we work it out: marginata starts when the ice has gone and spring has given enough warmth, vespertina a week later. Vulgata starts when the warmth sum from 1 April reaches a fixed level. Temperature is air at the lake, scaled to its altitude. For vulgata the model typically misses by about 5 days where it has been tested (eastern Norway and Kautokeino); for marginata and vespertina it has only been checked against scattered species records. Lakes with a calibrated forecast have their own page.') + '</p>';
+  el.className = ''; el.innerHTML = h;
+}
+
+// Nærmeste HatchWatch-sted med egen prognose (innen 40 km): lenke under anslagene
 function vulgataRow(v) {
   var best = null, bd = 1e9;
   LOCS.forEach(function (l) { var d = haversine(v.lat, v.lon, l[2], l[3]); if (d < bd) { bd = d; best = l; } });
-  if (best && bd < 40) return '<div class="art muted"><b>Vulgata</b><span class="d"><a href="/dashboard.html?loc=' + best[0] + '" style="color:inherit">' + tx('Se prognosen', 'See forecast') + '</a></span><span class="s"><i>Ephemera vulgata</i> · ' + tx('nærmeste klekkeprognose er ' + best[1] + ', ' + Math.round(bd) + ' km unna. Vulgata følger varmen, ikke isgangen.', 'the nearest hatch forecast is ' + best[1] + ', ' + Math.round(bd) + ' km away. Vulgata follows warmth, not ice-out.') + '</span></div>';
-  return '<div class="art muted"><b>Vulgata</b><span class="d">–</span><span class="s"><i>Ephemera vulgata</i> · ' + tx('ingen klekkeprognose i nærheten ennå. Vulgata følger varmen, ikke isgangen.', 'no hatch forecast nearby yet. Vulgata follows warmth, not ice-out.') + '</span></div>';
+  if (!best || bd >= 40) return '';
+  return '<div class="art muted"><b>' + tx('Egen prognose i nærheten', 'Own forecast nearby') + '</b><span class="d"><a href="/dashboard.html?loc=' + best[0] + '" style="color:inherit">' + best[1] + '</a></span><span class="s">' + tx(Math.round(bd) + ' km unna. Der har vi daglig prognose med stasjonsdata, og for noen steder kalibrering mot egne observasjoner.', Math.round(bd) + ' km away. There we have a daily forecast with station data, and for some places calibration against our own observations.') + '</span></div>';
 }
 
 function yrsSvg(isg, years, med, ly) {
