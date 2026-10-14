@@ -118,6 +118,12 @@
   .maal svg.profil { width: 100%; height: auto; display: block; margin-top: 10px; }
   .maal svg.profil text { font-family: var(--hw-mono); font-size: 10px; fill: var(--hw-fg-3); }
   .maal .pinfo { font-size: 12.5px; color: var(--hw-fg-2); margin-top: 4px; }
+  .maal .turtid { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+  .maal .turtid .k { display: block; font-family: var(--hw-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--hw-fg-3); }
+  .maal .turtid b { font-family: var(--hw-display); font-weight: 800; font-size: 20px; letter-spacing: -.01em; }
+  .maal .fart { display: inline-flex; background: var(--hw-bg-3); border-radius: 10px; padding: 3px; }
+  .maal .fart button { padding: 5px 10px; border-radius: 8px; font-size: 12.5px; color: var(--hw-fg-2); }
+  .maal .fart button.on { background: var(--hw-bg-2); color: var(--hw-fg); font-weight: 600; }
   body.kart-tur .brandrow { background: color-mix(in srgb, var(--hw-bg) 88%, transparent); backdrop-filter: blur(6px); border-radius: 12px; padding: 4px 12px 4px 6px; }
   .lagvalg button { width: 84px; text-align: center; font-size: 12.5px; color: var(--hw-fg-2); }
   .lagvalg button i { display: block; height: 56px; border-radius: 10px; margin-bottom: 5px; border: 2px solid transparent; }
@@ -226,7 +232,7 @@
     <div class="knapper">
       <button type="button" id="maalAngre" disabled>Angre</button>
       <button type="button" id="maalNull" disabled>Nullstill</button>
-      <button type="button" id="maalHoyde" disabled>Høydeprofil</button>
+      <button type="button" id="maalHoyde" disabled>Turprofil</button>
     </div>
     <div id="maalProfil"></div>
   </div>
@@ -352,7 +358,7 @@ function tx(no, en) { return EN ? en : no; }
   document.getElementById('maalFerdig').textContent = 'Done';
   document.getElementById('maalAngre').textContent = 'Undo';
   document.getElementById('maalNull').textContent = 'Clear';
-  document.getElementById('maalHoyde').textContent = 'Elevation profile';
+  document.getElementById('maalHoyde').textContent = 'Trip profile';
   document.getElementById('lagBtn').setAttribute('aria-label', 'Map layers'); document.getElementById('lagBtn').title = 'Map layers';
   document.getElementById('lagValg').setAttribute('aria-label', 'Map layers');
 })();
@@ -789,6 +795,7 @@ function maalTegn() {
   document.getElementById('maalNull').disabled = n === 0;
   document.getElementById('maalHoyde').disabled = n < 2;
   document.getElementById('maalProfil').innerHTML = '';
+  sisteTur = null;
 }
 function maalLeggTil(p) { maalPunkter.push(p); maalTegn(); }
 function maalStart() {
@@ -842,7 +849,36 @@ function hentHoyder(pkt, vis) {
   var b = kv().then(function (r) { fikkKv = true; vis(r); return true; }).catch(function () { return false; });
   return Promise.all([a, b]).then(function (x) { if (!x[0] && !x[1]) throw new Error('ingen høyder'); });
 }
-// Høydeprofil: jevnt fordelte punkter langs streken (lineært i grader — godt nok på turavstander)
+// Turtid (2026-10-14, Stian): Naismiths regel — flat fart + 10 min per 100 høydemeter oppover. Flat fart
+// lavere enn Naismiths 5 km/t fordi streken går i terreng/sti, ofte med sekk og fiskeutstyr: rolig 3,
+// vanlig 4, rask 5 km/t. Nedover regnes som flatt. Valget huskes (hw_turfart).
+var TURFART = { rolig: 3, vanlig: 4, rask: 5 };
+var turFart = 'vanlig';
+try { var tf0 = localStorage.getItem('hw_turfart'); if (TURFART[tf0]) turFart = tf0; } catch (e) {}
+var sisteTur = null;
+function turMinutter(tot, opp) { return (tot / 1000) / TURFART[turFart] * 60 + opp / 100 * 10; }
+function turFmt(min) {
+  min = Math.max(5, Math.round(min / 5) * 5);
+  var t = Math.floor(min / 60), m = min % 60;
+  return t ? (EN ? t + ' h' + (m ? ' ' + m + ' min' : '') : t + ' t' + (m ? ' ' + m + ' min' : '')) : m + ' min';
+}
+function turTidHtml() {
+  if (!sisteTur) return '';
+  var navn = { rolig: tx('Rolig', 'Easy'), vanlig: tx('Vanlig', 'Normal'), rask: tx('Rask', 'Brisk') };
+  return '<div class="turtid"><div><span class="k">' + tx('Turtid', 'Walking time') + '</span><b id="turTidTxt">' + tx('ca. ', 'about ') + turFmt(turMinutter(sisteTur.tot, sisteTur.opp)) + '</b></div>' +
+    '<div class="fart">' + ['rolig', 'vanlig', 'rask'].map(function (k) { return '<button type="button" data-fart="' + k + '"' + (k === turFart ? ' class="on"' : '') + '>' + navn[k] + '</button>'; }).join('') + '</div></div>' +
+    '<div class="pinfo">' + tx('Anslag etter Naismiths regel: ' + TURFART[turFart] + ' km/t på flatmark og 10 min ekstra per 100 høydemeter opp. Streken følger ikke stien, så regn med mer.',
+                               'Estimate by Naismith\'s rule: ' + TURFART[turFart] + ' km/h on the flat and 10 min extra per 100 m of ascent. The line does not follow the trail, so allow for more.') + '</div>';
+}
+document.getElementById('maalProfil').addEventListener('click', function (e) {
+  var b = e.target.closest('button[data-fart]'); if (!b || !sisteTur) return;
+  turFart = b.getAttribute('data-fart');
+  try { localStorage.setItem('hw_turfart', turFart); } catch (err) {}
+  var gammel = this.querySelector('.turtid'), info = gammel && gammel.nextElementSibling;
+  var tmp = document.createElement('div'); tmp.innerHTML = turTidHtml();
+  if (gammel) { gammel.replaceWith(tmp.children[0]); if (info) info.replaceWith(tmp.children[0]); }
+});
+// Turprofil: jevnt fordelte punkter langs streken (lineært i grader — godt nok på turavstander)
 function maalHoyde() {
   var tot = maalTotal(); if (maalPunkter.length < 2 || !tot) return;
   var N = Math.max(2, Math.min(100, Math.round(tot / 25) + 1)), ut = [];
@@ -873,7 +909,8 @@ function maalHoyde() {
       '<text x="' + (L - 4) + '" y="' + (y(lo) + 4) + '" text-anchor="end">' + Math.round(lo) + '</text>' +
       '<text x="' + L + '" y="' + (H + 12) + '">0</text><text x="' + (W - 4) + '" y="' + (H + 12) + '" text-anchor="end">' + maalFmt(tot) + '</text></svg>';
     var kildeTxt = kilde === 'kartverket' ? tx('Høyder: Kartverket', 'Heights: Kartverket') : tx('Høyder: Copernicus via open-meteo (grovere; byttes til Kartverket hvis det svarer)', 'Heights: Copernicus via open-meteo (coarser; replaced by Kartverket if it answers)');
-    boks.innerHTML = svg + '<div class="pinfo">' + (EN ? 'Up ' + Math.round(opp) + ' m · down ' + Math.round(ned) + ' m · highest ' + Math.round(hi) + ' m a.s.l. · '
+    sisteTur = { tot: tot, opp: opp };
+    boks.innerHTML = svg + turTidHtml() + '<div class="pinfo">' + (EN ? 'Up ' + Math.round(opp) + ' m · down ' + Math.round(ned) + ' m · highest ' + Math.round(hi) + ' m a.s.l. · '
                                                     : 'Opp ' + Math.round(opp) + ' m · ned ' + Math.round(ned) + ' m · høyest ' + Math.round(hi) + ' moh · ') + kildeTxt + '</div>';
   }).catch(function () {
     boks.innerHTML = '<div class="pinfo">' + tx('Fikk ikke hentet høyder akkurat nå.', 'Could not fetch heights right now.') + '</div>';
