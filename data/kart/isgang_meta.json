@@ -26,7 +26,6 @@
   "2026": 12846
  },
  "kilde": "Sentinel-2 via Google Earth Engine (HatchWatch, låst metode), midt i observert intervall",
- "bygget": "2026-10-14T12:34:32",
  "fylkesfiler": [
   "isgang_00_uten_fylke.csv",
   "isgang_03_oslo.csv",

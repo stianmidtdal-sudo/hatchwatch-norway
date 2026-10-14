@@ -1,6 +1,6 @@
 # Isgang for hele Norge i GEE (g2) — framdrift per fylke
 
-Oppdatert 2026-10-12T03:35. Vindu 02-01–07-16, 2017–2026, vann >= 10 ha, vann over 3000 ha droppet. Piksel 20 m <= 150 ha, 40 m 150-600 ha, 60 m > 600 ha. Referansenettets vann-år (644 vann, 20 m, vindu 03-01–07-16) beholdes uendret; vann som alt lå inne for alle årene hentes ikke på nytt.
+Oppdatert 2026-10-14T21:09. Vindu 02-01–07-16, 2017–2026, vann >= 10 ha, vann over 3000 ha droppet. Piksel 20 m <= 150 ha, 40 m 150-600 ha, 60 m > 600 ha. Referansenettets vann-år (644 vann, 20 m, vindu 03-01–07-16) beholdes uendret; vann som alt lå inne for alle årene hentes ikke på nytt.
 
 Kvote denne måneden (2026-10): brukt **950.0 EECU-t (estimat)** av budsjett 950 t. Estimat, ikke avlest: 30 EECU-s per vann-år på 20 m (vindu 03-01–07-16), skalert med (20/piksel)^2 og vinduslengde. Stians eget forbruk før 11. okt 2026 (39,23 % = 58,8 t) ligger IKKE her.
 
