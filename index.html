@@ -92,6 +92,16 @@
   .zoomctl #lagBtn.on { color: var(--hw-hatch); border-color: color-mix(in srgb, var(--hw-hatch) 55%, transparent); }
   .lagvalg { position: absolute; right: 58px; bottom: calc(var(--scrub-h, 190px) + 152px); z-index: 24; display: none; gap: 8px; padding: 8px; border-radius: 14px; background: var(--hw-bg-2); border: 1px solid var(--hw-line); box-shadow: var(--hw-shadow); }
   .lagvalg.open { display: flex; }
+  /* Skjul tidsskyveren (2026-10-14, Stian: tar mye plass på mobil): krysset gjør den om til en liten
+     knapp nede til venstre; trykk på knappen åpner den igjen. Valget huskes (hw_skyver). */
+  .scrub .top { align-items: flex-start; }
+  .scrub .play.lukk { margin-left: -2px; }
+  .scrub .play.lukk svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; width: 12px; height: 12px; }
+  .scrubmini { position: absolute; left: 12px; bottom: 12px; z-index: 21; display: none; align-items: center; gap: 7px; padding: 8px 14px 8px 10px; border-radius: 999px; background: color-mix(in srgb, var(--hw-bg-2) 92%, transparent); backdrop-filter: blur(8px); border: 1px solid var(--hw-line); color: var(--hw-fg); font-size: 13.5px; font-weight: 500; }
+  .scrubmini svg { width: 17px; height: 17px; fill: none; stroke: var(--hw-hatch); stroke-width: 1.8; stroke-linecap: round; }
+  body.skyver-liten .scrub { display: none; }
+  body.skyver-liten .scrubmini { display: inline-flex; }
+  @media (min-width: 760px) { .scrubmini { left: auto; right: 12px; } }
   /* Avstandsmåling (2026-10-14): panel der skyveren står mens man måler */
   .zoomctl #maalBtn { display: grid; place-items: center; }
   .zoomctl #maalBtn svg { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; }
@@ -231,6 +241,7 @@
     <button id="zout" aria-label="Zoom ut">−</button>
   </div>
 
+  <button class="scrubmini" id="scrubMini" type="button" aria-label="Vis tidsskyveren"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span id="scrubMiniTxt">I dag</span></button>
   <div class="scrub" id="scrub">
     <div class="top">
       <div class="grow">
@@ -239,6 +250,7 @@
         <div class="sum ice" id="iceSum"></div>
       </div>
       <button class="play" id="play" type="button" aria-label="Spill av"><svg viewBox="0 0 16 16"><path d="M4 2l10 6-10 6z"/></svg></button>
+      <button class="play lukk" id="scrubLukk" type="button" aria-label="Skjul tidsskyveren" title="Skjul"><svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
     </div>
     <input type="range" id="scrubRange" min="60" max="273" value="60" aria-label="Dato gjennom sesongen">
     <div class="ticks"><span>Mar</span><span>Apr</span><span id="tickMay">Mai</span><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span></div>
@@ -333,6 +345,9 @@ function tx(no, en) { return EN ? en : no; }
   document.getElementById('elvClose').setAttribute('aria-label', 'Close');
   document.getElementById('play').setAttribute('aria-label', 'Play');
   document.getElementById('lagTurTxt').textContent = 'Hiking map';
+  document.getElementById('scrubLukk').setAttribute('aria-label', 'Hide the time slider'); document.getElementById('scrubLukk').title = 'Hide';
+  document.getElementById('scrubMini').setAttribute('aria-label', 'Show the time slider');
+  document.getElementById('scrubMiniTxt').textContent = 'Today';
   document.getElementById('maalBtn').setAttribute('aria-label', 'Measure distance'); document.getElementById('maalBtn').title = 'Measure distance';
   document.getElementById('maalFerdig').textContent = 'Done';
   document.getElementById('maalAngre').textContent = 'Undo';
@@ -458,14 +473,28 @@ map.on('movestart', function (e) { if (e.originalEvent) userMoved = true; });
 function foldAttrib() { var a = document.querySelector('.maplibregl-ctrl-attrib'); if (a) a.classList.remove('maplibregl-compact-show'); }
 map.once('idle', foldAttrib); setTimeout(foldAttrib, 1500);
 function fitNorway() {
-  var w = window.innerWidth, top = w >= 760 ? 115 : 155, sh = document.getElementById('scrub').offsetHeight || 190;
+  var w = window.innerWidth, top = w >= 760 ? 115 : 155;
+  var sh = document.body.classList.contains('skyver-liten') ? (document.getElementById('scrubMini').offsetHeight || 40) : (document.getElementById('scrub').offsetHeight || 190);
   // Stor skjerm: skyveren ligger nede til høyre, så Norge får hele høyden og holder seg til venstre for den
   // Venstre 230 på stor skjerm: plass til forklaringen. Mobil: plass til forklaringsraden over skyveren.
   var pad = w >= 1100 ? { top: top, bottom: 20, left: 230, right: 470 }
                       : { top: top, bottom: sh + (w >= 760 ? 20 : 56), left: 10, right: 10 };
   map.fitBounds([[4.6, 57.9], [31.2, 71.2]], { padding: pad, duration: 0 });
 }
-function syncScrubHeight() { document.getElementById('map').style.setProperty('--scrub-h', (document.getElementById('scrub').offsetHeight || 190) + 'px'); }
+function syncScrubHeight() {
+  var liten = document.body.classList.contains('skyver-liten');
+  var h = liten ? document.getElementById('scrubMini').offsetHeight : document.getElementById('scrub').offsetHeight;
+  document.getElementById('map').style.setProperty('--scrub-h', (h || (liten ? 40 : 190)) + 'px');
+}
+function settSkyverLiten(liten) {
+  stopPlay();
+  document.body.classList.toggle('skyver-liten', liten);
+  try { localStorage.setItem('hw_skyver', liten ? 'liten' : 'full'); } catch (e) {}
+  syncScrubHeight();
+}
+try { if (localStorage.getItem('hw_skyver') === 'liten') document.body.classList.add('skyver-liten'); } catch (e) {}
+document.getElementById('scrubLukk').addEventListener('click', function () { settSkyverLiten(true); });
+document.getElementById('scrubMini').addEventListener('click', function () { settSkyverLiten(false); });
 
 function locGeo() {
   return { type: 'FeatureCollection', features: LOCS.map(function (l) {
@@ -894,6 +923,7 @@ function paintScrub() {
   var day = isToday ? TODAY_DOY : T;
   var dateBtn = document.getElementById('scrubDate');
   var py = predYear();
+  document.getElementById('scrubMiniTxt').textContent = isToday ? tx('I dag', 'Today') : fmtDoy(YEAR, T);
   if (isToday) dateBtn.innerHTML = tx('I dag', 'Today');
   else dateBtn.innerHTML = fmtDoy(YEAR, T) + '<small>' + tx('tilbake til i dag', 'back to today') + '</small>';
   var leg = document.getElementById('legend');
@@ -1094,7 +1124,7 @@ function openRiver(id, props, keep) {
     shExtra.innerHTML = kurveSvg(e, day) + '<div class="arter"><div class="note">' + tx('Gull er de tre beste ukene i snitt. Streken er valgt dato.', 'Gold marks the three best weeks on average. The line is the chosen date.') + '</div></div>';
   } else {
     big.innerHTML = '<span style="margin:0;font-size:15px">' + tx('Ingen fangstkurve ennå', 'No catch curve yet') + '</span>';
-    line.innerHTML = tx('Vi har fangstkurve for de 30 elvene med mest laks. Flere kommer.', 'We have catch curves for the 30 rivers with the most salmon. More are coming.');
+    line.innerHTML = tx('Fangstkurven krever minst fire sesonger med minst 100 laks i dataene våre. Denne elva har ikke nok ennå.', 'The catch curve needs at least four seasons with at least 100 salmon in our data. This river does not have enough yet.');
     shExtra.innerHTML = '';
   }
   shFav.style.display = ''; shFav.classList.toggle('on', isElvFav(id)); shFav.setAttribute('aria-label', tx('Legg til i Mine elver', 'Add to My rivers'));
@@ -1303,7 +1333,10 @@ fetch(API_BASE + '/api/predictions')
 paintYears(); paintScrub(); syncScrubHeight();
 window.addEventListener('resize', syncScrubHeight);
 // Skyveren endrer høyde når tekstene kommer inn; forklaring, zoom og kildeknapp følger etter
-if (window.ResizeObserver) new ResizeObserver(syncScrubHeight).observe(document.getElementById('scrub'));
+if (window.ResizeObserver) {
+  var ro = new ResizeObserver(syncScrubHeight);
+  ro.observe(document.getElementById('scrub')); ro.observe(document.getElementById('scrubMini'));
+}
 if (location.hash === '#sesong') { if (mode === 'laks') openElvPanel(); else openSesong(); }
 </script>
 <script src="/hw-shell.js"></script>

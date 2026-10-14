@@ -158,13 +158,22 @@ def bygg_elver():
             "lat2": _f(r["ovre_lat"]), "lon2": _f(r["ovre_lon"]),
             "url": r["lakseregister_url"]}
 
-    oversikt = {r["elv_nokkel"]: r for r in les(os.path.join(an, "H_oversikt_elv.csv"))}
+    # 2026-10-14: H_alle_* (analyse_H.py --alle: alle elver i laksedataene, samme låste kriterier) når de
+    # finnes, ellers topp-30-filene. Bare elver med fangstkurve (>= 4 normalår og halv-fangst-dato) og som
+    # finnes i Lakseregisteret (ellers har vi verken strekning på kartet eller side) tas med.
+    pref = "H_alle_" if os.path.exists(os.path.join(an, "H_alle_oversikt_elv.csv")) else "H_"
+    oversikt = {r["elv_nokkel"]: r for r in les(os.path.join(an, pref + "oversikt_elv.csv"))
+                if r.get("normal_n_aar") and int(r["normal_n_aar"]) >= 4 and r.get("halv_fangst_dato")}
+    utenfor = [o["navn"] for k, o in oversikt.items() if k not in elver]
+    oversikt = {k: o for k, o in oversikt.items() if k in elver}
+    if utenfor:
+        print(f"elver: {len(utenfor)} med fangstkurve, men ikke i Lakseregisteret (utelatt): {', '.join(utenfor)}")
     kurver = collections.defaultdict(list)
-    for r in les(os.path.join(an, "H_normalkurve.csv")):
+    for r in les(os.path.join(an, pref + "normalkurve.csv")):
         kurver[r["elv_nokkel"]].append(r)
 
     for nk, o in oversikt.items():
-        e = elver.setdefault(nk, {"id": nk, "navn": o["navn"]})
+        e = elver[nk]
         e["fangstnavn"] = o["navn"]
         k = sorted(kurver.get(nk, []), key=lambda r: int(r["uke_2027"]))
         e["kurve"] = {
