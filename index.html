@@ -752,6 +752,22 @@ function leggTilTurkart() {
   map.addSource('kv-tur', { type: 'raster', tileSize: 256, minzoom: 9, attribution: tx('Turruter: Turrutebasen © Kartverket', 'Trails: Turrutebasen © Kartverket'),
     tiles: ['https://wms.geonorge.no/skwms1/wms.friluftsruter2?service=WMS&version=1.3.0&request=GetMap&layers=Fotrute,Ruteinfopunkt&styles=&format=image/png&transparent=true&crs=EPSG:3857&width=256&height=256&bbox={bbox-epsg-3857}'] });
   map.addLayer({ id: 'kv-topo', type: 'raster', source: 'kv-topo', layout: { visibility: 'none' } }, 'vann-fill');
+  // Underlag (2026-10-15): Kartverkets topo dekker bare Norge og et havbelte; utenfor er flisene gjennomsiktige.
+  // Under dem ligger OpenFreeMap tegnet i Kartverkets egne farger (målt fra flisene), så nabolandene og havet
+  // fortsetter sømløst. Inne i Norge dekker Kartverket alt dette. MapLibre henter 256-px rasterfliser på avrundet
+  // kartzoom + 1, så Kartverkets palettskifte (land mellom flis-z8 og z9, hav mellom z10 og z11) kommer ved kartzoom 7,5 og 9,5 (der Kartverket går over
+  // til dybdeblått, #87dcff–#abe8ff; vi tar midten).
+  var kv = function (lav, hoy, ved) { return ['step', ['zoom'], lav, ved, hoy]; };
+  var under = [
+    { id: 'tu-land', type: 'background', paint: { 'background-color': kv('#ffffcc', '#f1f1cd', 7.5) } },
+    { id: 'tu-skog', type: 'fill', source: 'omt', 'source-layer': 'landcover', filter: ['==', ['get', 'class'], 'wood'], paint: { 'fill-color': kv('#d2e67c', '#d2e096', 7.5) } },
+    { id: 'tu-is', type: 'fill', source: 'omt', 'source-layer': 'landcover', filter: ['in', ['get', 'class'], ['literal', ['ice', 'glacier']]], paint: { 'fill-color': '#ffffff' } },
+    { id: 'tu-vann', type: 'fill', source: 'omt', 'source-layer': 'water', paint: { 'fill-color': kv('#e0fefe', ['case', ['==', ['get', 'class'], 'ocean'], '#9ae2ff', '#e0fefe'], 9.5) } },   // zoom må stå øverst i uttrykket
+    { id: 'tu-vei', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 7, filter: ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary', 'secondary']]], paint: { 'line-color': '#d2232a', 'line-opacity': 0.75, 'line-width': ['interpolate', ['linear'], ['zoom'], 7, 0.6, 14, 2.5] } },
+    { id: 'tu-grense', type: 'line', source: 'omt', 'source-layer': 'boundary', filter: ['all', ['==', ['get', 'admin_level'], 2], ['!=', ['get', 'maritime'], 1]], paint: { 'line-color': '#be5abe', 'line-width': ['interpolate', ['linear'], ['zoom'], 4, 1.2, 10, 2.5] } },
+    { id: 'tu-sted', type: 'symbol', source: 'omt', 'source-layer': 'place', minzoom: 5, filter: ['in', ['get', 'class'], ['literal', ['city', 'town']]], layout: { 'text-field': ['coalesce', ['get', 'name:nb'], ['get', 'name:no'], ['get', 'name:latin'], ['get', 'name']], 'text-font': ['Noto Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 5, 10, 10, 13] }, paint: { 'text-color': '#3a3a3a', 'text-halo-color': '#ffffff', 'text-halo-width': 1.2 } }
+  ];
+  under.forEach(function (l) { l.layout = Object.assign({ visibility: 'none' }, l.layout || {}); map.addLayer(l, 'kv-topo'); });
   map.addLayer({ id: 'kv-tur', type: 'raster', source: 'kv-tur', minzoom: 9, layout: { visibility: 'none' } }, 'vann-navn');
   // Dybdekart (2026-10-14): NVEs dybdekoter og loddpunkter (Innsjødatabase2) fra zoom 12, i begge kartlagene.
   // Finnes digitalt for ca. 530 vann; de andre har bare PDF (lenke på vannsiden). NVE tegner bare under 1:160 000.
@@ -775,7 +791,7 @@ function leggTilTurkart() {
     layout: { visibility: 'none', 'text-field': tx('gapahuk', 'shelter'), 'text-font': ['Noto Sans Italic'], 'text-size': 10.5 },
     paint: { 'text-color': '#6b4a1f', 'text-halo-color': '#ffffff', 'text-halo-width': 1.6 } }, 'loc-cluster');
 }
-var TUR_ADKOMST = ['tur-p', 'tur-p-txt', 'tur-bom', 'tur-gapahuk', 'nve-lodd'];
+var TUR_ADKOMST = ['tur-p', 'tur-p-txt', 'tur-bom', 'tur-gapahuk', 'nve-lodd', 'tu-land', 'tu-skog', 'tu-is', 'tu-vann', 'tu-vei', 'tu-grense', 'tu-sted'];
 function applyKartlag() {
   var tur = KARTLAG === 'tur';
   document.body.classList.toggle('kart-tur', tur);   // mørk bakgrunn bak logoen på det lyse turkartet
