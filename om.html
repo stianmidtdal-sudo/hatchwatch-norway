@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-itunes-app" content="app-id=6817913220">   <!-- Apples app-banner i Safari på iPhone (2026-10-15) -->
     <title>Om HatchWatch · HatchWatch</title>
     <meta name="theme-color" content="#0b1418">
     <meta name="description" content="Om HatchWatch: klekking, isgang og fiskeforhold for fluefiskere i hele Norge.">
@@ -100,6 +101,16 @@
             margin: 0 0 28px; max-width: 940px;
         }
         .cta-row { margin-top: 0; display: flex; gap: 12px; flex-wrap: wrap; }
+        /* Appboksen (2026-10-15) */
+        .appboks { display: flex; gap: 28px; align-items: center; justify-content: space-between; max-width: 940px; margin: 0 0 28px; padding: 22px 24px; border: 1px solid var(--hw-line); border-radius: 16px; background: var(--hw-bg-2); scroll-margin-top: 20px; }
+        .appboks h2 { margin-top: 0; }
+        .appboks p { margin-bottom: 12px; }
+        .appboks .appand { font-size: .9rem; color: var(--hw-fg-3); }
+        .appboks .appqr { display: none; flex: none; text-align: center; }
+        .appboks.har-qr .appqr { display: block; }
+        .appboks .appqr span { display: block; font-size: 12px; color: var(--hw-fg-3); margin-top: 8px; }
+        .appboks #appQr { padding: 8px; background: #ffffff; border: 1px solid var(--hw-line); border-radius: 10px; display: inline-block; }
+        .appboks #appQr img, .appboks #appQr canvas { display: block; }
         .cta-btn {
             display: inline-block; background: linear-gradient(135deg, #0d0f0e, #161918); color: white; border: none;
             padding: 12px 22px; font-size: 0.92rem;
@@ -216,6 +227,17 @@
         </div>
     </div>
 
+    <!-- Appen (2026-10-15, Stian): skjules inne i iPhone-appen. QR-koden vises bare på PC. -->
+    <section class="appboks" id="app">
+        <div>
+            <h2 data-i18n="appH">HatchWatch på telefonen</h2>
+            <p data-i18n="appP">Last ned HatchWatch for iPhone. Du får varsler om isgang, klekking og spinnerfall rett på telefonen, og kartet med deg ut ved vannet.</p>
+            <p class="appand" data-i18n="appAnd">Android-app kommer. Til da kan du åpne hatchwatch.no i Chrome og velge «Legg til på startsiden» i menyen.</p>
+            <a class="cta-btn" href="https://apps.apple.com/no/app/id6817913220" target="_blank" rel="noopener" data-i18n="appBtn">Last ned i App Store</a>
+        </div>
+        <div class="appqr"><div id="appQr" aria-hidden="true"></div><span data-i18n="appQr">Skann med kameraet på iPhone</span></div>
+    </section>
+
     <div class="disclaimer" data-i18n-html="disclaimer">
         <b>En modell er et hjelpemiddel, ikke en fasit.</b> Klekking varierer fra vann til vann og fra år til år, og været på selve dagen kan både framskynde og utsette den. HatchWatch er et utgangspunkt for planlegging, ikke en garanti for fisk.
     </div>
@@ -274,7 +296,11 @@
         builtH: 'Built by',
         builtP: 'Stian Midtdal, as a hobby project. Feedback and observations are very welcome.',
         disclaimer: '<b>A model is a tool, not an answer key.</b> Hatches vary from lake to lake and from year to year, and the weather on the day can bring a hatch forward or push it back. HatchWatch is a starting point for planning, not a guarantee of fish.',
-        ctaLoc: 'To the map', ctaArt: 'Read articles', ctaObs: 'Report a hatch', ctaFb: 'Send feedback', ctaPriv: 'Privacy'
+        ctaLoc: 'To the map', ctaArt: 'Read articles', ctaObs: 'Report a hatch', ctaFb: 'Send feedback', ctaPriv: 'Privacy',
+        appH: 'HatchWatch on your phone',
+        appP: 'Get HatchWatch for iPhone. You get notifications about ice-out, hatches and spinner falls right on your phone, and the map with you at the water.',
+        appAnd: 'An Android app is coming. Until then you can open hatchwatch.no in Chrome and choose “Add to Home screen” in the menu.',
+        appBtn: 'Get it on the App Store', appQr: 'Scan with your iPhone camera'
     };
     document.title = 'About HatchWatch · HatchWatch';
     document.querySelectorAll('[data-i18n]').forEach(function (el) { var v = EN[el.getAttribute('data-i18n')]; if (v) el.textContent = v; });
@@ -299,6 +325,22 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').cat
 </script>
 
 
+<script>
+// Appen (2026-10-15): skjul boksen inne i iPhone-appen; QR-koden lages bare på PC (biblioteket hentes da fra cdnjs)
+(function () {
+    var boks = document.getElementById('app'); if (!boks) return;
+    if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) { boks.style.display = 'none'; return; }
+    if (('ontouchstart' in window) || window.innerWidth < 760) return;
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+    s.onload = function () {
+        if (!window.QRCode) return;
+        new QRCode(document.getElementById('appQr'), { text: 'https://apps.apple.com/no/app/id6817913220', width: 132, height: 132, colorDark: '#11201f', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+        boks.classList.add('har-qr');
+    };
+    document.head.appendChild(s);
+})();
+</script>
 <script src="/hw-shell.js" defer></script>
 </body>
 </html>

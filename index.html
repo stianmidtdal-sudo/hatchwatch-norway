@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-itunes-app" content="app-id=6817913220">   <!-- Apples app-banner i Safari på iPhone (2026-10-15) -->
 <title>HatchWatch — Norgeskartet</title>
 <meta name="theme-color" content="#0b1418">
 <meta name="description" content="Klekkeprognoser og isgang for fluefiskere, og lakseelver med fangstkurver: hele Norge på ett kart.">
@@ -25,8 +26,9 @@
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
   body { height: 100vh; height: 100dvh; display: flex; flex-direction: column; }
-  body.hw-has-bar { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 63px); }   /* kartet går helt ned til baren (64 px) */
+  body.hw-has-bar { padding-bottom: calc(var(--hw-bar-h, 64px) - 1px); }   /* kartet går helt ned til baren (høyden står i hw.css) */
   #map { flex: 1; position: relative; overflow: hidden; min-height: 0; background: #13242b; }
+  :root[data-theme="light"] #map { background: #e0fefe; }   /* lyst: ingen mørk flate før kartet er tegnet */
   #gl { position: absolute; inset: 0; }
 
   .maplibregl-ctrl-attrib { background: color-mix(in srgb, var(--hw-bg) 80%, transparent) !important; color: var(--hw-fg-3) !important; font-size: 10px; }
@@ -82,7 +84,7 @@
   .legend .hw-chip { flex: none; }
   @media (min-width: 760px) { .legend { right: auto; bottom: 52px; flex-direction: column; overflow: visible; pointer-events: none; } }
   .legend .hw-chip { background: color-mix(in srgb, var(--hw-bg) 85%, transparent); backdrop-filter: blur(6px); }
-  .legend .hw-chip i.ice { background: #c9dde6; } .legend .hw-chip i.open { background: var(--hw-water); } .legend .hw-chip i.nod { background: #2a5361; }
+  .legend .hw-chip i.ice { background: #93a9b4; } .legend .hw-chip i.open { background: #1a8cc0; } .legend .hw-chip i.nod { background: #cfd8d6; }   /* = ISFARGE */
   .legend .hw-chip i.line { border-radius: 2px; width: 14px; height: 4px; }
   .zoomctl { position: absolute; right: 12px; bottom: calc(var(--scrub-h, 190px) + 20px); z-index: 20; display: flex; flex-direction: column; gap: 6px; }
   .zoomctl button { width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--hw-line); background: color-mix(in srgb, var(--hw-bg-2) 92%, transparent); color: var(--hw-fg); font-size: 1.15rem; font-weight: 600; cursor: pointer; backdrop-filter: blur(6px); }
@@ -94,8 +96,9 @@
   .lagvalg { position: absolute; right: 58px; bottom: calc(var(--scrub-h, 190px) + 196px); z-index: 24; display: none; gap: 8px; padding: 8px; border-radius: 14px; background: var(--hw-bg-2); border: 1px solid var(--hw-line); box-shadow: var(--hw-shadow); }
   .lagvalg.open { display: flex; }
   /* Overlegg (2026-10-15): kalk i berggrunnen fra NGU, kan slås på oppå både Lyst og Mørkt */
-  .lagvalg { flex-wrap: wrap; width: 196px; }
-  .lagvalg .overlegg { flex-basis: 100%; display: flex; align-items: center; gap: 10px; padding: 9px 4px 2px; border-top: 1px solid var(--hw-line); margin-top: 2px; cursor: pointer; color: var(--hw-fg); }
+  .lagvalg { flex-wrap: wrap; width: 220px; }
+  .lagvalg-hode { flex-basis: 100%; font-family: var(--hw-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--hw-fg-3); padding: 2px 4px 0; }
+  .lagvalg .overlegg { flex-basis: 100%; display: flex; align-items: center; gap: 10px; padding: 4px 4px 2px; cursor: pointer; color: var(--hw-fg); }
   .lagvalg .overlegg input { width: 18px; height: 18px; accent-color: var(--hw-hatch); flex: none; margin: 0; }
   .lagvalg .overlegg b { display: block; font-size: 13px; font-weight: 600; }
   .lagvalg .overlegg small { display: block; font-size: 11.5px; color: var(--hw-fg-3); }
@@ -113,11 +116,10 @@
   body.skyver-liten .scrubmini { display: inline-flex; }
   @media (min-width: 760px) { .scrubmini { left: auto; right: 12px; } }
   /* Avstandsmåling (2026-10-14): panel der skyveren står mens man måler */
-  .zoomctl #gpsBtn { display: grid; place-items: center; }
-  .zoomctl #gpsBtn svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linejoin: round; }
-  .zoomctl #gpsBtn.on { color: #4aa3ff; border-color: color-mix(in srgb, #4aa3ff 55%, transparent); }
-  .zoomctl #gpsBtn.on svg { fill: currentColor; }
-  .zoomctl #gpsBtn.venter { opacity: .6; }
+  /* Lokasjonsknappen øverst (2026-10-15): blå når den følger deg, halvgjennomsiktig mens den venter på posisjon */
+  #locateBtn.on { color: #4aa3ff; border-color: color-mix(in srgb, #4aa3ff 55%, transparent); }
+  #locateBtn.on svg circle:last-of-type { fill: currentColor; }
+  #locateBtn.venter { opacity: .6; }
   /* Her er jeg med retning (2026-10-15, Stian): egen prikk med kjegle som følger telefonens kompass
      (MapLibres egen retning bruker bare GPS-kursen, som forsvinner når man står stille). Nøyaktighetsringen
      er fortsatt MapLibres. */
@@ -318,7 +320,7 @@
         </div>
         <div id="hits" role="listbox"></div>
       </div>
-      <button class="hw-iconbtn" type="button" id="locateBtn" aria-label="Nærmest meg" title="Nærmest meg">
+      <button class="hw-iconbtn" type="button" id="locateBtn" aria-label="Vis hvor jeg er" title="Vis hvor jeg er">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
       </button>
     </div>
@@ -344,14 +346,12 @@
     <div id="maalProfil"></div>
   </div>
   <div class="lagvalg" id="lagValg" role="dialog" aria-label="Kartlag">
-    <button type="button" class="tur" data-lag="tur"><i></i><span id="lagTurTxt">Lyst</span></button>
-    <button type="button" class="std" data-lag="standard"><i></i><span id="lagStdTxt">Mørkt</span></button>
+    <div class="lagvalg-hode" id="lagHode">Oppå kartet</div>
     <label class="overlegg"><input type="checkbox" id="kalkBryter"><span><b id="kalkTxt">Kalk i berggrunnen</b><small id="kalkSub">NGU, oppå kartet</small></span></label>
   </div>
   <button class="kompass" id="kompass" type="button" aria-label="Kompass: trykk for at kartet skal følge retningen du peker" title="Kartet følger retningen du peker"><svg viewBox="0 0 24 24" id="kompassNaal"><path d="M12 2.6l3.1 9.4H8.9z" fill="#e5484d"/><path d="M12 21.4L8.9 12h6.2z" fill="currentColor" opacity=".55"/><circle cx="12" cy="12" r="1.5" fill="#ffffff"/></svg></button>
   <div class="zoomctl">
     <button id="lagBtn" type="button" aria-label="Kartlag" title="Kartlag"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg></button>
-    <button id="gpsBtn" type="button" aria-label="Vis hvor jeg er" title="Vis hvor jeg er"><svg viewBox="0 0 24 24"><path d="M3.5 11.2L20.5 3.5l-7.7 17-2.1-7.4z"/></svg></button>
     <button id="maalBtn" type="button" aria-label="Lag tur og mål avstand" title="Lag tur og mål avstand"><svg viewBox="0 0 24 24"><path d="M3 17L17 3l4 4L7 21z"/><path d="M7 13l2 2M10 10l2 2M13 7l2 2"/></svg></button>
     <button id="tegnBtn" type="button" aria-label="Tegnforklaring" title="Tegnforklaring"><svg viewBox="0 0 24 24"><circle cx="6" cy="7" r="1.8"/><circle cx="6" cy="12" r="1.8"/><circle cx="6" cy="17" r="1.8"/><path d="M11 7h8M11 12h8M11 17h8"/></svg></button>
     <button id="zin" aria-label="Zoom inn">+</button>
@@ -445,7 +445,7 @@ function tx(no, en) { return EN ? en : no; }
   if (!EN) return;
   document.title = 'HatchWatch — Norway map';
   var q = document.getElementById('q'); q.placeholder = 'Search lake, river or place'; q.setAttribute('aria-label', 'Search');
-  var lb = document.getElementById('locateBtn'); lb.setAttribute('aria-label', 'Nearest me'); lb.title = 'Nearest me';
+  var lb = document.getElementById('locateBtn'); lb.setAttribute('aria-label', 'Show where I am'); lb.title = 'Show where I am';
   document.getElementById('zin').setAttribute('aria-label', 'Zoom in');
   document.getElementById('zout').setAttribute('aria-label', 'Zoom out');
   document.getElementById('scrubDate').title = 'Back to today';
@@ -453,7 +453,7 @@ function tx(no, en) { return EN ? en : no; }
   document.getElementById('tickMay').textContent = 'May';
   document.getElementById('modeFlueTxt').textContent = 'Dry fly'; document.getElementById('modeFlue').title = 'Dry fly';
   document.getElementById('modeLaksTxt').textContent = 'Salmon'; document.getElementById('modeLaks').title = 'Salmon fishing';
-  document.getElementById('lagStdTxt').textContent = 'Dark';
+  document.getElementById('lagHode').textContent = 'On top of the map';
   document.getElementById('kalkTxt').textContent = 'Lime in bedrock'; document.getElementById('kalkSub').textContent = 'NGU, on top of the map';
   document.getElementById('tegnBtn').setAttribute('aria-label', 'Map legend'); document.getElementById('tegnBtn').title = 'Map legend';
   document.getElementById('shFav').setAttribute('aria-label', 'Add to favourites');
@@ -465,7 +465,6 @@ function tx(no, en) { return EN ? en : no; }
   document.getElementById('elvTitle').textContent = 'Salmon rivers';
   document.getElementById('elvClose').setAttribute('aria-label', 'Close');
   document.getElementById('play').setAttribute('aria-label', 'Play');
-  document.getElementById('lagTurTxt').textContent = 'Light';
   document.getElementById('scrubLukk').setAttribute('aria-label', 'Hide the time slider'); document.getElementById('scrubLukk').title = 'Hide';
   document.getElementById('scrubMini').setAttribute('aria-label', 'Show the time slider');
   document.getElementById('scrubMiniTxt').textContent = 'Today';
@@ -476,7 +475,6 @@ function tx(no, en) { return EN ? en : no; }
   document.getElementById('maalHoyde').textContent = 'Trip profile';
   document.getElementById('maalLagre').textContent = 'Save';
   document.getElementById('maalDel').textContent = 'Share';
-  document.getElementById('gpsBtn').setAttribute('aria-label', 'Show where I am'); document.getElementById('gpsBtn').title = 'Show where I am';
   document.getElementById('kompass').setAttribute('aria-label', 'Compass: tap to make the map follow the direction you are facing'); document.getElementById('kompass').title = 'Map follows the direction you are facing';
   document.getElementById('lagBtn').setAttribute('aria-label', 'Map layers'); document.getElementById('lagBtn').title = 'Map layers';
   document.getElementById('lagValg').setAttribute('aria-label', 'Map layers');
@@ -568,6 +566,9 @@ function haversine(a, b, c, d) {
 // ═══ KART ═══
 var protocol = new pmtiles.Protocol();
 maplibregl.addProtocol('pmtiles', protocol.tile);
+// Lyst valgt allerede ved oppstart? Da starter kartstilen lys (bakgrunn og ingen mørke lag), så kartet ikke blinker
+// mørkt før Lyst-lagene er koblet på (2026-10-15, Stian: «mørkt et millisekund når jeg går tilbake til kartet»).
+var LYS0 = true;   // alltid lyst fra 2026-10-15 (mørk variant fjernet)
 var C = { land: '#13242b', sea: '#081217', wood: '#152a2f', ice: '#1d3139', res: '#192d34', road: '#29424a', road2: '#36525a', rail: '#2a3e45', bound: '#3b5660', label: '#9db0b0', label2: '#63787a', halo: '#0b1418' };
 var style = {
   version: 8,
@@ -577,16 +578,16 @@ var style = {
     hw: { type: 'vector', url: 'pmtiles://' + location.origin + DATA + 'hatchwatch.pmtiles', promoteId: { vann: 'vatnlnr', laks: 'vassdrag', vannpunkt: 'vatnlnr' } }
   },
   layers: [
-    { id: 'bg', type: 'background', paint: { 'background-color': C.land } },
-    { id: 'wood', type: 'fill', source: 'omt', 'source-layer': 'landcover', filter: ['==', ['get', 'class'], 'wood'], paint: { 'fill-color': C.wood } },
-    { id: 'glacier', type: 'fill', source: 'omt', 'source-layer': 'landcover', filter: ['in', ['get', 'class'], ['literal', ['ice', 'glacier']]], paint: { 'fill-color': C.ice } },
-    { id: 'res', type: 'fill', source: 'omt', 'source-layer': 'landuse', filter: ['in', ['get', 'class'], ['literal', ['residential', 'suburb', 'neighbourhood']]], paint: { 'fill-color': C.res } },
-    { id: 'water', type: 'fill', source: 'omt', 'source-layer': 'water', paint: { 'fill-color': C.sea } },
-    { id: 'waterway', type: 'line', source: 'omt', 'source-layer': 'waterway', minzoom: 9, paint: { 'line-color': '#163039', 'line-width': ['interpolate', ['linear'], ['zoom'], 9, 0.5, 14, 2] } },
-    { id: 'road-minor', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 11, filter: ['in', ['get', 'class'], ['literal', ['minor', 'service', 'track']]], paint: { 'line-color': C.road, 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 0.4, 16, 2.5] } },
-    { id: 'road-major', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 6, filter: ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary', 'secondary', 'tertiary']]], paint: { 'line-color': C.road2, 'line-width': ['interpolate', ['linear'], ['zoom'], 6, 0.5, 14, 3] } },
-    { id: 'rail', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 10, filter: ['==', ['get', 'class'], 'rail'], paint: { 'line-color': C.rail, 'line-dasharray': [2, 2], 'line-width': 1 } },
-    { id: 'boundary', type: 'line', source: 'omt', 'source-layer': 'boundary', filter: ['<=', ['get', 'admin_level'], 4], paint: { 'line-color': C.bound, 'line-dasharray': [3, 2], 'line-width': 0.8 } }
+    { id: 'bg', type: 'background', paint: { 'background-color': LYS0 ? '#e0fefe' : C.land } },
+    { id: 'wood', layout: { visibility: LYS0 ? 'none' : 'visible' }, type: 'fill', source: 'omt', 'source-layer': 'landcover', filter: ['==', ['get', 'class'], 'wood'], paint: { 'fill-color': C.wood } },
+    { id: 'glacier', layout: { visibility: LYS0 ? 'none' : 'visible' }, type: 'fill', source: 'omt', 'source-layer': 'landcover', filter: ['in', ['get', 'class'], ['literal', ['ice', 'glacier']]], paint: { 'fill-color': C.ice } },
+    { id: 'res', layout: { visibility: LYS0 ? 'none' : 'visible' }, type: 'fill', source: 'omt', 'source-layer': 'landuse', filter: ['in', ['get', 'class'], ['literal', ['residential', 'suburb', 'neighbourhood']]], paint: { 'fill-color': C.res } },
+    { id: 'water', layout: { visibility: LYS0 ? 'none' : 'visible' }, type: 'fill', source: 'omt', 'source-layer': 'water', paint: { 'fill-color': C.sea } },
+    { id: 'waterway', layout: { visibility: LYS0 ? 'none' : 'visible' }, type: 'line', source: 'omt', 'source-layer': 'waterway', minzoom: 9, paint: { 'line-color': '#163039', 'line-width': ['interpolate', ['linear'], ['zoom'], 9, 0.5, 14, 2] } },
+    { id: 'road-minor', layout: { visibility: LYS0 ? 'none' : 'visible' }, type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 11, filter: ['in', ['get', 'class'], ['literal', ['minor', 'service', 'track']]], paint: { 'line-color': C.road, 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 0.4, 16, 2.5] } },
+    { id: 'road-major', layout: { visibility: LYS0 ? 'none' : 'visible' }, type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 6, filter: ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary', 'secondary', 'tertiary']]], paint: { 'line-color': C.road2, 'line-width': ['interpolate', ['linear'], ['zoom'], 6, 0.5, 14, 3] } },
+    { id: 'rail', layout: { visibility: LYS0 ? 'none' : 'visible' }, type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 10, filter: ['==', ['get', 'class'], 'rail'], paint: { 'line-color': C.rail, 'line-dasharray': [2, 2], 'line-width': 1 } },
+    { id: 'boundary', layout: { visibility: LYS0 ? 'none' : 'visible' }, type: 'line', source: 'omt', 'source-layer': 'boundary', filter: ['<=', ['get', 'admin_level'], 4], paint: { 'line-color': C.bound, 'line-dasharray': [3, 2], 'line-width': 0.8 } }
   ]
 };
 var map = new maplibregl.Map({ container: 'gl', style: style, center: [15, 65], zoom: 4, attributionControl: false, maxZoom: 16, minZoom: 3, dragRotate: false, pitchWithRotate: false, touchPitch: false,
@@ -641,7 +642,18 @@ function syncScrubHeight() {
   var liten = document.body.classList.contains('skyver-liten');
   var h = liten ? document.getElementById('scrubMini').offsetHeight : document.getElementById('scrub').offsetHeight;
   document.getElementById('map').style.setProperty('--scrub-h', (h || (liten ? 40 : 190)) + 'px');
+  setTimeout(plasserKnapper, 0);
 }
+// Kartlagvalget og kildeknappen (i) plasseres ut fra knappestabelen slik den faktisk ligger (2026-10-15),
+// så de ikke forskyves når knapper legges til eller fjernes.
+function plasserKnapper() {
+  var m = document.getElementById('map').getBoundingClientRect(), lag = document.getElementById('lagBtn').getBoundingClientRect();
+  if (!lag.height) return;
+  document.getElementById('lagValg').style.bottom = Math.round(m.bottom - lag.bottom) + 'px';
+  var br = document.querySelector('.maplibregl-ctrl-bottom-right');
+  if (br) br.style.bottom = window.innerWidth < 760 ? Math.round(m.bottom - document.querySelector('.zoomctl').getBoundingClientRect().top + 6) + 'px' : '';
+}
+window.addEventListener('resize', function () { setTimeout(plasserKnapper, 0); });
 function settSkyverLiten(liten) {
   stopPlay();
   document.body.classList.toggle('skyver-liten', liten);
@@ -659,9 +671,12 @@ function locGeo() {
     return { type: 'Feature', properties: { id: l.id, name: l.name.toUpperCase(), st: stateOf(l).st, sel: sel && sel.kind === 'loc' && sel.id === l.id ? 1 : 0 }, geometry: { type: 'Point', coordinates: [l.lon, l.lat] } };
   }) };
 }
+// Isgangfarger for det lyse kartet (2026-10-15, Stian: mørk variant fjernet): isfritt kraftig blå, islagt gråblå,
+// uten satellittdata lys grå — valgt for å stå ut mot Kartverkets lyse vann og land.
+var ISFARGE = { aapen: '#1a8cc0', is: '#93a9b4', ingen: '#cfd8d6' };
 function lakeColor() {
   var isg = ['coalesce', ['feature-state', 'isg'], -1];
-  return ['case', ['<', isg, 0], '#2a5361', ['>=', T, isg], '#5cc6e8', '#c9dde6'];
+  return ['case', ['<', isg, 0], ISFARGE.ingen, ['>=', T, isg], ISFARGE.aapen, ISFARGE.is];
 }
 // Laks: farge etter elvas fangstkurve for uka til valgt dato (feature-state «k»):
 // 3 = blant toppukene i snitt, 2 = god periode, 1 = lite fangst i snitt, 0/ukjent = ingen fangstdata.
@@ -882,8 +897,9 @@ function isoWeek(doy) {
 // utelatt (går ofte over myr om sommeren). Våre egne lag (vann, laks, prognosesteder) ligger oppå.
 // Fra 2026-10-15 (Stian) heter valgene «Lyst» (tur) og «Mørkt» (standard), og Lyst er utgangspunktet for alle
 // som ikke selv har valgt Mørkt (huskes i hw_kartlag). hw-lang.js bruker samme regel for temaet på alle sider.
+// 2026-10-15 (Stian): den mørke varianten er fjernet — kartet er alltid lyst (Kartverket). Koden for «standard»
+// står igjen i applyKartlag, men kan ikke velges lenger; et gammelt lagret valg ignoreres.
 var KARTLAG = 'tur';
-try { if (localStorage.getItem('hw_kartlag') === 'standard') KARTLAG = 'standard'; } catch (e) {}
 var KALK = false;
 try { KALK = localStorage.getItem('hw_kalk') === '1'; } catch (e) {}
 // NGUs fem klasser med NGUs egne farger (fra tegnforklaringen i tjenesten)
@@ -964,6 +980,7 @@ function applyKartlag() {
   map.setLayoutProperty('kv-tur', 'visibility', tur ? 'visible' : 'none');
   TUR_ADKOMST.forEach(function (id) { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', tur ? 'visible' : 'none'); });
   STANDARD_LAG.forEach(function (id) { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', tur ? 'none' : 'visible'); });
+  map.setPaintProperty('bg', 'background-color', tur ? '#e0fefe' : C.land);
   // Turkartet har egne vann med Kartverkets strandlinje. Vår vannflate blir usynlig (men kan fortsatt
   // trykkes på), og vann med data vises som prikker farget etter isgang. Helt utzoomet (under z9, der
   // prikkene ikke vises) ligger isgangfargene svakt over som før. Valgt vann får gull omriss.
@@ -976,7 +993,9 @@ function applyKartlag() {
   map.setPaintProperty('loc-cluster', 'circle-stroke-color', ['case', ['>', ['get', 'nnow'], 0], '#f2b84b', tur ? '#ffffff' : '#63787a']);
   map.setPaintProperty('loc-cluster', 'circle-stroke-width', tur ? 2 : 1.6);
   var flue = mode === 'flue';
-  map.setPaintProperty('vann-fill', 'fill-opacity', tur ? (flue ? ['interpolate', ['linear'], ['zoom'], 8.5, 0.5, 9.2, 0] : 0) : 0.92);
+  // Isgangfargen (som før bare fantes i det mørke kartet): sterk på oversiktsnivå der tidsskyveren brukes,
+  // toner ut mot zoom 10,5 der prikkene (fra z9) tar over og Kartverkets strandlinjer skal synes.
+  map.setPaintProperty('vann-fill', 'fill-opacity', tur ? (flue ? ['interpolate', ['linear'], ['zoom'], 5, 0.9, 9, 0.8, 10.5, 0] : 0) : 0.92);
   map.setPaintProperty('vann-line', 'line-opacity', tur ? ['case', ['boolean', ['feature-state', 'sel'], false], 1, 0] : 1);
   map.setLayoutProperty('vann-punkt', 'visibility', tur && flue ? 'visible' : 'none');
 }
@@ -1227,17 +1246,17 @@ document.getElementById('maalDel').addEventListener('click', maalDel);
 // Retning på iPhone krever tillatelse til kompass, som må spørres om ved et trykk.
 var geo = new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: true, showUserHeading: true, showAccuracyCircle: true });
 map.addControl(geo, 'top-left');
-geo.on('trackuserlocationstart', function () { var b = document.getElementById('gpsBtn'); b.classList.add('on'); b.classList.remove('venter'); });
-geo.on('trackuserlocationend', function () { var b = document.getElementById('gpsBtn'); if (geo._watchState === 'OFF') b.classList.remove('on'); });
-geo.on('geolocate', function () { document.getElementById('gpsBtn').classList.remove('venter'); });
-geo.on('error', function () { var b = document.getElementById('gpsBtn'); b.classList.remove('on', 'venter'); b.title = tx('Posisjon ikke tilgjengelig', 'Location unavailable'); });
-document.getElementById('gpsBtn').addEventListener('click', function () {
-  var b = this;
+geo.on('trackuserlocationstart', function () { var b = document.getElementById('locateBtn'); b.classList.add('on'); b.classList.remove('venter'); });
+geo.on('trackuserlocationend', function () { var b = document.getElementById('locateBtn'); if (geo._watchState === 'OFF') b.classList.remove('on'); });
+geo.on('geolocate', function () { document.getElementById('locateBtn').classList.remove('venter'); });
+geo.on('error', function () { var b = document.getElementById('locateBtn'); b.classList.remove('on', 'venter'); b.title = tx('Posisjon ikke tilgjengelig', 'Location unavailable'); });
+function visMeg() {
+  var b = document.getElementById('locateBtn');
   startKompass();   // må skje i selve trykket (iPhone spør om lov til kompasset)
   if (!b.classList.contains('on')) b.classList.add('venter');
   userMoved = true;
   if (!geo.trigger()) b.classList.remove('venter');
-});
+}
 
 // ═══ RETNING OG KOMPASS (2026-10-15, Stian: «en must om folk går til vannene sine») ═══
 // Retningen kommer fra telefonens kompass: iPhone gir webkitCompassHeading (grader fra nord, med klokka)
@@ -1325,7 +1344,7 @@ document.getElementById('maalFerdig').addEventListener('click', maalLukk);
 document.getElementById('maalAngre').addEventListener('click', function () { maalPunkter.pop(); maalTegn(); });
 document.getElementById('maalNull').addEventListener('click', function () { maalPunkter = []; maalTegn(); });
 document.getElementById('maalHoyde').addEventListener('click', maalHoyde);
-document.getElementById('lagBtn').addEventListener('click', function (e) { e.stopPropagation(); document.getElementById('lagValg').classList.toggle('open'); });
+document.getElementById('lagBtn').addEventListener('click', function (e) { e.stopPropagation(); plasserKnapper(); document.getElementById('lagValg').classList.toggle('open'); });
 document.getElementById('lagValg').addEventListener('click', function (e) {
   var b = e.target.closest('button[data-lag]'); if (!b) return;
   KARTLAG = b.getAttribute('data-lag');
@@ -1689,25 +1708,10 @@ qIn.addEventListener('keydown', function (e) { if (e.key === 'Enter') { var b = 
 document.addEventListener('click', function (e) { if (!e.target.closest('.search')) hits.classList.remove('open'); });
 
 // Nærmest meg: nærmeste HatchWatch-lokasjon (Tørrflue) eller lakseelv (Laksefiske)
-document.getElementById('locateBtn').addEventListener('click', function () {
-  var btn = this;
-  if (!navigator.geolocation) { btn.title = tx('Posisjon støttes ikke', 'Location is not supported'); return; }
-  btn.disabled = true; btn.style.opacity = '.6';
-  navigator.geolocation.getCurrentPosition(function (pos) {
-    btn.disabled = false; btn.style.opacity = '';
-    var la = pos.coords.latitude, lo = pos.coords.longitude, best = null, bd = 1e9;
-    if (mode === 'laks' && ELVER) {
-      Object.keys(ELVER).forEach(function (k) { var e = ELVER[k]; if (e.lat == null) return; var d = haversine(la, lo, e.lat, e.lon); if (d < bd) { bd = d; best = e; } });
-      if (best) { map.flyTo({ center: [best.lon, best.lat], zoom: 10, speed: 1.6, offset: sheetOffset() }); openRiver(best.id); document.getElementById('shSub').textContent += ' · ' + Math.round(bd) + tx(' km unna', ' km away'); }
-      return;
-    }
-    LOCS.forEach(function (l) { var d = haversine(la, lo, l.lat, l.lon); if (d < bd) { bd = d; best = l; } });
-    if (best) { goTo(best); document.getElementById('shSub').textContent = best.region + ' · ' + best.moh + ' ' + MOH + ' · ' + Math.round(bd) + tx(' km unna', ' km away'); }
-  }, function () {
-    btn.disabled = false; btn.style.opacity = '';
-    qIn.focus(); qIn.placeholder = tx('Posisjon avslått. Søk i stedet.', 'Location declined. Search instead.');
-  }, { timeout: 8000, maximumAge: 300000 });
-});
+// Lokasjonsknappen (2026-10-15, Stian: «åpner Nordmarka»): var «Nærmest meg» (åpnet nærmeste prognosested).
+// Nå er den eneste «vis hvor jeg er»-knapp — samme som GPS-knappen i stabelen var (prikk med retning, følger deg).
+// GPS-knappen i stabelen er fjernet, så det ikke er to like knapper.
+document.getElementById('locateBtn').addEventListener('click', visMeg);
 
 document.getElementById('zin').addEventListener('click', function () { map.zoomIn(); });
 document.getElementById('zout').addEventListener('click', function () { map.zoomOut(); });

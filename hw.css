@@ -150,16 +150,19 @@ body.hw-dark {
    Klassenavnene er de samme som den gamle kopierte blokken (hwb, hwpanel,
    hwp-*), så dashboard og kart kan flyttes over uten å bytte navn. */
 #hwMenuBtn, #hwMenuDropdown { display: none !important; }   /* pensjonert burger på undersidene */
-body.hw-has-bar { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 78px); }
+/* Tynnere bunnbar (2026-10-15, Stian): mindre luft over og under ikonene, og på iPhone legger den seg delvis
+   inn i hjem-strekens felt (safe area minus 10 px) slik Apples egne faner gjør. --hw-bar-h = barens høyde. */
+:root { --hw-bar-pad: max(calc(env(safe-area-inset-bottom, 0px) - 10px), 4px); --hw-bar-h: calc(var(--hw-bar-pad) + 46px); }
+body.hw-has-bar { padding-bottom: calc(var(--hw-bar-h) + 14px); }
 #hwBar {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 900;
   background: var(--hw-bg-2); border-top: 1px solid var(--hw-line);
   display: grid; grid-template-columns: repeat(4, 1fr); align-items: center;
-  padding: 6px 4px calc(env(safe-area-inset-bottom, 0px) + 8px);
+  padding: 2px 4px var(--hw-bar-pad);
   font-family: var(--hw-body);
 }
-#hwBar .hwb { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0; background: none; border: 0; cursor: pointer; text-decoration: none; border-radius: 10px; color: var(--hw-fg-3); font: 500 10px/1.2 var(--hw-mono); letter-spacing: .05em; text-transform: uppercase; }
-.hwb svg { width: 22px; height: 22px; display: block; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+#hwBar .hwb { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 0; background: none; border: 0; cursor: pointer; text-decoration: none; border-radius: 10px; color: var(--hw-fg-3); font: 500 9.5px/1.2 var(--hw-mono); letter-spacing: .05em; text-transform: uppercase; }
+.hwb svg { width: 21px; height: 21px; display: block; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .hwb span { font-size: inherit; font-weight: 500; color: inherit; }
 .hwb.on { color: var(--hw-fg); }
 .hwb.on svg { stroke: var(--hw-hatch); }

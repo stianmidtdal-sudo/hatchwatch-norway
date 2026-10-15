@@ -6,7 +6,7 @@
 		"url": "https://www.hatchwatch.no",
 		"cleartext": false
 	},
-	"backgroundColor": "#0b1418",
+	"backgroundColor": "#f2f6f5",
 	"plugins": {
 		"PushNotifications": {
 			"presentationOptions": [

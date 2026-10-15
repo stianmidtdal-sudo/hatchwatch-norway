@@ -38,6 +38,7 @@
 
   var ICON = {
     map: '<svg viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>',
+    phone: '<svg viewBox="0 0 24 24"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg>',
     season: '<svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 4 4-7 5 5"/><path d="M3 21h18"/></svg>',
     heart: '<svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.7-9.3-9A5.2 5.2 0 0 1 12 6.6a5.2 5.2 0 0 1 9.3 4.9c-1.8 4.3-9.3 9-9.3 9z"/></svg>',
     plus: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>',
@@ -64,6 +65,7 @@
     ofa: 'OFA stocking', ofaSub: 'Nordmarka 2021–2025',
     about: 'About HatchWatch', aboutSub: 'The model, data sources, stations',
     feedback: 'Send feedback', feedbackSub: 'Beta · we read everything',
+    app: 'Get the app', appSub: 'iPhone · App Store',
     lang: 'Norsk', langSub: 'Switch to Norwegian',
     empty: '<b>No favourites yet.</b><br>Tap the heart on a water in the map or at the top of a forecast, and your waters gather here. Trips you save with the ruler in the map also end up here. Your notifications follow the waters.'
   } : {
@@ -74,6 +76,7 @@
     ofa: 'OFA settefisk', ofaSub: 'Utsett i Nordmarka 2021–2025',
     about: 'Om HatchWatch', aboutSub: 'Modellen, datakildene, stasjonene',
     feedback: 'Send tilbakemelding', feedbackSub: 'Beta · vi leser alt',
+    app: 'Last ned appen', appSub: 'iPhone · App Store',
     lang: 'English', langSub: 'Bytt til engelsk',
     empty: '<b>Ingen favoritter ennå.</b><br>Trykk hjertet på et vann i kartet eller øverst på prognosen, så samler vannene dine seg her. Turer du lagrer med linjalen i kartet havner også her. Varslene dine følger vannene.'
   };
@@ -89,6 +92,12 @@
       '<span class="chev">›</span></button>';
   }
   var extras = Array.isArray(cfg.menuExtra) ? cfg.menuExtra : [];
+  // «Last ned appen» (2026-10-15, Stian): skjult inne i iPhone-appen. Telefon → rett til App Store;
+  // PC (uten berøring) → Om-siden, der det er en QR-kode å skanne med telefonen.
+  var iAppen = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  var APP_URL = 'https://apps.apple.com/no/app/id6817913220';
+  var paPC = !('ontouchstart' in window) && window.innerWidth >= 760;
+  var appRad = iAppen ? '' : row(paPC ? '/om.html#app' : APP_URL, ICON.phone, S.app, S.appSub, paPC ? '' : ' target="_blank" rel="noopener"');
 
   var html =
     '<nav id="hwBar" aria-label="' + S.nav + '">' +
@@ -110,6 +119,7 @@
         row('/artikler.html', ICON.book, S.articles, S.articlesSub) +
         row('/ofa-settefisk.html', ICON.drop, S.ofa, S.ofaSub) +
         row('/om.html', ICON.info, S.about, S.aboutSub) +
+        appRad +
         row('https://tally.so/r/EkBErN', ICON.out, S.feedback, S.feedbackSub, ' target="_blank" rel="noopener"') +
         extras.map(function (x, i) { return btnRow(i, x.icon || ICON.out, x.title, x.sub); }).join('') +
         '<button class="hwp-row" type="button" id="hwbLang">' + ICON.globe +
