@@ -805,6 +805,14 @@ function applyKartlag() {
   // Turkartet har egne vann med Kartverkets strandlinje. Vår vannflate blir usynlig (men kan fortsatt
   // trykkes på), og vann med data vises som prikker farget etter isgang. Helt utzoomet (under z9, der
   // prikkene ikke vises) ligger isgangfargene svakt over som før. Valgt vann får gull omriss.
+  // Prognosestedene (2026-10-15): på det lyse turkartet får de mørk, skarp tekst med hvit glorie og hvit ring
+  // rundt prikken (Kartverket-stil), i stedet for den mørke glorien som ble grumsete på lys bunn.
+  map.setPaintProperty('loc-navn', 'text-color', tur ? ['match', ['get', 'st'], 'now', '#7a4f00', 'closed', '#3d4f55', '#0b1418'] : ['match', ['get', 'st'], 'now', '#e9f1ef', 'soon', '#9db0b0', 'later', '#9db0b0', '#63787a']);
+  map.setPaintProperty('loc-navn', 'text-halo-color', tur ? '#ffffff' : C.halo);
+  map.setPaintProperty('loc-navn', 'text-halo-width', tur ? 2 : 1.6);
+  map.setPaintProperty('loc-dot', 'circle-stroke-color', ['case', ['==', ['get', 'sel'], 1], tur ? '#0b1418' : '#e9f1ef', ['==', ['get', 'st'], 'closed'], tur ? '#ffffff' : '#63787a', tur ? '#ffffff' : '#0b1418']);
+  map.setPaintProperty('loc-cluster', 'circle-stroke-color', ['case', ['>', ['get', 'nnow'], 0], '#f2b84b', tur ? '#ffffff' : '#63787a']);
+  map.setPaintProperty('loc-cluster', 'circle-stroke-width', tur ? 2 : 1.6);
   var flue = mode === 'flue';
   map.setPaintProperty('vann-fill', 'fill-opacity', tur ? (flue ? ['interpolate', ['linear'], ['zoom'], 8.5, 0.5, 9.2, 0] : 0) : 0.92);
   map.setPaintProperty('vann-line', 'line-opacity', tur ? ['case', ['boolean', ['feature-state', 'sel'], false], 1, 0] : 1);
