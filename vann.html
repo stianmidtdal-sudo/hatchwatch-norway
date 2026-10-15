@@ -177,6 +177,21 @@ function render(v) {
        '<div class="row2"><a class="hw-btn ghost" href="/observasjon.html?vann=' + ID + '&navn=' + encodeURIComponent(navn) + (v.moh != null ? '&moh=' + v.moh : '') + '">' + tx('Meld klekking her', 'Report a hatch here') + '</a></div>' +
        '<p class="note" style="margin-top:6px">' + tx('Så du klekking i dette vannet? Én melding med dato gjør anslagene bedre for alle.', 'Saw a hatch in this lake? One report with a date makes the estimates better for everyone.') + '</p></div>';
 
+  // ── Isgang år for år ──
+  if (years.length) {
+    h += '<div class="card"><h2>' + tx('Isgang år for år', 'Ice-out year by year') + '</h2>' +
+      '<p class="lead">' + tx('Punktet er midt i tidsrommet der satellitten så at isen gikk. Streken viser hvor langt tidsrommet var.', 'The dot is the middle of the period in which the satellite saw the ice go. The bar shows how long that period was.') + '</p>' +
+      yrsSvg(isg, years, med, ly) +
+      '<p class="note">' + tx('Sentinel-2-bilder, behandlet av HatchWatch. Skyer kan gi lange tidsrom. Typisk bom er 4–5 dager mot målt isgang.', 'Sentinel-2 images, processed by HatchWatch. Clouds can give long periods. Typical error is 4–5 days against measured ice-out.') + '</p></div>';
+  }
+
+  // ── Arter ──
+  h += '<div class="card"><h2>' + tx('Registrerte arter', 'Recorded species') + '</h2>' + arterHtml(v.arter) + '</div>';
+
+  // Rekkefølge (2026-10-15, Stian): klekking → isgang år for år → arter → snø → varsler → dybde → kart
+  // ── Snø ved vannet (2026-10-14): seNorge via /api/nve?gts=sd ──
+  h += '<div class="card" id="snoCard"><h2>' + tx('Snø ved vannet', 'Snow at the lake') + '</h2><div id="sno" class="skel">' + tx('Henter snødata…', 'Fetching snow data…') + '</div></div>';
+
   // ── Varsler for vannet (2026-10-14) ──
   if (pushStottet()) {
     var valgt = (getPrefs().triggers['vann:' + ID]) || [];
@@ -191,20 +206,6 @@ function render(v) {
       '<div class="row2"><button class="hw-btn primary" type="button" id="varselLagre">' + tx('Lagre varsler', 'Save notifications') + '</button></div>' +
       '<div class="status" id="varselStatus"></div></div>';
   }
-
-  // ── Snø ved vannet (2026-10-14): seNorge via /api/nve?gts=sd ──
-  h += '<div class="card" id="snoCard"><h2>' + tx('Snø ved vannet', 'Snow at the lake') + '</h2><div id="sno" class="skel">' + tx('Henter snødata…', 'Fetching snow data…') + '</div></div>';
-
-  // ── Isgang år for år ──
-  if (years.length) {
-    h += '<div class="card"><h2>' + tx('Isgang år for år', 'Ice-out year by year') + '</h2>' +
-      '<p class="lead">' + tx('Punktet er midt i tidsrommet der satellitten så at isen gikk. Streken viser hvor langt tidsrommet var.', 'The dot is the middle of the period in which the satellite saw the ice go. The bar shows how long that period was.') + '</p>' +
-      yrsSvg(isg, years, med, ly) +
-      '<p class="note">' + tx('Sentinel-2-bilder, behandlet av HatchWatch. Skyer kan gi lange tidsrom. Typisk bom er 4–5 dager mot målt isgang.', 'Sentinel-2 images, processed by HatchWatch. Clouds can give long periods. Typical error is 4–5 days against measured ice-out.') + '</p></div>';
-  }
-
-  // ── Arter ──
-  h += '<div class="card"><h2>' + tx('Registrerte arter', 'Recorded species') + '</h2>' + arterHtml(v.arter) + '</div>';
 
   // ── Dybde (2026-10-14): NVEs dybdekart, bare for de ca. 686 vannene som er loddet ──
   h += '<div class="card" id="dybdeCard" style="display:none"><h2>' + tx('Dybde', 'Depth') + '</h2><div id="dybde"></div></div>';

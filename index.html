@@ -250,6 +250,42 @@
   .mini em { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--hw-fg); }
   .sesong-head { font-size: 13px; color: var(--hw-fg-2); margin: -4px 0 6px; }
   .listsec { font-family: var(--hw-mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--hw-fg-3); margin: 14px 0 2px; }
+
+  /* ── Mer kart på mobil (2026-10-15, Stian) ──
+     Toppen: én rad (søk + liten ikonbryter Tørrflue/Laksefiske + nærmest meg); merket vises ved oppstart og
+     glir bort første gang man drar eller zoomer (body.kart-i-bruk). Bunnen: forklaringen bak en knapp
+     (tegnBtn → body.vis-tegn) og «I dag» sammenslått som standard. PC er uendret. */
+  .modeseg .ik, .search-in .flue-ik, .zoomctl #tegnBtn, .modustoast { display: none; }
+  .modeseg svg.ik { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linejoin: round; }
+  .modeseg svg.ik circle { fill: currentColor; stroke: none; }
+  @media (max-width: 759px) {
+    .maptop { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+    .brandrow { grid-column: 1 / -1; grid-row: 1; max-height: 56px; transition: opacity .3s, max-height .35s, margin .35s, visibility 0s 0s; }
+    /* visibility skjules etter at animasjonen er ferdig, ellers ble en rest av konturen stående øverst til venstre */
+    body.kart-i-bruk .brandrow { opacity: 0; max-height: 0; margin-bottom: -8px; pointer-events: none; overflow: hidden; visibility: hidden; transition: opacity .3s, max-height .35s, margin .35s, visibility 0s .35s; }
+    .searchrow { grid-column: 1; grid-row: 2; min-width: 0; }
+    .modeseg { grid-column: 2; grid-row: 2; grid-template-columns: 40px 40px; align-self: center; }
+    .modeseg button { padding: 0; height: 36px; display: grid; place-items: center; }
+    .modeseg button .tx { display: none; }
+    .modeseg .ik { display: block; }
+    .search-in { padding: 9px 12px 9px 10px; }
+    .search-in .flue-ik { display: inline-block; flex: none; }
+    .search-in .lupe { display: none; }
+    /* Forklaringen åpnes fra knappen; ligger da som et kort ved siden av knappene */
+    .zoomctl #tegnBtn { display: grid; place-items: center; }
+    .zoomctl #tegnBtn svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+    .zoomctl #tegnBtn svg circle { fill: currentColor; stroke: none; }
+    body.vis-tegn .zoomctl #tegnBtn { color: var(--hw-hatch); border-color: color-mix(in srgb, var(--hw-hatch) 55%, transparent); }
+    .legend { display: none; }
+    body.vis-tegn .legend { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; left: auto; right: 58px; bottom: calc(var(--scrub-h, 190px) + 20px); padding: 10px; border-radius: 14px; background: var(--hw-bg-2); border: 1px solid var(--hw-line); box-shadow: var(--hw-shadow); overflow: visible; z-index: 24; }
+    body.vis-tegn .legend .hw-chip { box-shadow: none; }
+    /* Én knapp mer i stabelen (6 × 38 + 5 × 6 = 258 px): kartlagvalget og kildeknappen flyttes opp tilsvarende */
+    .lagvalg { bottom: calc(var(--scrub-h, 190px) + 240px); }
+    .maplibregl-ctrl-bottom-right { bottom: calc(var(--scrub-h, 190px) + 284px); }
+    /* Navnet på modusen vises kort når man bytter (knappene har bare ikoner) */
+    .modustoast { position: absolute; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 60px); transform: translateX(-50%); z-index: 25; padding: 7px 14px; border-radius: 999px; background: var(--hw-bg-2); border: 1px solid var(--hw-line); color: var(--hw-fg); font-size: 13.5px; font-weight: 600; box-shadow: var(--hw-shadow); pointer-events: none; }
+    .modustoast.vis { display: block; }
+  }
 </style>
 </head>
 <body class="hw-dark">
@@ -262,11 +298,12 @@
       <span class="flyramme"><span class="hw-fly" style="width:36px;color:var(--hw-hatch)" aria-hidden="true"></span></span>
       <span class="wm">Hatch<b>Watch</b></span>
     </a>
-    <div class="modeseg" id="modeseg" role="tablist"><button type="button" data-m="flue" class="on" id="modeFlue">Tørrflue</button><button type="button" data-m="laks" id="modeLaks">Laksefiske</button></div>
+    <div class="modeseg" id="modeseg" role="tablist"><button type="button" data-m="flue" class="on" id="modeFlue" title="Tørrflue"><span class="ik hw-fly" style="width:22px" aria-hidden="true"></span><span class="tx" id="modeFlueTxt">Tørrflue</span></button><button type="button" data-m="laks" id="modeLaks" title="Laksefiske"><svg class="ik" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12c2.5-3.6 7-5 11.5-4 2.3.5 4 1.8 5.5 4-1.5 2.2-3.2 3.5-5.5 4-4.5 1-9-.4-11.5-4z"/><path d="M20 12l2.6-3.3v6.6z"/><circle cx="7.4" cy="11.2" r=".9"/></svg><span class="tx" id="modeLaksTxt">Laksefiske</span></button></div>
     <div class="searchrow">
       <div class="search">
         <div class="search-in">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          <span class="hw-fly flue-ik" style="width:20px;color:var(--hw-hatch)" aria-hidden="true"></span>
+          <svg class="lupe" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
           <input id="q" type="search" placeholder="Søk vann, elv eller sted" autocomplete="off" aria-label="Søk">
         </div>
         <div id="hits" role="listbox"></div>
@@ -297,18 +334,20 @@
     <div id="maalProfil"></div>
   </div>
   <div class="lagvalg" id="lagValg" role="dialog" aria-label="Kartlag">
-    <button type="button" class="std" data-lag="standard"><i></i><span id="lagStdTxt">Standard</span></button>
-    <button type="button" class="tur" data-lag="tur"><i></i><span id="lagTurTxt">Turkart</span></button>
+    <button type="button" class="tur" data-lag="tur"><i></i><span id="lagTurTxt">Lyst</span></button>
+    <button type="button" class="std" data-lag="standard"><i></i><span id="lagStdTxt">Mørkt</span></button>
   </div>
   <button class="kompass" id="kompass" type="button" aria-label="Kompass: trykk for at kartet skal følge retningen du peker" title="Kartet følger retningen du peker"><svg viewBox="0 0 24 24" id="kompassNaal"><path d="M12 2.6l3.1 9.4H8.9z" fill="#e5484d"/><path d="M12 21.4L8.9 12h6.2z" fill="currentColor" opacity=".55"/><circle cx="12" cy="12" r="1.5" fill="#ffffff"/></svg></button>
   <div class="zoomctl">
     <button id="lagBtn" type="button" aria-label="Kartlag" title="Kartlag"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg></button>
     <button id="gpsBtn" type="button" aria-label="Vis hvor jeg er" title="Vis hvor jeg er"><svg viewBox="0 0 24 24"><path d="M3.5 11.2L20.5 3.5l-7.7 17-2.1-7.4z"/></svg></button>
     <button id="maalBtn" type="button" aria-label="Lag tur og mål avstand" title="Lag tur og mål avstand"><svg viewBox="0 0 24 24"><path d="M3 17L17 3l4 4L7 21z"/><path d="M7 13l2 2M10 10l2 2M13 7l2 2"/></svg></button>
+    <button id="tegnBtn" type="button" aria-label="Tegnforklaring" title="Tegnforklaring"><svg viewBox="0 0 24 24"><circle cx="6" cy="7" r="1.8"/><circle cx="6" cy="12" r="1.8"/><circle cx="6" cy="17" r="1.8"/><path d="M11 7h8M11 12h8M11 17h8"/></svg></button>
     <button id="zin" aria-label="Zoom inn">+</button>
     <button id="zout" aria-label="Zoom ut">−</button>
   </div>
 
+  <div class="modustoast" id="modusToast" aria-live="polite"></div>
   <button class="scrubmini" id="scrubMini" type="button" aria-label="Vis tidsskyveren"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span id="scrubMiniTxt">I dag</span></button>
   <div class="scrub" id="scrub">
     <div class="top">
@@ -401,8 +440,10 @@ function tx(no, en) { return EN ? en : no; }
   document.getElementById('scrubDate').title = 'Back to today';
   document.getElementById('scrubRange').setAttribute('aria-label', 'Date through the season');
   document.getElementById('tickMay').textContent = 'May';
-  document.getElementById('modeFlue').textContent = 'Dry fly';
-  document.getElementById('modeLaks').textContent = 'Salmon';
+  document.getElementById('modeFlueTxt').textContent = 'Dry fly'; document.getElementById('modeFlue').title = 'Dry fly';
+  document.getElementById('modeLaksTxt').textContent = 'Salmon'; document.getElementById('modeLaks').title = 'Salmon fishing';
+  document.getElementById('lagStdTxt').textContent = 'Dark';
+  document.getElementById('tegnBtn').setAttribute('aria-label', 'Map legend'); document.getElementById('tegnBtn').title = 'Map legend';
   document.getElementById('shFav').setAttribute('aria-label', 'Add to favourites');
   document.getElementById('shOpen').textContent = 'Open the forecast';
   document.getElementById('shClose').textContent = 'Close';
@@ -412,7 +453,7 @@ function tx(no, en) { return EN ? en : no; }
   document.getElementById('elvTitle').textContent = 'Salmon rivers';
   document.getElementById('elvClose').setAttribute('aria-label', 'Close');
   document.getElementById('play').setAttribute('aria-label', 'Play');
-  document.getElementById('lagTurTxt').textContent = 'Hiking map';
+  document.getElementById('lagTurTxt').textContent = 'Light';
   document.getElementById('scrubLukk').setAttribute('aria-label', 'Hide the time slider'); document.getElementById('scrubLukk').title = 'Hide';
   document.getElementById('scrubMini').setAttribute('aria-label', 'Show the time slider');
   document.getElementById('scrubMiniTxt').textContent = 'Today';
@@ -541,7 +582,20 @@ var map = new maplibregl.Map({ container: 'gl', style: style, center: [15, 65], 
 map.touchZoomRotate.disableRotation();
 map.addControl(new maplibregl.AttributionControl({ compact: true, customAttribution: tx('Vann: NVE · Laks: Miljødirektoratet · Isgang: Sentinel-2 (HatchWatch) · Arter: Artsdatabanken/GBIF · Stedsnavn: Kartverket · Kart: © OpenStreetMap, OpenFreeMap', 'Lakes: NVE · Salmon: Norwegian Environment Agency · Ice-out: Sentinel-2 (HatchWatch) · Species: Artsdatabanken/GBIF · Place names: Kartverket · Map: © OpenStreetMap, OpenFreeMap') }), window.innerWidth >= 760 ? 'bottom-left' : 'bottom-right');
 var userMoved = false, iceFitted = false;
-map.on('movestart', function (e) { if (e.originalEvent) userMoved = true; });
+map.on('movestart', function (e) {
+  if (!e.originalEvent) return;
+  userMoved = true;
+  // Mobil: merket glir bort første gang brukeren selv drar eller zoomer (kommer tilbake ved neste oppstart)
+  if (!document.body.classList.contains('kart-i-bruk')) { document.body.classList.add('kart-i-bruk'); setTimeout(plasserKompass, 380); }
+});
+// Kompasset ligger rett under topplinja på mobil (som flytter seg når merket glir bort), øverst til høyre på PC
+function plasserKompass() {
+  var k = document.getElementById('kompass'); if (!k) return;
+  if (window.innerWidth >= 760) { k.style.top = ''; return; }
+  var m = document.getElementById('map').getBoundingClientRect(), t = document.querySelector('.maptop').getBoundingClientRect();
+  k.style.top = Math.round(t.bottom - m.top + 8) + 'px';
+}
+window.addEventListener('resize', plasserKompass);
 function foldAttrib() { var a = document.querySelector('.maplibregl-ctrl-attrib'); if (a) a.classList.remove('maplibregl-compact-show'); }
 map.once('idle', foldAttrib); setTimeout(foldAttrib, 1500);
 function fitNorway() {
@@ -574,7 +628,9 @@ function settSkyverLiten(liten) {
   try { localStorage.setItem('hw_skyver', liten ? 'liten' : 'full'); } catch (e) {}
   syncScrubHeight();
 }
-try { if (localStorage.getItem('hw_skyver') === 'liten') document.body.classList.add('skyver-liten'); } catch (e) {}
+// Mobil (2026-10-15): «I dag» starter sammenslått med mindre brukeren selv har åpnet den (hw_skyver = 'full')
+try { var skv = localStorage.getItem('hw_skyver'); if (skv === 'liten' || (skv == null && window.innerWidth < 760)) document.body.classList.add('skyver-liten'); } catch (e) {}
+if (window.innerWidth < 760) document.getElementById('q').placeholder = tx('Søk vann, elv, sted', 'Search lake, river, place');
 document.getElementById('scrubLukk').addEventListener('click', function () { settSkyverLiten(true); });
 document.getElementById('scrubMini').addEventListener('click', function () { settSkyverLiten(false); });
 
@@ -643,6 +699,7 @@ map.on('load', function () {
   if (forrige && !qs0.get('vann') && !qs0.get('elv') && !qs0.get('tur')) { map.jumpTo({ center: forrige.c, zoom: forrige.z }); userMoved = true; }
   else fitNorway();
   map.on('moveend', lagreKartvisning);
+  plasserKompass();
   apneTurFraLenke();   // /?tur=… (delt eller lagret tur) åpner målemodus med streken
   // Årene kommer fra isgang_meta.json (vårmodusen legger til inneværende år når satellitten har data)
   fetch(DATA + 'isgang_meta.json').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
@@ -803,9 +860,10 @@ function isoWeek(doy) {
 // Standard = dagens mørke kart. Turkart = Kartverkets topografiske kart (cache.kartverket.no, CC BY 4.0)
 // med fotruter og infopunkter fra Turrutebasen (wms.geonorge.no, CC BY 4.0, fra zoom 9). Skiløyper er
 // utelatt (går ofte over myr om sommeren). Våre egne lag (vann, laks, prognosesteder) ligger oppå.
-// Standard er alltid utgangspunktet; Turkart bare når brukeren velger det (huskes i hw_kartlag).
-var KARTLAG = 'standard';
-try { if (localStorage.getItem('hw_kartlag') === 'tur') KARTLAG = 'tur'; } catch (e) {}
+// Fra 2026-10-15 (Stian) heter valgene «Lyst» (tur) og «Mørkt» (standard), og Lyst er utgangspunktet for alle
+// som ikke selv har valgt Mørkt (huskes i hw_kartlag). hw-lang.js bruker samme regel for temaet på alle sider.
+var KARTLAG = 'tur';
+try { if (localStorage.getItem('hw_kartlag') === 'standard') KARTLAG = 'standard'; } catch (e) {}
 var STANDARD_LAG = ['wood', 'glacier', 'res', 'water', 'waterway', 'road-minor', 'road-major', 'rail', 'boundary', 'steder', 'topper', 'vann-navn', 'vann-navn-store'];
 function leggTilTurkart() {
   map.addSource('kv-topo', { type: 'raster', tileSize: 256, maxzoom: 18, attribution: '© <a href="https://www.kartverket.no/" target="_blank" rel="noopener">Kartverket</a>',
@@ -1255,7 +1313,17 @@ document.getElementById('modeseg').addEventListener('click', function (e) {
   if (mode === 'laks' && location.hash !== '#laks') history.replaceState(null, '', '/#laks');
   if (mode === 'flue' && location.hash === '#laks') history.replaceState(null, '', '/');
   applyMode();
+  // Mobil: knappene har bare ikoner, så navnet vises kort
+  if (window.innerWidth < 760) {
+    var toast = document.getElementById('modusToast');
+    toast.textContent = mode === 'flue' ? tx('Tørrflue', 'Dry fly') : tx('Laksefiske', 'Salmon fishing');
+    toast.style.top = (Math.round(document.querySelector('.maptop').getBoundingClientRect().bottom - document.getElementById('map').getBoundingClientRect().top) + 10) + 'px';
+    toast.classList.add('vis'); clearTimeout(toast._t); toast._t = setTimeout(function () { toast.classList.remove('vis'); }, 1400);
+  }
 });
+// Tegnforklaring (mobil): knappen viser og skjuler forklaringen; trykk andre steder lukker den
+document.getElementById('tegnBtn').addEventListener('click', function (e) { e.stopPropagation(); document.body.classList.toggle('vis-tegn'); });
+document.addEventListener('click', function (e) { if (!e.target.closest('#tegnBtn') && !e.target.closest('#legend')) document.body.classList.remove('vis-tegn'); });
 
 // ═══ TIDSSKYVER ═══
 var scrubIn = document.getElementById('scrubRange');
@@ -1277,6 +1345,8 @@ function paintScrub() {
   }
   var cnt = { now: 0, soon: 0, later: 0 };
   LOCS.forEach(function (l) { var st = stateOf(l).st; if (cnt[st] !== undefined) cnt[st]++; });
+  // Sammenslått «I dag» (mobil): det viktigste står rett i knappen
+  if (isToday && loaded && cnt.now) document.getElementById('scrubMiniTxt').textContent = tx('I dag · klekking pågår (' + cnt.now + ')', 'Today · hatch under way (' + cnt.now + ')');
   var sum = document.getElementById('scrubSum');
   if (!loaded) sum.textContent = tx('laster…', 'loading…');
   else if (day < OPEN_DOY) sum.textContent = tx('Klekkeprognosen åpner 1. april', 'The hatch forecast opens 1 April');

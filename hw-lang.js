@@ -40,8 +40,9 @@
     var m = document.querySelector('meta[name="theme-color"]');
     if (m) m.setAttribute('content', lys ? '#f2f6f5' : '#0b1418');
   };
-  var lys = false;
-  try { lys = localStorage.getItem('hw_kartlag') === 'tur'; } catch (e) {}
+  // Lyst er standard fra 2026-10-15; bare de som har valgt «Mørkt» på kartet (hw_kartlag = 'standard') får mørkt
+  var lys = true;
+  try { lys = localStorage.getItem('hw_kartlag') !== 'standard'; } catch (e) {}
   if (lys) {
     window.hwSettTema(true);
     document.addEventListener('DOMContentLoaded', function () { window.hwSettTema(true); });   // theme-color står ofte etter dette skriptet
