@@ -135,7 +135,10 @@
   .maal .fart { display: inline-flex; background: var(--hw-bg-3); border-radius: 10px; padding: 3px; }
   .maal .fart button { padding: 5px 10px; border-radius: 8px; font-size: 12.5px; color: var(--hw-fg-2); }
   .maal .fart button.on { background: var(--hw-bg-2); color: var(--hw-fg); font-weight: 600; }
-  body.kart-tur .brandrow { background: color-mix(in srgb, var(--hw-bg) 88%, transparent); backdrop-filter: blur(6px); border-radius: 12px; padding: 4px 12px 4px 6px; }
+  /* Turkart (2026-10-15, Stian): ingen mørk boks bak merket — i stedet en tynn mørk kontur rundt bokstavene og
+     flua, pluss en svak skygge for dybde. Filteret ligger på hele merket fordi flua er en maskert flate
+     (filter rett på den blir maskert bort). Hver drop-shadow bygger på den forrige, så fire retninger gir full kant. */
+  body.kart-tur .brandrow { filter: drop-shadow(1.2px 0 0 #0b1418) drop-shadow(-1.2px 0 0 #0b1418) drop-shadow(0 1.2px 0 #0b1418) drop-shadow(0 -1.2px 0 #0b1418) drop-shadow(0 2px 5px rgba(11, 20, 24, .35)); }
   .lagvalg button { width: 84px; text-align: center; font-size: 12.5px; color: var(--hw-fg-2); }
   .lagvalg button i { display: block; height: 56px; border-radius: 10px; margin-bottom: 5px; border: 2px solid transparent; }
   .lagvalg button.on { color: var(--hw-fg); font-weight: 600; }
@@ -507,6 +510,16 @@ function fitNorway() {
                       : { top: top, bottom: sh + (w >= 760 ? 20 : 56), left: 10, right: 10 };
   map.fitBounds([[4.6, 57.9], [31.2, 71.2]], { padding: pad, duration: 0 });
 }
+// Kartutsnittet huskes i sessionStorage (hw_kartvisning), så det overlever turen til vannsiden og tilbake,
+// men ikke et nytt besøk. Utløper etter 6 timer (appen kan holde samme økt i dagevis).
+function hentKartvisning() {
+  try { var v = JSON.parse(sessionStorage.getItem('hw_kartvisning')); if (v && v.c && isFinite(v.z) && Date.now() - v.t < 6 * 3600e3) return v; } catch (e) {}
+  return null;
+}
+function lagreKartvisning() {
+  var c = map.getCenter();
+  try { sessionStorage.setItem('hw_kartvisning', JSON.stringify({ c: [+c.lng.toFixed(5), +c.lat.toFixed(5)], z: +map.getZoom().toFixed(2), t: Date.now() })); } catch (e) {}
+}
 function syncScrubHeight() {
   var liten = document.body.classList.contains('skyver-liten');
   var h = liten ? document.getElementById('scrubMini').offsetHeight : document.getElementById('scrub').offsetHeight;
@@ -581,7 +594,12 @@ map.on('load', function () {
 
   map.resize();   // bunnbaren (hw-shell.js) krymper kartet etter at det ble laget
   applyMode();    // før tilpasningen: modusen bestemmer høyden på skyveren
-  fitNorway();
+  // Kommer man tilbake fra en vann-/elveside i samme økt, åpner kartet der man var (Stian 15.10.2026),
+  // ellers hele Norge. Lenker med ?vann/?elv/?tur bestemmer selv hvor kartet skal.
+  var qs0 = new URLSearchParams(location.search), forrige = hentKartvisning();
+  if (forrige && !qs0.get('vann') && !qs0.get('elv') && !qs0.get('tur')) { map.jumpTo({ center: forrige.c, zoom: forrige.z }); userMoved = true; }
+  else fitNorway();
+  map.on('moveend', lagreKartvisning);
   apneTurFraLenke();   // /?tur=… (delt eller lagret tur) åpner målemodus med streken
   // Årene kommer fra isgang_meta.json (vårmodusen legger til inneværende år når satellitten har data)
   fetch(DATA + 'isgang_meta.json').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
