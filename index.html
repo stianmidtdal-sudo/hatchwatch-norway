@@ -135,10 +135,10 @@
   .maal .fart { display: inline-flex; background: var(--hw-bg-3); border-radius: 10px; padding: 3px; }
   .maal .fart button { padding: 5px 10px; border-radius: 8px; font-size: 12.5px; color: var(--hw-fg-2); }
   .maal .fart button.on { background: var(--hw-bg-2); color: var(--hw-fg); font-weight: 600; }
-  /* Turkart (2026-10-15, Stian): ingen mørk boks bak merket — i stedet en tynn mørk kontur rundt bokstavene og
-     flua, pluss en svak skygge for dybde. Filteret ligger på hele merket fordi flua er en maskert flate
+  /* Turkart (2026-10-15, Stian): ingen mørk boks bak merket — i stedet en tynn, flat mørk kontur rundt bokstavene
+     og flua (ingen myk skygge: Stian ville ha ren 2D). Filteret ligger på hele merket fordi flua er en maskert flate
      (filter rett på den blir maskert bort). Hver drop-shadow bygger på den forrige, så fire retninger gir full kant. */
-  body.kart-tur .brandrow { filter: drop-shadow(1.2px 0 0 #0b1418) drop-shadow(-1.2px 0 0 #0b1418) drop-shadow(0 1.2px 0 #0b1418) drop-shadow(0 -1.2px 0 #0b1418) drop-shadow(0 2px 5px rgba(11, 20, 24, .35)); }
+  body.kart-tur .brandrow { filter: drop-shadow(1.2px 0 0 #0b1418) drop-shadow(-1.2px 0 0 #0b1418) drop-shadow(0 1.2px 0 #0b1418) drop-shadow(0 -1.2px 0 #0b1418); }
   .lagvalg button { width: 84px; text-align: center; font-size: 12.5px; color: var(--hw-fg-2); }
   .lagvalg button i { display: block; height: 56px; border-radius: 10px; margin-bottom: 5px; border: 2px solid transparent; }
   .lagvalg button.on { color: var(--hw-fg); font-weight: 600; }
