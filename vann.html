@@ -45,6 +45,10 @@
   .ofa-aar span { display: block; font-family: var(--hw-mono); font-size: 10px; color: var(--hw-fg-3); }
   .ofa-aar b { font-family: var(--hw-mono); font-size: 13px; color: var(--hw-fg); }
   .grp.ofa { margin: 0 0 14px; padding-bottom: 12px; border-bottom: 1px solid var(--hw-line); }
+  .grp.fiskgrp { margin: 0 0 6px; }
+  .grp.fiskgrp .note { margin-top: 6px; }
+  .sp small.aar { font-family: var(--hw-mono); font-size: 10px; color: var(--hw-fg-3); font-style: normal; margin-left: 2px; }
+  .sp small.innfort { font-size: 10px; font-style: normal; color: var(--hw-bad); margin-left: 2px; }
   .berggrunn { color: var(--hw-fg-2); font-size: 13.5px; margin-top: 4px; line-height: 1.45; }
   .berggrunn b { color: var(--hw-fg); font-weight: 600; }
   .berggrunn .kalkprikk { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 7px; vertical-align: -1px; border: 1px solid rgba(0, 0, 0, .15); }
@@ -197,7 +201,7 @@ function render(v) {
   }
 
   // ── Arter ──
-  h += '<div class="card"><h2>' + tx('Registrerte arter', 'Recorded species') + '</h2><div id="ofa"></div>' + arterHtml(v.arter) + '</div>';
+  h += '<div class="card"><h2>' + tx('Registrerte arter', 'Recorded species') + '</h2><div id="ofa"></div><div id="fisk"></div>' + arterHtml(v.arter) + '</div>';
 
   // Rekkefølge (2026-10-15, Stian): klekking → isgang år for år → arter → snø → varsler → dybde → kart
   // ── Snø ved vannet (2026-10-14): seNorge via /api/nve?gts=sd ──
@@ -234,6 +238,32 @@ function render(v) {
   visDybde();
   hentBerggrunn(v);
   visOfa();
+  visFisk();
+}
+
+// ═══ FISK (2026-10-15, Stian: «alle registrerte fiskearter, vis siste funndato») ═══
+// data/kart/fisk/<id % 64>.json (bygg_kart.py fisk ← i3_fisk.py): GBIF-funn koblet til vannet med samme regler
+// som insektene. [latin, norsk, funn, siste år, sikker, innført]. Ørret meldes sjelden inn, så vi sier at den
+// finnes i de fleste vann selv om den ikke står her (samme tanke som «gjelder bare hvis arten finnes»).
+var FISK_GULL = ['Salmo trutta', 'Salvelinus alpinus', 'Thymallus thymallus', 'Salmo salar'];
+function visFisk() {
+  var el = document.getElementById('fisk'); if (!el) return;
+  fetch('/data/kart/fisk/' + (ID % 64) + '.json').then(function (r) { return r.ok ? r.json() : {}; }).then(function (j) {
+    var liste = j[String(ID)] || [];
+    var harOrret = liste.some(function (f) { return f[0] === 'Salmo trutta'; });
+    var h = '<div class="grp fiskgrp"><div class="hw-eyebrow">' + tx('Fisk', 'Fish') + (liste.length ? ' · ' + liste.length : '') + '</div>';
+    if (liste.length) {
+      liste = liste.slice().sort(function (a, b) { var ka = FISK_GULL.indexOf(a[0]) >= 0 ? 0 : 1, kb = FISK_GULL.indexOf(b[0]) >= 0 ? 0 : 1; return ka - kb || b[2] - a[2]; });
+      h += '<div class="splist">' + liste.map(function (f) {
+        var no = !EN && f[1] ? esc(f[1].charAt(0).toUpperCase() + f[1].slice(1)) + ' · ' : '';
+        return '<span class="sp' + (FISK_GULL.indexOf(f[0]) >= 0 ? ' key' : '') + '" title="' + f[2] + tx(' funn', ' records') + (f[3] ? tx(', sist ', ', last ') + f[3] : '') + '">' + no + '<i>' + esc(f[0]) + '</i>' +
+          (f[3] ? ' <small class="aar">' + f[3] + '</small>' : '') + (f[5] ? ' <small class="innfort">' + tx('innført', 'introduced') + '</small>' : '') + '</span>';
+      }).join('') + '</div>';
+    }
+    h += '<p class="note">' + (liste.length ? tx('Årstallet er siste registrerte funn. ', 'The year is the latest record. ') : tx('Ingen fiskefunn er koblet til dette vannet ennå. ', 'No fish records are linked to this lake yet. ')) +
+      (harOrret ? '' : tx('Ørret finnes i de fleste norske vann, selv om ingen har registrert den her.', 'Brown trout lives in most Norwegian lakes, even if nobody has recorded it here.')) + '</p></div>';
+    el.innerHTML = h;
+  }).catch(function () {});
 }
 
 // ═══ OFA-UTSETTINGER (2026-10-15, Stian) ═══

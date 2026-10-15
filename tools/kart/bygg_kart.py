@@ -463,6 +463,35 @@ def bygg_dybde():
     print(f"dybde: {len(ut)} vann med dybdekart, {os.path.getsize(os.path.join(OUT, 'dybde.json')) // 1024} kB")
 
 
+# ── Fisk per vann (2026-10-15, Stian: «alle registrerte fiskearter, siste funndato») ──
+# Kilde: tools/research_analyser/I_arter_per_vann/fisk_per_vann.csv (i3_fisk.py: GBIF-nedlasting, samme
+# koblingsregler som insektene). Egne filer data/kart/fisk/<id % 64>.json — IKKE i vann/*.json, som
+# isgang-jobben eier, så de kommer med i en vanlig opplasting.
+# {vatnlnr: [[latinsk navn, norsk navn, funn, siste år, sikker 0/1, innført 0/1], ...]}  sortert etter funn
+FISK_SRC = os.path.join(ROOT, "tools", "research_analyser", "I_arter_per_vann", "fisk_per_vann.csv")
+
+
+def bygg_fisk():
+    if not os.path.exists(FISK_SRC):
+        raise SystemExit("fisk: fant ikke %s — kjør i3_fisk.py først" % FISK_SRC)
+    per = collections.defaultdict(list)
+    with open(FISK_SRC, encoding="utf-8-sig") as fh:
+        for r in csv.DictReader(fh, delimiter=";"):
+            per[int(r["vatnLnr"])].append([r["art"], (r.get("norsk_navn") or "").strip(), int(r["n_funn"] or 0),
+                                           int(r["siste_aar"]) if r.get("siste_aar") else None,
+                                           1 if int(r.get("n_sikre") or 0) > 0 else 0, 1 if int(r.get("n_innfort") or 0) > 0 else 0])
+    grupper = [dict() for _ in range(VANN_GRUPPER)]
+    for vid, liste in per.items():
+        liste.sort(key=lambda x: -x[2])
+        grupper[vid % VANN_GRUPPER][str(vid)] = liste
+    mappe = os.path.join(OUT, "fisk")
+    os.makedirs(mappe, exist_ok=True)
+    for i, g in enumerate(grupper):
+        with open(os.path.join(mappe, f"{i}.json"), "w", encoding="utf-8") as fh:
+            json.dump(g, fh, ensure_ascii=False, separators=(",", ":"))
+    print(f"fisk: {len(per)} vann med fiskefunn, {sum(len(x) for x in per.values())} vann/art-par")
+
+
 # ── OFA-utsettinger (2026-10-15, Stian) ──────────────────────────────────
 # Kilde: DATA i ofa-settefisk.html (Oslomarkas Fiskeadministrasjon, fisk satt ut 2021–2025; art oppgis ikke).
 # OFA har navn + område, ikke NVE-nummer. Kobling: navnevarianter (Store Åklungen ↔ Åklungen Store,
@@ -540,6 +569,8 @@ if __name__ == "__main__":
     hva = sys.argv[1] if len(sys.argv) > 1 else "alt"
     if hva in ("alt", "ofa"):
         bygg_ofa()
+    if hva in ("alt", "fisk") and (hva == "fisk" or os.path.exists(FISK_SRC)):
+        bygg_fisk()
     if hva in ("alt", "dybde"):
         bygg_dybde()
     if hva in ("alt", "isgang"):
