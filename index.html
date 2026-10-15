@@ -138,7 +138,9 @@
   /* Turkart (2026-10-15, Stian): ingen mørk boks bak merket — i stedet en tynn, flat mørk kontur rundt bokstavene
      og flua (ingen myk skygge: Stian ville ha ren 2D). Filteret ligger på hele merket fordi flua er en maskert flate
      (filter rett på den blir maskert bort). Hver drop-shadow bygger på den forrige, så fire retninger gir full kant. */
-  body.kart-tur .brandrow { filter: drop-shadow(1.2px 0 0 #0b1418) drop-shadow(-1.2px 0 0 #0b1418) drop-shadow(0 1.2px 0 #0b1418) drop-shadow(0 -1.2px 0 #0b1418); }
+  /* Ingen forskyvning: forskjøvne skygger ble rundet skjevt på skalerte skjermer (tykkere kant oppe til venstre).
+     Tre sentrerte skygger med liten utglidning stables til en jevn, tynn kant like tykk på alle sider. */
+  body.kart-tur .brandrow { filter: drop-shadow(0 0 .6px #0b1418) drop-shadow(0 0 .6px #0b1418) drop-shadow(0 0 .6px #0b1418); }
   /* Lyst grensesnitt på Turkart (2026-10-15, Stian: «rent og cleant, hvitt»). Alt som flyter over kartet får det
      lyse token-settet fra hw.css (samme verdier som :root[data-theme="light"]), så farger og kanter følger systemet.
      Bunnbaren og helskjermpanelene (Nå i Norge, Lakseelver) beholder appens mørke ramme. */
