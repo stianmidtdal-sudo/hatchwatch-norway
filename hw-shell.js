@@ -99,6 +99,7 @@
     '</nav>' +
     '<div class="hwpanel" id="hwbFavPanel" role="dialog" aria-label="' + S.fav + '">' +
       '<div class="hwp-title"><span>' + S.fav + '</span><button class="hwp-close" type="button" data-close="hwbFavPanel" aria-label="' + S.close + '">×</button></div>' +
+      '<div class="hwp-faner" id="hwbFavFaner" role="tablist"></div>' +
       '<div class="hwp-scroll" id="hwbFavList"></div>' +
     '</div>' +
     '<div class="hwpanel" id="hwbMenuPanel" role="dialog" aria-label="' + S.menu + '">' +
@@ -150,26 +151,46 @@
   function vannFavs() {
     try { var v = JSON.parse(localStorage.getItem('hw_vann_favs') || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; }
   }
+  // Faner (2026-10-15, Stian): Områder (prognosestedene, hw_favs) · Vann · Elver · Turer. Hver liste vises for
+  // seg; valgt fane huskes (hw_fav_fane). Uten husket valg åpnes første fane som har noe i seg.
+  var FANER = [
+    { id: 'omr', no: 'Områder', en: 'Areas', tom: ['Ingen områder ennå. Trykk hjertet øverst på en prognose, for eksempel Kautokeino, så havner den her.', 'No areas yet. Tap the heart at the top of a forecast, for example Kautokeino, and it ends up here.'] },
+    { id: 'vann', no: 'Vann', en: 'Lakes', tom: ['Ingen vann ennå. Trykk hjertet på et vann i kartet eller på vannsiden. Varslene dine følger vannene.', 'No lakes yet. Tap the heart on a lake in the map or on the lake page. Your notifications follow the lakes.'] },
+    { id: 'elv', no: 'Elver', en: 'Rivers', tom: ['Ingen elver ennå. Trykk hjertet på en lakseelv i kartet eller på elvesiden.', 'No rivers yet. Tap the heart on a salmon river in the map or on the river page.'] },
+    { id: 'tur', no: 'Turer', en: 'Trips', tom: ['Ingen turer ennå. Tegn en tur med linjalen i kartet og trykk Lagre.', 'No trips yet. Draw a trip with the ruler in the map and tap Save.'] }
+  ];
+  var favFane = null;
+  try { favFane = localStorage.getItem('hw_fav_fane'); } catch (e) {}
   function renderFavs() {
-    var list = document.getElementById('hwbFavList');
+    var list = document.getElementById('hwbFavList'), faner = document.getElementById('hwbFavFaner');
     var f = favs(), e = elvFavs(), vf = vannFavs(), tu = turer();
-    if (!f.length && !e.length && !vf.length && !tu.length) {
-      list.innerHTML = '<div class="hwp-empty">' + S.empty + '</div>';
+    var antall = { omr: f.length, vann: vf.length, elv: e.length, tur: tu.length };
+    if (!FANER.some(function (x) { return x.id === favFane; })) {
+      var forste = FANER.filter(function (x) { return antall[x.id] > 0; })[0];
+      favFane = forste ? forste.id : 'vann';
+    }
+    faner.innerHTML = FANER.map(function (x) {
+      return '<button type="button" role="tab" data-fane="' + x.id + '" aria-selected="' + (x.id === favFane) + '"' + (x.id === favFane ? ' class="on"' : '') + '>' +
+        (EN ? x.en : x.no) + (antall[x.id] ? '<small>' + antall[x.id] + '</small>' : '') + '</button>';
+    }).join('');
+    var fane = FANER.filter(function (x) { return x.id === favFane; })[0];
+    if (!antall[favFane]) {
+      list.innerHTML = '<div class="hwp-empty">' + (EN ? fane.tom[1] : fane.tom[0]) + '</div>';
       return;
     }
-    var html = f.map(function (id) {
+    var html = '';
+    if (favFane === 'omr') html = f.map(function (id) {
       var sub = typeof cfg.favSub === 'function' ? (cfg.favSub(id) || '') : '';
       return row('/dashboard.html?loc=' + encodeURIComponent(id), ICON.drop, NAMES[id] || id, sub);
-    }).join('') + vf.map(function (x) {
+    }).join('');
+    if (favFane === 'vann') html = vf.map(function (x) {
       return row('/vann.html?id=' + encodeURIComponent(x.id), ICON.drop, esc(x.navn || x.id), EN ? 'Ice-out and hatch' : 'Isgang og klekking');
     }).join('');
-    if (e.length) {
-      html += '<div class="hwp-sec">' + (EN ? 'My rivers' : 'Mine elver') + '</div>' + e.map(function (x) {
-        return row('/elv.html?id=' + encodeURIComponent(x.id), RIVER, esc(x.navn || x.id), EN ? 'Salmon river' : 'Lakseelv');
-      }).join('');
-    }
-    if (tu.length) {
-      html += '<div class="hwp-sec">' + (EN ? 'My trips' : 'Mine turer') + '</div>' + tu.map(function (t) {
+    if (favFane === 'elv') html = e.map(function (x) {
+      return row('/elv.html?id=' + encodeURIComponent(x.id), RIVER, esc(x.navn || x.id), EN ? 'Salmon river' : 'Lakseelv');
+    }).join('');
+    if (favFane === 'tur') {
+      html = tu.map(function (t) {
         var km = t.m >= 1000 ? (t.m / 1000).toFixed(1).replace('.', EN ? '.' : ',') + ' km' : t.m + ' m';
         var href = '/?tur=' + encodeURIComponent(t.tur) + '&navn=' + encodeURIComponent(t.navn || '');
         var dato = /^\d{4}-\d{2}-\d{2}$/.test(t.dato || '') ? (+t.dato.slice(8)) + '.' + (+t.dato.slice(5, 7)) + '.' + t.dato.slice(0, 4) : '';
@@ -192,6 +213,13 @@
     });
   });
   document.getElementById('hwbFav').addEventListener('click', function () { renderFavs(); open('hwbFavPanel', 'fav'); });
+  document.getElementById('hwbFavFaner').addEventListener('click', function (ev) {
+    var b = ev.target.closest('[data-fane]'); if (!b) return;
+    favFane = b.getAttribute('data-fane');
+    try { localStorage.setItem('hw_fav_fane', favFane); } catch (e) {}
+    renderFavs();
+    document.getElementById('hwbFavList').scrollTop = 0;
+  });
   document.getElementById('hwbFavList').addEventListener('click', function (ev) {
     var b = ev.target.closest('.hwp-fjern'); if (!b) return;
     ev.preventDefault();

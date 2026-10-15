@@ -169,7 +169,8 @@
 
         /* v3 mørk skinn (2026-10-01): tokens fra hw.css, ligger sist i kaskaden */
         html, body { background: var(--hw-bg); color: var(--hw-fg); font-family: var(--hw-body); }
-        nav, nav.hw-nav { background: var(--hw-bg); box-shadow: none; border-bottom: 1px solid var(--hw-line); gap: 10px; }
+        nav, nav.hw-nav { background: var(--hw-bg); box-shadow: none; border-bottom: 1px solid var(--hw-line); gap: 10px; color: var(--hw-fg-2); }   /* farge: undertittelen arvet hvit (usynlig i lyst tema) */
+        nav.hw-nav a { color: var(--hw-fg); }
         .logo-text, nav.hw-nav .logo-text { font-family: var(--hw-display); font-weight: 700; font-size: 18px; letter-spacing: -.02em; text-transform: none; color: var(--hw-fg); }
         .logo-text b, nav.hw-nav .logo-text b { color: var(--hw-hatch); }
         h1 { font-family: var(--hw-display); color: var(--hw-fg); letter-spacing: -.03em; }

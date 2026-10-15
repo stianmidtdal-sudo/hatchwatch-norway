@@ -894,6 +894,11 @@
         .drv-value { color: var(--hw-fg); }
         .drv-cell.drv-anom-mild .drv-value, .drv-cell.drv-anom-strong .drv-value { color: var(--hw-water); }
         .drv-cell.drv-anom-late-mild .drv-value, .drv-cell.drv-anom-late-strong .drv-value { color: var(--hw-hatch); }
+        /* Lyst tema (Turkart valgt, 2026-10-15): avvikscellene hadde hardkodet mørk tone — her lyse toner av samme farger */
+        :root[data-theme="light"] .drv-cell.drv-anom-mild { background: var(--hw-water-soft); }
+        :root[data-theme="light"] .drv-cell.drv-anom-strong { background: rgba(26, 140, 192, .24); }
+        :root[data-theme="light"] .drv-cell.drv-anom-late-mild { background: var(--hw-hatch-soft); }
+        :root[data-theme="light"] .drv-cell.drv-anom-late-strong { background: rgba(201, 138, 18, .26); }
         .drv-status { color: var(--hw-fg-2); }
         .explain-text { color: var(--hw-fg-2); border-top-color: var(--hw-line); }
         .explain-text strong { color: var(--hw-fg); }

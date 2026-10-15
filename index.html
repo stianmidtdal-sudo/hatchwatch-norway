@@ -109,6 +109,20 @@
   .zoomctl #gpsBtn.on { color: #4aa3ff; border-color: color-mix(in srgb, #4aa3ff 55%, transparent); }
   .zoomctl #gpsBtn.on svg { fill: currentColor; }
   .zoomctl #gpsBtn.venter { opacity: .6; }
+  /* Her er jeg med retning (2026-10-15, Stian): egen prikk med kjegle som følger telefonens kompass
+     (MapLibres egen retning bruker bare GPS-kursen, som forsvinner når man står stille). Nøyaktighetsringen
+     er fortsatt MapLibres. */
+  .maplibregl-user-location-dot { display: none !important; }
+  .meg { width: 72px; height: 72px; pointer-events: none; }
+  .meg svg { width: 72px; height: 72px; display: block; overflow: visible; }
+  .meg .kjegle { opacity: 0; transition: opacity .3s; }
+  .meg.retning .kjegle { opacity: 1; }
+  /* Kompass øverst til høyre: nålen viser kartets nord; trykk = kartet følger retningen telefonen peker */
+  .kompass { position: absolute; right: 12px; top: calc(env(safe-area-inset-top, 0px) + 8px); z-index: 23; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--hw-line); background: color-mix(in srgb, var(--hw-bg-2) 92%, transparent); backdrop-filter: blur(6px); display: grid; place-items: center; cursor: pointer; color: var(--hw-fg-2); }
+  .kompass svg { width: 26px; height: 26px; display: block; }
+  .kompass.folg { border-color: #4aa3ff; box-shadow: 0 0 0 2px rgba(74, 163, 255, .35); color: #4aa3ff; }
+  .kompass.ingen { opacity: .5; }
+  @media (min-width: 760px) { .kompass { top: 14px; } }
   .zoomctl #maalBtn { display: grid; place-items: center; }
   .zoomctl #maalBtn svg { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; }
   .zoomctl #maalBtn.on { color: var(--hw-hatch); border-color: color-mix(in srgb, var(--hw-hatch) 55%, transparent); }
@@ -138,23 +152,27 @@
   /* Turkart (2026-10-15, Stian): ingen mørk boks bak merket — i stedet en tynn, flat mørk kontur rundt bokstavene
      og flua (ingen myk skygge: Stian ville ha ren 2D). Filteret ligger på hele merket fordi flua er en maskert flate
      (filter rett på den blir maskert bort). Hver drop-shadow bygger på den forrige, så fire retninger gir full kant. */
-  /* Ingen forskyvning: forskjøvne skygger ble rundet skjevt på skalerte skjermer (tykkere kant oppe til venstre).
-     Tre sentrerte skygger med liten utglidning stables til en jevn, tynn kant like tykk på alle sider. */
-  body.kart-tur .brandrow { filter: drop-shadow(0 0 .6px #0b1418) drop-shadow(0 0 .6px #0b1418) drop-shadow(0 0 .6px #0b1418); }
+  /* Bokstavene: tekstkontur der streken males under fyllet (paint-order), så 2 px strek gir 1 px kant utenfor —
+     skarp og like tykk på alle sider på alle skjermer, også iPhone. Flua er en maskert flate og kan ikke ha
+     tekstkontur; den får tre sentrerte skygger på en egen ramme (filter rett på flua blir maskert bort).
+     Forskjøvne skygger er droppet: de ble rundet skjevt på skalerte skjermer (tykkere kant oppe til venstre). */
+  .flyramme { display: inline-flex; line-height: 0; }
+  body.kart-tur .brandrow .wm { -webkit-text-stroke: 2px #0b1418; paint-order: stroke fill; }
+  body.kart-tur .brandrow .flyramme { filter: drop-shadow(0 0 .6px #0b1418) drop-shadow(0 0 .6px #0b1418) drop-shadow(0 0 .6px #0b1418); }
   /* Lyst grensesnitt på Turkart (2026-10-15, Stian: «rent og cleant, hvitt»). Alt som flyter over kartet får det
      lyse token-settet fra hw.css (samme verdier som :root[data-theme="light"]), så farger og kanter følger systemet.
      Bunnbaren og helskjermpanelene (Nå i Norge, Lakseelver) beholder appens mørke ramme. */
-  body.kart-tur :is(.maptop, .legend, .maal, .lagvalg, .zoomctl, .scrub, .scrubmini, .sheet, .maplibregl-ctrl-bottom-left, .maplibregl-ctrl-bottom-right) {
+  body.kart-tur :is(.maptop, .legend, .maal, .lagvalg, .zoomctl, .scrub, .scrubmini, .sheet, .kompass, .maplibregl-ctrl-bottom-left, .maplibregl-ctrl-bottom-right) {
     --hw-bg: #f2f6f5; --hw-bg-2: #ffffff; --hw-bg-3: #e6eeec; --hw-bg-4: #d9e4e1; --hw-line: #d3dedb;
     --hw-fg: #11201f; --hw-fg-2: #56696a; --hw-fg-3: #8a9c9c;
     --hw-water: #1a8cc0; --hw-water-soft: rgba(26, 140, 192, .14); --hw-hatch: #c98a12; --hw-hatch-soft: rgba(201, 138, 18, .16); --hw-hatch-ink: #ffffff;
     --hw-far: #b8c6c4; --hw-coming: #7fb9d3; --hw-shadow: 0 18px 40px rgba(20, 40, 40, .18);
     color: var(--hw-fg);   /* tekst uten egen farge arver ellers den lyse fargen fra body */
   }
-  /* Merket ligger i .maptop, men skal beholde hvit «Hatch» og lys gull med mørk kontur */
-  body.kart-tur .brandrow { --hw-fg: #e9f1ef; --hw-hatch: #f2b84b; }
+  /* Merket ligger over kartet og skal alltid ha hvit «Hatch» og lys gull, også når appen har lyst tema */
+  .brandrow { --hw-fg: #e9f1ef; --hw-hatch: #f2b84b; }
   /* Hvite flater på lyst kart trenger en svak skygge for å skille seg fra bunnen */
-  body.kart-tur :is(.search-in, .modeseg, .zoomctl button, .scrub, .scrubmini, .maal, .legend .hw-chip) { box-shadow: 0 1px 2px rgba(20, 40, 40, .10), 0 3px 10px rgba(20, 40, 40, .08); }
+  body.kart-tur :is(.search-in, .modeseg, .zoomctl button, .scrub, .scrubmini, .maal, .legend .hw-chip, .kompass) { box-shadow: 0 1px 2px rgba(20, 40, 40, .10), 0 3px 10px rgba(20, 40, 40, .08); }
   body.kart-tur .modeseg { background: color-mix(in srgb, #ffffff 94%, transparent); border: 1px solid var(--hw-line); }
   body.kart-tur .modeseg button.on { background: #11201f; color: #ffffff; box-shadow: none; }
   body.kart-tur .legend .hw-chip { background: color-mix(in srgb, #ffffff 94%, transparent); }
@@ -241,7 +259,7 @@
 
   <div class="maptop">
     <a class="brandrow" href="/" aria-label="HatchWatch">
-      <span class="hw-fly" style="width:36px;color:var(--hw-hatch)" aria-hidden="true"></span>
+      <span class="flyramme"><span class="hw-fly" style="width:36px;color:var(--hw-hatch)" aria-hidden="true"></span></span>
       <span class="wm">Hatch<b>Watch</b></span>
     </a>
     <div class="modeseg" id="modeseg" role="tablist"><button type="button" data-m="flue" class="on" id="modeFlue">Tørrflue</button><button type="button" data-m="laks" id="modeLaks">Laksefiske</button></div>
@@ -282,6 +300,7 @@
     <button type="button" class="std" data-lag="standard"><i></i><span id="lagStdTxt">Standard</span></button>
     <button type="button" class="tur" data-lag="tur"><i></i><span id="lagTurTxt">Turkart</span></button>
   </div>
+  <button class="kompass" id="kompass" type="button" aria-label="Kompass: trykk for at kartet skal følge retningen du peker" title="Kartet følger retningen du peker"><svg viewBox="0 0 24 24" id="kompassNaal"><path d="M12 2.6l3.1 9.4H8.9z" fill="#e5484d"/><path d="M12 21.4L8.9 12h6.2z" fill="currentColor" opacity=".55"/><circle cx="12" cy="12" r="1.5" fill="#ffffff"/></svg></button>
   <div class="zoomctl">
     <button id="lagBtn" type="button" aria-label="Kartlag" title="Kartlag"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg></button>
     <button id="gpsBtn" type="button" aria-label="Vis hvor jeg er" title="Vis hvor jeg er"><svg viewBox="0 0 24 24"><path d="M3.5 11.2L20.5 3.5l-7.7 17-2.1-7.4z"/></svg></button>
@@ -405,6 +424,7 @@ function tx(no, en) { return EN ? en : no; }
   document.getElementById('maalLagre').textContent = 'Save';
   document.getElementById('maalDel').textContent = 'Share';
   document.getElementById('gpsBtn').setAttribute('aria-label', 'Show where I am'); document.getElementById('gpsBtn').title = 'Show where I am';
+  document.getElementById('kompass').setAttribute('aria-label', 'Compass: tap to make the map follow the direction you are facing'); document.getElementById('kompass').title = 'Map follows the direction you are facing';
   document.getElementById('lagBtn').setAttribute('aria-label', 'Map layers'); document.getElementById('lagBtn').title = 'Map layers';
   document.getElementById('lagValg').setAttribute('aria-label', 'Map layers');
 })();
@@ -835,7 +855,8 @@ function leggTilTurkart() {
 var TUR_ADKOMST = ['tur-p', 'tur-p-txt', 'tur-bom', 'tur-gapahuk', 'nve-lodd', 'tu-land', 'tu-skog', 'tu-is', 'tu-vann', 'tu-vei', 'tu-grense', 'tu-sted'];
 function applyKartlag() {
   var tur = KARTLAG === 'tur';
-  document.body.classList.toggle('kart-tur', tur);   // mørk bakgrunn bak logoen på det lyse turkartet
+  document.body.classList.toggle('kart-tur', tur);   // lyst grensesnitt over kartet og kontur rundt merket
+  if (window.hwSettTema) window.hwSettTema(tur);       // hele appen (bunnbar, paneler, undersider) følger kartvalget
   document.getElementById('lagBtn').classList.toggle('on', tur);
   document.querySelectorAll('#lagValg button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-lag') === KARTLAG); });
   if (!map.getLayer('kv-topo')) return;
@@ -1112,12 +1133,92 @@ geo.on('geolocate', function () { document.getElementById('gpsBtn').classList.re
 geo.on('error', function () { var b = document.getElementById('gpsBtn'); b.classList.remove('on', 'venter'); b.title = tx('Posisjon ikke tilgjengelig', 'Location unavailable'); });
 document.getElementById('gpsBtn').addEventListener('click', function () {
   var b = this;
-  if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function') {
-    DeviceOrientationEvent.requestPermission().catch(function () {});
-  }
+  startKompass();   // må skje i selve trykket (iPhone spør om lov til kompasset)
   if (!b.classList.contains('on')) b.classList.add('venter');
   userMoved = true;
   if (!geo.trigger()) b.classList.remove('venter');
+});
+
+// ═══ RETNING OG KOMPASS (2026-10-15, Stian: «en must om folk går til vannene sine») ═══
+// Retningen kommer fra telefonens kompass: iPhone gir webkitCompassHeading (grader fra nord, med klokka)
+// etter tillatelse; Android/Chrome gir deviceorientationabsolute (alpha mot klokka, så 360 − alpha).
+// Skjermens dreiing (liggende telefon) legges til. Verdien glattes sirkulært så kjeglen ikke skjelver.
+// Uten kompass (PC) brukes GPS-kursen mens man beveger seg. Egen markør (MapLibres prikk er skjult).
+var kursRaa = null, kurs = null, kursTid = 0, kompassStartet = false, folgRetning = false, megMarkor = null, megPos = null, kursRaf = 0;
+function skjermVinkel() { return (screen.orientation && typeof screen.orientation.angle === 'number') ? screen.orientation.angle : (window.orientation || 0); }
+function nyKurs(h) {
+  if (h == null || !isFinite(h)) return;
+  kursRaa = (h + skjermVinkel() + 360) % 360; kursTid = Date.now();
+  if (!kursRaf) kursRaf = requestAnimationFrame(oppdaterKurs);
+}
+function oppdaterKurs() {
+  kursRaf = 0;
+  if (kursRaa == null) return;
+  if (kurs == null) kurs = kursRaa;
+  else { var d = ((kursRaa - kurs + 540) % 360) - 180; kurs = (kurs + d * 0.3 + 360) % 360; }
+  tegnMeg();
+  if (folgRetning && Math.abs(((kurs - map.getBearing() + 540) % 360) - 180) > 1.5) map.jumpTo({ bearing: kurs });
+}
+function startKompass() {
+  if (kompassStartet) return;
+  var lytt = function () {
+    kompassStartet = true;
+    if ('ondeviceorientationabsolute' in window) window.addEventListener('deviceorientationabsolute', function (e) { if (e.alpha != null) nyKurs(360 - e.alpha); });
+    window.addEventListener('deviceorientation', function (e) {
+      if (typeof e.webkitCompassHeading === 'number') nyKurs(e.webkitCompassHeading);
+      else if (e.absolute && e.alpha != null && !('ondeviceorientationabsolute' in window)) nyKurs(360 - e.alpha);
+    });
+  };
+  if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function') {
+    // Lytt uansett svar: uten tillatelse kommer det bare ingen data, og noen nettlesere har API-et uten å trenge det
+    DeviceOrientationEvent.requestPermission().then(lytt, lytt);
+  } else if (window.DeviceOrientationEvent) lytt();
+}
+function lagMeg() {
+  var el = document.createElement('div');
+  el.className = 'meg';
+  el.innerHTML = '<svg viewBox="0 0 72 72"><defs><radialGradient id="megKjegle" cx="36" cy="36" r="34" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#1f6fe0" stop-opacity=".9"/><stop offset=".55" stop-color="#1f6fe0" stop-opacity=".55"/><stop offset="1" stop-color="#1f6fe0" stop-opacity=".08"/></radialGradient></defs>' +
+    '<path class="kjegle" d="M36 36 L17 4 A36 36 0 0 1 55 4 Z" fill="url(#megKjegle)"/>' +
+    '<circle cx="36" cy="36" r="9" fill="#2f80ed" stroke="#ffffff" stroke-width="3"/></svg>';
+  return new maplibregl.Marker({ element: el, rotationAlignment: 'map', pitchAlignment: 'map' });
+}
+function tegnMeg() {
+  if (!megPos) return;
+  if (!megMarkor) megMarkor = lagMeg();
+  megMarkor.setLngLat(megPos);
+  if (!megMarkor._map) megMarkor.addTo(map);
+  var harKurs = kurs != null && Date.now() - kursTid < 5000;
+  megMarkor.getElement().classList.toggle('retning', harKurs);
+  if (harKurs) megMarkor.setRotation(kurs);
+}
+function fjernMeg() { if (megMarkor) megMarkor.remove(); megPos = null; }
+geo.on('geolocate', function (e) {
+  megPos = [e.coords.longitude, e.coords.latitude];
+  // Uten kompass (f.eks. PC/nettbrett uten magnetometer): GPS-kursen mens man går
+  if ((!kompassStartet || Date.now() - kursTid > 5000) && e.coords.heading != null && isFinite(e.coords.heading) && (e.coords.speed || 0) > 0.5) { kursRaa = e.coords.heading; kursTid = Date.now(); oppdaterKurs(); }
+  tegnMeg();
+});
+geo.on('trackuserlocationend', function () { if (geo._watchState === 'OFF') fjernMeg(); });
+geo.on('error', fjernMeg);
+// Kompassknappen: nålen viser hvor nord er på kartet. Trykk = kartet snur seg etter retningen telefonen peker;
+// trykk igjen = nord opp. Gir kompasset ingenting på fire sekunder (f.eks. PC), sier knappen fra og går
+// tilbake til nord opp. GPS-sporingen i MapLibre beholder kartets retning når den flytter kartet etter deg.
+function tegnKompass() { document.getElementById('kompassNaal').style.transform = 'rotate(' + (-map.getBearing()) + 'deg)'; }
+map.on('rotate', tegnKompass);
+document.getElementById('kompass').addEventListener('click', function () {
+  var k = this;
+  startKompass();
+  folgRetning = !folgRetning;
+  k.classList.toggle('folg', folgRetning);
+  if (!folgRetning) { map.easeTo({ bearing: 0, duration: 400 }); return; }
+  if (kurs != null) map.easeTo({ bearing: kurs, duration: 400 });
+  setTimeout(function () {
+    if (folgRetning && (kurs == null || Date.now() - kursTid > 4000)) {
+      folgRetning = false; k.classList.remove('folg'); k.classList.add('ingen');
+      k.title = tx('Fant ikke kompass på denne enheten', 'No compass found on this device');
+      map.easeTo({ bearing: 0, duration: 400 });
+    }
+  }, 4000);
 });
 document.getElementById('maalBtn').addEventListener('click', function (e) { e.stopPropagation(); maalStart(); });
 document.getElementById('maalFerdig').addEventListener('click', maalLukk);

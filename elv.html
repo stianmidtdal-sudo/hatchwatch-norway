@@ -70,6 +70,7 @@
   .maplibregl-ctrl-attrib a { color: var(--hw-fg-2) !important; }
   .maplibregl-ctrl-attrib-button { filter: invert(.8); }
   #mini { height: 240px; border-radius: 14px; overflow: hidden; margin-top: 12px; background: #13242b; }
+  :root[data-theme="light"] #mini { background: #e0fefe; }   /* lyst tema: minikartet bruker Kartverkets turkart */
   .row2 { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
   .skel { color: var(--hw-fg-3); font-size: 13.5px; margin-top: 10px; }
   .miss { text-align: center; padding: 60px 16px; color: var(--hw-fg-2); }
@@ -336,13 +337,23 @@ function water(e, season) {
 function miniMap(e) {
   if (!window.maplibregl || e.lat == null) { var m = document.getElementById('mini'); if (m) m.style.display = 'none'; return; }
   var protocol = new pmtiles.Protocol(); maplibregl.addProtocol('pmtiles', protocol.tile);
+  // Lyst tema (Turkart valgt, 2026-10-15): Kartverkets topo som bakgrunn, bare elva vår oppå
+  var lys = document.documentElement.getAttribute('data-theme') === 'light';
+  var kilder = { omt: { type: 'vector', url: 'https://tiles.openfreemap.org/planet' }, hw: { type: 'vector', url: 'pmtiles://' + location.origin + '/data/kart/hatchwatch.pmtiles' } };
+  if (lys) kilder.kv = { type: 'raster', tileSize: 256, tiles: ['https://cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator/{z}/{y}/{x}.png'] };
   var map = new maplibregl.Map({
     container: 'mini', interactive: false, attributionControl: false,
     preserveDrawingBuffer: /^(localhost|127\.0\.0\.1)$/.test(location.hostname),
     style: {
       version: 8, glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
-      sources: { omt: { type: 'vector', url: 'https://tiles.openfreemap.org/planet' }, hw: { type: 'vector', url: 'pmtiles://' + location.origin + '/data/kart/hatchwatch.pmtiles' } },
-      layers: [
+      sources: kilder,
+      layers: lys ? [
+        { id: 'bg', type: 'background', paint: { 'background-color': '#e0fefe' } },
+        { id: 'kv', type: 'raster', source: 'kv' },
+        { id: 'laks', type: 'line', source: 'hw', 'source-layer': 'laks', layout: { 'line-cap': 'round' }, paint: { 'line-color': '#5f7478', 'line-width': 2 } },
+        { id: 'denne-kant', type: 'line', source: 'hw', 'source-layer': 'laks', filter: ['==', ['get', 'vassdrag'], e.id], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#0b1418', 'line-width': 6 } },
+        { id: 'denne', type: 'line', source: 'hw', 'source-layer': 'laks', filter: ['==', ['get', 'vassdrag'], e.id], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#f2b84b', 'line-width': 4 } }
+      ] : [
         { id: 'bg', type: 'background', paint: { 'background-color': '#13242b' } },
         { id: 'wood', type: 'fill', source: 'omt', 'source-layer': 'landcover', filter: ['==', ['get', 'class'], 'wood'], paint: { 'fill-color': '#152a2f' } },
         { id: 'water', type: 'fill', source: 'omt', 'source-layer': 'water', paint: { 'fill-color': '#081217' } },
@@ -356,7 +367,7 @@ function miniMap(e) {
     bounds: [[Math.min(e.lon, e.lon2 || e.lon) - 0.05, Math.min(e.lat, e.lat2 || e.lat) - 0.03], [Math.max(e.lon, e.lon2 || e.lon) + 0.05, Math.max(e.lat, e.lat2 || e.lat) + 0.03]],
     fitBoundsOptions: { padding: 24, maxZoom: 12 }
   });
-  map.addControl(new maplibregl.AttributionControl({ compact: true, customAttribution: 'Miljødirektoratet · NVE' }));
+  map.addControl(new maplibregl.AttributionControl({ compact: true, customAttribution: 'Miljødirektoratet · NVE' + (lys ? ' · Kartverket' : '') }));
   var fold = function () { var a = document.querySelector('#mini .maplibregl-ctrl-attrib'); if (a) a.classList.remove('maplibregl-compact-show'); };
   map.once('load', fold); setTimeout(fold, 1500);
 }

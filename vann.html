@@ -80,6 +80,7 @@
   .maplibregl-ctrl-attrib a { color: var(--hw-fg-2) !important; }
   .maplibregl-ctrl-attrib-button { filter: invert(.8); }
   #mini { height: 240px; border-radius: 14px; overflow: hidden; margin-top: 12px; background: #13242b; }
+  :root[data-theme="light"] #mini { background: #e0fefe; }   /* lyst tema: minikartet bruker Kartverkets turkart */
   .row2 { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
   .skel { color: var(--hw-fg-3); font-size: 13.5px; margin-top: 10px; }
   .miss { text-align: center; padding: 60px 16px; color: var(--hw-fg-2); }
@@ -620,14 +621,24 @@ function arterHtml(list) {
 function miniMap(v) {
   if (!window.maplibregl || v.lat == null) { var m = document.getElementById('mini'); if (m) m.style.display = 'none'; return; }
   var protocol = new pmtiles.Protocol(); maplibregl.addProtocol('pmtiles', protocol.tile);
+  // Lyst tema (Turkart valgt, 2026-10-15): Kartverkets topo som bakgrunn, vannet markert med gull kant
+  var lys = document.documentElement.getAttribute('data-theme') === 'light';
+  var kilder = { omt: { type: 'vector', url: 'https://tiles.openfreemap.org/planet' }, hw: { type: 'vector', url: 'pmtiles://' + location.origin + '/data/kart/hatchwatch.pmtiles' } };
+  if (lys) kilder.kv = { type: 'raster', tileSize: 256, tiles: ['https://cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator/{z}/{y}/{x}.png'] };
   var map = new maplibregl.Map({
     container: 'mini', interactive: false, attributionControl: false,
     preserveDrawingBuffer: /^(localhost|127\.0\.0\.1)$/.test(location.hostname),
     center: [v.lon, v.lat], zoom: v.ha > 2000 ? 9.5 : v.ha > 300 ? 11 : v.ha > 60 ? 12.3 : 13.3,
     style: {
       version: 8, glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
-      sources: { omt: { type: 'vector', url: 'https://tiles.openfreemap.org/planet' }, hw: { type: 'vector', url: 'pmtiles://' + location.origin + '/data/kart/hatchwatch.pmtiles' } },
-      layers: [
+      sources: kilder,
+      layers: lys ? [
+        { id: 'bg', type: 'background', paint: { 'background-color': '#e0fefe' } },
+        { id: 'kv', type: 'raster', source: 'kv' },
+        { id: 'dette-kant2', type: 'line', source: 'hw', 'source-layer': 'vann', filter: ['==', ['get', 'vatnlnr'], ID], paint: { 'line-color': '#0b1418', 'line-width': 4 } },
+        { id: 'dette-kant', type: 'line', source: 'hw', 'source-layer': 'vann', filter: ['==', ['get', 'vatnlnr'], ID], paint: { 'line-color': '#f2b84b', 'line-width': 2.5 } },
+        { id: 'navn', type: 'symbol', source: 'hw', 'source-layer': 'vann', filter: ['==', ['get', 'vatnlnr'], -1], layout: { 'text-field': '' } }   // holder plass til dybdelaget (legges før «navn»)
+      ] : [
         { id: 'bg', type: 'background', paint: { 'background-color': '#13242b' } },
         { id: 'wood', type: 'fill', source: 'omt', 'source-layer': 'landcover', filter: ['==', ['get', 'class'], 'wood'], paint: { 'fill-color': '#152a2f' } },
         { id: 'water', type: 'fill', source: 'omt', 'source-layer': 'water', paint: { 'fill-color': '#081217' } },
@@ -639,7 +650,7 @@ function miniMap(v) {
       ]
     }
   });
-  map.addControl(new maplibregl.AttributionControl({ compact: true, customAttribution: 'NVE' }));
+  map.addControl(new maplibregl.AttributionControl({ compact: true, customAttribution: 'NVE' + (lys ? ' · Kartverket' : '') }));
   // Dybdekoter fra NVE oppå vannet når de finnes digitalt (2026-10-14)
   dybdeP.then(function (d) {
     if (!d || d[5] !== 1) return;

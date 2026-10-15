@@ -30,4 +30,20 @@
     try { localStorage.setItem('lang', lang === 'no' ? 'en' : 'no'); } catch (e) {}
     location.reload();
   };
+
+  // Lyst tema (2026-10-15, Stian): velger man Turkart på kartet, får hele appen det lyse fargevalget
+  // (token-settet :root[data-theme="light"] i hw.css). Settes her fordi fila lastes synkront i <head>
+  // på alle sider, så siden tegnes lys med en gang uten å blinke mørkt først. Kartet bytter med hwSettTema().
+  window.hwSettTema = function (lys) {
+    var html = document.documentElement;
+    if (lys) html.setAttribute('data-theme', 'light'); else html.removeAttribute('data-theme');
+    var m = document.querySelector('meta[name="theme-color"]');
+    if (m) m.setAttribute('content', lys ? '#f2f6f5' : '#0b1418');
+  };
+  var lys = false;
+  try { lys = localStorage.getItem('hw_kartlag') === 'tur'; } catch (e) {}
+  if (lys) {
+    window.hwSettTema(true);
+    document.addEventListener('DOMContentLoaded', function () { window.hwSettTema(true); });   // theme-color står ofte etter dette skriptet
+  }
 })();
