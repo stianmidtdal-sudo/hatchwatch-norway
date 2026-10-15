@@ -139,6 +139,27 @@
      og flua (ingen myk skygge: Stian ville ha ren 2D). Filteret ligger på hele merket fordi flua er en maskert flate
      (filter rett på den blir maskert bort). Hver drop-shadow bygger på den forrige, så fire retninger gir full kant. */
   body.kart-tur .brandrow { filter: drop-shadow(1.2px 0 0 #0b1418) drop-shadow(-1.2px 0 0 #0b1418) drop-shadow(0 1.2px 0 #0b1418) drop-shadow(0 -1.2px 0 #0b1418); }
+  /* Lyst grensesnitt på Turkart (2026-10-15, Stian: «rent og cleant, hvitt»). Alt som flyter over kartet får det
+     lyse token-settet fra hw.css (samme verdier som :root[data-theme="light"]), så farger og kanter følger systemet.
+     Bunnbaren og helskjermpanelene (Nå i Norge, Lakseelver) beholder appens mørke ramme. */
+  body.kart-tur :is(.maptop, .legend, .maal, .lagvalg, .zoomctl, .scrub, .scrubmini, .sheet, .maplibregl-ctrl-bottom-left, .maplibregl-ctrl-bottom-right) {
+    --hw-bg: #f2f6f5; --hw-bg-2: #ffffff; --hw-bg-3: #e6eeec; --hw-bg-4: #d9e4e1; --hw-line: #d3dedb;
+    --hw-fg: #11201f; --hw-fg-2: #56696a; --hw-fg-3: #8a9c9c;
+    --hw-water: #1a8cc0; --hw-water-soft: rgba(26, 140, 192, .14); --hw-hatch: #c98a12; --hw-hatch-soft: rgba(201, 138, 18, .16); --hw-hatch-ink: #ffffff;
+    --hw-far: #b8c6c4; --hw-coming: #7fb9d3; --hw-shadow: 0 18px 40px rgba(20, 40, 40, .18);
+    color: var(--hw-fg);   /* tekst uten egen farge arver ellers den lyse fargen fra body */
+  }
+  /* Merket ligger i .maptop, men skal beholde hvit «Hatch» og lys gull med mørk kontur */
+  body.kart-tur .brandrow { --hw-fg: #e9f1ef; --hw-hatch: #f2b84b; }
+  /* Hvite flater på lyst kart trenger en svak skygge for å skille seg fra bunnen */
+  body.kart-tur :is(.search-in, .modeseg, .zoomctl button, .scrub, .scrubmini, .maal, .legend .hw-chip) { box-shadow: 0 1px 2px rgba(20, 40, 40, .10), 0 3px 10px rgba(20, 40, 40, .08); }
+  body.kart-tur .modeseg { background: color-mix(in srgb, #ffffff 94%, transparent); border: 1px solid var(--hw-line); }
+  body.kart-tur .modeseg button.on { background: #11201f; color: #ffffff; box-shadow: none; }
+  body.kart-tur .legend .hw-chip { background: color-mix(in srgb, #ffffff 94%, transparent); }
+  body.kart-tur .legend .hw-chip i.ice { background: #9fb8c2; }
+  body.kart-tur .years button.on { color: #ffffff; }
+  body.kart-tur .sheet { box-shadow: 0 -8px 28px rgba(20, 40, 40, .16); }
+  body.kart-tur .maplibregl-ctrl-attrib-button { filter: none; opacity: .55; }
   .lagvalg button { width: 84px; text-align: center; font-size: 12.5px; color: var(--hw-fg-2); }
   .lagvalg button i { display: block; height: 56px; border-radius: 10px; margin-bottom: 5px; border: 2px solid transparent; }
   .lagvalg button.on { color: var(--hw-fg); font-weight: 600; }
