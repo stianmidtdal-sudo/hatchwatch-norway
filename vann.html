@@ -227,7 +227,8 @@ function render(v) {
 
   // ── Kart ──
   h += '<div class="card"><h2>' + tx('Kart', 'Map') + '</h2><div id="mini"></div><div class="row2"><a class="hw-btn primary" href="/?vann=' + ID + '">' + tx('Vis i kartet', 'Show on the map') + '</a></div></div>';
-  h += '<p class="note">' + tx('Vann: NVE Innsjødatabase. Isgang: Sentinel-2 via Google Earth Engine, HatchWatch. Arter: Artsdatabanken via GBIF.', 'Lake: NVE lake database. Ice-out: Sentinel-2 via Google Earth Engine, HatchWatch. Species: Artsdatabanken via GBIF.') + '</p>';
+  h += '<p class="note">' + tx('Vann og dybde: NVE. Isgang: Sentinel-2 via Google Earth Engine, HatchWatch. Vær: Open-Meteo. Snø: seNorge (NVE og MET). Arter og fisk: Artsdatabanken og NINA via GBIF. Berggrunn: NGU. Utsetting: Oslomarkas Fiskeadministrasjon. Kart: Kartverket, OpenStreetMap. <a href="/om.html#kilder">Alle kilder</a>',
+    'Lake and depth: NVE. Ice-out: Sentinel-2 via Google Earth Engine, HatchWatch. Weather: Open-Meteo. Snow: seNorge (NVE and MET). Species and fish: Artsdatabanken and NINA via GBIF. Bedrock: NGU. Stocking: Oslomarkas Fiskeadministrasjon. Map: Norwegian Mapping Authority, OpenStreetMap. <a href="/om.html#kilder">All sources</a>') + '</p>';
   main.innerHTML = h;
   miniMap(v);
   favOppsett(navn);
