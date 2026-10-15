@@ -39,6 +39,15 @@
   .wrap { max-width: 720px; margin: 0 auto; padding: 18px 16px 40px; }
   h1 { font-family: var(--hw-display); font-weight: 800; font-size: 34px; letter-spacing: -.03em; line-height: 1.05; margin-top: 6px; }
   .sub { color: var(--hw-fg-2); font-size: 14px; margin-top: 6px; }
+  .ofa-aar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+  .ofa-aar div { background: var(--hw-bg-3); border-radius: 8px; padding: 6px 4px; text-align: center; }
+  .ofa-aar span { display: block; font-family: var(--hw-mono); font-size: 10px; color: var(--hw-fg-3); }
+  .ofa-aar b { font-family: var(--hw-mono); font-size: 13px; color: var(--hw-fg); }
+  .grp.ofa { margin: 0 0 14px; padding-bottom: 12px; border-bottom: 1px solid var(--hw-line); }
+  .berggrunn { color: var(--hw-fg-2); font-size: 13.5px; margin-top: 4px; line-height: 1.45; }
+  .berggrunn b { color: var(--hw-fg); font-weight: 600; }
+  .berggrunn .kalkprikk { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 7px; vertical-align: -1px; border: 1px solid rgba(0, 0, 0, .15); }
+  .berggrunn .kilde { display: block; font-family: var(--hw-mono); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--hw-fg-3); margin-top: 1px; }
   .card { background: var(--hw-bg-2); border: 1px solid var(--hw-line); border-radius: 18px; padding: 16px; margin-top: 14px; }
   .card h2 { font-family: var(--hw-display); font-weight: 700; font-size: 18px; letter-spacing: -.01em; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .card .lead { font-size: 14.5px; color: var(--hw-fg-2); line-height: 1.55; margin-top: 6px; }
@@ -157,6 +166,7 @@ function render(v) {
   h += '<div class="hw-eyebrow gold">' + tx('Vann', 'Lake') + (v.kommune ? ' · ' + esc(v.kommune) : '') + '</div>';
   h += '<h1>' + esc(navn) + '</h1>';
   h += '<div class="sub">' + [v.moh != null ? v.moh + ' ' + MOH : '', num(v.ha, v.ha < 100 ? 1 : 0) + ' ha'].filter(Boolean).join(' · ') + '</div>';
+  h += '<div class="berggrunn" id="berggrunn"></div>';   // fylles fra NGU (hentBerggrunn)
 
   // ── Isgang, hovedtall ──
   if (ly) {
@@ -186,7 +196,7 @@ function render(v) {
   }
 
   // ── Arter ──
-  h += '<div class="card"><h2>' + tx('Registrerte arter', 'Recorded species') + '</h2>' + arterHtml(v.arter) + '</div>';
+  h += '<div class="card"><h2>' + tx('Registrerte arter', 'Recorded species') + '</h2><div id="ofa"></div>' + arterHtml(v.arter) + '</div>';
 
   // Rekkefølge (2026-10-15, Stian): klekking → isgang år for år → arter → snø → varsler → dybde → kart
   // ── Snø ved vannet (2026-10-14): seNorge via /api/nve?gts=sd ──
@@ -221,6 +231,49 @@ function render(v) {
   hentVaer(v).then(function (w) { klekking(v, w); }).catch(function () { klekking(v, null); });
   hentSno(v);
   visDybde();
+  hentBerggrunn(v);
+  visOfa();
+}
+
+// ═══ OFA-UTSETTINGER (2026-10-15, Stian) ═══
+// data/kart/ofa.json (bygg_kart.py ofa): fisk satt ut av Oslomarkas Fiskeadministrasjon 2021–2025 per vann,
+// koblet på navn innenfor markaområdet (66 vann). OFA oppgir ikke art, så vi skriver «fisk».
+function visOfa() {
+  fetch('/data/kart/ofa.json').then(function (r) { return r.ok ? r.json() : {}; }).then(function (j) {
+    var o = j[String(ID)], el = document.getElementById('ofa'); if (!o || !el) return;
+    var aar = Object.keys(o.s).sort(), periode = aar[0] + '–' + aar[aar.length - 1];
+    var sum = aar.reduce(function (a, y) { return a + (o.s[y] || 0); }, 0);
+    el.innerHTML = '<div class="grp ofa"><div class="hw-eyebrow gold">' + tx('Fisk satt ut · OFA', 'Fish stocked · OFA') + '</div>' +
+      (sum ? '<p class="lead" style="margin:4px 0 8px">' + tx('Oslomarkas Fiskeadministrasjon satte ut <b>' + num(sum, 0) + '</b> fisk her i ' + periode + '.',
+        'Oslomarkas Fiskeadministrasjon stocked <b>' + num(sum, 0) + '</b> fish here in ' + periode + '.') + '</p>' +
+      '<div class="ofa-aar">' + aar.map(function (y) { return '<div><span>' + y + '</span><b>' + (o.s[y] ? num(o.s[y], 0) : '–') + '</b></div>'; }).join('') + '</div>'
+      : '<p class="lead" style="margin:4px 0 8px">' + tx('Vannet står på OFAs utsettingsliste, men det er ikke satt ut fisk her i ' + periode + '.', 'The lake is on OFA\'s stocking list, but no fish were stocked here in ' + periode + '.') + '</p>') +
+      '<p class="note">' + tx('OFA oppgir ikke art. Tall fra OFAs utsettingsliste (' + esc(o.o) + '). ', 'OFA does not give the species. Numbers from OFA\'s stocking list (' + esc(o.o) + '). ') +
+      '<a href="/ofa-settefisk.html">' + tx('Mer om OFAs utsettinger', 'More on OFA stocking') + '</a></p></div>';
+  }).catch(function () {});
+}
+
+// ═══ BERGGRUNN (2026-10-15, Stian) ═══
+// NGU BerggrunnOkologiWMS, GetFeatureInfo på laget Kalkinnhold_N250 i vannets punkt. Gir NGUs kalkklasse
+// (1 svært kalkfattig … 5 svært kalkrik) og bergartene. Kartet er i 1:250 000, så det er grovt.
+var KALK_FARGE = { 1: '#ffe6c8', 2: '#fad2be', 3: '#c2d69a', 4: '#64c8ff', 5: '#0064e6' };
+var KALK_EN = { 1: 'Very lime-poor', 2: 'Lime-poor', 3: 'Intermediate', 4: 'Lime-rich', 5: 'Very lime-rich' };
+function hentBerggrunn(v) {
+  var el = document.getElementById('berggrunn'); if (!el || v.lat == null) return;
+  var x = v.lon * 20037508.34 / 180, y = Math.log(Math.tan((90 + v.lat) * Math.PI / 360)) * 6378137, r = 50;
+  var u = 'https://geo.ngu.no/mapserver/BerggrunnOkologiWMS?service=WMS&version=1.3.0&request=GetFeatureInfo&layers=Kalkinnhold_N250&query_layers=Kalkinnhold_N250&styles=&crs=EPSG:3857' +
+    '&bbox=' + [x - r, y - r, x + r, y + r].join(',') + '&width=101&height=101&i=50&j=50&info_format=application%2Fvnd.ogc.gml&feature_count=1';
+  fetch(u).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
+    var d = new DOMParser().parseFromString(t, 'text/xml');
+    var f = function (n) { var e = d.getElementsByTagName(n)[0]; return e ? e.textContent.trim() : ''; };
+    var kl = parseInt(f('kalkinnhold_hovedbergart'), 10), tekst = f('kalkinnhold_tekst');
+    if (!kl || !tekst) return;
+    var bergarter = [f('hovedbergart_tekst'), f('tilleggsbergart1_tekst'), f('tilleggsbergart2_tekst'), f('tilleggsbergart3_tekst')].filter(Boolean);
+    var navn = EN ? KALK_EN[kl] || tekst : tekst;
+    el.innerHTML = '<span class="kalkprikk" style="background:' + (KALK_FARGE[kl] || '#ccc') + '"></span>' + tx('Berggrunn: ', 'Bedrock: ') + '<b>' + esc(navn) + '</b>' +
+      (bergarter.length && !EN ? ' · ' + esc(bergarter.map(function (b, i) { return i ? b.toLowerCase() : b; }).join(', ')) : '') +
+      '<span class="kilde">' + tx('NGU, grovt kart (1:250 000)', 'NGU, coarse map (1:250,000)') + '</span>';
+  }).catch(function () {});
 }
 
 // ═══ DYBDE (2026-10-14) ═══

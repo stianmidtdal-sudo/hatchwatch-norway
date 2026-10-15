@@ -463,8 +463,83 @@ def bygg_dybde():
     print(f"dybde: {len(ut)} vann med dybdekart, {os.path.getsize(os.path.join(OUT, 'dybde.json')) // 1024} kB")
 
 
+# ── OFA-utsettinger (2026-10-15, Stian) ──────────────────────────────────
+# Kilde: DATA i ofa-settefisk.html (Oslomarkas Fiskeadministrasjon, fisk satt ut 2021–2025; art oppgis ikke).
+# OFA har navn + område, ikke NVE-nummer. Kobling: navnevarianter (Store Åklungen ↔ Åklungen Store,
+# -vann/-vannet osv.) mot våre vann i Oslomarka-boksen. Navn som finnes flere steder avgjøres av avstand til
+# områdets sentrum (median av entydige treff). Alle treff må ligge innen 12 km fra områdesentrum, og peker
+# flere OFA-rader mot samme vann, beholdes bare eksakt navnetreff. Feil kobling er verre enn ingen.
+# ofa.json = {vatnlnr: {"n": OFA-navn, "o": område, "s": {"2021": satt, ...}, "t": total}}
+def bygg_ofa():
+    import re, statistics
+    html = open(os.path.join(ROOT, "ofa-settefisk.html"), encoding="utf-8").read()
+    rec = json.loads(re.search(r"const DATA = (\{.*?\});\s*$", html, re.M).group(1))["records"]
+    vann = {}
+    for i in range(VANN_GRUPPER):
+        for k, v in json.load(open(os.path.join(OUT, "vann", f"{i}.json"), encoding="utf-8")).items():
+            if 59.55 < v["lat"] < 60.45 and 9.9 < v["lon"] < 11.45:
+                vann[int(k)] = v
+    kval = {"store", "lille", "søndre", "nordre", "vestre", "østre", "øvre", "nedre", "midtre", "indre", "ytre"}
+
+    def grunn(s):
+        s = re.sub(r"\(.*?\)", "", s.lower().replace("*", ""))
+        s = re.sub(r"\b(v\.|ved)\b.*$", "", s)
+        return re.sub(r"\s+", " ", s).strip()
+
+    def varianter(s):
+        s = grunn(s); ut = {s}; o = s.split(" ")
+        if len(o) == 2 and (o[0] in kval or o[1] in kval):
+            ut.add(o[1] + " " + o[0])
+        for x in list(ut):
+            for a, b in (("vannet", "vann"), ("vann", "vannet"), ("tjernet", "tjern"), ("tjern", "tjernet"), ("sjøen", "sjø")):
+                if x.endswith(a):
+                    ut.add(x[: -len(a)] + b)
+        return ut
+
+    per = collections.defaultdict(set)
+    for k, v in vann.items():
+        for n in varianter(v.get("navn") or ""):
+            per[n].add(k)
+    kand = lambda r: sorted(set().union(*[per.get(n, set()) for n in varianter(r["vann"])]))
+    pos = collections.defaultdict(list)
+    for r in rec:
+        c = kand(r)
+        if len(c) == 1:
+            pos[r["omrade"]].append((vann[c[0]]["lat"], vann[c[0]]["lon"]))
+    senter = {o: (statistics.median(p[0] for p in ps), statistics.median(p[1] for p in ps)) for o, ps in pos.items() if len(ps) >= 2}
+    km = lambda a, b: math.hypot((a[0] - b[0]) * 111.2, (a[1] - b[1]) * 111.2 * math.cos(math.radians(a[0])))
+    koblet = collections.defaultdict(list)
+    for r in rec:
+        c, sc = kand(r), senter.get(r["omrade"])
+        if not c or not sc:
+            continue
+        c = sorted(c, key=lambda k: km((vann[k]["lat"], vann[k]["lon"]), sc))
+        if len(c) > 1 and km((vann[c[1]]["lat"], vann[c[1]]["lon"]), sc) < 1.8 * km((vann[c[0]]["lat"], vann[c[0]]["lon"]), sc):
+            continue   # ikke tydelig hvilket vann
+        if km((vann[c[0]]["lat"], vann[c[0]]["lon"]), sc) > 12:
+            continue
+        koblet[c[0]].append(r)
+    ut = {}
+    for k, rs in koblet.items():
+        if len(rs) > 1:
+            eksakt = [r for r in rs if grunn(r["vann"]) == grunn(vann[k]["navn"] or "")]
+            if len(eksakt) != 1:
+                continue
+            rs = eksakt
+        r = rs[0]
+        ut[str(k)] = {"n": r["vann"].replace("*", "").strip(), "o": r["omrade"], "t": r.get("total") or 0,
+                      "s": {str(y): r.get(f"satt_{y}") or 0 for y in range(2021, 2026)}}
+    with open(os.path.join(OUT, "ofa.json"), "w", encoding="utf-8") as fh:
+        json.dump(ut, fh, ensure_ascii=False, separators=(",", ":"))
+    print(f"ofa: {len(ut)} vann koblet av {len(rec)} OFA-rader (resten er små vann under 10 ha, elver eller usikre navn)")
+    for k, x in sorted(ut.items(), key=lambda kv: kv[1]["o"]):
+        print(f"   {x['o']:22} {x['n']:28} -> {vann[int(k)]['navn']} ({k})")
+
+
 if __name__ == "__main__":
     hva = sys.argv[1] if len(sys.argv) > 1 else "alt"
+    if hva in ("alt", "ofa"):
+        bygg_ofa()
     if hva in ("alt", "dybde"):
         bygg_dybde()
     if hva in ("alt", "isgang"):
