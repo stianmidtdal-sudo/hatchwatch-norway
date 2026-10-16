@@ -17,8 +17,11 @@
 // temp = dagen droppes. Manglende cloud/precip = bruker 0 som default
 // (ingen straffeffekt — gir nøytral vurdering).
 
+import { forMange } from '../lib/fartsgrense.js';
+
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
+    if (forMange(req, res, 'spinnerfall_history', 60)) return;
     res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=600');
 
     const { station, days } = req.query;

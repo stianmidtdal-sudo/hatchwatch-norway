@@ -31,6 +31,7 @@
 import { redis, k, hashEndpoint } from '../lib/redis.js';
 import { sendPush, buildPayload } from '../lib/push.js';
 import { hentVann, regnVann, datoTekst, finnes, doyOf, spinnerfallSjanse, SPINNER_HOY } from '../lib/vannmodell.js';
+import { internNokkel } from '../lib/fartsgrense.js';
 
 // Maks antall subs vi prosesserer i én kjøring — beskytt mot timeout.
 const MAX_SUBS_PER_RUN = 200;
@@ -420,7 +421,7 @@ function osloDato() {
 // Kveldsvær (19–22) per dato fra /api/spinnerfall, eller null.
 async function hentKveld(lat, lon) {
     try {
-        const resp = await fetch(`${getBaseUrl()}/api/spinnerfall?lat=${lat}&lon=${lon}`);
+        const resp = await fetch(`${getBaseUrl()}/api/spinnerfall?lat=${lat}&lon=${lon}`, { headers: { 'x-hw-intern': internNokkel() } });   // forbi fartsgrensen
         return resp.ok ? await resp.json() : null;
     } catch (e) {
         return null;

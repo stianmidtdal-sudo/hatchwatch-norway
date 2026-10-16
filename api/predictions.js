@@ -26,6 +26,7 @@
 //
 // Cache (GET): 5 min på Vercel edge (prediksjoner endrer seg sjelden).
 
+import { forMange } from '../lib/fartsgrense.js';
 import { redis, k } from '../lib/redis.js';
 
 const LOCATIONS = [
@@ -37,6 +38,7 @@ const LOCATIONS = [
 
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
+    if (req.method !== 'OPTIONS' && forMange(req, res, 'predictions', 120)) return;
     if (req.method === 'OPTIONS') {
         res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
         res.setHeader('Access-Control-Allow-Headers', 'Content-Type');

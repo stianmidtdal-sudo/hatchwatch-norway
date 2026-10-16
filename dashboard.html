@@ -1528,7 +1528,7 @@
 
         <!-- ═══ ICE THICKNESS CHART (Kautokeino only) ═══ -->
         <section id="iceSection" style="display:none">
-            <h2 data-i18n="iceHeading">Estimated Ice Thickness · Stefan Equation · h = α × √FDD  (α = 0.6)</h2>
+            <h2 data-i18n="iceHeading">Estimated ice thickness</h2>
             <div class="chart-wrap" style="height:260px">
                 <canvas id="iceChart"></canvas>
             </div>
@@ -1683,7 +1683,7 @@ const T = {
     valNoDataStation: 'Ingen data (stasjon)',
     valNotYet: 'Ikke ennå',
     indicatorsFooter: 'Alle markører baseres på tilgjengelige år med data. For ukalibrerte lokasjoner er historiske gjennomsnitt utledet kun fra værdata.',
-    iceHeading: 'Estimert istykkelse · Stefan-ligningen · h = α × √FDD  (α = 0.6)',
+    iceHeading: 'Estimert istykkelse',
     iceShortNote: 'Historiske søyler = topp-istykkelse den vinteren. Nåværende søyle = løpende estimat basert på frost-døgngrader hittil.',
     iceLegendSeasonPeak: 'Sesong-topp',
     locArea: 'Område',
@@ -1745,9 +1745,9 @@ const T = {
     waterLapseRate: 'vann-temperaturgradient 0,35°C/100m',
     noHatchDataRow: 'Ingen systematiske klekkobservasjoner tilgjengelig for dette stedet. Værhistorikk (nedenfor) hentes live fra MET Norge. Kontakt oss for å bidra med kalibreringsdata.',
     gddHatchModel: 'Varmesum klekkemodell',
-    dualTriggerLabel: 'Dobbelttrigger-modell · Varmesum ≥',
-    gddPriorLabel: 'Varmesum forenklet modell · Terskel',
-    pctOfTarget: '% av',
+    dualTriggerLabel: 'Modell: varmesum og vanntemperatur',
+    gddPriorLabel: 'Modell: varmesum (forenklet)',
+    pctOfTarget: '% av målet',
     fiveYearAvg: '5-årig gjennomsnitt samme dato:',
     vsAvg: 'vs. snitt',
     latestOf: (gddT, wtT) => `siste av: Varmesum ≥ ${gddT} + vanntemp ≥ ${wtT}°C`,
@@ -1914,7 +1914,7 @@ const T = {
     valNoDataStation: 'No data (station)',
     valNotYet: 'Not yet',
     indicatorsFooter: 'All indicators based on available years of data. For uncalibrated locations, historical averages are derived from weather data only.',
-    iceHeading: 'Estimated Ice Thickness · Stefan Equation · h = α × √FDD  (α = 0.6)',
+    iceHeading: 'Estimated ice thickness',
     iceShortNote: 'Historical bars = peak ice thickness that winter. Current bar = live estimate based on frost degree-days so far.',
     iceLegendSeasonPeak: 'Season peak',
     locArea: 'Area',
@@ -1976,9 +1976,9 @@ const T = {
     waterLapseRate: 'water lapse 0.35°C/100m',
     noHatchDataRow: 'No systematic hatch observations available for this location. Weather history (below) is fetched live from MET Norway. Contact us to contribute calibration data.',
     gddHatchModel: 'GDD Hatch Model',
-    dualTriggerLabel: 'Dual Trigger Model · GDD ≥',
-    gddPriorLabel: 'GDD Prior Model · Threshold',
-    pctOfTarget: '% of',
+    dualTriggerLabel: 'Model: heat sum and water temperature',
+    gddPriorLabel: 'Model: heat sum (simplified)',
+    pctOfTarget: '% of target',
     fiveYearAvg: '5-year average same date:',
     vsAvg: 'vs avg',
     latestOf: (gddT, wtT) => `latest of: GDD ≥ ${gddT} + water temp ≥ ${wtT}°C`,
@@ -3066,6 +3066,14 @@ function getCurrentAltitude(loc) {
 // kompensasjon for at Sinnerdammen-stasjonen sannsynligvis er varmere enn
 // typiske skogsvann i Nordmarka — samme empiriske resonnement som GDD-bumpen
 // for Bjørnholt-luft-stasjonen).
+// Synlig kalibreringstekst uten modellens tall (2026-10-16, Stian: «si litt mindre om modellen»).
+// Beholder antall år (n=…) og «indikativ», dropper terskler og metode-notater.
+function kalibKort(loc, lang) {
+    const s = (lang === 'no' ? loc.calibShortNo : loc.calibShortEn) || '';
+    const n = (s.match(/n=\d+(\+\d+)?/) || [''])[0];
+    const ind = /indikativ|indicative/.test(s) ? (lang === 'no' ? 'indikativ' : 'indicative') : '';
+    return [n ? n.replace('n=', '') + (lang === 'no' ? ' observasjoner' : ' observations') : '', ind].filter(Boolean).join(' · ');
+}
 function getWtThreshold(loc) {
     return (loc && loc.wtThreshold != null) ? loc.wtThreshold : 12;
 }
@@ -3263,8 +3271,8 @@ if (snowNoteEl) snowNoteEl.textContent = `${t('stationLabel')}: ${snowNoteName} 
     const _initThr = getEffectiveGddThreshold(LOC);
     document.getElementById('modelHeading').textContent =
         LOC.calibrated
-            ? `${t('dualTriggerLabel')} ${_initThr} (bt = 0°C, ${t('fromJan1')}) + ${t('waterTemp')} ≥ ${getWtThreshold(LOC)}°C · ${t('stdShort')} = ±${fmtNum(LOC.uncertaintyDays)} ${t('daysLabel')}`
-            : `${t('gddPriorLabel')} ${_initThr} GDD (bt = 0°C) · ${t('priorUncLabel')} ±${fmtNum(LOC.uncertaintyDays)} ${t('daysLabel')}`;
+            ? `${t('dualTriggerLabel')} · ${t('stdShort')} = ±${fmtNum(LOC.uncertaintyDays)} ${t('daysLabel')}`
+            : `${t('gddPriorLabel')} · ${t('priorUncLabel')} ±${fmtNum(LOC.uncertaintyDays)} ${t('daysLabel')}`;
 }
 
 const _snowHdrStnId = LOC.snowStation || LOC.frostStation;
@@ -4444,7 +4452,7 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
     document.getElementById('adgNow').textContent  = fmtNum(currentADG);
     document.getElementById('adgLeft').textContent = fmtNum(remaining);
     document.getElementById('adgBar').style.width  = pct + '%';
-    document.getElementById('adgPct').textContent  = `${fmtNum(pct)}${t('pctOfTarget')} ${effThr} GDD`;
+    document.getElementById('adgPct').textContent  = `${fmtNum(pct)}${t('pctOfTarget')}`;
 
     const diff = currentADG - histADG;
     const sign = diff >= 0 ? '+' : '';
@@ -4465,8 +4473,8 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
     const uncDays = getDynamicUncertainty(uncDaysBaseline, currentADG, effThr);
     const uncSource = LOC.calibrated
         ? (LANG === 'no'
-            ? `typisk avvik, ${LOC.calibNoteNo || 'validert mot observerte klekkedatoer'}`
-            : `typical error, ${LOC.calibNoteEn || 'validated against observed hatch dates'}`)
+            ? `typisk avvik, validert mot observerte klekkedatoer`
+            : `typical error, validated against observed hatch dates`)
         : t('priorEstimateText');
     const unc = document.getElementById('uncertaintyBand');
     if (LOC.calibrated) {
@@ -4486,8 +4494,8 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
     // Kalibrerte: baseline ±2,1 d fra Excel-validering (n=8 år) — modulert dynamisk.
     // Ukalibrerte: baseline 14 d (prior) — modulert dynamisk.
     document.getElementById('modelHeading').textContent = LOC.calibrated
-        ? `${t('dualTriggerLabel')} ${effThr} (bt = 0°C, ${t('fromJan1')}) + ${t('waterTemp')} ≥ ${getWtThreshold(LOC)}°C · ${t('stdShort')} = ±${fmtNum(uncDays)} ${t('daysLabel')}`
-        : `${t('gddPriorLabel')} ${effThr} GDD (bt = 0°C) · ${t('indicativeLabel').toLowerCase()}`;
+        ? `${t('dualTriggerLabel')} · ${t('stdShort')} = ±${fmtNum(uncDays)} ${t('daysLabel')}`
+        : `${t('gddPriorLabel')} · ${t('indicativeLabel').toLowerCase()}`;
 
     // Dual-trigger: latest of GDD ≥ LOC.gddThreshold og vanntemp ≥ getWtThreshold(LOC).
     // Gjelder ALLE lokasjoner med vanntemp-data, ikke bare kalibrerte.
@@ -7662,7 +7670,7 @@ function renderSpeciesCalendar(isgangResult, vulgataDate, best) {
     for (let i = 0; i < 3; i++) starsHtml += `<svg class="${i < starsN ? '' : 'off'}"><use href="#star"/></svg>`;
     starsHtml += '</span>';
     const calTxt = LOC.calibrated
-        ? (no ? 'Kalibrert' : 'Calibrated') + (LOC.calibShortNo ? ' · ' + LOC.calibShortNo : '')
+        ? (no ? 'Kalibrert' : 'Calibrated') + (kalibKort(LOC, no ? 'no' : 'en') ? ' · ' + kalibKort(LOC, no ? 'no' : 'en') : '')
         : (no ? 'Ukalibrert · indikativ prognose' : 'Uncalibrated · indicative forecast');
 
     // Tidslinje-akse: 25. april – 10. august, utvidet hvis prognosen faller utenfor
@@ -8048,8 +8056,8 @@ async function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate,
     const uncDays = getDynamicUncertainty(uncDaysBaseline, _currObservedGDD, getEffectiveGddThreshold(LOC));
     const uncSource = LOC.calibrated
         ? (LANG === 'no'
-            ? `standardavvik, ${LOC.calibShortNo || 'kalibrert'}`
-            : `std. dev., ${LOC.calibShortEn || 'calibrated'}`)
+            ? `standardavvik, ${kalibKort(LOC, 'no') || 'kalibrert'}`
+            : `std. dev., ${kalibKort(LOC, 'en') || 'calibrated'}`)
         : t('priorLower');
 
     // Best-estimate-kandidater (samme logikk som før — feeder "Best estimate now")

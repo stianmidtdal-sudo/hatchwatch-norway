@@ -1,8 +1,11 @@
 // Vercel serverless function – proxies requests to NVE HydAPI
 // Keeps the NVE API key secret (stored as env var NVE_KEY)
 
+import { forMange } from '../lib/fartsgrense.js';
+
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
+    if (forMange(req, res, 'nve', 120)) return;
     // Cache at Vercel edge for 1 hour
     res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=600');
 

@@ -69,7 +69,7 @@
 
 <main>
     <h1 data-i18n="h1">Personvern</h1>
-    <p class="updated" data-i18n="updated">Sist oppdatert 1. oktober 2026</p>
+    <p class="updated" data-i18n="updated">Sist oppdatert 16. oktober 2026</p>
 
     <p class="lead" data-i18n="lead">HatchWatch har ingen brukerkontoer, ingen reklame og selger ingen data. Du kan bruke hele tjenesten uten å oppgi noe om deg selv. Denne siden forklarer det lille som likevel lagres, og hvordan du får det slettet. Den gjelder både nettsiden hatchwatch.no og HatchWatch-appen for iPhone.</p>
 
@@ -93,11 +93,13 @@
 
     <h2 data-i18n="posH">Posisjon</h2>
     <p data-i18n="posP">Knappen for å finne nærmeste vann spør om posisjonen din. Posisjonen brukes der og da, på din egen enhet, til å regne ut hvilket vann som ligger nærmest. Den sendes ikke til oss og lagres ikke.</p>
+    <p data-i18n="posP2">Når du trykker «Logg nå» i fangstdagboka, lagres posisjonen i dagboka på din egen enhet. For å fylle inn vær og berggrunn sendes bare koordinatene, uten noe som sier hvem du er, til Open-Meteo (vær) og NGU (berggrunn). Posisjonen sendes ikke til oss.</p>
 
     <h2 data-i18n="localH">Det som lagres på din egen enhet</h2>
     <p data-i18n="localP1">Nettsiden og appen husker noen valg lokalt i nettleseren eller appen, så du slipper å gjøre dem på nytt:</p>
     <ul>
         <li data-i18n="localL1">favorittvann og lagrede turer («Favoritter»)</li>
+        <li data-i18n="localL5">fangstdagboka: tid, posisjon, vær, fangst og notater du logger</li>
         <li data-i18n="localL2">språk og visningsvalg</li>
         <li data-i18n="localL3">hvilke varsler du har valgt</li>
         <li data-i18n="localL4">navn og e-post du sist brukte i observasjonsskjemaet, slik at feltene er ferdig utfylt neste gang</li>
@@ -139,7 +141,7 @@
 (function () {
     if (window.HW_LANG !== 'en') return;
     var EN = {
-        h1: 'Privacy', updated: 'Last updated 1 October 2026',
+        h1: 'Privacy', updated: 'Last updated 16 October 2026',
         lead: 'HatchWatch has no user accounts, no ads, and sells no data. You can use the whole service without telling us anything about yourself. This page explains the little that is stored anyway, and how to get it deleted. It covers both the website hatchwatch.no and the HatchWatch app for iPhone.',
         whoH: 'Who is responsible',
         whoP: 'HatchWatch is run by Stian Midtdal as a private hobby project. Questions about privacy, or requests to see or delete your data, go to <a href="mailto:stian.midtdal@gmail.com">stian.midtdal@gmail.com</a>.',
@@ -156,9 +158,11 @@
         obsP3: 'Observations are kept until you ask for them to be deleted. Send an email and we delete the name and email, or the whole observation if you prefer.',
         posH: 'Location',
         posP: 'The button for finding the nearest water asks for your location. It is used there and then, on your own device, to work out which water is closest. It is not sent to us and not stored.',
+        posP2: 'When you tap “Log now” in the logbook, the position is saved in the logbook on your own device. To fill in weather and bedrock, only the coordinates, with nothing that says who you are, are sent to Open-Meteo (weather) and NGU (bedrock). The position is not sent to us.',
         localH: 'What is stored on your own device',
         localP1: 'The website and the app remember a few choices locally in the browser or the app, so you do not have to make them again:',
         localL1: 'favourite waters and saved trips (“Favourites”)',
+        localL5: 'the logbook: time, position, weather, catches and notes you log',
         localL2: 'language and display choices',
         localL3: 'which notifications you have chosen',
         localL4: 'the name and email you last used in the observation form, so the fields are filled in next time',

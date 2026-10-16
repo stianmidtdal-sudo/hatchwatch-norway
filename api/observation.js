@@ -20,6 +20,7 @@
 import crypto from 'crypto';
 import { redis } from '../lib/redis.js';
 import { sendPush } from '../lib/push.js';
+import { forMange } from '../lib/fartsgrense.js';
 
 const ADMIN_KEY = (process.env.OBS_ADMIN_KEY || '').trim();
 
@@ -49,6 +50,9 @@ export default async function handler(req, res) {
         res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
         return res.status(204).end();
     }
+    // Fartsgrense (2026-10-16): admin-lesing 20 per minutt (gjetting av nøkkelen), innsending 10 per 10 min (spam)
+    if (req.method === 'GET' && forMange(req, res, 'obs-les', 20)) return;
+    if (req.method === 'POST' && forMange(req, res, 'obs-send', 10, 600)) return;
     try {
         if (req.method === 'GET') return await handleList(req, res);
         if (req.method === 'POST') {

@@ -14,8 +14,11 @@
 // Hver måling vektes med intervallet til neste måling. Daglig snitt =
 // sum(temp * timer) / sum(timer). Krever ≥12 timers dekning per dag.
 
+import { forMange } from '../lib/fartsgrense.js';
+
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
+    if (forMange(req, res, 'forecast', 120)) return;
     // Cache 1 time — MET oppdaterer prognose maks hver time
     res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=600');
 

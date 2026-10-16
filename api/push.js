@@ -15,11 +15,13 @@
 //   (i stedet for subscription/endpoint). Lagres som endpoint 'apns:<token>'
 //   med platform:'ios', så cron og hashing fungerer likt for begge veier.
 
+import { forMange } from '../lib/fartsgrense.js';
 import { redis, hashEndpoint, k } from '../lib/redis.js';
 import { sendPush, buildPayload, TRIGGER_TYPES } from '../lib/push.js';
 
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
+    if (req.method !== 'OPTIONS' && forMange(req, res, 'push', 30)) return;
     if (req.method === 'OPTIONS') {
         res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
         res.setHeader('Access-Control-Allow-Headers', 'Content-Type');

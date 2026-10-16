@@ -9,8 +9,11 @@
 //       slått sammen hit 2026-10-01 for å frigjøre en Vercel-function.
 //       /api/frost-sources fungerer fortsatt via rewrite i vercel.json.
 
+import { forMange } from '../lib/fartsgrense.js';
+
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
+    if (forMange(req, res, 'frost', 240)) return;
 
     const FROST_ID = process.env.FROST_ID;
     if (!FROST_ID) {

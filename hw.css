@@ -157,7 +157,7 @@ body.hw-has-bar { padding-bottom: calc(var(--hw-bar-h) + 14px); }
 #hwBar {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 900;
   background: var(--hw-bg-2); border-top: 1px solid var(--hw-line);
-  display: grid; grid-template-columns: repeat(4, 1fr); align-items: center;
+  display: grid; grid-template-columns: repeat(5, 1fr); align-items: center;   /* 5 faner fra 16.10.2026 (Dagbok) */
   padding: 2px 4px var(--hw-bar-pad);
   font-family: var(--hw-body);
 }

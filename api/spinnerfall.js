@@ -32,8 +32,11 @@
 // hensyn til nedbørtype, tåke og lysforhold. Å bruke den gir samme ikon som
 // yr.no viser, noe brukeren kjenner igjen.
 
+import { forMange } from '../lib/fartsgrense.js';
+
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
+    if (forMange(req, res, 'spinnerfall', 120)) return;
     // Cache 1 time — MET oppdaterer prognose maks hver time
     res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=600');
 

@@ -8,7 +8,7 @@
 //  Dashboard har fortsatt egen variant med side-spesifikke kroker; den
 //  flyttes hit når Sesongen bygges (steg 4).
 //
-//  Faner (godkjent 1. okt 2026): Kart · Sesong · Favoritter (het «Mine vann» til 14.10.2026) · Meny.
+//  Faner (godkjent 1. okt 2026): Kart · Sesong · Favoritter (het «Mine vann» til 14.10.2026) · Dagbok (16.10.2026) · Meny.
 //  Observasjon er en handling: rad i menyen + knapp inne på vannet.
 //
 //  Kroker (valgfrie) via window.HW_SHELL før skriptet kjører:
@@ -38,6 +38,7 @@
 
   var ICON = {
     map: '<svg viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>',
+    logbook: '<svg viewBox="0 0 24 24"><path d="M6 3h12a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6z"/><path d="M6 3v18M9.5 8h6M9.5 12h6M9.5 16h3.5"/></svg>',
     phone: '<svg viewBox="0 0 24 24"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg>',
     season: '<svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 4 4-7 5 5"/><path d="M3 21h18"/></svg>',
     heart: '<svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.7-9.3-9A5.2 5.2 0 0 1 12 6.6a5.2 5.2 0 0 1 9.3 4.9c-1.8 4.3-9.3 9-9.3 9z"/></svg>',
@@ -52,13 +53,13 @@
   };
 
   var path = location.pathname.replace(/\/index\.html$/, '/');
-  var pageTab = path === '/' ? (location.hash === '#sesong' ? 'sesong' : 'home') : '';
+  var pageTab = path === '/' ? (location.hash === '#sesong' ? 'sesong' : 'home') : path === '/dagbok.html' ? 'dagbok' : '';
 
   // Tekster: språket kommer fra hw-lang.js (window.HW_LANG); dashboardet kan
   // overstyre via cfg.lang. Uten hw-lang.js: norsk.
   var EN = (cfg.lang || window.HW_LANG) === 'en';
   var S = EN ? {
-    map: 'Map', season: 'Season', fav: 'Favourites', menu: 'Menu', close: 'Close', nav: 'Main navigation',
+    map: 'Map', season: 'Season', fav: 'Favourites', logbook: 'Logbook', menu: 'Menu', close: 'Close', nav: 'Main navigation',
     obs: 'Report a hatch', obsSub: 'Seen a hatch? It makes the model better.',
     notif: 'Notifications', notifSub: 'Hatch, spinner fall, ants · push',
     articles: 'Articles', articlesSub: 'Mayflies, spinner fall, ants',
@@ -66,10 +67,10 @@
     about: 'About HatchWatch', aboutSub: 'The model, data sources, stations',
     feedback: 'Send feedback', feedbackSub: 'Beta · we read everything',
     app: 'Get the app', appSub: 'iPhone · App Store',
-    lang: 'Norsk', langSub: 'Switch to Norwegian',
+    lang: 'Norsk', langSub: 'Switch to Norwegian', terms: 'Terms', privacy: 'Privacy',
     empty: '<b>No favourites yet.</b><br>Tap the heart on a water in the map or at the top of a forecast, and your waters gather here. Trips you save with the ruler in the map also end up here. Your notifications follow the waters.'
   } : {
-    map: 'Kart', season: 'Sesong', fav: 'Favoritter', menu: 'Meny', close: 'Lukk', nav: 'Hovednavigasjon',
+    map: 'Kart', season: 'Sesong', fav: 'Favoritter', logbook: 'Dagbok', menu: 'Meny', close: 'Lukk', nav: 'Hovednavigasjon',
     obs: 'Meld observasjon', obsSub: 'Så du klekking? Det gjør modellen bedre.',
     notif: 'Varsler', notifSub: 'Klekking, spinnerfall, stokkmaur · push',
     articles: 'Artikler', articlesSub: 'Døgnfluer, spinnerfall, stokkmaur',
@@ -77,7 +78,7 @@
     about: 'Om HatchWatch', aboutSub: 'Modellen, datakildene, stasjonene',
     feedback: 'Send tilbakemelding', feedbackSub: 'Beta · vi leser alt',
     app: 'Last ned appen', appSub: 'iPhone · App Store',
-    lang: 'English', langSub: 'Bytt til engelsk',
+    lang: 'English', langSub: 'Bytt til engelsk', terms: 'Vilkår', privacy: 'Personvern',
     empty: '<b>Ingen favoritter ennå.</b><br>Trykk hjertet på et vann i kartet eller øverst på prognosen, så samler vannene dine seg her. Turer du lagrer med linjalen i kartet havner også her. Varslene dine følger vannene.'
   };
 
@@ -104,6 +105,7 @@
       '<a class="hwb" data-tab="home" href="/">' + ICON.map + '<span>' + S.map + '</span></a>' +
       '<a class="hwb" data-tab="sesong" href="/#sesong">' + ICON.season + '<span>' + S.season + '</span></a>' +
       '<button class="hwb" data-tab="fav" id="hwbFav" type="button">' + ICON.heart + '<span>' + S.fav + '</span></button>' +
+      '<a class="hwb" data-tab="dagbok" href="/dagbok.html">' + ICON.logbook + '<span>' + S.logbook + '</span></a>' +
       '<button class="hwb" data-tab="menu" id="hwbMenu" type="button">' + ICON.menu + '<span>' + S.menu + '</span></button>' +
     '</nav>' +
     '<div class="hwpanel" id="hwbFavPanel" role="dialog" aria-label="' + S.fav + '">' +
@@ -124,7 +126,7 @@
         extras.map(function (x, i) { return btnRow(i, x.icon || ICON.out, x.title, x.sub); }).join('') +
         '<button class="hwp-row" type="button" id="hwbLang">' + ICON.globe +
           '<span><span class="mt">' + S.lang + '</span><span class="ms">' + S.langSub + '</span></span><span class="chev">›</span></button>' +
-        '<div class="hwp-foot">hatchwatch.no · beta · data: MET · NVE · Sentinel</div>' +
+        '<div class="hwp-foot">© 2026 Stian Midtdal · <a href="/vilkar.html" style="color:inherit">' + S.terms + '</a> · <a href="/personvern.html" style="color:inherit">' + S.privacy + '</a></div>' +
       '</div>' +
     '</div>';
 
