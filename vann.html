@@ -149,6 +149,34 @@ var LOCS = [
   ['ostmarka', 'Østmarka', 59.700, 11.170], ['vestfjella', 'Vestfjella', 59.300, 11.660], ['hardangervidda', 'Hardangervidda', 60.139, 8.547],
   ['bergen', 'Bergen', 60.500, 5.700]
 ];
+// Artsnavn (2026-10-16, Stian): norsk navn på norsk, engelsk på engelsk — ikke latin i tillegg. Latin brukes bare der
+// arten mangler navn på språket (sjeldne insekter og fiskeformer), og ligger ellers i hjelpeteksten (title).
+var EN_NAVN = {
+  // fisk
+  'Salmo trutta': 'Brown trout', 'Salvelinus alpinus': 'Arctic char', 'Perca fluviatilis': 'Perch', 'Anguilla anguilla': 'European eel',
+  'Phoxinus phoxinus': 'Minnow', 'Esox lucius': 'Pike', 'Lota lota': 'Burbot', 'Coregonus lavaretus': 'Whitefish',
+  'Gasterosteus aculeatus': 'Three-spined stickleback', 'Rutilus rutilus': 'Roach', 'Salvelinus fontinalis': 'Brook trout',
+  'Salmo salar': 'Atlantic salmon', 'Thymallus thymallus': 'Grayling', 'Oncorhynchus mykiss': 'Rainbow trout', 'Alburnus alburnus': 'Bleak',
+  'Scardinius erythrophthalmus': 'Rudd', 'Abramis brama': 'Bream', 'Carassius carassius': 'Crucian carp', 'Gymnocephalus cernua': 'Ruffe',
+  'Osmerus eperlanus': 'Smelt', 'Tinca tinca': 'Tench', 'Pungitius pungitius': 'Nine-spined stickleback', 'Leuciscus idus': 'Ide',
+  'Coregonus albula': 'Vendace', 'Blicca bjoerkna': 'Silver bream', 'Leuciscus leuciscus': 'Dace', 'Lampetra fluviatilis': 'River lamprey',
+  'Cottus poecilopus': 'Alpine bullhead', 'Lampetra planeri': 'Brook lamprey', 'Platichthys flesus': 'Flounder', 'Squalius cephalus': 'Chub',
+  'Sander lucioperca': 'Zander', 'Salvelinus namaycush': 'Lake trout', 'Cyprinus carpio': 'Carp', 'Cottus gobio': 'Bullhead',
+  'Oncorhynchus gorbuscha': 'Pink salmon', 'Ameiurus nebulosus': 'Brown bullhead', 'Leuciscus aspius': 'Asp', 'Carassius auratus': 'Goldfish',
+  'Gobio gobio': 'Gudgeon', 'Petromyzon marinus': 'Sea lamprey', 'Lepomis gibbosus': 'Pumpkinseed', 'Myoxocephalus quadricornis': 'Fourhorn sculpin',
+  'Oncorhynchus keta': 'Chum salmon', 'Ctenopharyngodon idella': 'Grass carp', 'Alosa alosa': 'Allis shad', 'Alosa fallax': 'Twaite shad',
+  // insekter og krepsdyr (fluefiskernes engelske navn der de finnes)
+  'Ephemera vulgata': 'Dark mayfly', 'Ephemera danica': 'Green drake', 'Leptophlebia marginata': 'Sepia dun', 'Leptophlebia vespertina': 'Claret dun',
+  'Siphlonurus lacustris': 'Large summer dun', 'Siphlonurus aestivalis': 'Large summer dun', 'Baetis rhodani': 'Large dark olive',
+  'Nigrobaetis niger': 'Iron blue', 'Heptagenia sulphurea': 'Yellow May dun', 'Serratella ignita': 'Blue-winged olive', 'Ephemerella ignita': 'Blue-winged olive',
+  'Caenis horaria': 'Angler\'s curse', 'Caenis luctuosa': 'Angler\'s curse', 'Cloeon dipterum': 'Pond olive', 'Centroptilum luteolum': 'Small spurwing',
+  'Phryganea grandis': 'Great red sedge', 'Gammarus lacustris': 'Freshwater shrimp', 'Gammarus pulex': 'Freshwater shrimp', 'Lepidurus arcticus': 'Tadpole shrimp'
+};
+// Visningsnavn: språkets navn hvis det finnes, ellers latin (i kursiv, siden det da er det vitenskapelige navnet)
+function artsnavn(latin, norsk) {
+  var n = EN ? EN_NAVN[latin] : (norsk ? norsk.charAt(0).toUpperCase() + norsk.slice(1) : '');
+  return n ? esc(n) : '<i>' + esc(latin) + '</i>';
+}
 var KEY_SPECIES = ['Ephemera vulgata', 'Ephemera danica', 'Leptophlebia marginata', 'Leptophlebia vespertina', 'Siphlonurus lacustris', 'Siphlonurus aestivalis', 'Ephemerella aurivillii', 'Heptagenia dalecarlica', 'Phryganea grandis', 'Phryganea bipunctata', 'Lepidurus arcticus', 'Gammarus lacustris'];
 
 var main = document.getElementById('main');
@@ -256,8 +284,7 @@ function visFisk() {
     if (liste.length) {
       liste = liste.slice().sort(function (a, b) { var ka = FISK_GULL.indexOf(a[0]) >= 0 ? 0 : 1, kb = FISK_GULL.indexOf(b[0]) >= 0 ? 0 : 1; return ka - kb || b[2] - a[2]; });
       h += '<div class="splist">' + liste.map(function (f) {
-        var no = !EN && f[1] ? esc(f[1].charAt(0).toUpperCase() + f[1].slice(1)) + ' · ' : '';
-        return '<span class="sp' + (FISK_GULL.indexOf(f[0]) >= 0 ? ' key' : '') + '" title="' + f[2] + tx(' funn', ' records') + (f[3] ? tx(', sist ', ', last ') + f[3] : '') + '">' + no + '<i>' + esc(f[0]) + '</i>' +
+        return '<span class="sp' + (FISK_GULL.indexOf(f[0]) >= 0 ? ' key' : '') + '" title="' + esc(f[0]) + ' · ' + f[2] + tx(' funn', ' records') + (f[3] ? tx(', sist ', ', last ') + f[3] : '') + '">' + artsnavn(f[0], f[1]) +
           (f[3] ? ' <small class="aar">' + f[3] + '</small>' : '') + (f[5] ? ' <small class="innfort">' + tx('innført', 'introduced') + '</small>' : '') + '</span>';
       }).join('') + '</div>';
     }
@@ -697,8 +724,7 @@ function arterHtml(list) {
     if (!by[g]) return;
     var items = by[g].slice().sort(function (a, b) { var ka = KEY_SPECIES.indexOf(a[0]) >= 0 ? 0 : 1, kb = KEY_SPECIES.indexOf(b[0]) >= 0 ? 0 : 1; return ka - kb || b[2] - a[2]; });
     h += '<div class="grp"><div class="hw-eyebrow">' + grp[g] + ' · ' + items.length + '</div><div class="splist">' + items.map(function (x) {
-      var no = !EN && x[5] ? esc(x[5]) + ' · ' : '';
-      return '<span class="sp' + (KEY_SPECIES.indexOf(x[0]) >= 0 ? ' key' : '') + '" title="' + x[2] + tx(' funn, sist ', ' records, last ') + (x[3] || '–') + '">' + no + '<i>' + esc(x[0]) + '</i></span>';
+      return '<span class="sp' + (KEY_SPECIES.indexOf(x[0]) >= 0 ? ' key' : '') + '" title="' + esc(x[0]) + ' · ' + x[2] + tx(' funn, sist ', ' records, last ') + (x[3] || '–') + '">' + artsnavn(x[0], x[5]) + '</span>';
     }).join('') + '</div></div>';
   });
   return h + '<p class="note">' + tx('Artsdatabanken via GBIF. Registrert betyr at minst ett funn er koblet til vannet, ikke at arten sikkert finnes der i dag. Gull er arter som er viktige for fluefiske.', 'Artsdatabanken via GBIF. Recorded means at least one record is linked to the lake, not that the species is surely there today. Gold marks species that matter for fly fishing.') + '</p>';

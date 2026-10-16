@@ -177,6 +177,7 @@
     color: var(--hw-fg);   /* tekst uten egen farge arver ellers den lyse fargen fra body */
   }
   .brandrow { --hw-fg: #11201f; --hw-hatch: #f2b84b; }   /* sort «Hatch», gull «Watch» (samme gull som før) */
+  body.bak-sat .brandrow { --hw-fg: #ffffff; }            /* satellitt: hvit «Hatch» på det mørke fotoet */
   /* Hvite flater på lyst kart trenger en svak skygge for å skille seg fra bunnen */
   body.kart-tur :is(.search-in, .modeseg, .zoomctl button, .scrub, .scrubmini, .maal, .legend .hw-chip, .kompass) { box-shadow: 0 1px 2px rgba(20, 40, 40, .10), 0 3px 10px rgba(20, 40, 40, .08); }
   body.kart-tur .modeseg { background: color-mix(in srgb, #ffffff 94%, transparent); border: 1px solid var(--hw-line); }
@@ -193,6 +194,14 @@
   .lagvalg .std i { background: linear-gradient(135deg, #13242b 0 45%, #2a5361 45% 60%, #13242b 60%); }
   .lagvalg .tur i { background: linear-gradient(135deg, #f3f0e4 0 40%, #a8d4e6 40% 55%, #dfe8cf 55%), #f3f0e4; position: relative; }
   .lagvalg .tur i::after { content: ''; position: absolute; left: 10%; right: 10%; top: 62%; border-top: 2px dashed #e0655a; }
+  /* Satellitt (2026-10-16): forhåndsvisning i skog/vann-farger */
+  .lagvalg .sat i { background: radial-gradient(circle at 70% 30%, #2e5a7a 0 18%, transparent 19%), radial-gradient(circle at 25% 75%, #34607f 0 14%, transparent 15%), linear-gradient(135deg, #3b5130 0 35%, #59683f 35% 60%, #2f4529 60%); }
+  .lagvalg button[data-bak] { width: 84px; text-align: center; font-size: 12.5px; color: var(--hw-fg-2); }
+  .lagvalg button[data-bak] i { display: block; height: 56px; border-radius: 10px; margin-bottom: 5px; border: 2px solid transparent; position: relative; }
+  .lagvalg button[data-bak].on { color: var(--hw-fg); font-weight: 600; }
+  .lagvalg button[data-bak].on i { border-color: var(--hw-hatch); }
+  /* På satellitt står krediteringen fra EOX (påkrevd ordlyd), som kan bli to linjer på mobil */
+  .kildelinje { max-width: calc(100% - 140px); text-align: right; }
 
   /* ── Tidsskyver ── */
   .scrub { position: absolute; left: 12px; right: 12px; bottom: 12px; z-index: 21; max-width: 560px; margin: 0 auto; background: color-mix(in srgb, var(--hw-bg-2) 92%, transparent); backdrop-filter: blur(8px); border: 1px solid var(--hw-line); border-radius: 16px; padding: 10px 14px 12px; }
@@ -341,6 +350,9 @@
     <div id="maalProfil"></div>
   </div>
   <div class="lagvalg" id="lagValg" role="dialog" aria-label="Kartlag">
+    <div class="lagvalg-hode" id="lagBakHode">Bakgrunn</div>
+    <button type="button" class="tur" data-bak="tur"><i></i><span id="bakTurTxt">Turkart</span></button>
+    <button type="button" class="sat" data-bak="sat"><i></i><span id="bakSatTxt">Satellitt</span></button>
     <div class="lagvalg-hode" id="lagHode">Oppå kartet</div>
     <label class="overlegg"><input type="checkbox" id="kalkBryter"><span><b id="kalkTxt">Kalk i berggrunnen</b><small id="kalkSub">NGU, oppå kartet</small></span></label>
   </div>
@@ -450,6 +462,8 @@ function tx(no, en) { return EN ? en : no; }
   document.getElementById('modeFlueTxt').textContent = 'Dry fly'; document.getElementById('modeFlue').title = 'Dry fly';
   document.getElementById('modeLaksTxt').textContent = 'Salmon'; document.getElementById('modeLaks').title = 'Salmon fishing';
   document.getElementById('lagHode').textContent = 'On top of the map';
+  document.getElementById('lagBakHode').textContent = 'Background';
+  document.getElementById('bakTurTxt').textContent = 'Hiking map'; document.getElementById('bakSatTxt').textContent = 'Satellite';
   document.getElementById('kalkTxt').textContent = 'Lime in bedrock'; document.getElementById('kalkSub').textContent = 'NGU, on top of the map';
   document.getElementById('tegnBtn').setAttribute('aria-label', 'Map legend'); document.getElementById('tegnBtn').title = 'Map legend';
   document.getElementById('shFav').setAttribute('aria-label', 'Add to favourites');
@@ -900,6 +914,28 @@ function isoWeek(doy) {
 var KARTLAG = 'tur';
 var KALK = false;
 try { KALK = localStorage.getItem('hw_kalk') === '1'; } catch (e) {}
+// Bakgrunn (2026-10-16, Stian): Turkart (Kartverket) eller Satellitt (EOxCloudless 2025, Sentinel-2, 10 m, skyfri
+// mosaikk; fri bruk ikke-kommersielt med påkrevd kreditering). Huskes i hw_bakgrunn.
+var BAKGRUNN = 'tur';
+try { if (localStorage.getItem('hw_bakgrunn') === 'sat') BAKGRUNN = 'sat'; } catch (e) {}
+var SAT_KREDIT = 'EOxCloudless (cloudless.eox.at) by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2025)';
+function settBakgrunn(b) {
+  BAKGRUNN = b;
+  try { localStorage.setItem('hw_bakgrunn', b); } catch (e) {}
+  applyBakgrunn();
+}
+function applyBakgrunn() {
+  var sat = BAKGRUNN === 'sat';
+  document.body.classList.toggle('bak-sat', sat);   // hvit «Hatch» på det mørke satellittbildet
+  document.querySelectorAll('#lagValg button[data-bak]').forEach(function (x) { x.classList.toggle('on', x.getAttribute('data-bak') === BAKGRUNN); });
+  var kl = document.getElementById('kildelinje');
+  if (kl) kl.textContent = sat ? SAT_KREDIT + ' · © OpenStreetMap' : '© Kartverket · OpenStreetMap';
+  if (!map.getLayer('eox-sat')) return;
+  map.setLayoutProperty('eox-sat', 'visibility', sat ? 'visible' : 'none');
+  map.setLayoutProperty('kv-topo', 'visibility', sat ? 'none' : 'visible');
+  // Satellittbildet har ingen navn: vis stedsnavn og vannavn fra OpenFreeMap (lys tekst med mørk kant passer på foto)
+  ['steder', 'topper', 'vann-navn', 'vann-navn-store'].forEach(function (id) { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', sat ? 'visible' : 'none'); });
+}
 // NGUs fem klasser med NGUs egne farger (fra tegnforklaringen i tjenesten)
 var KALK_KLASSER = [['#ffe6c8', 'Svært kalkfattig', 'Very lime-poor'], ['#fad2be', 'Kalkfattig', 'Lime-poor'], ['#c2d69a', 'Intermediær', 'Intermediate'], ['#64c8ff', 'Kalkrik', 'Lime-rich'], ['#0064e6', 'Svært kalkrik', 'Very lime-rich']];
 function kalkForklaring() {
@@ -943,6 +979,9 @@ function leggTilTurkart() {
   // fri bruk, CORS åpen). Oppå bakgrunnskartet, under våre vannflater og navn. Slås av/på i kartlagmenyen (hw_kalk).
   map.addSource('ngu-kalk', { type: 'raster', tileSize: 256, attribution: tx('Berggrunn: <a href="https://www.ngu.no/" target="_blank" rel="noopener">NGU</a>', 'Bedrock: <a href="https://www.ngu.no/" target="_blank" rel="noopener">NGU</a>'),
     tiles: ['https://geo.ngu.no/mapserver/BerggrunnOkologiWMS?service=WMS&version=1.3.0&request=GetMap&layers=Kalkinnhold_N250&styles=&format=image/png&transparent=true&crs=EPSG:3857&width=256&height=256&bbox={bbox-epsg-3857}'] });
+  // Satellitt (2026-10-16): EOxCloudless 2025 (Sentinel-2, 10 m). Ligger rett over Kartverket-laget; kalk og våre lag oppå.
+  map.addSource('eox-sat', { type: 'raster', tileSize: 256, maxzoom: 14, tiles: ['https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/{z}/{y}/{x}.jpg'] });
+  map.addLayer({ id: 'eox-sat', type: 'raster', source: 'eox-sat', layout: { visibility: 'none' } }, 'vann-fill');
   map.addLayer({ id: 'ngu-kalk', type: 'raster', source: 'ngu-kalk', layout: { visibility: KALK ? 'visible' : 'none' }, paint: { 'raster-opacity': 0.6 } }, 'vann-fill');
   // Dybdekart (2026-10-14): NVEs dybdekoter og loddpunkter (Innsjødatabase2) fra zoom 12, i begge kartlagene.
   // Finnes digitalt for ca. 530 vann; de andre har bare PDF (lenke på vannsiden). NVE tegner bare under 1:160 000.
@@ -979,6 +1018,7 @@ function applyKartlag() {
   TUR_ADKOMST.forEach(function (id) { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', tur ? 'visible' : 'none'); });
   STANDARD_LAG.forEach(function (id) { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', tur ? 'none' : 'visible'); });
   map.setPaintProperty('bg', 'background-color', tur ? '#e0fefe' : C.land);
+  applyBakgrunn();   // Turkart eller Satellitt (må komme etter at kv-topo og navnelagene er satt over)
   // Turkartet har egne vann med Kartverkets strandlinje. Vår vannflate blir usynlig (men kan fortsatt
   // trykkes på), og vann med data vises som prikker farget etter isgang. Helt utzoomet (under z9, der
   // prikkene ikke vises) ligger isgangfargene svakt over som før. Valgt vann får gull omriss.
@@ -1344,6 +1384,8 @@ document.getElementById('maalNull').addEventListener('click', function () { maal
 document.getElementById('maalHoyde').addEventListener('click', maalHoyde);
 document.getElementById('lagBtn').addEventListener('click', function (e) { e.stopPropagation(); plasserKnapper(); document.getElementById('lagValg').classList.toggle('open'); });
 document.getElementById('lagValg').addEventListener('click', function (e) {
+  var bak = e.target.closest('button[data-bak]');
+  if (bak) { settBakgrunn(bak.getAttribute('data-bak')); return; }   // menyen blir stående, så man kan slå på berggrunn også
   var b = e.target.closest('button[data-lag]'); if (!b) return;
   KARTLAG = b.getAttribute('data-lag');
   try { localStorage.setItem('hw_kartlag', KARTLAG); } catch (err) {}

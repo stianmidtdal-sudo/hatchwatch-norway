@@ -411,6 +411,19 @@ def bygg_vann():
     print(f"vann: {len(vann_js['features'])} vann i {VANN_GRUPPER} filer, snitt {tot // VANN_GRUPPER // 1024} kB per fil")
 
 
+def bygg_punkt():
+    """Fangstdagboka (2026-10-16): nærmeste vann fra GPS. Flat liste [vatnlnr, lat·1e4, lon·1e4, ...] fra vann/*.json."""
+    flat = []
+    for i in range(VANN_GRUPPER):
+        for vid, rec in json.load(open(os.path.join(OUT, "vann", f"{i}.json"), encoding="utf-8")).items():
+            if rec.get("lat") is not None:
+                flat += [int(vid), round(rec["lat"] * 1e4), round(rec["lon"] * 1e4)]
+    path = os.path.join(OUT, "vannpunkt.json")
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(flat, fh, separators=(",", ":"))
+    print(f"vannpunkt: {len(flat) // 3} vann, {os.path.getsize(path) // 1024} kB")
+
+
 def oppdater_vann_isgang():
     """Bytter bare isgangen («isg») i de ferdige vannfilene. Trenger verken NVE-geojson eller shapely,
     så GitHub-jobben kan kjøre den. Navn, arter og «bekreftet» beholdes som de er."""
@@ -582,6 +595,8 @@ if __name__ == "__main__":
         bygg_arter()
     if hva in ("alt", "isgang", "arter", "vann"):
         bygg_vann()
+    if hva in ("alt", "vann", "punkt"):
+        bygg_punkt()
     if hva in ("alt", "elver"):
         bygg_elver()
     if hva in ("alt", "fliser"):
