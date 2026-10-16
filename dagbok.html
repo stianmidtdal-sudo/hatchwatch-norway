@@ -540,6 +540,8 @@ if (EN) {
 
 tegnListe();
 berikAlle();
+// Fra kartet (2026-10-16): /dagbok.html#<id> åpner den loggen
+if (location.hash.length > 1) { const fra = decodeURIComponent(location.hash.slice(1)); if (hent(fra)) aapne(fra); }
 window.addEventListener('online', berikAlle);
 punkter().catch(() => {});   // varm opp vannlista, så den ligger i hurtigbufferen til du står uten dekning
 </script>

@@ -169,14 +169,15 @@
     { id: 'omr', no: 'Områder', en: 'Areas', tom: ['Ingen områder ennå. Trykk hjertet øverst på en prognose, for eksempel Kautokeino, så havner den her.', 'No areas yet. Tap the heart at the top of a forecast, for example Kautokeino, and it ends up here.'] },
     { id: 'vann', no: 'Vann', en: 'Lakes', tom: ['Ingen vann ennå. Trykk hjertet på et vann i kartet eller på vannsiden. Varslene dine følger vannene.', 'No lakes yet. Tap the heart on a lake in the map or on the lake page. Your notifications follow the lakes.'] },
     { id: 'elv', no: 'Elver', en: 'Rivers', tom: ['Ingen elver ennå. Trykk hjertet på en lakseelv i kartet eller på elvesiden.', 'No rivers yet. Tap the heart on a salmon river in the map or on the river page.'] },
-    { id: 'tur', no: 'Turer', en: 'Trips', tom: ['Ingen turer ennå. Tegn en tur med linjalen i kartet og trykk Lagre.', 'No trips yet. Draw a trip with the ruler in the map and tap Save.'] }
+    { id: 'tur', no: 'Turer', en: 'Trips', tom: ['Ingen turer ennå. Tegn en tur med linjalen i kartet og trykk Lagre, eller registrer turen mens du går.', 'No trips yet. Draw a trip with the ruler in the map and tap Save, or record the trip as you walk.'] },
+    { id: 'pkt', no: 'Punkter', en: 'Points', tom: ['Ingen punkter ennå. Trykk og hold på kartet, og velg Lagre punkt.', 'No points yet. Press and hold on the map, and choose Save point.'] }
   ];
   var favFane = null;
   try { favFane = localStorage.getItem('hw_fav_fane'); } catch (e) {}
   function renderFavs() {
     var list = document.getElementById('hwbFavList'), faner = document.getElementById('hwbFavFaner');
-    var f = favs(), e = elvFavs(), vf = vannFavs(), tu = turer();
-    var antall = { omr: f.length, vann: vf.length, elv: e.length, tur: tu.length };
+    var f = favs(), e = elvFavs(), vf = vannFavs(), tu = turer(), pk = punkter();
+    var antall = { omr: f.length, vann: vf.length, elv: e.length, tur: tu.length, pkt: pk.length };
     if (!FANER.some(function (x) { return x.id === favFane; })) {
       var forste = FANER.filter(function (x) { return antall[x.id] > 0; })[0];
       favFane = forste ? forste.id : 'vann';
@@ -210,7 +211,17 @@
           '<button type="button" class="hwp-fjern" data-tur="' + esc(t.id) + '" aria-label="' + (EN ? 'Remove trip' : 'Fjern turen') + '">×</button></div>';
       }).join('');
     }
+    // Egne punkter (2026-10-16): hw_punkter fra kartet (trykk og hold)
+    if (favFane === 'pkt') html = pk.map(function (x) {
+      return '<div class="hwp-tur">' + row('/?pkt=' + encodeURIComponent(x.id), PIN, esc(x.navn || (EN ? 'Point' : 'Punkt')), (PKT_KAT[x.kat] ? PKT_KAT[x.kat][EN ? 1 : 0] : '') + (x.dato ? ' · ' + x.dato.split('-').reverse().map(Number).join('.') : '')) +
+        '<button type="button" class="hwp-fjern" data-pkt="' + esc(x.id) + '" aria-label="' + (EN ? 'Remove point' : 'Fjern punktet') + '">×</button></div>';
+    }).join('');
     list.innerHTML = html;
+  }
+  var PIN = '<svg viewBox="0 0 24 24"><path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg>';
+  var PKT_KAT = { fisk: ['Fiskeplass', 'Fishing spot'], park: ['Parkering', 'Parking'], vad: ['Vadested', 'Ford'], telt: ['Teltplass', 'Campsite'], annet: ['Punkt', 'Point'] };
+  function punkter() {
+    try { var v = JSON.parse(localStorage.getItem('hw_punkter') || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; }
   }
   // Mine turer (2026-10-14): lagret fra avstandsmålingen på kartet, localStorage hw_turer
   var TUR = '<svg viewBox="0 0 24 24"><circle cx="5" cy="18" r="2"/><circle cx="19" cy="6" r="2"/><path d="M7 17c4-1 3-6 6-7s3-2 4-3"/></svg>';
@@ -236,6 +247,12 @@
     var b = ev.target.closest('.hwp-fjern'); if (!b) return;
     ev.preventDefault();
     var id = b.getAttribute('data-tur');
+    if (b.hasAttribute('data-pkt')) {
+      var pid = b.getAttribute('data-pkt');
+      try { localStorage.setItem('hw_punkter', JSON.stringify(punkter().filter(function (t) { return t.id !== pid; }))); } catch (e) {}
+      if (typeof window.hwPunkterEndret === 'function') window.hwPunkterEndret();
+      return renderFavs();
+    }
     try { localStorage.setItem('hw_turer', JSON.stringify(turer().filter(function (t) { return t.id !== id; }))); } catch (e) {}
     renderFavs();
   });

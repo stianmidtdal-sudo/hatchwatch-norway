@@ -196,7 +196,7 @@
             <p data-i18n="laksP">For lakseelvene viser vi når fisken typisk kommer gjennom sesongen, ut fra flere års data, og vannføring og vanntemperatur fra NVE der det finnes en målestasjon.</p>
 
             <h2 data-i18n="turH">På tur</h2>
-            <p data-i18n="turP">Turkartet viser Kartverkets topografiske kart med merkede stier, og parkering, bommer og gapahuker fra OpenStreetMap. Du kan tegne en tur, se høydeprofil og turtid, lagre den og dele den. Vannsidene viser dybdekart der NVE har loddet vannet, og snødybden i fjellet om våren. Fangstdagboka lagrer tid, sted, vær og modellens anslag med ett trykk, og kan lastes ned som Excel. Du kan også laste ned kartet for et område og bruke det uten dekning. Da vises stier, bekker og navn fra OpenStreetMap, og Kartverkets kart på oversiktsnivå.</p>
+            <p data-i18n="turP">Turkartet viser Kartverkets topografiske kart med merkede stier, og parkering, bommer og gapahuker fra OpenStreetMap. Du kan tegne en tur, se høydeprofil og turtid, lagre den og dele den. Vannsidene viser dybdekart der NVE har loddet vannet, og snødybden i fjellet om våren. Fangstdagboka lagrer tid, sted, vær og modellens anslag med ett trykk, og kan lastes ned som Excel. Du kan også laste ned kartet for et område og bruke det uten dekning. Da vises stier, bekker og navn fra OpenStreetMap, og Kartverkets kart på oversiktsnivå. Trykk og hold i kartet for koordinater, høyde og stedsnavn, lagre egne punkter, registrer turen mens du går, og ta turer og punkter inn og ut som GPX.</p>
         </div>
 
         <div>
@@ -210,13 +210,13 @@
             <ul>
                 <li data-i18n-html="src1"><b>MET Norge</b>: målt vær og værvarsel for stedene med egen prognose</li>
                 <li data-i18n-html="src2"><b>Open-Meteo</b> (ERA5 og værmodeller): vær ved hvert enkelt vann</li>
-                <li data-i18n-html="src3"><b>NVE</b>: vanntemperatur og vannføring, innsjødatabasen og dybdekart</li>
+                <li data-i18n-html="src3"><b>NVE</b>: vanntemperatur og vannføring, innsjødatabasen, dybdekart og svekket is</li>
                 <li data-i18n-html="src4"><b>seNorge</b> (NVE og MET): snødybde og snømengde</li>
                 <li data-i18n-html="src5"><b>Copernicus Sentinel-2</b> via Google Earth Engine: isgang, behandlet av HatchWatch</li>
                 <li data-i18n-html="src6"><b>Artsdatabanken</b> og <b>NINA</b> via GBIF: insekter, krepsdyr og fisk registrert per vann</li>
-                <li data-i18n-html="src7"><b>Kartverket</b>: turkart, turruter og høydedata</li>
+                <li data-i18n-html="src7"><b>Kartverket</b>: turkart, turruter, høydedata, stedsnavn og eiendomsgrenser</li>
                 <li data-i18n-html="src8"><b>OpenStreetMap</b> og OpenFreeMap: bakgrunnskart, parkering og gapahuker</li>
-                <li data-i18n-html="src9"><b>Miljødirektoratet</b>: lakseførende elver</li>
+                <li data-i18n-html="src9"><b>Miljødirektoratet</b>: lakseførende elver og verneområder</li>
                 <li data-i18n-html="src13"><b>NGU</b>: kalk i berggrunnen</li>
                 <li data-i18n-html="src14"><b>EOX</b>: satellittkartet (EOxCloudless, bearbeidede Copernicus Sentinel-2-data)</li>
                 <li data-i18n-html="src10"><b>Oslomarka Fiskeadministrasjon (OFA)</b>: vulgata-vann og fisk satt ut i Oslomarka</li>
@@ -278,7 +278,7 @@
         laksH: 'Salmon',
         laksP: 'For the salmon rivers we show when the fish typically arrive through the season, based on several years of data, and flow and water temperature from NVE where there is a gauging station.',
         turH: 'Out and about',
-        turP: 'The hiking map shows the Norwegian Mapping Authority’s topographic map with marked trails, and parking, gates and shelters from OpenStreetMap. You can draw a trip, see the elevation profile and walking time, save it and share it. The lake pages show depth maps where NVE has surveyed the lake, and the snow depth in the mountains in spring. The logbook saves the time, place, weather and the model’s estimates with one tap, and can be downloaded for Excel. You can also download the map for an area and use it without coverage. It then shows trails, streams and names from OpenStreetMap, and the Mapping Authority’s map at overview level.',
+        turP: 'The hiking map shows the Norwegian Mapping Authority’s topographic map with marked trails, and parking, gates and shelters from OpenStreetMap. You can draw a trip, see the elevation profile and walking time, save it and share it. The lake pages show depth maps where NVE has surveyed the lake, and the snow depth in the mountains in spring. The logbook saves the time, place, weather and the model’s estimates with one tap, and can be downloaded for Excel. You can also download the map for an area and use it without coverage. It then shows trails, streams and names from OpenStreetMap, and the Mapping Authority’s map at overview level. Press and hold on the map for coordinates, height and place name, save your own points, record the trip as you walk, and move trips and points in and out as GPX.',
         uncH: 'Uncertainty',
         uncP: 'Think of the forecast as a weather forecast. Early in the season the uncertainty is bigger, because more of the weather is still ahead. As the measurements come in, it narrows. Nature is still unpredictable, so use HatchWatch as guidance, not as fact.',
         betterH: 'Better every year',
@@ -286,13 +286,13 @@
         sourcesH: 'Data sources',
         src1: '<b>MET Norway</b>: measured weather and forecasts for the places with their own forecast',
         src2: '<b>Open-Meteo</b> (ERA5 and weather models): weather at each individual lake',
-        src3: '<b>NVE</b>: water temperature and flow, the lake database and depth maps',
+        src3: '<b>NVE</b>: water temperature and flow, the lake database, depth maps and weakened ice',
         src4: '<b>seNorge</b> (NVE and MET): snow depth and snow amount',
         src5: '<b>Copernicus Sentinel-2</b> via Google Earth Engine: ice-out, processed by HatchWatch',
         src6: '<b>Artsdatabanken</b> and <b>NINA</b> via GBIF: insects, crustaceans and fish recorded per lake',
-        src7: '<b>Norwegian Mapping Authority</b>: hiking map, trails and elevation data',
+        src7: '<b>Norwegian Mapping Authority</b>: hiking map, trails, elevation data, place names and property boundaries',
         src8: '<b>OpenStreetMap</b> and OpenFreeMap: base map, parking and shelters',
-        src9: '<b>Norwegian Environment Agency</b>: salmon rivers',
+        src9: '<b>Norwegian Environment Agency</b>: salmon rivers and protected areas',
         src13: '<b>Geological Survey of Norway (NGU)</b>: lime in the bedrock',
         src14: '<b>EOX</b>: the satellite map (EOxCloudless, modified Copernicus Sentinel-2 data)',
         src10: '<b>Oslomarka Fiskeadministrasjon (OFA)</b>: vulgata lakes and fish stocked in Oslomarka',

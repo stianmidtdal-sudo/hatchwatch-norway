@@ -116,6 +116,26 @@
   .lagvalg .off-rad button { width: 26px; height: 26px; flex: none; border-radius: 50%; border: 1px solid var(--hw-line); background: none; color: var(--hw-fg-2); font-size: 15px; line-height: 1; padding: 0; cursor: pointer; }
   .offpille { position: absolute; left: 50%; bottom: calc(var(--scrub-h, 190px) + 26px); transform: translateX(-50%); z-index: 26; display: none; max-width: calc(100% - 32px); padding: 8px 14px; border-radius: 999px; background: var(--hw-bg-2); border: 1px solid var(--hw-line); box-shadow: var(--hw-shadow); font-size: 13px; color: var(--hw-fg); text-align: center; }
   .offpille.vis { display: block; }
+  /* På tur (2026-10-16): opptak, punktkort */
+  .zoomctl #sporBtn { display: grid; place-items: center; }
+  .zoomctl #sporBtn svg { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+  .zoomctl #sporBtn svg .rec { fill: #e5484d; stroke: none; }
+  .zoomctl #sporBtn.on { color: #e5484d; border-color: color-mix(in srgb, #e5484d 55%, transparent); animation: hw-puls 1.6s ease-in-out infinite; }
+  @keyframes hw-puls { 50% { box-shadow: 0 0 0 5px rgba(229, 72, 77, .18); } }
+  .sporpille { position: absolute; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 112px); transform: translateX(-50%); z-index: 26; display: none; max-width: calc(100% - 32px); padding: 8px 14px; border-radius: 999px; background: var(--hw-bg-2); border: 1px solid var(--hw-line); box-shadow: var(--hw-shadow); font-size: 13px; color: var(--hw-fg); white-space: nowrap; }
+  .sporpille.vis { display: block; }
+  .sporpille .rec { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #e5484d; margin-right: 7px; animation: hw-blink 1.2s steps(2) infinite; }
+  @keyframes hw-blink { 50% { opacity: .25; } }
+  .sporpille button { margin-left: 8px; border: 0; background: none; color: #e5484d; font: 700 13px var(--hw-body); cursor: pointer; padding: 0; }
+  @media (min-width: 760px) { .sporpille { top: 84px; } }
+  .pk-kat { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .pk-kat button { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--hw-line); background: var(--hw-bg-2); color: var(--hw-fg-2); font: 13px var(--hw-body); cursor: pointer; }
+  .pk-kat button i { width: 9px; height: 9px; border-radius: 50%; }
+  .pk-kat button.on { border-color: var(--hw-hatch); color: var(--hw-fg); font-weight: 600; background: var(--hw-hatch-soft); }
+  .pk-knapper { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .pk-knapper .hw-btn { padding: 9px 12px; font-size: 13.5px; }
+  .pk-knapper .pk-slett { color: var(--hw-bad); }
+  .pk-status { font-size: 12.5px; color: var(--hw-fg-2); margin-top: 6px; min-height: 1em; }
   .offpille button { margin-left: 8px; border: 0; background: none; color: var(--hw-water); font: 600 13px var(--hw-body); cursor: pointer; padding: 0; }
   .legend .leg-hode { font-family: var(--hw-mono); font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--hw-fg-3); padding: 6px 2px 0; flex: none; }
   .legend .hw-chip i.kalk { border-radius: 2px; border: 1px solid rgba(0, 0, 0, .12); }
@@ -360,6 +380,9 @@
       <button type="button" id="maalNull" disabled>Nullstill</button>
       <button type="button" id="maalHoyde" disabled>Turprofil</button>
       <button type="button" id="maalDel" disabled>Del</button>
+      <button type="button" id="maalGpx" disabled>GPX</button>
+      <button type="button" id="maalImporter">Importer GPX</button>
+      <input type="file" id="gpxInn" accept=".gpx,application/gpx+xml,application/xml,text/xml" hidden>
     </div>
     <div class="pinfo" id="maalStatus"></div>
     <div id="maalProfil"></div>
@@ -370,6 +393,9 @@
     <button type="button" class="sat" data-bak="sat"><i></i><span id="bakSatTxt">Satellitt</span></button>
     <div class="lagvalg-hode" id="lagHode">Oppå kartet</div>
     <label class="overlegg"><input type="checkbox" id="kalkBryter"><span><b id="kalkTxt">Kalk i berggrunnen</b><small id="kalkSub">NGU, oppå kartet</small></span></label>
+    <label class="overlegg"><input type="checkbox" data-overlegg="eiendom"><span><b id="eiendomTxt">Eiendomsgrenser</b><small id="eiendomSub">Kartverket, synlig fra nært hold</small></span></label>
+    <label class="overlegg"><input type="checkbox" data-overlegg="vern"><span><b id="vernTxt">Verneområder</b><small id="vernSub">Miljødirektoratet</small></span></label>
+    <label class="overlegg"><input type="checkbox" data-overlegg="svakis"><span><b id="svakisTxt">Svekket is</b><small id="svakisSub">NVE: der isen ofte er svak. Ingen garanti for trygg is.</small></span></label>
     <div class="lagvalg-hode" id="offHode">Kart uten nett</div>
     <div class="offboks" id="offBoks"><button type="button" class="off-last" id="offLast">Last ned området du ser</button><div class="off-info" id="offInfo"></div><div id="offListe"></div></div>
   </div>
@@ -377,6 +403,7 @@
   <div class="zoomctl">
     <button id="lagBtn" type="button" aria-label="Kartlag" title="Kartlag"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg></button>
     <button id="maalBtn" type="button" aria-label="Lag tur og mål avstand" title="Lag tur og mål avstand"><svg viewBox="0 0 24 24"><path d="M3 17L17 3l4 4L7 21z"/><path d="M7 13l2 2M10 10l2 2M13 7l2 2"/></svg></button>
+    <button id="sporBtn" type="button" aria-label="Registrer turen mens du går" title="Registrer turen mens du går"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle class="rec" cx="12" cy="12" r="3.6"/></svg></button>
     <button id="tegnBtn" type="button" aria-label="Tegnforklaring" title="Tegnforklaring"><svg viewBox="0 0 24 24"><circle cx="6" cy="7" r="1.8"/><circle cx="6" cy="12" r="1.8"/><circle cx="6" cy="17" r="1.8"/><path d="M11 7h8M11 12h8M11 17h8"/></svg></button>
     <button id="zin" aria-label="Zoom inn">+</button>
     <button id="zout" aria-label="Zoom ut">−</button>
@@ -384,6 +411,7 @@
 
   <div class="modustoast" id="modusToast" aria-live="polite"></div>
   <div class="offpille" id="offPille" aria-live="polite"></div>
+  <div class="sporpille" id="sporPille" aria-live="polite"></div>
   <a class="kildelinje" id="kildelinje" href="/om.html#kilder">© Kartverket · OpenStreetMap</a>
   <button class="scrubmini" id="scrubMini" type="button" aria-label="Vis tidsskyveren"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span id="scrubMiniTxt">I dag</span></button>
   <div class="scrub" id="scrub">
@@ -482,7 +510,7 @@ function tx(no, en) { return EN ? en : no; }
   document.getElementById('lagHode').textContent = 'On top of the map';
   document.getElementById('lagBakHode').textContent = 'Background';
   document.getElementById('bakTurTxt').textContent = 'Hiking map'; document.getElementById('bakSatTxt').textContent = 'Satellite';
-  document.getElementById('kalkTxt').textContent = 'Lime in bedrock'; document.getElementById('kalkSub').textContent = 'NGU, on top of the map'; document.getElementById('offHode').textContent = 'Map without coverage'; document.getElementById('offLast').textContent = 'Download the area you see';
+  document.getElementById('kalkTxt').textContent = 'Lime in bedrock'; document.getElementById('kalkSub').textContent = 'NGU, on top of the map'; document.getElementById('offHode').textContent = 'Map without coverage'; document.getElementById('eiendomTxt').textContent = 'Property boundaries'; document.getElementById('eiendomSub').textContent = 'Kartverket, visible up close'; document.getElementById('vernTxt').textContent = 'Protected areas'; document.getElementById('vernSub').textContent = 'Norwegian Environment Agency'; document.getElementById('svakisTxt').textContent = 'Weakened ice'; document.getElementById('svakisSub').textContent = 'NVE: where the ice is often weak. No guarantee of safe ice.'; document.getElementById('maalImporter').textContent = 'Import GPX'; document.getElementById('sporBtn').setAttribute('aria-label', 'Record the trip as you walk'); document.getElementById('sporBtn').title = 'Record the trip as you walk'; document.getElementById('offLast').textContent = 'Download the area you see';
   document.getElementById('tegnBtn').setAttribute('aria-label', 'Map legend'); document.getElementById('tegnBtn').title = 'Map legend';
   document.getElementById('shFav').setAttribute('aria-label', 'Add to favourites');
   document.getElementById('shOpen').textContent = 'Open the forecast';
@@ -809,6 +837,7 @@ map.on('load', function () {
 
 function onMapClick(e) {
   if (maaling) { maalLeggTil([e.lngLat.lng, e.lngLat.lat]); return; }   // målemodus: trykk = nytt punkt
+  if (window.hwPunktKlikk && hwPunktKlikk(e)) return;                  // egne punkter, dagboklogger, trykk-og-hold (kart-tur.js)
   var pad = 8, box = [[e.point.x - pad, e.point.y - pad], [e.point.x + pad, e.point.y + pad]];
   var c = map.queryRenderedFeatures(box, { layers: ['loc-cluster'] })[0];
   if (c && mode === 'flue') {
@@ -975,7 +1004,19 @@ function settKalk(paa) {
   document.getElementById('kalkBryter').checked = paa;
   paintScrub();   // tegnforklaringen
 }
-var STANDARD_LAG = ['wood', 'glacier', 'res', 'water', 'waterway', 'road-minor', 'road-major', 'rail', 'boundary', 'steder', 'topper', 'vann-navn', 'vann-navn-store'];
+var WMS3857 = '&styles=&format=image/png&transparent=true&crs=EPSG:3857&width=256&height=256&bbox={bbox-epsg-3857}';
+var OVERLEGG = {
+  eiendom: { min: 13, url: 'https://wms.geonorge.no/skwms1/wms.matrikkelkart?service=WMS&version=1.3.0&request=GetMap&layers=eiendomsgrense' + WMS3857 },
+  vern: { min: 5, op: 0.55, url: 'https://kart.miljodirektoratet.no/arcgis/services/vern/mapserver/WMSServer?service=WMS&version=1.3.0&request=GetMap&layers=naturvern_omrade' + WMS3857 },
+  svakis: { min: 8, url: 'https://kart.nve.no/enterprise/services/SvekketIs1/MapServer/WMSServer?service=WMS&version=1.3.0&request=GetMap&layers=SvekketIs,SvekketIsElv,OppsprukketIsLangsLand' + WMS3857 }
+};
+var OVERLEGG_PAA = {};
+try { OVERLEGG_PAA = JSON.parse(localStorage.getItem('hw_overlegg') || '{}') || {}; } catch (e) {}
+function settOverlegg(k, paa) {
+  OVERLEGG_PAA[k] = paa ? 1 : 0;
+  try { localStorage.setItem('hw_overlegg', JSON.stringify(OVERLEGG_PAA)); } catch (e) {}
+  if (map.getLayer('ov-' + k)) map.setLayoutProperty('ov-' + k, 'visibility', paa ? 'visible' : 'none');
+}var STANDARD_LAG = ['wood', 'glacier', 'res', 'water', 'waterway', 'road-minor', 'road-major', 'rail', 'boundary', 'steder', 'topper', 'vann-navn', 'vann-navn-store'];
 var OFF = window.hwOff ? 'hwoff://' : 'https://';
 function leggTilTurkart() {
   map.addSource('kv-topo', { type: 'raster', tileSize: 256, maxzoom: 18, attribution: '© <a href="https://www.kartverket.no/" target="_blank" rel="noopener">Kartverket</a>',
@@ -1025,6 +1066,13 @@ function leggTilTurkart() {
   map.addSource('eox-sat', { type: 'raster', tileSize: 256, maxzoom: 14, tiles: ['https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/{z}/{y}/{x}.jpg'] });
   map.addLayer({ id: 'eox-sat', type: 'raster', source: 'eox-sat', layout: { visibility: 'none' } }, 'vann-fill');
   map.addLayer({ id: 'ngu-kalk', type: 'raster', source: 'ngu-kalk', layout: { visibility: KALK ? 'visible' : 'none' }, paint: { 'raster-opacity': 0.6 } }, 'vann-fill');
+  // Flere kartlag (2026-10-16, Stian): eiendomsgrenser (Kartverket Matrikkelkart WMS, åpne data CC BY 4.0),
+  // verneområder (Miljødirektoratet, NLOD) og svekket is (NVE SvekketIs1, NLOD). Av/på i kartlagmenyen (hw_overlegg).
+  Object.keys(OVERLEGG).forEach(function (k) {
+    var o = OVERLEGG[k];
+    map.addSource('ov-' + k, { type: 'raster', tileSize: 256, minzoom: o.min || 0, tiles: [o.url] });
+    map.addLayer({ id: 'ov-' + k, type: 'raster', source: 'ov-' + k, minzoom: o.min || 0, layout: { visibility: OVERLEGG_PAA[k] ? 'visible' : 'none' }, paint: { 'raster-opacity': o.op || 1 } }, 'vann-navn');
+  });
   // Dybdekart (2026-10-14): NVEs dybdekoter og loddpunkter (Innsjødatabase2) fra zoom 12, i begge kartlagene.
   // Finnes digitalt for ca. 530 vann; de andre har bare PDF (lenke på vannsiden). NVE tegner bare under 1:160 000.
   // Standard: bare kotene (loddpunktene ble for mye oppå isgangfargen). Turkart: koter og loddpunkter.
@@ -1213,8 +1261,10 @@ function maalTotal() { var s = 0; for (var i = 1; i < maalPunkter.length; i++) s
 function maalGeo() {
   var f = [];
   if (maalPunkter.length >= 2) f.push({ type: 'Feature', properties: { k: 'linje' }, geometry: { type: 'LineString', coordinates: maalPunkter } });
-  maalPunkter.forEach(function (p, i) { f.push({ type: 'Feature', properties: { k: 'punkt', forste: i === 0 ? 1 : 0 }, geometry: { type: 'Point', coordinates: p } }); });
-  for (var i = 1; i < maalPunkter.length && maalPunkter.length > 2; i++) {
+  // Lange streker (registrert spor eller importert GPX, 2026-10-16): bare start- og sluttpunkt, ingen delavstander
+  var langt = maalPunkter.length > 25;
+  maalPunkter.forEach(function (p, i) { if (langt && i > 0 && i < maalPunkter.length - 1) return; f.push({ type: 'Feature', properties: { k: 'punkt', forste: i === 0 ? 1 : 0 }, geometry: { type: 'Point', coordinates: p } }); });
+  for (var i = 1; i < maalPunkter.length && maalPunkter.length > 2 && !langt; i++) {
     var a = maalPunkter[i - 1], b = maalPunkter[i];
     f.push({ type: 'Feature', properties: { k: 'etikett', t: maalFmt(maalLengde(a, b)) }, geometry: { type: 'Point', coordinates: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2] } });
   }
@@ -1239,6 +1289,7 @@ function maalTegn() {
   document.getElementById('maalHoyde').disabled = n < 2;
   oppdaterLagre();
   document.getElementById('maalDel').disabled = n < 2;
+  document.getElementById('maalGpx').disabled = n < 2;
   document.getElementById('maalProfil').innerHTML = '';
   document.getElementById('maalStatus').textContent = turNavn ? tx('Tur: ', 'Trip: ') + turNavn : '';
   sisteTur = null;
@@ -1560,6 +1611,7 @@ document.addEventListener('click', function (e) {
 });
 document.getElementById('kalkBryter').checked = KALK;
 document.getElementById('kalkBryter').addEventListener('change', function () { settKalk(this.checked); });
+document.querySelectorAll('#lagValg input[data-overlegg]').forEach(function (b) { var k = b.getAttribute('data-overlegg'); b.checked = !!OVERLEGG_PAA[k]; b.addEventListener('change', function () { settOverlegg(k, this.checked); }); });
 
 // ═══ MODUS ═══
 function applyMode() {
@@ -2036,6 +2088,7 @@ if (window.ResizeObserver) {
 }
 if (location.hash === '#sesong') { if (mode === 'laks') openElvPanel(); else openSesong(); }
 </script>
+<script src="/kart-tur.js"></script>   <!-- egne punkter, trykk og hold, GPX, GPS-spor (2026-10-16) -->
 <script src="/hw-shell.js"></script>
 <script>
 // PWA: forsiden er inngangsdøra — den registrerer service workeren.
