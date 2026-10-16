@@ -187,7 +187,7 @@
             <p data-i18n="funnet">Vi sier alltid tydelig om en art er funnet i vannet eller ikke. Står det «Ikke registrert her», gjelder anslaget bare hvis arten faktisk finnes der.</p>
 
             <h2 data-i18n="isH">Isgang fra satellitt</h2>
-            <p data-i18n="isP">Vi leser isgangen fra Sentinel-2-bilder for hvert vann over 10 hektar, år for år tilbake til 2017. Om våren sjekkes hvert vann annenhver dag. Typisk bom er 4–5 dager mot målt isgang; skyer kan gjøre tidsrommet lengre. Før satellitten har sett isen gå, anslår vi isgangen ut fra hvor mye varme akkurat det vannet pleier å trenge.</p>
+            <p data-i18n="isP">Vi leser isgangen fra Sentinel-2-bilder for hvert vann over 10 hektar, år for år tilbake til 2017. Om våren sjekkes hvert vann annenhver dag. Typisk bom er 4–5 dager mot målt isgang; skyer kan gjøre tidsrommet lengre. Før satellitten har sett isen gå, anslår vi isgangen ut fra hvor mye varme akkurat det vannet pleier å trenge, justert for hvor mye snø som ligger.</p>
 
             <h2 data-i18n="spinH">Spinnerfall og forhold</h2>
             <p data-i18n="spinP">Spinnerfall-vakta ser på kveldsværet (vind, vindkast, temperatur, skyer, regn, fuktighet og trykk) de ukene vulgata er i sesong. Den bygger på fluefiskelitteratur og er ikke kalibrert mot observasjoner ennå.</p>
@@ -211,7 +211,7 @@
                 <li data-i18n-html="src1"><b>MET Norge</b>: målt vær og værvarsel for stedene med egen prognose</li>
                 <li data-i18n-html="src2"><b>Open-Meteo</b> (ERA5 og værmodeller): vær ved hvert enkelt vann</li>
                 <li data-i18n-html="src3"><b>NVE</b>: vanntemperatur og vannføring, innsjødatabasen og dybdekart</li>
-                <li data-i18n-html="src4"><b>seNorge</b> (NVE og MET): snødybde</li>
+                <li data-i18n-html="src4"><b>seNorge</b> (NVE og MET): snødybde og snømengde</li>
                 <li data-i18n-html="src5"><b>Copernicus Sentinel-2</b> via Google Earth Engine: isgang, behandlet av HatchWatch</li>
                 <li data-i18n-html="src6"><b>Artsdatabanken</b> og <b>NINA</b> via GBIF: insekter, krepsdyr og fisk registrert per vann</li>
                 <li data-i18n-html="src7"><b>Kartverket</b>: turkart, turruter og høydedata</li>
@@ -272,7 +272,7 @@
         art4: '<b>Tadpole shrimp and freshwater shrimp</b> are shown where they have been found, with the periods from Norwegian research on Hardangervidda.',
         funnet: 'We always say clearly whether a species has been found in the lake. If it says “Not recorded here”, the estimate only applies if the species actually lives there.',
         isH: 'Ice-out from satellite',
-        isP: 'We read ice-out from Sentinel-2 images for every lake over 10 hectares, year by year back to 2017. In spring every lake is checked every other day. The typical error is 4–5 days against measured ice-out; clouds can make the period longer. Before the satellite has seen the ice go, we estimate ice-out from how much warmth that particular lake usually needs.',
+        isP: 'We read ice-out from Sentinel-2 images for every lake over 10 hectares, year by year back to 2017. In spring every lake is checked every other day. The typical error is 4–5 days against measured ice-out; clouds can make the period longer. Before the satellite has seen the ice go, we estimate ice-out from how much warmth that particular lake usually needs, adjusted for how much snow is lying.',
         spinH: 'Spinner fall and conditions',
         spinP: 'The spinner fall watch looks at the evening weather (wind, gusts, temperature, cloud, rain, humidity and pressure) in the weeks vulgata is in season. It is based on fly fishing literature and is not yet calibrated against observations.',
         laksH: 'Salmon',
@@ -287,7 +287,7 @@
         src1: '<b>MET Norway</b>: measured weather and forecasts for the places with their own forecast',
         src2: '<b>Open-Meteo</b> (ERA5 and weather models): weather at each individual lake',
         src3: '<b>NVE</b>: water temperature and flow, the lake database and depth maps',
-        src4: '<b>seNorge</b> (NVE and MET): snow depth',
+        src4: '<b>seNorge</b> (NVE and MET): snow depth and snow amount',
         src5: '<b>Copernicus Sentinel-2</b> via Google Earth Engine: ice-out, processed by HatchWatch',
         src6: '<b>Artsdatabanken</b> and <b>NINA</b> via GBIF: insects, crustaceans and fish recorded per lake',
         src7: '<b>Norwegian Mapping Authority</b>: hiking map, trails and elevation data',

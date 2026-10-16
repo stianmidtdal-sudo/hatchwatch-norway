@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-itunes-app" content="app-id=6817913220">
+<title>Fangstdagbok — HatchWatch</title>
+<meta name="theme-color" content="#f2f6f5">
+<meta name="description" content="Din egen fangstdagbok: sted, vær og modellens anslag lagres med ett trykk.">
+<link rel="icon" type="image/png" sizes="32x32" href="/logos/favicon-32.png?v=2">
+<link rel="apple-touch-icon" href="/logos/apple-touch-icon-180.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="stylesheet" href="/hw.css">
+<script src="/hw-lang.js"></script>
+<style>
+  /* ═══ FANGSTDAGBOK (2026-10-16, Stian «kjør») ═══
+     «Logg nå» lagrer tid og posisjon straks, og fyller så inn nærmeste vann (data/kart/vannpunkt.json),
+     været den timen og kvelden (open-meteo), berggrunn (NGU) og modellens anslag den dagen
+     (lib/vannmodell.js = samme regler som vannsiden og varslene). Uten nett fylles resten inn senere.
+     Lagres bare på telefonen (localStorage hw_dagbok). Eksport: CSV som åpnes i Excel. */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { min-height: 100vh; }
+  .top { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: center; padding: calc(env(safe-area-inset-top, 0px) + 10px) 16px 10px; background: color-mix(in srgb, var(--hw-bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--hw-line); }
+  .top .brand { display: flex; align-items: center; gap: 6px; color: var(--hw-fg); text-decoration: none; font-family: var(--hw-display); font-weight: 700; font-size: 17px; letter-spacing: -.02em; }
+  .top .brand b { color: var(--hw-hatch); font-weight: 700; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 18px 16px 40px; }
+  h1 { font-family: var(--hw-display); font-weight: 800; font-size: 34px; letter-spacing: -.03em; line-height: 1.05; margin-top: 6px; }
+  .sub { color: var(--hw-fg-2); font-size: 14px; margin-top: 6px; line-height: 1.5; }
+  .logg { width: 100%; margin-top: 16px; padding: 18px; font-size: 18px; border-radius: 16px; }
+  .logg svg { width: 22px; height: 22px; }
+  .verktoy { display: flex; gap: 8px; align-items: center; margin-top: 22px; flex-wrap: wrap; }
+  .verktoy select { flex: 1; min-width: 120px; }
+  select, input[type=text], input[type=number], input[type=datetime-local], textarea {
+    font: inherit; font-size: 15px; color: var(--hw-fg); background: var(--hw-bg-2); border: 1px solid var(--hw-line);
+    border-radius: 12px; padding: 10px 12px; width: 100%; }
+  textarea { min-height: 80px; resize: vertical; }
+  .tom { text-align: center; color: var(--hw-fg-2); font-size: 14px; line-height: 1.55; padding: 36px 12px; }
+  .liste { display: grid; gap: 10px; margin-top: 14px; }
+  .post { text-align: left; width: 100%; font: inherit; color: inherit; cursor: pointer; background: var(--hw-bg-2); border: 1px solid var(--hw-line); border-radius: 16px; padding: 14px; display: grid; gap: 4px; }
+  .post .t { font-family: var(--hw-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--hw-fg-3); }
+  .post .n { font-family: var(--hw-display); font-weight: 700; font-size: 18px; letter-spacing: -.01em; }
+  .post .l { font-size: 13px; color: var(--hw-fg-2); line-height: 1.45; }
+  .post .l b { color: var(--hw-fg); font-weight: 600; }
+  .post .m { font-size: 13px; color: var(--hw-hatch); }
+  .post .venter { color: var(--hw-fg-3); font-style: italic; }
+  .note { font-size: 12.5px; color: var(--hw-fg-3); line-height: 1.5; margin-top: 14px; }
+  .note a { color: var(--hw-water); }
+
+  /* Arket (skjemaet) */
+  .ark-bak { position: fixed; inset: 0; z-index: 1000; background: rgba(10, 20, 20, .35); display: none; }
+  .ark-bak.open { display: block; }
+  .ark { position: fixed; left: 0; right: 0; bottom: 0; z-index: 1001; max-height: 92vh; overflow-y: auto; overscroll-behavior: contain;
+    background: var(--hw-bg); border-radius: 20px 20px 0 0; box-shadow: var(--hw-shadow); padding: 8px 16px calc(env(safe-area-inset-bottom, 0px) + 20px);
+    transform: translateY(105%); transition: transform .22s ease; max-width: 720px; margin: 0 auto; }
+  .ark.open { transform: none; }
+  .ark .grep { width: 40px; height: 4px; border-radius: 2px; background: var(--hw-line); margin: 4px auto 10px; }
+  .ark-hode { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .ark-hode h2 { font-family: var(--hw-display); font-weight: 800; font-size: 22px; letter-spacing: -.02em; }
+  .lukk { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--hw-line); background: var(--hw-bg-2); color: var(--hw-fg); font-size: 20px; line-height: 1; cursor: pointer; }
+  .felt { margin-top: 16px; }
+  .felt > label, .felt > .hw-eyebrow { display: block; margin-bottom: 6px; }
+  .auto { background: var(--hw-bg-2); border: 1px solid var(--hw-line); border-radius: 14px; padding: 12px; margin-top: 12px; display: grid; gap: 6px; font-size: 13.5px; color: var(--hw-fg-2); line-height: 1.45; }
+  .auto b { color: var(--hw-fg); font-weight: 600; }
+  .auto .rad { display: grid; grid-template-columns: 92px 1fr; gap: 8px; }
+  .auto .rad > span:first-child { font-family: var(--hw-mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--hw-fg-3); padding-top: 2px; }
+  .auto .liten { font-size: 11.5px; color: var(--hw-fg-3); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { font: inherit; font-size: 14px; padding: 8px 13px; border-radius: 999px; border: 1px solid var(--hw-line); background: var(--hw-bg-2); color: var(--hw-fg-2); cursor: pointer; }
+  .chip.on { background: var(--hw-hatch-soft); border-color: var(--hw-hatch); color: var(--hw-fg); font-weight: 600; }
+  .fisk { display: grid; grid-template-columns: 1fr 64px 74px 32px; gap: 6px; align-items: center; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--hw-line); }
+  .fisk .flue { grid-column: 1 / 3; }
+  .fisk .ut { grid-column: 3 / 5; display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--hw-fg-2); }
+  .fisk .ut input { width: 18px; height: 18px; accent-color: var(--hw-hatch); }
+  .fisk .fjern { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--hw-line); background: none; color: var(--hw-fg-2); font-size: 18px; cursor: pointer; }
+  .knapper { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 20px; }
+  .knapper .hw-btn { flex: 1; }
+  .slett { color: var(--hw-bad) !important; }
+  @media (max-width: 420px) { h1 { font-size: 30px; } }
+</style>
+</head>
+<body class="hw-dark">
+
+<header class="top">
+  <a class="brand" href="/" aria-label="HatchWatch"><span class="hw-fly" style="width:26px;color:var(--hw-hatch)" aria-hidden="true"></span><span>Hatch<b>Watch</b></span></a>
+</header>
+
+<main class="wrap">
+  <div class="hw-eyebrow gold" id="eyebrow">Din egen</div>
+  <h1 id="tittel">Fangstdagbok</h1>
+  <p class="sub" id="ingress">Ett trykk ved vannet lagrer tid, sted, vær og hva modellen anslo den dagen. Du legger til det du så og fikk. Alt lagres bare på denne telefonen.</p>
+  <button class="hw-btn primary logg" id="loggNa" type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span id="loggTxt">Logg nå</span></button>
+
+  <div class="verktoy" id="verktoy" hidden>
+    <select id="aarValg" aria-label="År"></select>
+    <button class="hw-btn ghost" id="eksport" type="button"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg><span id="eksportTxt">Last ned som Excel</span></button>
+  </div>
+  <div class="liste" id="liste"></div>
+  <p class="note" id="fot">Dagboka ligger bare på denne telefonen og forsvinner hvis du sletter appen eller nettleserdataene. Last ned som Excel innimellom, så har du en sikkerhetskopi. Været er fra open-meteo, berggrunnen fra NGU, og anslagene er modellens, ikke observert klekking. <a href="/om.html#kilder">Kilder</a></p>
+</main>
+
+<div class="ark-bak" id="arkBak"></div>
+<div class="ark" id="ark" role="dialog" aria-modal="true" aria-labelledby="arkTittel"></div>
+
+<datalist id="fiskeliste"></datalist>
+
+<script type="module">
+import { regnVann, spinnerfallSjanse, datoTekst } from '/lib/vannmodell.js';
+
+const EN = window.HW_LANG === 'en';
+const tx = (no, en) => EN ? en : no;
+const NOKKEL = 'hw_dagbok';
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const tall = (x, d = 1) => x == null ? '' : (EN ? (+x).toFixed(d) : (+x).toFixed(d).replace('.', ','));
+
+// ── Lagring ──────────────────────────────────────────────────────────
+function les() { try { const v = JSON.parse(localStorage.getItem(NOKKEL) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
+function lagre(alle) { try { localStorage.setItem(NOKKEL, JSON.stringify(alle)); } catch (e) { alert(tx('Fikk ikke lagret på telefonen (lagringen er full eller sperret).', 'Could not save on this phone (storage is full or blocked).')); } }
+function hent(id) { return les().find((e) => e.id === id); }
+function oppdater(id, fn) {
+  const alle = les(), i = alle.findIndex((e) => e.id === id);
+  if (i < 0) return null;
+  fn(alle[i]); lagre(alle); return alle[i];
+}
+
+// ── Tid (alltid norsk tid, også når telefonen står i en annen sone) ────
+const osloFmt = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Oslo', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
+function oslo(iso) {
+  const p = {}; osloFmt.formatToParts(new Date(iso)).forEach((x) => { p[x.type] = x.value; });
+  const time = parseInt(p.hour, 10) % 24, min = parseInt(p.minute, 10);
+  return { dato: `${p.year}-${p.month}-${p.day}`, time, min, aar: +p.year, hhmm: `${String(time).padStart(2, '0')}:${p.minute}` };
+}
+function doy(dato) { const [y, m, d] = dato.split('-').map(Number); return Math.round((Date.UTC(y, m - 1, d) - Date.UTC(y, 0, 1)) / 864e5) + 1; }
+const MND = EN ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] : ['jan', 'feb', 'mars', 'april', 'mai', 'juni', 'juli', 'aug', 'sep', 'okt', 'nov', 'des'];
+function datoPen(dato) { const [y, m, d] = dato.split('-').map(Number); return EN ? `${d} ${MND[m - 1]} ${y}` : `${d}. ${MND[m - 1]} ${y}`; }
+
+// ── Nærmeste vann ────────────────────────────────────────────────────
+let punktP = null;
+function punkter() { return punktP || (punktP = fetch('/data/kart/vannpunkt.json').then((r) => r.ok ? r.json() : Promise.reject()).catch((e) => { punktP = null; throw e; })); }
+const grupper = {};
+function vannRec(id) {
+  const g = id % 64;
+  return (grupper[g] || (grupper[g] = fetch(`/data/kart/vann/${g}.json`).then((r) => r.ok ? r.json() : Promise.reject()).catch((e) => { delete grupper[g]; throw e; })))
+    .then((j) => j[String(id)] || null);
+}
+function avstand(la1, lo1, la2, lo2) {
+  const R = 6371000, r = Math.PI / 180, dla = (la2 - la1) * r, dlo = (lo2 - lo1) * r;
+  const a = Math.sin(dla / 2) ** 2 + Math.cos(la1 * r) * Math.cos(la2 * r) * Math.sin(dlo / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+async function naereVann(lat, lon) {
+  const f = await punkter(), kand = [];
+  for (let i = 0; i < f.length; i += 3) {
+    const la = f[i + 1] / 1e4, lo = f[i + 2] / 1e4;
+    if (Math.abs(la - lat) > 0.06 || Math.abs(lo - lon) > 0.12) continue;
+    kand.push({ id: f[i], d: avstand(lat, lon, la, lo) });
+  }
+  kand.sort((a, b) => a.d - b.d);
+  const ut = [];
+  for (const k of kand.slice(0, 6)) {
+    if (k.d > 5000) break;
+    const v = await vannRec(k.id);
+    if (v) ut.push({ id: k.id, navn: v.navn || '', moh: v.moh, ha: v.ha, kommune: v.kommune, lat: v.lat, lon: v.lon, avst: Math.round(k.d) });
+  }
+  return ut;
+}
+function vannNavn(v) { return v ? (v.navn || tx('Vann uten navn', 'Unnamed lake') + ' (NVE ' + v.id + ')') : ''; }
+
+// ── Vær (open-meteo) ─────────────────────────────────────────────────
+const RETN = EN ? ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] : ['N', 'NØ', 'Ø', 'SØ', 'S', 'SV', 'V', 'NV'];
+const retning = (g) => g == null ? '' : RETN[Math.round(g / 45) % 8];
+const r1 = (x) => Math.round(x * 10) / 10;
+const snitt = (a) => { const b = a.filter((x) => x != null); return b.length ? b.reduce((s, x) => s + x, 0) / b.length : null; };
+async function hentVaer(lat, lon, iso) {
+  const o = oslo(iso), alder = (Date.now() - new Date(iso)) / 864e5;
+  const H = 'temperature_2m,relative_humidity_2m,precipitation,cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m';
+  const base = alder <= 80 ? 'https://api.open-meteo.com/v1/forecast' : 'https://archive-api.open-meteo.com/v1/archive';
+  const r = await fetch(`${base}?latitude=${lat.toFixed(4)}&longitude=${lon.toFixed(4)}&hourly=${H}&daily=sunset&timezone=Europe%2FOslo&wind_speed_unit=ms&start_date=${o.dato}&end_date=${o.dato}`);
+  if (!r.ok) throw new Error('open-meteo ' + r.status);
+  const j = await r.json(), h = j.hourly;
+  if (!h || !h.time) throw new Error('tomt svar');
+  const t = Math.min(23, o.time + (o.min >= 30 ? 1 : 0)), v = (k, i) => h[k] ? h[k][i] : null;
+  if (v('temperature_2m', t) == null) throw new Error('ingen data for timen');
+  const kv = (k) => [19, 20, 21, 22].map((i) => v(k, i));
+  const pKveld = snitt(kv('pressure_msl')), pEtterm = snitt([13, 14, 15, 16].map((i) => v('pressure_msl', i)));
+  const kveld = v('temperature_2m', 19) == null ? null : {   // samme form som /api/spinnerfall (kveld 19–22)
+    wind: r1(snitt(kv('wind_speed_10m'))), gust: snitt(kv('wind_gusts_10m')) == null ? null : r1(snitt(kv('wind_gusts_10m'))),
+    temp: r1(snitt(kv('temperature_2m'))), cloud: Math.round(snitt(kv('cloud_cover'))),
+    precip: r1(kv('precipitation').reduce((s, x) => s + (x || 0), 0)), humid: Math.round(snitt(kv('relative_humidity_2m'))),
+    pressureTrend: pKveld != null && pEtterm != null ? r1(pKveld - pEtterm) : null,
+  };
+  const sol = j.daily && j.daily.sunset && j.daily.sunset[0];
+  return {
+    temp: r1(v('temperature_2m', t)), vind: r1(v('wind_speed_10m', t)), kast: v('wind_gusts_10m', t) == null ? null : r1(v('wind_gusts_10m', t)),
+    retn: v('wind_direction_10m', t), sky: v('cloud_cover', t), nedbor: v('precipitation', t), fukt: v('relative_humidity_2m', t),
+    trykk: v('pressure_msl', t) == null ? null : Math.round(v('pressure_msl', t)),
+    trend: t >= 3 && v('pressure_msl', t) != null && v('pressure_msl', t - 3) != null ? r1(v('pressure_msl', t) - v('pressure_msl', t - 3)) : null,
+    sol: sol ? sol.slice(11, 16) : null, kveld,
+  };
+}
+function vaerTekst(w) {
+  if (!w) return '';
+  const deler = [`<b>${tall(w.temp)} °C</b>`, `${tall(w.vind)} m/s ${retning(w.retn)}` + (w.kast != null ? ` (${tx('kast', 'gusts')} ${tall(w.kast, 0)})` : ''), `${Math.round(w.sky)} % ${tx('skyer', 'cloud')}`];
+  if (w.nedbor > 0) deler.push(`${tall(w.nedbor)} mm`);
+  if (w.trykk) deler.push(`${w.trykk} hPa` + (w.trend != null ? ` (${w.trend > 0 ? '+' : ''}${tall(w.trend)} ${tx('siste 3 t', 'last 3 h')})` : ''));
+  return deler.join(' · ');
+}
+
+// ── Berggrunn (NGU, samme spørring som vannsiden) ──────────────────────
+const KALK_EN = { 1: 'Very lime-poor', 2: 'Lime-poor', 3: 'Intermediate', 4: 'Lime-rich', 5: 'Very lime-rich' };
+async function hentBerg(lat, lon) {
+  const x = lon * 20037508.34 / 180, y = Math.log(Math.tan((90 + lat) * Math.PI / 360)) * 6378137, r = 50;
+  const u = 'https://geo.ngu.no/mapserver/BerggrunnOkologiWMS?service=WMS&version=1.3.0&request=GetFeatureInfo&layers=Kalkinnhold_N250&query_layers=Kalkinnhold_N250&styles=&crs=EPSG:3857' +
+    '&bbox=' + [x - r, y - r, x + r, y + r].join(',') + '&width=101&height=101&i=50&j=50&info_format=application%2Fvnd.ogc.gml&feature_count=1';
+  const res = await fetch(u);
+  if (!res.ok) throw new Error('NGU ' + res.status);
+  const d = new DOMParser().parseFromString(await res.text(), 'text/xml');
+  const f = (n) => { const e = d.getElementsByTagName(n)[0]; return e ? e.textContent.trim() : ''; };
+  const kl = parseInt(f('kalkinnhold_hovedbergart'), 10);
+  return kl ? { kl, tekst: f('kalkinnhold_tekst'), bergart: f('hovedbergart_tekst') } : { kl: null };
+}
+const bergTekst = (b) => !b || !b.kl ? '' : (EN ? KALK_EN[b.kl] || b.tekst : b.tekst) + (b.bergart && !EN ? ' · ' + b.bergart.toLowerCase() : '');
+
+// ── Modellens anslag den dagen ────────────────────────────────────────
+// Fasene som på vannsiden: marginata start → +7, vespertina +7 → +21, vulgata start → +21, grandis «fra ca.».
+function faser(e) {
+  const m = e.modell; if (!m) return [];
+  const L = doy(oslo(e.t).dato), ut = [];
+  const fase = (navn, fra, til) => {
+    if (fra == null) return;
+    if (L < fra) ut.push({ navn, tekst: tx(`om ${fra - L} d`, `in ${fra - L} d`), naa: false, om: fra - L });
+    else if (til == null) ut.push({ navn, tekst: tx('flyr', 'flying'), naa: true });
+    else if (L <= til) ut.push({ navn, tekst: tx(`dag ${L - fra + 1}`, `day ${L - fra + 1}`), naa: true });
+    else ut.push({ navn, tekst: tx('over', 'over'), naa: false, over: true });
+  };
+  fase('Marginata', m.marg, m.marg != null ? m.marg + 7 : null);
+  fase('Vespertina', m.marg != null ? m.marg + 7 : null, m.marg != null ? m.marg + 21 : null);
+  fase('Vulgata', m.vulg, m.vulg != null ? m.vulg + 21 : null);
+  fase('Grandis', m.grand, null);
+  return ut;
+}
+function modellLinje(e) {
+  const f = faser(e), naa = f.filter((x) => x.naa);
+  let s = naa.length ? naa.map((x) => `${x.navn} ${x.tekst}`).join(' · ') : '';
+  if (!naa.length) { const neste = f.filter((x) => x.om).sort((a, b) => a.om - b.om)[0]; if (neste) s = tx('neste: ', 'next: ') + `${neste.navn} ${neste.tekst}`; }
+  if (e.modell && e.modell.spinner != null && e.modell.spinner > 0) s += (s ? ' · ' : '') + tx('spinnerfall i kveld ', 'spinner fall tonight ') + Math.round(e.modell.spinner * 100) + ' %';
+  return s ? tx('Modellen anslo: ', 'The model estimated: ') + s : '';
+}
+function isgangTekst(e) {
+  const m = e.modell; if (!m || m.isg == null) return '';
+  const L = doy(oslo(e.t).dato), d = datoTekst(m.S, m.isg, EN);
+  const kilde = m.isgSat ? tx('satellitt', 'satellite') : tx('anslått', 'estimated');
+  return L >= m.isg ? tx(`${d} (${kilde}), ${L - m.isg} dager før`, `${d} (${kilde}), ${L - m.isg} days before`) : tx(`${d} (${kilde}), ikke gått ennå`, `${d} (${kilde}), not yet gone`);
+}
+
+// ── Fyll inn det som mangler (kjøres ved logging, ved oppstart og når nettet kommer tilbake) ──
+const pagaar = new Set();
+function koord(e) { return e.pos ? e.pos : e.vann && e.vann.lat != null ? { lat: e.vann.lat, lon: e.vann.lon } : null; }
+async function berik(id) {
+  if (pagaar.has(id)) return; pagaar.add(id);
+  try {
+    let e = hent(id); if (!e) return;
+    if (e.pos && !e.vannSjekket) {
+      try {
+        const n = await naereVann(e.pos.lat, e.pos.lon);
+        e = oppdater(id, (x) => { x.naer = n; x.vannSjekket = true; if (!x.vann && n[0] && n[0].avst <= 1500) { x.vann = n[0]; if (!x.sted) x.sted = vannNavn(n[0]); } });
+        vis(id);
+      } catch (err) { /* uten nett: prøv igjen senere */ }
+    }
+    const k = koord(e);
+    if (k && !e.vaer) {
+      try { const w = await hentVaer(k.lat, k.lon, e.t); e = oppdater(id, (x) => { x.vaer = w; }); vis(id); } catch (err) {}
+    }
+    if (k && !e.berg) {
+      try { const b = await hentBerg(k.lat, k.lon); e = oppdater(id, (x) => { x.berg = b; }); vis(id); } catch (err) {}
+    }
+    if (e.vann && (!e.modell || e.modell.vannId !== e.vann.id)) {
+      try {
+        const v = await vannRec(e.vann.id);
+        if (v) {
+          const m = await regnVann(v, new Date(e.t));
+          if (!m.feil) {
+            e = oppdater(id, (x) => { x.modell = { vannId: e.vann.id, S: m.S, isg: m.isgang ? m.isgang.doy : null, isgSat: !!(m.isgang && m.isgang.sat), marg: m.marginata, vulg: m.vulgata, grand: m.grandis == null ? null : m.grandis, spinner: null }; });
+            vis(id);
+          }
+        }
+      } catch (err) {}
+    }
+    if (e.modell && e.modell.spinner == null && e.vaer && e.vaer.kveld && e.modell.vulg != null) {
+      const p = spinnerfallSjanse(e.vaer.kveld, doy(oslo(e.t).dato) - e.modell.vulg);
+      e = oppdater(id, (x) => { x.modell.spinner = Math.round(p * 100) / 100; }); vis(id);
+    }
+  } finally { pagaar.delete(id); }
+}
+function mangler(e) { return (e.pos && !e.vannSjekket) || (koord(e) && (!e.vaer || !e.berg)) || (e.vann && !e.modell); }
+function berikAlle() { les().filter(mangler).forEach((e) => berik(e.id)); }
+
+// ── Logg nå ──────────────────────────────────────────────────────────
+function posisjon() {
+  return new Promise((ok) => {
+    if (!navigator.geolocation) return ok({ feil: tx('Telefonen gir ikke posisjon.', 'The phone gives no position.') });
+    navigator.geolocation.getCurrentPosition(
+      (p) => ok({ lat: +p.coords.latitude.toFixed(5), lon: +p.coords.longitude.toFixed(5), acc: Math.round(p.coords.accuracy) }),
+      (err) => ok({ feil: err.code === 1 ? tx('Du har ikke gitt tilgang til posisjon.', 'You have not allowed location access.') : tx('Fant ikke posisjonen.', 'Could not find your position.') }),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+  });
+}
+async function loggNa() {
+  const e = { id: 'd' + Date.now().toString(36), t: new Date().toISOString(), pos: null, vann: null, sted: '', obs: [], insekt: [], fangst: [], notat: '', henterPos: true };
+  const alle = les(); alle.push(e); lagre(alle);
+  tegnListe(); aapne(e.id);
+  const p = await posisjon();
+  oppdater(e.id, (x) => { x.henterPos = false; if (p.feil) x.posFeil = p.feil; else x.pos = p; });
+  vis(e.id);
+  berik(e.id);
+}
+
+// ── Liste ────────────────────────────────────────────────────────────
+function fangstTekst(f) {
+  if (!f || !f.length) return '';
+  const n = f.reduce((s, x) => s + (+x.antall || 1), 0);
+  const perArt = {};
+  f.forEach((x) => { const a = (x.art || tx('fisk', 'fish')).trim(); perArt[a] = (perArt[a] || 0) + (+x.antall || 1); });
+  const l = f.map((x) => +x.lengde).filter((x) => x > 0);
+  return `<b>${n} ${n === 1 ? tx('fisk', 'fish') : tx('fisk', 'fish')}</b>: ` + Object.entries(perArt).map(([a, k]) => `${k} ${esc(a.toLowerCase())}`).join(', ') +
+    (l.length ? ` (${l.length === 1 ? l[0] : Math.min(...l) + '–' + Math.max(...l)} cm)` : '');
+}
+const OBS = [['klekking', 'Klekking', 'Hatch'], ['spinnerfall', 'Spinnerfall', 'Spinner fall'], ['vak', 'Vak', 'Rises'], ['lite', 'Lite aktivitet', 'Little activity']];
+const INSEKT = [['marginata', 'Marginata'], ['vespertina', 'Vespertina'], ['vulgata', 'Vulgata'], ['danica', 'Danica'], ['grandis', 'Grandis'], ['stokkmaur', tx('Stokkmaur', 'Carpenter ants')], ['fjaermygg', tx('Fjærmygg', 'Midges')], ['annet', tx('Annet', 'Other')]];
+const obsNavn = (k) => { const o = OBS.find((x) => x[0] === k); return o ? (EN ? o[2] : o[1]) : k; };
+const insNavn = (k) => { const o = INSEKT.find((x) => x[0] === k); return o ? o[1] : k; };
+function postHtml(e) {
+  const o = oslo(e.t), ms = [];
+  if (e.obs.length || e.insekt.length) ms.push(e.obs.map(obsNavn).concat(e.insekt.map(insNavn)).join(' · '));
+  const ft = fangstTekst(e.fangst); if (ft) ms.push(ft);
+  const ml = modellLinje(e), venter = mangler(e) && !e.posFeil;
+  return `<button class="post" type="button" data-id="${e.id}">
+    <span class="t">${datoPen(o.dato)} · ${o.hhmm}</span>
+    <span class="n">${esc(e.sted || vannNavn(e.vann) || tx('Uten sted', 'No place'))}</span>
+    ${e.vaer ? `<span class="l">${vaerTekst(e.vaer)}</span>` : ''}
+    ${ms.length ? `<span class="l">${ms.join('<br>')}</span>` : ''}
+    ${ml ? `<span class="m">${esc(ml)}</span>` : ''}
+    ${venter ? `<span class="l venter">${tx('Vær og anslag fylles inn når du har nett.', 'Weather and estimates fill in when you are online.')}</span>` : ''}
+  </button>`;
+}
+let valgtAar = null;
+function tegnListe() {
+  const alle = les().sort((a, b) => b.t.localeCompare(a.t));
+  const aar = [...new Set(alle.map((e) => oslo(e.t).aar))].sort((a, b) => b - a);
+  $('verktoy').hidden = !alle.length;
+  if (valgtAar !== 'alle' && !aar.includes(valgtAar)) valgtAar = aar[0] || null;
+  $('aarValg').innerHTML = aar.map((y) => `<option value="${y}"${y === valgtAar ? ' selected' : ''}>${y}</option>`).join('') + (aar.length > 1 ? `<option value="alle"${valgtAar === 'alle' ? ' selected' : ''}>${tx('Alle år', 'All years')}</option>` : '');
+  const vist = alle.filter((e) => valgtAar === 'alle' || oslo(e.t).aar === valgtAar);
+  $('liste').innerHTML = vist.length ? vist.map(postHtml).join('') :
+    `<div class="tom">${tx('<b>Ingen turer logget ennå.</b><br>Trykk «Logg nå» neste gang du står ved vannet.', '<b>No trips logged yet.</b><br>Tap “Log now” next time you are at the water.')}</div>`;
+}
+
+// ── Skjemaet ─────────────────────────────────────────────────────────
+let aapen = null;
+function lokalInput(iso) { const o = oslo(iso); return `${o.dato}T${o.hhmm}`; }
+function fraLokalInput(s) {
+  // Tolkes som norsk tid: finn UTC-tidspunktet som gir denne veggklokka i Europe/Oslo
+  const [d, t] = s.split('T'), [y, m, dd] = d.split('-').map(Number), [hh, mi] = t.split(':').map(Number);
+  let g = Date.UTC(y, m - 1, dd, hh, mi);
+  for (let i = 0; i < 2; i++) { const o = oslo(new Date(g).toISOString()), [oy, om, od] = o.dato.split('-').map(Number); g -= Date.UTC(oy, om - 1, od, o.time, o.min) - Date.UTC(y, m - 1, dd, hh, mi); }
+  return new Date(g).toISOString();
+}
+function arkHtml(e) {
+  const k = koord(e), auto = [];
+  if (e.henterPos) auto.push(`<div>${tx('Henter posisjon …', 'Getting position …')}</div>`);
+  else if (e.pos) auto.push(`<div class="rad"><span>${tx('Posisjon', 'Position')}</span><span>${tall(e.pos.lat, 4)}, ${tall(e.pos.lon, 4)} <span class="liten">± ${e.pos.acc} m</span></span></div>`);
+  else if (e.posFeil) auto.push(`<div>${esc(e.posFeil)} ${tx('Velg et favorittvann under, eller skriv stedet selv.', 'Pick a favourite lake below, or type the place yourself.')}</div>`);
+  if (e.vann) auto.push(`<div class="rad"><span>${tx('Vann', 'Lake')}</span><span><b>${esc(vannNavn(e.vann))}</b>${e.vann.moh != null ? ` · ${e.vann.moh} moh` : ''}${e.vann.ha ? ` · ${tall(e.vann.ha, 0)} ha` : ''}${e.vann.kommune ? ` · ${esc(e.vann.kommune)}` : ''}</span></div>`);
+  if (k) auto.push(`<div class="rad"><span>${tx('Vær', 'Weather')}</span><span>${e.vaer ? vaerTekst(e.vaer) + (e.vaer.sol ? ` · ${tx('sol ned', 'sunset')} ${e.vaer.sol}` : '') : tx('henter …', 'loading …')}</span></div>`);
+  if (e.berg && e.berg.kl) auto.push(`<div class="rad"><span>${tx('Berggrunn', 'Bedrock')}</span><span>${esc(bergTekst(e.berg))}</span></div>`);
+  if (e.vann) {
+    const ig = isgangTekst(e), f = faser(e);
+    if (ig) auto.push(`<div class="rad"><span>${tx('Isgang', 'Ice-out')}</span><span>${ig}</span></div>`);
+    if (f.length) auto.push(`<div class="rad"><span>${tx('Modellen', 'Model')}</span><span>${f.map((x) => `${x.navn} <b>${x.tekst}</b>`).join(' · ')}${e.modell.spinner ? ` · ${tx('spinnerfall i kveld', 'spinner fall tonight')} <b>${Math.round(e.modell.spinner * 100)} %</b>` : ''}<br><span class="liten">${tx('Anslag fra modellen, ikke observert. Gjelder bare arter som finnes i vannet.', 'Model estimates, not observations. Only apply to species that live in the lake.')}</span></span></div>`);
+    else if (!e.modell) auto.push(`<div class="rad"><span>${tx('Modellen', 'Model')}</span><span>${tx('regner …', 'working …')}</span></div>`);
+  } else if (e.vannSjekket && e.pos) auto.push(`<div class="liten">${tx('Ingen vann med data innen 1,5 km. Modellens anslag krever et vann.', 'No lake with data within 1.5 km. Model estimates need a lake.')}</div>`);
+
+  const valg = (e.naer || []).map((v) => `<option value="${v.id}"${e.vann && e.vann.id === v.id ? ' selected' : ''}>${esc(vannNavn(v))} (${v.avst < 1000 ? v.avst + ' m' : tall(v.avst / 1000) + ' km'})</option>`);
+  let favs = []; try { favs = JSON.parse(localStorage.getItem('hw_vann_favs') || '[]'); } catch (x) {}
+  const favValg = favs.filter((f) => !(e.naer || []).some((v) => v.id === +f.id)).map((f) => `<option value="${+f.id}"${e.vann && e.vann.id === +f.id ? ' selected' : ''}>${esc(f.navn || f.id)} (${tx('favoritt', 'favourite')})</option>`);
+  const vannVelger = valg.length || favValg.length ? `<div class="felt"><label class="hw-eyebrow" for="fVann">${tx('Vann', 'Lake')}</label><select id="fVann"><option value="">${tx('Ikke et vann i lista', 'Not a lake in the list')}</option>${valg.join('')}${favValg.join('')}</select></div>` : '';
+  const fiskRad = (f, i) => `<div class="fisk" data-i="${i}">
+      <input type="text" list="fiskeliste" data-k="art" value="${esc(f.art)}" placeholder="${tx('Art', 'Species')}" aria-label="${tx('Art', 'Species')}">
+      <input type="number" inputmode="numeric" min="1" data-k="antall" value="${esc(f.antall || 1)}" aria-label="${tx('Antall', 'Count')}">
+      <input type="number" inputmode="decimal" min="0" step="0.5" data-k="lengde" value="${esc(f.lengde)}" placeholder="cm" aria-label="${tx('Lengde i cm', 'Length in cm')}">
+      <button class="fjern" type="button" data-fjern="${i}" aria-label="${tx('Fjern', 'Remove')}">×</button>
+      <input class="flue" type="text" data-k="flue" value="${esc(f.flue)}" placeholder="${tx('Flue', 'Fly')}" aria-label="${tx('Flue', 'Fly')}">
+      <label class="ut"><input type="checkbox" data-k="ut"${f.ut ? ' checked' : ''}>${tx('Satt ut', 'Released')}</label>
+    </div>`;
+  const meld = e.vann && (e.obs.includes('klekking') || e.obs.includes('spinnerfall'))
+    ? `<a class="hw-btn ghost" href="/observasjon.html?vann=${e.vann.id}&navn=${encodeURIComponent(e.vann.navn || '')}${e.vann.moh != null ? '&moh=' + e.vann.moh : ''}">${tx('Meld til HatchWatch', 'Report to HatchWatch')}</a>` : '';
+  return `<div class="grep"></div>
+    <div class="ark-hode"><h2 id="arkTittel">${tx('Logg', 'Log')}</h2><button class="lukk" type="button" id="arkLukk" aria-label="${tx('Lukk', 'Close')}">×</button></div>
+    <div class="auto">${auto.join('')}</div>
+    <div class="felt"><label class="hw-eyebrow" for="fTid">${tx('Tidspunkt', 'Time')}</label><input type="datetime-local" id="fTid" value="${lokalInput(e.t)}"></div>
+    ${vannVelger}
+    <div class="felt"><label class="hw-eyebrow" for="fSted">${tx('Sted', 'Place')}</label><input type="text" id="fSted" value="${esc(e.sted)}" placeholder="${tx('For eksempel nordre bukt', 'For example the north bay')}"></div>
+    <div class="felt"><span class="hw-eyebrow">${tx('Hva så du', 'What did you see')}</span><div class="chips" data-gruppe="obs">${OBS.map((o) => `<button type="button" class="chip${e.obs.includes(o[0]) ? ' on' : ''}" data-v="${o[0]}">${EN ? o[2] : o[1]}</button>`).join('')}</div></div>
+    <div class="felt"><span class="hw-eyebrow">${tx('Insekter', 'Insects')}</span><div class="chips" data-gruppe="insekt">${INSEKT.map((o) => `<button type="button" class="chip${e.insekt.includes(o[0]) ? ' on' : ''}" data-v="${o[0]}">${o[1]}</button>`).join('')}</div></div>
+    <div class="felt"><span class="hw-eyebrow">${tx('Fangst', 'Catch')}</span><div id="fFangst">${e.fangst.map(fiskRad).join('')}</div>
+      <button class="hw-btn ghost" type="button" id="leggTilFisk">${tx('Legg til fisk', 'Add fish')}</button></div>
+    <div class="felt"><label class="hw-eyebrow" for="fNotat">${tx('Notat', 'Notes')}</label><textarea id="fNotat" placeholder="${tx('Flue, vannstand, hvem du fisket med …', 'Fly, water level, who you fished with …')}">${esc(e.notat)}</textarea></div>
+    <div class="knapper"><button class="hw-btn primary" type="button" id="arkFerdig">${tx('Ferdig', 'Done')}</button>${meld}</div>
+    <div class="knapper"><button class="hw-btn ghost slett" type="button" id="arkSlett">${tx('Slett loggen', 'Delete this log')}</button></div>`;
+}
+function aapne(id) {
+  aapen = id; vis(id);
+  $('ark').classList.add('open'); $('arkBak').classList.add('open'); document.body.style.overflow = 'hidden';
+  fyllFiskeliste(hent(id));
+}
+function lukk() {
+  aapen = null; $('ark').classList.remove('open'); $('arkBak').classList.remove('open'); document.body.style.overflow = ''; tegnListe();
+}
+// Tegn arket på nytt når ny data kommer inn, uten å forstyrre et felt du skriver i
+function vis(id) {
+  tegnListe();
+  if (aapen !== id) return;
+  const e = hent(id); if (!e) return;
+  const ark = $('ark'), fokus = document.activeElement && ark.contains(document.activeElement) ? document.activeElement : null;
+  if (fokus && /INPUT|TEXTAREA|SELECT/.test(fokus.tagName)) { const a = ark.querySelector('.auto'); const tmp = document.createElement('div'); tmp.innerHTML = arkHtml(e); a.innerHTML = tmp.querySelector('.auto').innerHTML; return; }
+  const top = ark.scrollTop; ark.innerHTML = arkHtml(e); ark.scrollTop = top;
+}
+async function fyllFiskeliste(e) {
+  const std = EN ? ['Brown trout', 'Arctic char', 'Grayling', 'Salmon', 'Pike', 'Perch', 'Whitefish'] : ['Ørret', 'Røye', 'Harr', 'Laks', 'Gjedde', 'Abbor', 'Sik'];
+  let navn = [];
+  if (e && e.vann && !EN) { try { const r = await fetch(`/data/kart/fisk/${e.vann.id % 64}.json`); if (r.ok) { const j = await r.json(); navn = (j[String(e.vann.id)] || []).map((x) => x[1]).filter(Boolean); } } catch (x) {} }
+  $('fiskeliste').innerHTML = [...new Set(navn.concat(std))].map((n) => `<option value="${esc(n)}">`).join('');
+}
+
+$('ark').addEventListener('click', (ev) => {
+  const id = aapen; if (!id) return;
+  const t = ev.target.closest('button'); if (!t) return;
+  if (t.id === 'arkLukk' || t.id === 'arkFerdig') return lukk();
+  if (t.id === 'arkSlett') {
+    if (!confirm(tx('Slette denne loggen? Det kan ikke angres.', 'Delete this log? This cannot be undone.'))) return;
+    lagre(les().filter((e) => e.id !== id)); return lukk();
+  }
+  if (t.id === 'leggTilFisk') { oppdater(id, (x) => { x.fangst.push({ art: EN ? 'Brown trout' : 'Ørret', antall: 1, lengde: '', flue: '', ut: false }); }); vis(id); const r = $('fFangst').lastElementChild; if (r) r.querySelector('[data-k=lengde]').focus(); return; }
+  if (t.dataset.fjern != null) { oppdater(id, (x) => { x.fangst.splice(+t.dataset.fjern, 1); }); return vis(id); }
+  const gruppe = t.closest('[data-gruppe]');
+  if (gruppe && t.dataset.v) {
+    const g = gruppe.dataset.gruppe, v = t.dataset.v;
+    oppdater(id, (x) => { x[g] = x[g].includes(v) ? x[g].filter((y) => y !== v) : x[g].concat(v); });
+    vis(id);
+  }
+});
+$('ark').addEventListener('input', (ev) => {
+  const id = aapen, el = ev.target; if (!id) return;
+  if (el.id === 'fSted') oppdater(id, (x) => { x.sted = el.value; });
+  else if (el.id === 'fNotat') oppdater(id, (x) => { x.notat = el.value; });
+  else if (el.dataset.k) {
+    const i = +el.closest('.fisk').dataset.i;
+    oppdater(id, (x) => { if (x.fangst[i]) x.fangst[i][el.dataset.k] = el.type === 'checkbox' ? el.checked : el.value; });
+  }
+});
+$('ark').addEventListener('change', (ev) => {
+  const id = aapen, el = ev.target; if (!id) return;
+  if (el.id === 'fTid' && el.value) {
+    // Nytt tidspunkt: været og modellen hentes på nytt for den tiden
+    oppdater(id, (x) => { x.t = fraLokalInput(el.value); x.vaer = null; x.modell = null; });
+    vis(id); berik(id);
+  } else if (el.id === 'fVann') {
+    const vid = +el.value;
+    const e = hent(id), kjent = (e.naer || []).find((v) => v.id === vid);
+    const sett = (v) => { oppdater(id, (x) => { const gammelt = vannNavn(x.vann); x.vann = v; x.modell = null; if (!x.pos) { x.vaer = null; x.berg = null; } if (!x.sted || x.sted === gammelt) x.sted = v ? vannNavn(v) : ''; }); vis(id); fyllFiskeliste(hent(id)); berik(id); };
+    if (!vid) sett(null);
+    else if (kjent) sett(kjent);
+    else vannRec(vid).then((v) => v && sett({ id: vid, navn: v.navn || '', moh: v.moh, ha: v.ha, kommune: v.kommune, lat: v.lat, lon: v.lon })).catch(() => {});
+  } else if (el.dataset.k === 'ut') tegnListe();
+});
+$('arkBak').addEventListener('click', lukk);
+document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && aapen) lukk(); });
+// Dra ned for å lukke (som vannkortet på kartet)
+(() => {
+  const ark = $('ark'); let y0 = null, t0 = 0;
+  ark.addEventListener('touchstart', (ev) => { y0 = ark.scrollTop <= 0 ? ev.touches[0].clientY : null; t0 = Date.now(); }, { passive: true });
+  ark.addEventListener('touchmove', (ev) => { if (y0 == null) return; const dy = ev.touches[0].clientY - y0; if (dy > 0) { ark.style.transition = 'none'; ark.style.transform = `translateY(${dy}px)`; } }, { passive: true });
+  ark.addEventListener('touchend', (ev) => {
+    if (y0 == null) return; const dy = ev.changedTouches[0].clientY - y0, fart = dy / Math.max(1, Date.now() - t0);
+    ark.style.transition = ''; ark.style.transform = ''; y0 = null;
+    if (dy > 90 || fart > 0.6) lukk();
+  });
+})();
+
+$('liste').addEventListener('click', (ev) => { const b = ev.target.closest('.post'); if (b) aapne(b.dataset.id); });
+$('aarValg').addEventListener('change', (ev) => { valgtAar = ev.target.value === 'alle' ? 'alle' : +ev.target.value; tegnListe(); });
+$('loggNa').addEventListener('click', loggNa);
+
+// ── Eksport til Excel (CSV) ───────────────────────────────────────────
+function csv() {
+  const sep = EN ? ',' : ';', num = (x, d = 1) => x == null || x === '' ? '' : tall(x, d);
+  const celle = (v) => { const s = String(v == null ? '' : v); return (s.includes(sep) || /["\n\r]/.test(s)) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  const fd = (e, k) => { const f = faser(e).find((x) => x.navn === k); return f ? f.tekst : ''; };
+  const md = (e, k) => e.modell && e.modell[k] != null ? datoTekst(e.modell.S, e.modell[k], EN) : '';
+  const hode = EN
+    ? ['Date', 'Time', 'Place', 'Lake', 'Lake ID (NVE)', 'Municipality', 'Altitude (m)', 'Area (ha)', 'Latitude', 'Longitude', 'GPS accuracy (m)', 'Temp (°C)', 'Wind (m/s)', 'Gusts (m/s)', 'Wind from', 'Cloud (%)', 'Precip (mm/h)', 'Humidity (%)', 'Pressure (hPa)', 'Pressure change 3 h (hPa)', 'Sunset', 'Bedrock', 'Ice-out', 'Ice-out source', 'Days since ice-out', 'Model: marginata start', 'Model: marginata', 'Model: vespertina', 'Model: vulgata start', 'Model: vulgata', 'Model: grandis from', 'Model: spinner fall chance tonight (%)', 'Seen', 'Insects', 'Fish caught', 'Catch', 'Notes']
+    : ['Dato', 'Tid', 'Sted', 'Vann', 'Vann-ID (NVE)', 'Kommune', 'Moh', 'Areal (ha)', 'Breddegrad', 'Lengdegrad', 'GPS-nøyaktighet (m)', 'Temp (°C)', 'Vind (m/s)', 'Vindkast (m/s)', 'Vind fra', 'Skydekke (%)', 'Nedbør (mm/t)', 'Luftfuktighet (%)', 'Lufttrykk (hPa)', 'Trykkendring 3 t (hPa)', 'Solnedgang', 'Berggrunn', 'Isgang', 'Isgang kilde', 'Dager siden isgang', 'Modell: marginata start', 'Modell: marginata', 'Modell: vespertina', 'Modell: vulgata start', 'Modell: vulgata', 'Modell: grandis fra', 'Modell: spinnerfall-sjanse kveld (%)', 'Observert', 'Insekter', 'Antall fisk', 'Fangst', 'Notat'];
+  const rader = les().filter((e) => valgtAar === 'alle' || oslo(e.t).aar === valgtAar).sort((a, b) => a.t.localeCompare(b.t)).map((e) => {
+    const o = oslo(e.t), v = e.vann || {}, w = e.vaer || {}, k = koord(e) || {}, m = e.modell;
+    const L = doy(o.dato);
+    const fangst = e.fangst.map((f) => [`${f.antall || 1} ${f.art || ''}`.trim(), f.lengde ? f.lengde + ' cm' : '', f.flue, f.ut ? tx('satt ut', 'released') : ''].filter(Boolean).join(' ')).join(' | ');
+    return [o.dato, o.hhmm, e.sted, e.vann ? vannNavn(e.vann) : '', v.id || '', v.kommune || '', v.moh == null ? '' : v.moh, num(v.ha, 0),
+      k.lat == null ? '' : num(k.lat, 5), k.lon == null ? '' : num(k.lon, 5), e.pos ? e.pos.acc : '',
+      num(w.temp), num(w.vind), num(w.kast), retning(w.retn), w.sky == null ? '' : Math.round(w.sky), num(w.nedbor), w.fukt == null ? '' : Math.round(w.fukt), w.trykk || '', num(w.trend), w.sol || '',
+      bergTekst(e.berg), md(e, 'isg'), m && m.isg != null ? (m.isgSat ? tx('satellitt', 'satellite') : tx('anslått', 'estimated')) : '', m && m.isg != null && L >= m.isg ? L - m.isg : '',
+      md(e, 'marg'), fd(e, 'Marginata'), fd(e, 'Vespertina'), md(e, 'vulg'), fd(e, 'Vulgata'), md(e, 'grand'), m && m.spinner != null ? Math.round(m.spinner * 100) : '',
+      e.obs.map(obsNavn).join(', '), e.insekt.map(insNavn).join(', '), e.fangst.reduce((s, f) => s + (+f.antall || 1), 0) || '', fangst, e.notat].map(celle).join(sep);
+  });
+  return '﻿' + [hode.map(celle).join(sep)].concat(rader).join('\r\n');
+}
+$('eksport').addEventListener('click', async () => {
+  const navn = `hatchwatch-${EN ? 'logbook' : 'dagbok'}-${valgtAar === 'alle' ? tx('alle', 'all') : valgtAar}.csv`;
+  const blob = new Blob([csv()], { type: 'text/csv;charset=utf-8' });
+  // iPhone-appen og Safari: delingsarket (Lagre i Filer, e-post …). Ellers vanlig nedlasting.
+  try {
+    const fil = new File([blob], navn, { type: 'text/csv' });
+    if ('ontouchstart' in window && navigator.canShare && navigator.canShare({ files: [fil] })) { await navigator.share({ files: [fil], title: navn }); return; }
+  } catch (err) { if (err && err.name === 'AbortError') return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = navn;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+});
+
+// ── Engelsk ──────────────────────────────────────────────────────────
+if (EN) {
+  document.documentElement.lang = 'en';
+  document.title = 'Logbook — HatchWatch';
+  $('eyebrow').textContent = 'Your own';
+  $('tittel').textContent = 'Fishing logbook';
+  $('ingress').textContent = 'One tap at the water saves the time, place, weather and what the model estimated that day. You add what you saw and caught. Everything is stored only on this phone.';
+  $('loggTxt').textContent = 'Log now';
+  $('eksportTxt').textContent = 'Download for Excel';
+  $('aarValg').setAttribute('aria-label', 'Year');
+  $('fot').innerHTML = 'The logbook lives only on this phone and disappears if you delete the app or the browser data. Download it for Excel now and then, so you have a backup. Weather is from open-meteo, bedrock from NGU, and the estimates are the model’s, not observed hatches. <a href="/om.html#kilder">Sources</a>';
+}
+
+tegnListe();
+berikAlle();
+window.addEventListener('online', berikAlle);
+punkter().catch(() => {});   // varm opp vannlista, så den ligger i hurtigbufferen til du står uten dekning
+</script>
+<script src="/hw-shell.js" defer></script>
+</body>
+</html>

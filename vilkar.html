@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-itunes-app" content="app-id=6817913220">
+    <title>Vilkår · HatchWatch</title>
+    <meta name="theme-color" content="#f2f6f5">
+    <meta name="description" content="Vilkår for bruk av HatchWatch: rettigheter, data og ansvar.">
+    <link rel="icon" type="image/png" sizes="32x32" href="/logos/favicon-32.png?v=2">
+    <link rel="icon" type="image/png" sizes="64x64" href="/logos/favicon-64.png?v=2">
+    <link rel="apple-touch-icon" href="/logos/apple-touch-icon-180.png">
+    <link rel="stylesheet" href="/hw.css">
+    <script src="/hw-lang.js"></script>
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        /* Vilkår for bruk (2026-10-16, Stian «kjør vilkårsside»). Samme oppsett som personvern.html. */
+        * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; background: var(--hw-bg); color: var(--hw-fg); font-family: var(--hw-body); -webkit-font-smoothing: antialiased; text-size-adjust: 100%; -webkit-text-size-adjust: 100%; }
+        body { min-height: 100vh; min-height: 100dvh; }
+        nav { background: var(--hw-bg); color: var(--hw-fg); border-bottom: 1px solid var(--hw-line); padding: calc(env(safe-area-inset-top, 0px) + 16px) calc(env(safe-area-inset-right, 0px) + 18px) 14px calc(env(safe-area-inset-left, 0px) + 18px); display: flex; align-items: center; }
+        nav a { text-decoration: none; color: var(--hw-fg); display: flex; align-items: center; gap: 10px; }
+        .logo-text { font-family: var(--hw-display); font-weight: 700; font-size: 18px; letter-spacing: -.02em; }
+        .logo-text b { color: var(--hw-hatch); }
+        main { max-width: 760px; margin: 0 auto; padding: 32px 20px 80px; padding-bottom: max(80px, env(safe-area-inset-bottom, 0px) + 60px); }
+        h1 { margin: 0 0 6px; font-family: var(--hw-display); font-size: 1.9rem; letter-spacing: -.03em; line-height: 1.2; }
+        .updated { color: var(--hw-fg-3); font: 500 11px/1.4 var(--hw-mono); letter-spacing: .08em; text-transform: uppercase; margin: 0 0 22px; }
+        .lead { color: var(--hw-fg); font-size: 1.05rem; line-height: 1.65; margin: 0 0 28px; padding-bottom: 22px; border-bottom: 1px solid var(--hw-line); }
+        h2 { margin: 30px 0 10px; font-family: var(--hw-display); font-size: 1.15rem; letter-spacing: -.01em; color: var(--hw-fg); }
+        p, li { color: var(--hw-fg-2); line-height: 1.7; font-size: 1rem; }
+        p { margin: 0 0 14px; }
+        ul { margin: 0 0 14px; padding-left: 22px; }
+        li { margin-bottom: 6px; }
+        b, strong { color: var(--hw-fg); }
+        a { color: var(--hw-water); }
+        .box { background: var(--hw-bg-2); border: 1px solid var(--hw-line); border-radius: var(--hw-radius-sm); padding: 16px 18px; margin: 0 0 14px; }
+        .box p:last-child, .box ul:last-child { margin-bottom: 0; }
+        .copy { margin-top: 36px; color: var(--hw-fg-3); font: 500 11px/1.4 var(--hw-mono); letter-spacing: .08em; text-transform: uppercase; }
+        @media (max-width: 600px) { h1 { font-size: 1.55rem; } }
+    </style>
+</head>
+<body class="hw-dark">
+
+<nav>
+    <a href="/">
+        <span class="hw-fly" style="width:30px;color:var(--hw-hatch)" aria-hidden="true"></span>
+        <span class="logo-text">Hatch<b>Watch</b></span>
+    </a>
+</nav>
+
+<main>
+    <h1 data-i18n="h1">Vilkår for bruk</h1>
+    <p class="updated" data-i18n="updated">Sist oppdatert 16. oktober 2026</p>
+
+    <p class="lead" data-i18n="lead">HatchWatch er gratis å bruke for alle som fisker. Vilkårene under gjelder både nettsiden hatchwatch.no og HatchWatch-appen, og sier hva du kan bruke innholdet til og hva som krever tillatelse.</p>
+
+    <h2 data-i18n="useH">Fri bruk til eget fiske</h2>
+    <p data-i18n="useP">Du kan fritt bruke kart, prognoser, vannsider, varsler og dagbok til egen planlegging og eget fiske. Du kan også dele lenker og skjermbilder med venner og i fiskegrupper, så lenge HatchWatch står som kilde.</p>
+
+    <h2 data-i18n="rightsH">Rettigheter</h2>
+    <p data-i18n="rightsP1">Tekster, design, kode, prognosemodellen og dataene HatchWatch har laget, er vernet etter åndsverkloven. Det gjelder blant annet isgangen fra satellitt for over 19 000 vann, klekkeanslagene og sammenstillingene per vann. Samlingene er også vernet som database.</p>
+    <div class="box">
+        <p data-i18n="rightsP2">Uten skriftlig tillatelse er det ikke lov å:</p>
+        <ul>
+            <li data-i18n="notL1">kopiere eller laste ned data eller innhold systematisk, med skript, roboter eller lignende (skraping)</li>
+            <li data-i18n="notL2">bruke data, prognoser eller innhold i en annen tjeneste, app eller nettside</li>
+            <li data-i18n="notL3">bruke noe av det kommersielt, for eksempel i betalte tjenester eller i markedsføring</li>
+            <li data-i18n="notL4">bruke navnet HatchWatch eller logoen på en måte som kan gi inntrykk av at du representerer tjenesten</li>
+        </ul>
+    </div>
+    <p data-i18n-html="rightsP3">Vil du bruke noe til forskning, undervisning eller noe annet? Spør gjerne på <a href="mailto:stian.midtdal@gmail.com">stian.midtdal@gmail.com</a>. Det blir ofte et ja.</p>
+
+    <h2 data-i18n="othersH">Data fra andre</h2>
+    <p data-i18n-html="othersP">Mye av grunnlaget kommer fra offentlige og åpne kilder, som Kartverket, NVE, MET Norge, Artsdatabanken, NGU, OpenStreetMap og Copernicus. Disse dataene har egne lisenser, og rettighetene til dem er deres, ikke våre. Hele lista står under <a href="/om.html#kilder">Kilder på Om-siden</a>.</p>
+
+    <h2 data-i18n="estH">Anslag, ikke garantier</h2>
+    <p data-i18n="estP1">Prognosene er modellens anslag og kan bomme, noen ganger med flere uker. HatchWatch gir ingen garanti for klekking, fisk eller forhold, og er ikke ansvarlig for tap eller skade som følge av bruk av tjenesten.</p>
+    <div class="box">
+        <p data-i18n-html="iceP"><b>Isen:</b> Isgang fra satellitt viser når vannet er isfritt på bildene, ikke om isen er trygg å gå på. Bruk aldri HatchWatch til å vurdere isen.</p>
+    </div>
+    <p data-i18n="estP2">Turkart, stier, parkering og dybdekart kan være utdaterte eller feil. Bruk egne vurderinger på tur, og følg regler for fiskekort, ferdsel og vern der du fisker.</p>
+
+    <h2 data-i18n="obsH">Det du sender inn</h2>
+    <p data-i18n-html="obsP">Når du sender inn en klekkeobservasjon, gir du HatchWatch lov til å bruke den til å forbedre modellen og i statistikk, uten navn og e-post. Hvordan personopplysningene dine behandles, står under <a href="/personvern.html">Personvern</a>. Fangstdagboka lagres bare på din egen enhet, og vi ser den ikke.</p>
+
+    <h2 data-i18n="changesH">Endringer</h2>
+    <p data-i18n="changesP">Vilkårene kan bli oppdatert når tjenesten endres. Datoen øverst viser når de sist ble endret.</p>
+
+    <p class="copy">© 2026 Stian Midtdal · HatchWatch</p>
+</main>
+
+<script>
+(function () {
+    if (window.HW_LANG !== 'en') return;
+    var EN = {
+        h1: 'Terms of use', updated: 'Last updated 16 October 2026',
+        lead: 'HatchWatch is free for everyone who fishes. The terms below cover both the website hatchwatch.no and the HatchWatch app, and say what you can use the content for and what needs permission.',
+        useH: 'Free to use for your own fishing',
+        useP: 'You are free to use the map, forecasts, lake pages, notifications and logbook for your own planning and fishing. You can also share links and screenshots with friends and in fishing groups, as long as HatchWatch is named as the source.',
+        rightsH: 'Rights',
+        rightsP1: 'The texts, design, code, forecast model and the data HatchWatch has produced are protected by Norwegian copyright law. This includes the satellite ice-out for more than 19,000 lakes, the hatch estimates and the compilations per lake. The collections are also protected as a database.',
+        rightsP2: 'Without written permission you may not:',
+        notL1: 'copy or download data or content systematically, with scripts, robots or similar (scraping)',
+        notL2: 'use data, forecasts or content in another service, app or website',
+        notL3: 'use any of it commercially, for example in paid services or in marketing',
+        notL4: 'use the HatchWatch name or logo in a way that suggests you represent the service',
+        rightsP3: 'Want to use something for research, teaching or something else? Feel free to ask at <a href="mailto:stian.midtdal@gmail.com">stian.midtdal@gmail.com</a>. The answer is often yes.',
+        othersH: 'Data from others',
+        othersP: 'Much of the basis comes from public and open sources, such as Kartverket, NVE, MET Norway, Artsdatabanken, NGU, OpenStreetMap and Copernicus. These data have their own licences, and the rights to them are theirs, not ours. The full list is under <a href="/om.html#kilder">Sources on the About page</a>.',
+        estH: 'Estimates, not guarantees',
+        estP1: 'The forecasts are the model’s estimates and can miss, sometimes by several weeks. HatchWatch gives no guarantee of hatches, fish or conditions, and is not responsible for loss or damage resulting from use of the service.',
+        iceP: '<b>The ice:</b> Satellite ice-out shows when the lake is ice-free in the images, not whether the ice is safe to walk on. Never use HatchWatch to judge the ice.',
+        estP2: 'Trail maps, paths, parking and depth maps can be outdated or wrong. Use your own judgement out there, and follow the rules for fishing licences, access and protected areas where you fish.',
+        obsH: 'What you send in',
+        obsP: 'When you send in a hatch observation, you allow HatchWatch to use it to improve the model and in statistics, without name and email. How your personal data is handled is described under <a href="/personvern.html">Privacy</a>. The logbook is stored only on your own device, and we do not see it.',
+        changesH: 'Changes',
+        changesP: 'The terms may be updated when the service changes. The date at the top shows when they were last changed.'
+    };
+    document.documentElement.lang = 'en';
+    document.title = 'Terms · HatchWatch';
+    document.querySelectorAll('[data-i18n]').forEach(function (el) { var v = EN[el.getAttribute('data-i18n')]; if (v) el.textContent = v; });
+    document.querySelectorAll('[data-i18n-html]').forEach(function (el) { var v = EN[el.getAttribute('data-i18n-html')]; if (v) el.innerHTML = v; });
+})();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+</script>
+<script src="/hw-shell.js" defer></script>
+</body>
+</html>

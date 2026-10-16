@@ -262,7 +262,11 @@ function render(v) {
   favOppsett(navn);
   var lagre = document.getElementById('varselLagre');
   if (lagre) lagre.addEventListener('click', function () { lagreVarsler(navn); });
-  hentVaer(v).then(function (w) { klekking(v, w); }).catch(function () { klekking(v, null); });
+  hentVaer(v).then(function (w) {
+    var S = TODAY.getMonth() < 2 ? YEAR - 1 : YEAR;            // samme sesong som klekking() viser
+    if (!trengerSno(v, S)) return klekking(v, w);
+    return hentSwe(v, S).then(function (swe) { klekking(v, w, swe); });
+  }).catch(function () { klekking(v, null); });
   hentSno(v);
   visDybde();
   hentBerggrunn(v);
@@ -586,18 +590,49 @@ function varmesumTil(s, fra, til) {
   for (var i = 0; i < s.length; i++) { if (s[i].n >= fra && s[i].n <= til) sum += Math.max(s[i].t || 0, 0); }
   return sum;
 }
-// Isgangprognose for år S når satellittdatoen mangler (J3)
-function isgangPrognose(v, w, S) {
+// ── Snø i isgangprognosen (2026-10-16, Stian «kjør»; analyse L, variant B1c i L_sno_isgang/RAPPORT_L.md) ──
+// Vannets varmesumterskel flyttes SNO_HELNING graddager per mm snøvannekvivalent (seNorge SWE, 1 km-ruta)
+// 1. april over/under vannets vanlige mengde 1. april (median i de samme årene som terskelen). Én felles
+// helning for hele landet (0,103 lært av 167 vann). Før 1. april i år: siste tilgjengelige SWE.
+// SPEILES i lib/vannmodell.js. Uten snødata: samme regel som før.
+var SNO_HELNING = 0.10;
+function trengerSno(v, S) {
+  var isg = v.isg || {}, aar = Object.keys(isg).map(Number);
+  return !isg[S] && aar.length >= 4 && median(aar.map(function (y) { return isg[y][0]; })) >= 91;
+}
+function hentSwe(v, S) {
+  var xy = tilUtm33(v.lat, v.lon), igaar = new Date(TODAY); igaar.setDate(igaar.getDate() - 1);
+  var slutt = S < YEAR ? S + '-04-01' : ymd(igaar);
+  return fetch(API_BASE + '/api/nve?gts=swe&x=' + xy[0] + '&y=' + xy[1] + '&start=' + (S - 6) + '-04-01&end=' + slutt)
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function (j) {
+      var swe = {}, d0 = new Date(S - 6, 3, 1);
+      (j.Data || []).forEach(function (val, i) { if (val !== j.NoDataValue && val != null) { var d = new Date(d0); d.setDate(d.getDate() + i); swe[ymd(d)] = val; } });
+      return swe;
+    }).catch(function () { return null; });
+}
+function sweNaa(swe, S) {
+  if (swe[S + '-04-01'] != null) return swe[S + '-04-01'];
+  for (var i = 1; i <= 7; i++) { var d = new Date(TODAY); d.setDate(d.getDate() - i); if (swe[ymd(d)] != null && d.getFullYear() === S) return swe[ymd(d)]; }
+  return null;
+}
+// Isgangprognose for år S når satellittdatoen mangler (J3, + snø fra 16.10.2026)
+function isgangPrognose(v, w, S, swe) {
   var isg = v.isg || {}, aar = Object.keys(isg).map(Number);
   if (aar.length < 4) return null;
   var klima = median(aar.map(function (y) { return isg[y][0]; }));
   if (klima < 91) return { n: Math.round(klima), tidlig: true };               // isen går vanligvis før april
-  var terskler = aar.filter(function (y) { return y >= S - 6 && y < S; }).map(function (y) { return varmesumTil(serie(w, y), 60, isg[y][0]); }).filter(function (x) { return x > 0; });
+  var brukte = aar.filter(function (y) { return y >= S - 6 && y < S; }).map(function (y) { return { y: y, t: varmesumTil(serie(w, y), 60, isg[y][0]) }; }).filter(function (x) { return x.t > 0; });
   var s = serie(w, S);
-  if (terskler.length < 2) return { n: Math.round(klima), bareKlima: true };
+  if (brukte.length < 2) return { n: Math.round(klima), bareKlima: true };
   // J3: ren graddagmodell slo både vanlig isgang og 50/50-blandingen (snittavvik 7,8 d varslet 14 d før)
-  var g = naar(s, 60, median(terskler));
-  return { n: g ? g.n : Math.round(klima), maalt: g && g.maalt };
+  var terskel = median(brukte.map(function (x) { return x.t; })), sno = null;
+  if (swe) {
+    var naa = sweNaa(swe, S), tidl = brukte.map(function (x) { return swe[x.y + '-04-01']; }).filter(function (x) { return x != null; });
+    if (naa != null && tidl.length >= 2) { sno = { naa: naa, vanlig: median(tidl) }; terskel = Math.max(0, terskel + SNO_HELNING * (naa - sno.vanlig)); }
+  }
+  var g = naar(s, 60, terskel);
+  return { n: g ? g.n : Math.round(klima), maalt: g && g.maalt, sno: sno };
 }
 
 function tilstede(v, latin, nokkel) {
@@ -612,7 +647,7 @@ function tilstede(v, latin, nokkel) {
   return '<span class="pres"><i></i>' + tx('Ikke registrert her', 'Not recorded here') + '</span> ' + tx('Anslaget gjelder bare hvis arten finnes i vannet.', 'The estimate only applies if the species lives in the lake.');
 }
 
-function klekking(v, w) {
+function klekking(v, w, swe) {
   var el = document.getElementById('klekk'); if (!el) return;
   var isg = v.isg || {}, h = '';
   var S = TODAY.getMonth() < 2 ? YEAR - 1 : YEAR;            // jan–feb: vis fjorårets sesong
@@ -626,13 +661,20 @@ function klekking(v, w) {
   var s = serie(w, S), etikett = function (m) { return m ? tx('målt vær', 'measured weather') : tx('prognose', 'forecast'); };
   // Isgang for sesongen
   var ig = isg[S] ? { n: isg[S][0], sat: true, pm: isg[S][1] != null ? Math.max(1, Math.round(isg[S][1] / 2)) : null } : null;
-  var prog = !ig ? isgangPrognose(v, w, S) : null;
-  if (!ig && prog) ig = { n: prog.n, prognose: true, tidlig: prog.tidlig, maalt: prog.maalt };
+  var prog = !ig ? isgangPrognose(v, w, S, swe) : null;
+  if (!ig && prog) ig = { n: prog.n, prognose: true, tidlig: prog.tidlig, maalt: prog.maalt, sno: prog.sno };
+  // Snø i prognosen: bare en setning når mengden avviker merkbart fra det vanlige (ingen tall, Stians middelvei)
+  var snoTekst = '';
+  if (ig && ig.sno && Math.abs(ig.sno.naa - ig.sno.vanlig) >= 50) snoTekst = ig.sno.naa > ig.sno.vanlig
+    ? (ferdig ? tx(' Det lå mer snø enn vanlig ved vannet i april, og det trakk anslaget senere.', ' There was more snow than usual at the lake in April, which pushed the estimate later.')
+              : tx(' Det ligger mer snø enn vanlig ved vannet, og det trekker anslaget senere.', ' There is more snow than usual at the lake, which pushes the estimate later.'))
+    : (ferdig ? tx(' Det lå mindre snø enn vanlig ved vannet i april, og det trakk anslaget tidligere.', ' There was less snow than usual at the lake in April, which pulled the estimate earlier.')
+              : tx(' Det ligger mindre snø enn vanlig ved vannet, og det trekker anslaget tidligere.', ' There is less snow than usual at the lake, which pulls the estimate earlier.'));
   // Linje om isgangen
   if (ig && ig.sat) h += '<p class="lead">' + tx('Isen gikk ' + fmt(S, ig.n) + ' (satellitt). ', 'The ice went out on ' + fmt(S, ig.n) + ' (satellite). ') + (ferdig ? tx('Med været i ' + S + ' gir modellen dette:', 'With the weather in ' + S + ' the model gives this:') : tx('Med målt vær og varsel gir modellen dette:', 'With measured weather and the forecast the model gives this:')) + '</p>';
   else if (ig && ig.tidlig) h += '<p class="lead">' + tx('Isen går vanligvis tidlig her, rundt ' + fmt(S, ig.n) + '. Da styrer varmen klekkingen mer enn isgangen.', 'The ice usually goes early here, around ' + fmt(S, ig.n) + '. Then warmth governs the hatch more than ice-out.') + '</p>';
-  else if (ig && ig.prognose && ferdig) h += '<p class="lead">' + tx('Satellitten fant ingen sikker isgangdato i ' + S + '. Ut fra varmen anslår modellen at isen gikk rundt <b>' + fmt(S, ig.n) + '</b>, med typisk en ukes usikkerhet.', 'The satellite found no reliable ice-out date in ' + S + '. From the warmth, the model estimates the ice went out around <b>' + fmt(S, ig.n) + '</b>, with typically a week of uncertainty.') + '</p>';
-  else if (ig && ig.prognose) h += '<p class="lead">' + tx('Satellitten har ikke sett isgangen for ' + S + ' ennå. Modellen anslår at isen går rundt <b>' + fmt(S, ig.n) + '</b>, ut fra hvor mye varme som pleier å trengs i dette vannet og varmen hittil i år. To uker i forveien bommer den typisk med en uke.', 'The satellite has not seen ice-out for ' + S + ' yet. The model estimates the ice goes around <b>' + fmt(S, ig.n) + '</b>, from how much warmth this lake usually needs and the warmth so far this year. Two weeks ahead it typically misses by a week.') + '</p>';
+  else if (ig && ig.prognose && ferdig) h += '<p class="lead">' + tx('Satellitten fant ingen sikker isgangdato i ' + S + '. Ut fra varmen anslår modellen at isen gikk rundt <b>' + fmt(S, ig.n) + '</b>, med typisk en ukes usikkerhet.', 'The satellite found no reliable ice-out date in ' + S + '. From the warmth, the model estimates the ice went out around <b>' + fmt(S, ig.n) + '</b>, with typically a week of uncertainty.') + snoTekst + '</p>';
+  else if (ig && ig.prognose) h += '<p class="lead">' + tx('Satellitten har ikke sett isgangen for ' + S + ' ennå. Modellen anslår at isen går rundt <b>' + fmt(S, ig.n) + '</b>, ut fra hvor mye varme som pleier å trengs i dette vannet' + (ig.sno ? ', varmen hittil i år og snømengden' : ' og varmen hittil i år') + '. To uker i forveien bommer den typisk med en uke.', 'The satellite has not seen ice-out for ' + S + ' yet. The model estimates the ice goes around <b>' + fmt(S, ig.n) + '</b>, from how much warmth this lake usually needs' + (ig.sno ? ', the warmth so far this year and the amount of snow' : ' and the warmth so far this year') + '. Two weeks ahead it typically misses by a week.') + snoTekst + '</p>';
   var rows = '';
   // Marginata og vespertina
   var gMarg = naar(s, 91, T_MARG);
