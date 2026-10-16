@@ -15,6 +15,6 @@
   "ios": {
     "contentInset": "never",
     "scheme": "HatchWatch",
-    "limitsNavigationsToAppBoundDomains": false
+    "limitsNavigationsToAppBoundDomains": true
   }
 }

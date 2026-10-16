@@ -15,6 +15,7 @@
 <script src="/hw-lang.js"></script>
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
+<script src="/kart-offline.js"></script>   <!-- kart uten nett (2026-10-16): protokollene hwoff:// og hwpm:// -->
 <style>
   /* ═══ KARTFORSIDE v4 — ekte kart (2026-10-14) ═══
      MapLibre + egne kartfliser (data/kart/hatchwatch.pmtiles: alle NVE-vann ≥ 10 ha
@@ -102,6 +103,20 @@
   .lagvalg .overlegg input { width: 18px; height: 18px; accent-color: var(--hw-hatch); flex: none; margin: 0; }
   .lagvalg .overlegg b { display: block; font-size: 13px; font-weight: 600; }
   .lagvalg .overlegg small { display: block; font-size: 11.5px; color: var(--hw-fg-3); }
+  /* Kart uten nett (2026-10-16) */
+  .lagvalg .offboks { flex-basis: 100%; display: grid; gap: 6px; padding: 2px 4px; }
+  .lagvalg .off-last { width: 100%; padding: 9px 10px; border-radius: 10px; border: 0; background: var(--hw-hatch); color: var(--hw-hatch-ink); font: 600 13px/1.2 var(--hw-body); cursor: pointer; text-align: center; }
+  .lagvalg .off-last[disabled] { opacity: .55; cursor: default; }
+  .lagvalg .off-info { font-size: 11.5px; color: var(--hw-fg-3); line-height: 1.4; }
+  .lagvalg .off-bar { height: 5px; border-radius: 3px; background: var(--hw-bg-3); overflow: hidden; margin-bottom: 4px; }
+  .lagvalg .off-bar i { display: block; height: 100%; background: var(--hw-hatch); }
+  .lagvalg .off-rad { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--hw-fg); padding: 2px 0; }
+  .lagvalg .off-rad .n { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+  .lagvalg .off-rad small { color: var(--hw-fg-3); font-size: 11px; }
+  .lagvalg .off-rad button { width: 26px; height: 26px; flex: none; border-radius: 50%; border: 1px solid var(--hw-line); background: none; color: var(--hw-fg-2); font-size: 15px; line-height: 1; padding: 0; cursor: pointer; }
+  .offpille { position: absolute; left: 50%; bottom: calc(var(--scrub-h, 190px) + 26px); transform: translateX(-50%); z-index: 26; display: none; max-width: calc(100% - 32px); padding: 8px 14px; border-radius: 999px; background: var(--hw-bg-2); border: 1px solid var(--hw-line); box-shadow: var(--hw-shadow); font-size: 13px; color: var(--hw-fg); text-align: center; }
+  .offpille.vis { display: block; }
+  .offpille button { margin-left: 8px; border: 0; background: none; color: var(--hw-water); font: 600 13px var(--hw-body); cursor: pointer; padding: 0; }
   .legend .leg-hode { font-family: var(--hw-mono); font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--hw-fg-3); padding: 6px 2px 0; flex: none; }
   .legend .hw-chip i.kalk { border-radius: 2px; border: 1px solid rgba(0, 0, 0, .12); }
   @media (min-width: 760px) { .legend .leg-hode { background: color-mix(in srgb, var(--hw-bg) 85%, transparent); border-radius: 6px; padding: 3px 6px; width: fit-content; } }
@@ -355,6 +370,8 @@
     <button type="button" class="sat" data-bak="sat"><i></i><span id="bakSatTxt">Satellitt</span></button>
     <div class="lagvalg-hode" id="lagHode">Oppå kartet</div>
     <label class="overlegg"><input type="checkbox" id="kalkBryter"><span><b id="kalkTxt">Kalk i berggrunnen</b><small id="kalkSub">NGU, oppå kartet</small></span></label>
+    <div class="lagvalg-hode" id="offHode">Kart uten nett</div>
+    <div class="offboks" id="offBoks"><button type="button" class="off-last" id="offLast">Last ned området du ser</button><div class="off-info" id="offInfo"></div><div id="offListe"></div></div>
   </div>
   <button class="kompass" id="kompass" type="button" aria-label="Kompass: trykk for at kartet skal følge retningen du peker" title="Kartet følger retningen du peker"><svg viewBox="0 0 24 24" id="kompassNaal"><path d="M12 2.6l3.1 9.4H8.9z" fill="#e5484d"/><path d="M12 21.4L8.9 12h6.2z" fill="currentColor" opacity=".55"/><circle cx="12" cy="12" r="1.5" fill="#ffffff"/></svg></button>
   <div class="zoomctl">
@@ -366,6 +383,7 @@
   </div>
 
   <div class="modustoast" id="modusToast" aria-live="polite"></div>
+  <div class="offpille" id="offPille" aria-live="polite"></div>
   <a class="kildelinje" id="kildelinje" href="/om.html#kilder">© Kartverket · OpenStreetMap</a>
   <button class="scrubmini" id="scrubMini" type="button" aria-label="Vis tidsskyveren"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span id="scrubMiniTxt">I dag</span></button>
   <div class="scrub" id="scrub">
@@ -464,7 +482,7 @@ function tx(no, en) { return EN ? en : no; }
   document.getElementById('lagHode').textContent = 'On top of the map';
   document.getElementById('lagBakHode').textContent = 'Background';
   document.getElementById('bakTurTxt').textContent = 'Hiking map'; document.getElementById('bakSatTxt').textContent = 'Satellite';
-  document.getElementById('kalkTxt').textContent = 'Lime in bedrock'; document.getElementById('kalkSub').textContent = 'NGU, on top of the map';
+  document.getElementById('kalkTxt').textContent = 'Lime in bedrock'; document.getElementById('kalkSub').textContent = 'NGU, on top of the map'; document.getElementById('offHode').textContent = 'Map without coverage'; document.getElementById('offLast').textContent = 'Download the area you see';
   document.getElementById('tegnBtn').setAttribute('aria-label', 'Map legend'); document.getElementById('tegnBtn').title = 'Map legend';
   document.getElementById('shFav').setAttribute('aria-label', 'Add to favourites');
   document.getElementById('shOpen').textContent = 'Open the forecast';
@@ -582,10 +600,11 @@ var LYS0 = true;   // alltid lyst fra 2026-10-15 (mørk variant fjernet)
 var C = { land: '#13242b', sea: '#081217', wood: '#152a2f', ice: '#1d3139', res: '#192d34', road: '#29424a', road2: '#36525a', rail: '#2a3e45', bound: '#3b5660', label: '#9db0b0', label2: '#63787a', halo: '#0b1418' };
 var style = {
   version: 8,
-  glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
+  // Alle kilder går gjennom hwoff:// og hwpm:// (kart-offline.js): nedlastede områder fra telefonen, ellers nettet
+  glyphs: (window.hwOff ? 'hwoff://' : 'https://') + 'tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
   sources: {
-    omt: { type: 'vector', url: 'https://tiles.openfreemap.org/planet' },
-    hw: { type: 'vector', url: 'pmtiles://' + location.origin + DATA + 'hatchwatch.pmtiles', promoteId: { vann: 'vatnlnr', laks: 'vassdrag', vannpunkt: 'vatnlnr' } }
+    omt: { type: 'vector', url: (window.hwOff ? 'hwoff://' : 'https://') + 'tiles.openfreemap.org/planet' },
+    hw: { type: 'vector', url: (window.hwOff ? 'hwpm://' : 'pmtiles://') + location.origin + DATA + 'hatchwatch.pmtiles', promoteId: { vann: 'vatnlnr', laks: 'vassdrag', vannpunkt: 'vatnlnr' } }
   },
   layers: [
     { id: 'bg', type: 'background', paint: { 'background-color': LYS0 ? '#e0fefe' : C.land } },
@@ -736,6 +755,11 @@ map.on('load', function () {
   });
   map.on('click', onMapClick);
   leggTilTurkart();   // skjult til brukeren velger Turkart (applyMode → applyKartlag)
+  // Nedlastede områder (kart uten nett): stiplet gull omriss, vises mens kartlagmenyen er åpen
+  map.addSource('off-omr', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+  map.addLayer({ id: 'off-omr', type: 'line', source: 'off-omr', layout: { visibility: 'none' }, paint: { 'line-color': '#c98a12', 'line-width': 2, 'line-dasharray': [3, 2] } });
+  if (window.hwOff) hwOff.klar.then(offTegnRuter);
+  if (window.hwOff && navigator.onLine === false) settUtenNett(true);
   leggTilMaalLag();   // avstandsmåling (tom til brukeren måler)
 
   map.resize();   // bunnbaren (hw-shell.js) krymper kartet etter at det ble laget
@@ -952,11 +976,12 @@ function settKalk(paa) {
   paintScrub();   // tegnforklaringen
 }
 var STANDARD_LAG = ['wood', 'glacier', 'res', 'water', 'waterway', 'road-minor', 'road-major', 'rail', 'boundary', 'steder', 'topper', 'vann-navn', 'vann-navn-store'];
+var OFF = window.hwOff ? 'hwoff://' : 'https://';
 function leggTilTurkart() {
   map.addSource('kv-topo', { type: 'raster', tileSize: 256, maxzoom: 18, attribution: '© <a href="https://www.kartverket.no/" target="_blank" rel="noopener">Kartverket</a>',
-    tiles: ['https://cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator/{z}/{y}/{x}.png'] });
+    tiles: [OFF + 'cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator/{z}/{y}/{x}.png'] });
   map.addSource('kv-tur', { type: 'raster', tileSize: 256, minzoom: 9, attribution: tx('Turruter: Turrutebasen © Kartverket', 'Trails: Turrutebasen © Kartverket'),
-    tiles: ['https://wms.geonorge.no/skwms1/wms.friluftsruter2?service=WMS&version=1.3.0&request=GetMap&layers=Fotrute,Ruteinfopunkt&styles=&format=image/png&transparent=true&crs=EPSG:3857&width=256&height=256&bbox={bbox-epsg-3857}'] });
+    tiles: [OFF + 'wms.geonorge.no/skwms1/wms.friluftsruter2?service=WMS&version=1.3.0&request=GetMap&layers=Fotrute,Ruteinfopunkt&styles=&format=image/png&transparent=true&crs=EPSG:3857&width=256&height=256&bbox={bbox-epsg-3857}'] });
   map.addLayer({ id: 'kv-topo', type: 'raster', source: 'kv-topo', layout: { visibility: 'none' } }, 'vann-fill');
   // Underlag (2026-10-15): Kartverkets topo dekker bare Norge og et havbelte; utenfor er flisene gjennomsiktige.
   // Under dem ligger OpenFreeMap tegnet i Kartverkets egne farger (målt fra flisene), så nabolandene og havet
@@ -974,6 +999,23 @@ function leggTilTurkart() {
     { id: 'tu-sted', type: 'symbol', source: 'omt', 'source-layer': 'place', minzoom: 5, filter: ['in', ['get', 'class'], ['literal', ['city', 'town']]], layout: { 'text-field': ['coalesce', ['get', 'name:nb'], ['get', 'name:no'], ['get', 'name:latin'], ['get', 'name']], 'text-font': ['Noto Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 5, 10, 10, 13] }, paint: { 'text-color': '#3a3a3a', 'text-halo-color': '#ffffff', 'text-halo-width': 1.2 } }
   ];
   under.forEach(function (l) { l.layout = Object.assign({ visibility: 'none' }, l.layout || {}); map.addLayer(l, 'kv-topo'); });
+  // Kart uten nett (2026-10-16): OpenStreetMap-detaljer i Kartverkets stil (myr, bekker, veier, traktorveier,
+  // stier, vann-, steds- og toppnavn). Vises bare når nettet er borte, for Kartverkets detaljnivåer (z12+) kan
+  // ikke lastes ned uten tillatelse (se kart-offline.js). Ligger under kv-topo, som da bare tegnes på oversiktsnivå.
+  var NAVN = ['coalesce', ['get', 'name:nb'], ['get', 'name:no'], ['get', 'name:latin'], ['get', 'name']];
+  var detalj = [
+    { id: 'tu-d-myr', type: 'fill', source: 'omt', 'source-layer': 'landcover', filter: ['==', ['get', 'class'], 'wetland'], paint: { 'fill-color': '#d6ecee' } },
+    { id: 'tu-d-bekk', type: 'line', source: 'omt', 'source-layer': 'waterway', minzoom: 10, paint: { 'line-color': '#3fa9df', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.6, 15, 2] } },
+    { id: 'tu-d-vei', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 10, filter: ['in', ['get', 'class'], ['literal', ['tertiary', 'minor', 'service']]], paint: { 'line-color': '#7a7a7a', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.5, 15, 2.2] } },
+    { id: 'tu-d-traktor', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 11, filter: ['==', ['get', 'class'], 'track'], paint: { 'line-color': '#555555', 'line-width': 1.2, 'line-dasharray': [3, 2] } },
+    { id: 'tu-d-sti', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 11, filter: ['==', ['get', 'class'], 'path'], paint: { 'line-color': '#2b2b2b', 'line-width': 1, 'line-dasharray': [2, 2] } },
+    { id: 'tu-d-vannavn', type: 'symbol', source: 'omt', 'source-layer': 'water_name', minzoom: 11, layout: { 'text-field': NAVN, 'text-font': ['Noto Sans Italic'], 'text-size': 12 }, paint: { 'text-color': '#1f6f9f', 'text-halo-color': '#ffffff', 'text-halo-width': 1.2 } },
+    { id: 'tu-d-sted', type: 'symbol', source: 'omt', 'source-layer': 'place', minzoom: 10, filter: ['in', ['get', 'class'], ['literal', ['village', 'hamlet', 'isolated_dwelling', 'locality']]], layout: { 'text-field': NAVN, 'text-font': ['Noto Sans Regular'], 'text-size': 11.5 }, paint: { 'text-color': '#2a2a2a', 'text-halo-color': '#ffffff', 'text-halo-width': 1.2 } },
+    { id: 'tu-d-topp', type: 'symbol', source: 'omt', 'source-layer': 'mountain_peak', minzoom: 11,
+      layout: { 'text-field': ['case', ['has', 'ele'], ['concat', NAVN, '\n', ['to-string', ['get', 'ele']], ' m'], NAVN], 'text-font': ['Noto Sans Regular'], 'text-size': 11 },
+      paint: { 'text-color': '#5a3c1e', 'text-halo-color': '#ffffff', 'text-halo-width': 1.2 } }
+  ];
+  detalj.forEach(function (l) { l.layout = Object.assign({ visibility: 'none' }, l.layout || {}); map.addLayer(l, 'kv-topo'); });
   map.addLayer({ id: 'kv-tur', type: 'raster', source: 'kv-tur', minzoom: 9, layout: { visibility: 'none' } }, 'vann-navn');
   // Kalk i berggrunnen (2026-10-15, Stian): NGU BerggrunnOkologiWMS, laget Kalkinnhold_N250 (prognose, 1:250 000,
   // fri bruk, CORS åpen). Oppå bakgrunnskartet, under våre vannflater og navn. Slås av/på i kartlagmenyen (hw_kalk).
@@ -1037,6 +1079,120 @@ function applyKartlag() {
   map.setPaintProperty('vann-line', 'line-opacity', tur ? ['case', ['boolean', ['feature-state', 'sel'], false], 1, 0] : 1);
   map.setLayoutProperty('vann-punkt', 'visibility', tur && flue ? 'visible' : 'none');
 }
+// ═══ KART UTEN NETT (2026-10-16, Stian «kjør») ═══
+// Nedlasting og lagring ligger i kart-offline.js (window.hwOff). Her: stilbyttet når nettet er borte, menyen
+// «Kart uten nett» i kartlagvalget, fremdriften og omrisset av nedlastede områder.
+var TU_DETALJ = ['tu-d-myr', 'tu-d-bekk', 'tu-d-vei', 'tu-d-traktor', 'tu-d-sti', 'tu-d-vannavn', 'tu-d-sted', 'tu-d-topp'];
+var utenNett = false;
+function settUtenNett(paa) {
+  utenNett = paa;
+  document.body.classList.toggle('uten-nett', paa);
+  if (!map.getLayer('kv-topo')) return;
+  TU_DETALJ.forEach(function (id) { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', paa ? 'visible' : 'none'); });
+  // Kartverket bare der vi har lov å lagre (flis-z11 = kartzoom under 10,5); innover tar OpenStreetMap-detaljene over
+  map.setLayerZoomRange('kv-topo', 0, paa ? 10.5 : 24);
+}
+if (window.hwOff) {
+  window.addEventListener('offline', function () { settUtenNett(true); });
+  window.addEventListener('online', function () { settUtenNett(false); });
+  // Dårlig dekning: telefonen sier den er på nett, men Kartverkets fliser feiler. Fire feil på 15 s inne i et
+  // nedlastet område → samme visning som uten nett. Hvert halve minutt prøver vi én flis for å komme tilbake.
+  var kvFeil = [];
+  map.on('error', function (e) {
+    if (utenNett || !e || e.sourceId !== 'kv-topo') return;
+    var c = map.getCenter(); if (!hwOff.dekker(c.lng, c.lat)) return;
+    var n = Date.now(); kvFeil = kvFeil.filter(function (t) { return n - t < 15000; }); kvFeil.push(n);
+    if (kvFeil.length >= 4) { kvFeil = []; settUtenNett(true); }
+  });
+  setInterval(function () {
+    if (!utenNett || !navigator.onLine) return;
+    var ac = new AbortController(); setTimeout(function () { ac.abort(); }, 5000);
+    fetch('https://cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator/12/2170/1150.png', { cache: 'no-store', signal: ac.signal })
+      .then(function (r) { if (r.ok) settUtenNett(false); }).catch(function () {});
+  }, 30000);
+}
+function offBbox() { var b = map.getBounds(); return [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()].map(function (x) { return +x.toFixed(5); }); }
+function offMb(bytes) { var mb = bytes / 1048576; return (mb < 10 ? (EN ? mb.toFixed(1) : mb.toFixed(1).replace('.', ',')) : Math.round(mb)) + ' MB'; }
+function offDato(t) { var d = new Date(t); return EN ? d.getDate() + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()] : d.getDate() + '.' + (d.getMonth() + 1) + '.'; }
+function offTegnRuter() {
+  if (!window.hwOff || !map.getSource('off-omr')) return;
+  map.getSource('off-omr').setData({ type: 'FeatureCollection', features: hwOff.omrader().filter(function (o) { return o.ferdig; }).map(function (o) {
+    var b = o.bbox; return { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [[[b[0], b[1]], [b[2], b[1]], [b[2], b[3]], [b[0], b[3]], [b[0], b[1]]]] } };
+  }) });
+}
+function offVisRuter(paa) { if (map.getLayer('off-omr')) map.setLayoutProperty('off-omr', 'visibility', paa ? 'visible' : 'none'); }
+var offStatus = '';
+function offTegn() {
+  if (!window.hwOff) { document.getElementById('offBoks').innerHTML = '<div class="off-info">' + tx('Nettleseren din kan ikke lagre kart.', 'Your browser cannot store maps.') + '</div>'; return; }
+  var knapp = document.getElementById('offLast'), info = document.getElementById('offInfo'), laster = hwOff.laster();
+  knapp.disabled = laster;
+  if (laster) info.innerHTML = offStatus;
+  else {
+    var p = hwOff.plan(offBbox());
+    knapp.disabled = p.forStort;
+    info.textContent = offStatus || (p.forStort ? tx('Området er for stort. Zoom inn litt, så går det.', 'The area is too large. Zoom in a little.')
+      : tx('Ca. ' + p.mb + ' MB. Stier, bekker og navn fra OpenStreetMap, Kartverket på oversiktsnivå.', 'About ' + p.mb + ' MB. Trails, streams and names from OpenStreetMap, Kartverket at overview level.'));
+  }
+  document.getElementById('offListe').innerHTML = hwOff.omrader().filter(function (o) { return o.ferdig; }).map(function (o) {
+    return '<div class="off-rad"><span class="n" data-vis="' + o.id + '">' + o.navn.replace(/</g, '&lt;') + ' <small>' + offMb(o.bytes) + ' · ' + offDato(o.dato) + '</small></span>' +
+      '<button type="button" data-slett="' + o.id + '" aria-label="' + tx('Slett', 'Delete') + '">×</button></div>';
+  }).join('');
+}
+// Navn på området: nærmeste stedsnavn fra Kartverket, ellers «Område» + dato
+function offNavn(c) {
+  var u = 'https://ws.geonorge.no/stedsnavn/v1/punkt?nord=' + c.lat.toFixed(5) + '&ost=' + c.lng.toFixed(5) + '&koordsys=4258&radius=5000&treffPerSide=10&utkoordsys=4258';
+  return fetch(u).then(function (r) { return r.json(); }).then(function (j) {
+    var n = (j.navn || []).slice().sort(function (a, b) { return (a.meterFraPunkt || 0) - (b.meterFraPunkt || 0); })[0];
+    var s = n && n.stedsnavn && n.stedsnavn[0] && n.stedsnavn[0].skrivemåte;
+    if (!s) throw new Error('ingen');
+    return s;
+  }).catch(function () { return tx('Område ', 'Area ') + offDato(Date.now()); });
+}
+function offPille(tekst, ferdig) {
+  var p = document.getElementById('offPille');
+  if (!tekst) { p.classList.remove('vis'); return; }
+  p.innerHTML = tekst + (ferdig ? '' : ' <button type="button" id="offAvbryt">' + tx('Avbryt', 'Cancel') + '</button>');
+  p.classList.add('vis');
+  if (ferdig) { clearTimeout(p._t); p._t = setTimeout(function () { p.classList.remove('vis'); }, 4000); }
+}
+function offStart() {
+  if (!window.hwOff || hwOff.laster()) return;
+  var b = offBbox(), c = map.getCenter();
+  offStatus = tx('Starter …', 'Starting …'); offTegn(); offPille(offStatus);
+  offNavn(c).then(function (navn) {
+    return hwOff.lastNed(b, navn, location.origin + DATA + 'hatchwatch.pmtiles', function (andel) {
+      var pst = Math.round(andel * 100);
+      offStatus = '<div class="off-bar"><i style="width:' + pst + '%"></i></div>' + tx('Laster ned ' + navn + ' … ' + pst + ' %', 'Downloading ' + navn + ' … ' + pst + ' %');
+      if (document.getElementById('lagValg').classList.contains('open')) document.getElementById('offInfo').innerHTML = offStatus;
+      offPille(tx('Laster ned kart … ', 'Downloading map … ') + pst + ' %');
+    }).then(function (omr) {
+      offStatus = '';
+      var mangler = omr.feilet > omr.antall * 0.05;
+      offPille(mangler ? tx('Lagret, men ' + omr.feilet + ' kartbiter manglet. Prøv igjen med bedre dekning.', 'Saved, but ' + omr.feilet + ' map pieces were missing. Try again with better coverage.')
+                       : tx(navn + ' er lagret (' + offMb(omr.bytes) + ') og virker uten nett.', navn + ' is saved (' + offMb(omr.bytes) + ') and works offline.'), true);
+      offTegn(); offTegnRuter();
+    });
+  }).catch(function (e) {
+    offStatus = '';
+    offPille(e && e.message === 'avbrutt' ? tx('Nedlastingen ble avbrutt.', 'The download was cancelled.') : tx('Fikk ikke lastet ned kartet. Sjekk nettet og prøv igjen.', 'Could not download the map. Check your connection and try again.'), true);
+    offTegn();
+  });
+}
+document.getElementById('offLast').addEventListener('click', offStart);
+document.getElementById('offPille').addEventListener('click', function (e) { if (e.target.id === 'offAvbryt' && window.hwOff) { hwOff.avbryt(); offPille(tx('Avbryter …', 'Cancelling …')); } });
+document.getElementById('offListe').addEventListener('click', function (e) {
+  var s = e.target.closest('[data-slett]'), v = e.target.closest('[data-vis]');
+  if (s) {
+    var o = hwOff.omrader().filter(function (x) { return x.id === s.getAttribute('data-slett'); })[0]; if (!o) return;
+    if (!confirm(tx('Slette det lagrede kartet for ' + o.navn + '?', 'Delete the saved map for ' + o.navn + '?'))) return;
+    hwOff.slett(o.id).then(function () { offTegn(); offTegnRuter(); });
+  } else if (v) {
+    var o2 = hwOff.omrader().filter(function (x) { return x.id === v.getAttribute('data-vis'); })[0];
+    if (o2) { document.getElementById('lagValg').classList.remove('open'); offVisRuter(true); map.fitBounds([[o2.bbox[0], o2.bbox[1]], [o2.bbox[2], o2.bbox[3]]], { padding: 30 }); }
+  }
+});
+map.on('moveend', function () { if (document.getElementById('lagValg').classList.contains('open') && window.hwOff && !hwOff.laster()) offTegn(); });
+
 function settVannSel(id, paa) {
   map.setFeatureState({ source: 'hw', sourceLayer: 'vann', id: id }, { sel: paa });
   map.setFeatureState({ source: 'hw', sourceLayer: 'vannpunkt', id: id }, { sel: paa });
@@ -1382,7 +1538,12 @@ document.getElementById('maalFerdig').addEventListener('click', maalLukk);
 document.getElementById('maalAngre').addEventListener('click', function () { maalPunkter.pop(); maalTegn(); });
 document.getElementById('maalNull').addEventListener('click', function () { maalPunkter = []; maalTegn(); });
 document.getElementById('maalHoyde').addEventListener('click', maalHoyde);
-document.getElementById('lagBtn').addEventListener('click', function (e) { e.stopPropagation(); plasserKnapper(); document.getElementById('lagValg').classList.toggle('open'); });
+document.getElementById('lagBtn').addEventListener('click', function (e) {
+  e.stopPropagation(); plasserKnapper();
+  var aapen = document.getElementById('lagValg').classList.toggle('open');
+  if (aapen) offTegn();
+  offVisRuter(aapen);
+});
 document.getElementById('lagValg').addEventListener('click', function (e) {
   var bak = e.target.closest('button[data-bak]');
   if (bak) { settBakgrunn(bak.getAttribute('data-bak')); return; }   // menyen blir stående, så man kan slå på berggrunn også
@@ -1392,7 +1553,11 @@ document.getElementById('lagValg').addEventListener('click', function (e) {
   applyKartlag();
   this.classList.remove('open');
 });
-document.addEventListener('click', function (e) { if (!e.target.closest('#lagValg') && !e.target.closest('#lagBtn')) document.getElementById('lagValg').classList.remove('open'); });
+document.addEventListener('click', function (e) {
+  if (e.target.closest('#lagValg') || e.target.closest('#lagBtn')) return;
+  if (document.getElementById('lagValg').classList.contains('open')) offVisRuter(false);
+  document.getElementById('lagValg').classList.remove('open');
+});
 document.getElementById('kalkBryter').checked = KALK;
 document.getElementById('kalkBryter').addEventListener('change', function () { settKalk(this.checked); });
 

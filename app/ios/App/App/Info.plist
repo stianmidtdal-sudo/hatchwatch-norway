@@ -72,5 +72,10 @@
 	<string>UIStatusBarStyleDarkContent</string>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>WKAppBoundDomains</key>
+	<array>
+		<string>www.hatchwatch.no</string>
+		<string>hatchwatch.no</string>
+	</array>
 </dict>
 </plist>
