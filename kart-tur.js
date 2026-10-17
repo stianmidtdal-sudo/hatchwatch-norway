@@ -178,7 +178,8 @@
     var hva = b.getAttribute('data-pk');
     if (hva === 'lagre') {
       var forslag = (document.getElementById('pkSted') || {}).textContent || '';
-      forslag = forslag.replace(/^(Nær |Near )/, '').replace(/ \(.*\)$/, '') || tx('Punkt', 'Point');
+      var naer = tx('Nær ', 'Near ');   // på alle språk (svensk «Nära », finsk «Lähellä: »)
+      forslag = (forslag.indexOf(naer) === 0 ? forslag.slice(naer.length) : forslag).replace(/ \(.*\)$/, '') || tx('Punkt', 'Point');
       var navn = window.prompt(tx('Navn på punktet', 'Name of the point'), forslag);
       if (navn == null) return;
       var nytt = { id: 'p' + Date.now().toString(36), navn: navn.trim().slice(0, 60) || forslag, lat: +o.lat.toFixed(6), lon: +o.lon.toFixed(6), kat: 'fisk', dato: ymdLokal(new Date()) };
@@ -304,7 +305,8 @@
         maalStart(forenkle(g.spor, 400), navn);
         rammeInn(g.spor);
         var st = document.getElementById('maalStatus');
-        if (st) st.textContent = tx('Importert: ' + navn + (n ? ' og ' + n + ' punkter' : '') + '. Trykk Lagre for å beholde turen.', 'Imported: ' + navn + (n ? ' and ' + n + ' points' : '') + '. Tap Save to keep the trip.');
+        if (st) st.textContent = n ? tx('Importert: ' + navn + ' og ' + n + ' punkter. Trykk Lagre for å beholde turen.', 'Imported: ' + navn + ' and ' + n + ' points. Tap Save to keep the trip.')
+                                   : tx('Importert: ' + navn + '. Trykk Lagre for å beholde turen.', 'Imported: ' + navn + '. Tap Save to keep the trip.');
       } else if (n) {
         var pk = g.punkter; rammeInn(pk.map(function (p) { return [p.lon, p.lat]; }));
         alert(tx(n + ' punkter er lagt til under Favoritter → Punkter.', n + ' points were added under Favourites → Points.'));

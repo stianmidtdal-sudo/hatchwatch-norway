@@ -516,6 +516,11 @@ function tx(no, en) { return window.hwT(no, en); }
   document.getElementById('scrubDate').title = tx('Tilbake til i dag', 'Back to today');
   document.getElementById('scrubRange').setAttribute('aria-label', tx('Dato gjennom sesongen', 'Date through the season'));
   document.getElementById('tickMay').textContent = tx('Mai', 'May');
+  // Månedene på tidsskyveren (mars–sep) på språket (svensk/finsk skiller seg fra norsk/engelsk)
+  if (window.HW_LANG === 'sv' || window.HW_LANG === 'fi') {
+    var mndK = window.hwMnd();
+    document.querySelectorAll('.ticks span').forEach(function (s, i) { var n = mndK[i + 2]; s.textContent = window.HW_LANG === 'fi' ? n : n.charAt(0).toUpperCase() + n.slice(1, 3); });
+  }
   document.getElementById('modeFlueTxt').textContent = tx('Tørrflue', 'Dry fly'); document.getElementById('modeFlue').title = tx('Tørrflue', 'Dry fly');
   document.getElementById('modeLaksTxt').textContent = tx('Laksefiske', 'Salmon'); document.getElementById('modeLaks').title = tx('Laksefiske', 'Salmon fishing');
   document.getElementById('lagHode').textContent = tx('Oppå kartet', 'On top of the map');
@@ -1901,19 +1906,13 @@ function fillSheet(id) {
   } else {
     big.innerHTML = fmtDoy(p.year, p.doy) + '<span>±' + uncOf(l) + ' d</span>';
     var txt;
-    if (EN) {
-      if (s.st === 'pre') txt = 'The season opens 1 April. This is ' + (p.year < YEAR ? 'last year’s' : 'the latest') + ' estimate.';
-      else if (s.st === 'now') txt = '<b>Day ' + s.days + '.</b> Vulgata is probably under way.';
-      else if (s.st === 'closed') txt = 'This year’s hatch is over. The model estimated the start ' + s.days + ' days ago.';
-      else txt = '<b>In ' + s.days + ' days</b>' + (isToday ? '.' : ' from ' + fmtDoy(YEAR, day) + '.');
-      if (p.year !== YEAR && s.st !== 'pre') txt += ' <span class="hw-muted">(estimate from ' + p.year + ')</span>';
-    } else {
-      if (s.st === 'pre') txt = 'Sesongen åpner 1. april. Dette er ' + (p.year < YEAR ? 'fjorårets' : 'siste') + ' anslag.';
-      else if (s.st === 'now') txt = '<b>Dag ' + s.days + '.</b> Vulgata er trolig i gang.';
-      else if (s.st === 'closed') txt = 'Årets klekking er over. Modellen anslo start for ' + s.days + ' dager siden.';
-      else txt = '<b>Om ' + s.days + ' dager</b>' + (isToday ? '.' : ' fra ' + fmtDoy(YEAR, day) + '.');
-      if (p.year !== YEAR && s.st !== 'pre') txt += ' <span class="hw-muted">(anslag fra ' + p.year + ')</span>';
-    }
+    if (s.st === 'pre') txt = p.year < YEAR ? tx('Sesongen åpner 1. april. Dette er fjorårets anslag.', 'The season opens 1 April. This is last year’s estimate.')
+                                            : tx('Sesongen åpner 1. april. Dette er siste anslag.', 'The season opens 1 April. This is the latest estimate.');
+    else if (s.st === 'now') txt = tx('<b>Dag ' + s.days + '.</b> Vulgata er trolig i gang.', '<b>Day ' + s.days + '.</b> Vulgata is probably under way.');
+    else if (s.st === 'closed') txt = tx('Årets klekking er over. Modellen anslo start for ' + s.days + ' dager siden.', 'This year’s hatch is over. The model estimated the start ' + s.days + ' days ago.');
+    else txt = isToday ? tx('<b>Om ' + s.days + ' dager</b>.', '<b>In ' + s.days + ' days</b>.')
+                       : tx('<b>Om ' + s.days + ' dager</b> fra ' + fmtDoy(YEAR, day) + '.', '<b>In ' + s.days + ' days</b> from ' + fmtDoy(YEAR, day) + '.');
+    if (p.year !== YEAR && s.st !== 'pre') txt += ' <span class="hw-muted">' + tx('(anslag fra ' + p.year + ')', '(estimate from ' + p.year + ')') + '</span>';
     line.innerHTML = txt + '<br>' + stars(l.cal || 0) + '<span class="hw-eyebrow">' + calText(l) + '</span>';
   }
   shExtra.innerHTML = '';
@@ -2089,8 +2088,11 @@ function openLakeSE(id) {
       (fisk.length ? fisk.slice(0, 4).map(function (f) { return '<span>' + fnavn(f) + '</span>'; }).join('') + (fisk.length > 4 ? '<span>+' + (fisk.length - 4) + '</span>' : '') : '<span>' + tx('Ingen registrert', 'None recorded') + '</span>') + '</div>' +
       '<div class="vk-lab">' + tx('Insekter funnet her', 'Insects found here') + '</div><div class="vk-chips">' +
       (ins.length ? ins.map(function (x) { return '<span class="ja">' + tx(x[2], x[3]) + '</span>'; }).join('') : '<span>' + tx('Ingen registrert ennå', 'None recorded yet') + '</span>') + '</div>' +
-      '<div class="note" style="margin-top:10px">' + (sisteIs ? tx('Svenske vann er nye på kartet. Klekkeanslag kommer.', 'Swedish lakes are new on the map. Hatch estimates are coming.')
-        : tx('Svenske vann er nye på kartet. Isgang og klekkeanslag kommer.', 'Swedish lakes are new on the map. Ice-out and hatch estimates are coming.')) + '</div>';
+      // Marginata/vespertina der vi har minst fire år med målt isgang (2026-10-17), vulgata/grandis under 3000 ha
+      (nIs >= 4 || !(v.ha > 3000) ? '<div class="note" style="margin-top:10px">' + (nIs >= 4 && !(v.ha > 3000)
+        ? tx('Anslag for marginata, vespertina, vulgata og grandis, og varsler: åpne vannet.', 'Marginata, vespertina, vulgata and grandis estimates, and notifications: open the lake.')
+        : nIs >= 4 ? tx('Anslag for marginata og vespertina, og varsler: åpne vannet.', 'Marginata and vespertina estimates, and notifications: open the lake.')
+        : tx('Anslag for vulgata og grandis, og varsler: åpne vannet.', 'Vulgata and grandis estimates, and notifications: open the lake.')) + '</div>' : '');
   });
 }
 // Finsk vann (2026-10-17, Stian «KJØR FINLAND»). data/kart/fi/vann/<id % 64>.json (bygg_kart.py finland): Sykes
@@ -2145,8 +2147,11 @@ function openLakeFI(id) {
       (fisk.length ? fisk.slice(0, 4).map(function (f) { return '<span>' + fnavn(f) + '</span>'; }).join('') + (fisk.length > 4 ? '<span>+' + (fisk.length - 4) + '</span>' : '') : '<span>' + tx('Ingen registrert', 'None recorded') + '</span>') + '</div>' +
       '<div class="vk-lab">' + tx('Insekter funnet her', 'Insects found here') + '</div><div class="vk-chips">' +
       (ins.length ? ins.map(function (x) { return '<span class="ja">' + tx(x[2], x[3]) + '</span>'; }).join('') : '<span>' + tx('Ingen registrert ennå', 'None recorded yet') + '</span>') + '</div>' +
-      '<div class="note" style="margin-top:10px">' + (sisteIs ? tx('Finske vann er nye på kartet. Klekkeanslag kommer.', 'Finnish lakes are new on the map. Hatch estimates are coming.')
-        : tx('Finske vann er nye på kartet. Isgang og klekkeanslag kommer.', 'Finnish lakes are new on the map. Ice-out and hatch estimates are coming.')) + '</div>';
+      // Marginata/vespertina der vi har minst fire år med målt isgang (2026-10-17), vulgata/grandis under 3000 ha
+      (nIs >= 4 || !(v.ha > 3000) ? '<div class="note" style="margin-top:10px">' + (nIs >= 4 && !(v.ha > 3000)
+        ? tx('Anslag for marginata, vespertina, vulgata og grandis, og varsler: åpne vannet.', 'Marginata, vespertina, vulgata and grandis estimates, and notifications: open the lake.')
+        : nIs >= 4 ? tx('Anslag for marginata og vespertina, og varsler: åpne vannet.', 'Marginata and vespertina estimates, and notifications: open the lake.')
+        : tx('Anslag for vulgata og grandis, og varsler: åpne vannet.', 'Vulgata and grandis estimates, and notifications: open the lake.')) + '</div>' : '');
   });
 }
 function centroid(g) {

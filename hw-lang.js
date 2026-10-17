@@ -43,7 +43,7 @@
 
   // Svensk og finsk: ordboka lastes synkront her, så den er klar før sidens eget skript kjører.
   // Bytt I18N_V når oversettelsene endres (tvinger ny henting forbi hurtigbufferen).
-  var I18N_V = '1';
+  var I18N_V = '3';
   if (lang === 'sv' || lang === 'fi') {
     document.write('<script src="/i18n/' + lang + '.js?v=' + I18N_V + '"><\/script>');
     if (/\/artikler(\.html)?$/.test(location.pathname)) document.write('<script src="/i18n/' + lang + '-artikler.js?v=' + I18N_V + '"><\/script>');
@@ -130,6 +130,30 @@
     location.reload();
   };
   window.hwToggleLang = function () { window.hwSettSpraak(lang === 'no' ? 'en' : 'no'); };
+
+  // Push-varslene skrives på språket som er lagret med abonnementet (api/push.js → lib/push.js, 2026-10-17).
+  // Er språket byttet siden varslene sist ble lagret (hw_push_lang), sendes samme abonnement og samme
+  // varselvalg på nytt med det nye språket. Spør aldri om lov: bare et abonnement eller app-token som finnes fra før.
+  window.addEventListener('load', function () {
+    try {
+      var prefs = JSON.parse(localStorage.getItem('hw_notif_prefs') || 'null');
+      if (localStorage.getItem('hw_push_lang') === lang || !prefs || !prefs.triggers) return;
+      var t = prefs.triggers;
+      if (!Object.keys(t).some(function (k) { return (t[k] || []).length > 0; })) return;
+      var C = window.Capacitor, app = !!(C && C.isNativePlatform && C.isNativePlatform()), tok = localStorage.getItem('hw_apns_token');
+      var finn = app ? Promise.resolve(tok ? { platform: 'ios', token: tok } : null)
+        : ('serviceWorker' in navigator && 'PushManager' in window)
+          ? navigator.serviceWorker.getRegistration('/').then(function (reg) { return reg ? reg.pushManager.getSubscription() : null; })
+              .then(function (s) { return s ? { subscription: s.toJSON() } : null; })
+          : Promise.resolve(null);
+      finn.then(function (p) {
+        if (!p) return;
+        return fetch('/api/push?action=subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(Object.assign({}, p, { locations: t, lang: lang })) })
+          .then(function (r) { if (r.ok) try { localStorage.setItem('hw_push_lang', lang); } catch (e) {} });
+      }).catch(function () {});
+    } catch (e) {}
+  });
 
   // Lyst tema (2026-10-15, Stian): velger man Turkart på kartet, får hele appen det lyse fargevalget
   // (token-settet :root[data-theme="light"] i hw.css). Settes her fordi fila lastes synkront i <head>

@@ -1612,7 +1612,7 @@ const T = {
     snowDepth: 'Snødybde',
     waterFlow: 'Vannføring',
     waterTemp: 'Vanntemperatur',
-    earlyWarning: 'Tidlig varsel · Når når vannet 12°C?',
+    earlyWarning: 'Tidlig varsel · Når blir vannet varmt nok?',
     wStep0: 'Grunnlinje · Varmesum-modell',
     wStep1: 'Nivå 1 · Snøfri + 32 dager',
     wStep2: 'Nivå 2 · Vanntemp. ekstrapolering',
@@ -1752,7 +1752,7 @@ const T = {
     pctOfTarget: '% av målet',
     fiveYearAvg: '5-årig gjennomsnitt samme dato:',
     vsAvg: 'vs. snitt',
-    latestOf: (gddT, wtT) => `siste av: Varmesum ≥ ${gddT} + vanntemp ≥ ${wtT}°C`,
+    latestOf: 'når både varmesummen og vanntemperaturen har nådd nivået modellen bruker',   // uten tall (Stian 2026-10-17)
     gddTriggerOnly: 'Kun varmesum-trigger — for tidlig å ekstrapolere vanntemp',
     forecastEffectEarlier: (days) => `<strong>Langtidsvarselet påvirker prognosen.</strong> 9-dagers værvarsel fra MET tilsier varmere vær enn klimasnittet. Estimert klekketidspunkt er fremskyndet ~${days} dager.`,
     forecastEffectLater: (days) => `<strong> Langtidsvarselet påvirker prognosen.</strong> 9-dagers værvarsel fra MET tilsier kaldere vær enn klimasnittet. Estimert klekketidspunkt er forsinket ~${days} dager.`,
@@ -1843,7 +1843,7 @@ const T = {
     snowDepth: 'Snow Depth',
     waterFlow: 'Water Flow',
     waterTemp: 'Water Temperature',
-    earlyWarning: 'Early Warning · When Will Water Reach 12°C?',
+    earlyWarning: 'Early Warning · When Will the Water Be Warm Enough?',
     wStep0: 'Baseline · GDD model',
     wStep1: 'Level 1 · Snow-free + 32 days',
     wStep2: 'Level 2 · Water temp extrapolation',
@@ -1983,7 +1983,7 @@ const T = {
     pctOfTarget: '% of target',
     fiveYearAvg: '5-year average same date:',
     vsAvg: 'vs avg',
-    latestOf: (gddT, wtT) => `latest of: GDD ≥ ${gddT} + water temp ≥ ${wtT}°C`,
+    latestOf: 'when both the heat sum and the water temperature have reached the level the model uses',
     gddTriggerOnly: 'GDD trigger only — too early to extrapolate water temp',
     forecastEffectEarlier: (days) => `<strong>Long-term forecast affects the prediction.</strong> MET's 9-day forecast suggests warmer weather than climate average. Estimated hatch is brought forward ~${days} days.`,
     forecastEffectLater: (days) => `<strong> Long-term forecast affects the prediction.</strong> MET's 9-day forecast suggests colder weather than climate average. Estimated hatch is delayed ~${days} days.`,
@@ -4505,7 +4505,7 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
     let hatchNote = '';
     if (adgDate && wtDate) {
         hatchDate = adgDate > wtDate ? adgDate : wtDate;
-        hatchNote = t('latestOf')(effThr, getWtThreshold(LOC));
+        hatchNote = t('latestOf');
     } else if (adgDate) {
         hatchNote = t('gddTriggerOnly');
     }
@@ -5262,7 +5262,8 @@ function wxDirName(dirFrom, no) {
                      'sønnavind','sørvestlig vind','vestavind','nordvestlig vind'];
     const namesEn = ['a northerly','a north-easterly','an easterly','a south-easterly',
                      'a southerly','a south-westerly','a westerly','a north-westerly'];
-    return (no ? namesNo : namesEn)[Math.round(dirFrom / 45) % 8];
+    const i = Math.round(dirFrom / 45) % 8;
+    return no ? L(namesNo[i], namesEn[i]) : namesEn[i];
 }
 
 // ── TOLKENDE KOMMENTAR ───────────────────────────────────────────────────
@@ -5339,9 +5340,9 @@ function wxComment(d, hours, no) {
         // «Mye nordavind» / «Lett sønnavind» — retningen bærer betydning
         // Engelsk: «A strong northerly wind» — artikkelen i dirName («a northerly»)
         // flyttes foran styrkeordet (rettet 2026-10-08, sto «Strong a northerly wind»).
-        lead = L(`${wWord} ${dirName}`, `A ${wWord.toLowerCase()} ${dirName.replace(/^an? /, '')} wind`);
+        lead = LANG === 'en' ? `A ${wWord.toLowerCase()} ${dirName.replace(/^an? /, '')} wind` : `${wWord} ${dirName}`;
     } else if (wWord) {
-        lead = L(`${wWord}${d.wind != null && d.wind >= 1.5 ? ' vind' : ''}`, `${wWord}${d.wind != null && d.wind >= 1.5 ? ' wind' : ''}`);
+        lead = wWord + (d.wind != null && d.wind >= 1.5 ? L(' vind', ' wind') : '');
     } else {
         lead = L('Vind', 'Wind');
     }
@@ -5557,7 +5558,8 @@ function renderTodayScore(args) {
         waterScore = diff >= 0 ? 95 : diff >= -1 ? 65 : diff >= -2 ? 45 : diff >= -4 ? 25 : 10;
         waterPill = diff >= 0 ? T2.warm : diff >= -2 ? T2.near : T2.cold;
         waterCls = diff >= 0 ? 'good' : diff >= -2 ? 'mid' : 'bad';
-        waterTxt = L(`${fmtNum(wtNow, 1)} °C · ${diff >= 0 ? 'over terskelen ' + thr + ' °C' : fmtNum(-diff, 1) + ' °C til terskelen ' + thr + ' °C'}`, `${wtNow.toFixed(1)} °C · ${diff >= 0 ? 'above the ' + thr + ' °C threshold' : (-diff).toFixed(1) + ' °C to the ' + thr + ' °C threshold'}`);
+        // Uten terskeltallet (Stian 2026-10-17): bare om vannet er varmt nok
+        waterTxt = fmtNum(wtNow, 1) + ' °C · ' + (diff >= 0 ? L('varmt nok for klekking', 'warm enough for the hatch') : L('ikke varmt nok for klekking ennå', 'not warm enough for the hatch yet'));
     }
     if (flowRatio != null) {
         if (flowRatio > 1.6) waterScore -= 20; else if (flowRatio > 1.25) waterScore -= 8; else if (flowRatio < 0.6) waterScore -= 5;
@@ -5593,7 +5595,8 @@ function renderTodayScore(args) {
     else if (score >= 40) {
         verdict = T2.maybe;
         expl = phaseKey === 'now'
-            ? (L(`Klekkingen er i gang, men ${weatherCls === 'bad' ? 'kvelden blir krevende' : 'vannet holder igjen'}.`, `The hatch is underway, but ${weatherCls === 'bad' ? 'the evening looks rough' : 'the water is holding it back'}.`))
+            ? (weatherCls === 'bad' ? L('Klekkingen er i gang, men kvelden blir krevende.', 'The hatch is underway, but the evening looks rough.')
+                                    : L('Klekkingen er i gang, men vannet holder igjen.', 'The hatch is underway, but the water is holding it back.'))
             : (L('Klekkingen har ikke startet, men vannet nærmer seg terskelen. Første rolige kveld kan åpne det.', 'The hatch has not started, but the water is closing in on the threshold. The first calm evening may open it.'));
     } else { verdict = T2.no; expl = phaseKey === 'unknown' ? (L('Ingen lagret prognose for dette vannet ennå.', 'No stored forecast for this water yet.')) : (L('Vannet er for kaldt. Følg vanntemperaturen, ikke kalenderen.', 'The water is too cold. Watch the water temperature, not the calendar.')); }
 
@@ -5875,10 +5878,10 @@ document.addEventListener('DOMContentLoaded', function () {
 function _bandStatusSentence(status, no, unit, dec) {
     if (!status) return '';
     const pct = Math.round(status.ratio * 100);
-    const where = status.aboveBand ? (L('over', 'above'))
-                : status.belowBand ? (L('under', 'below'))
-                : (L('innenfor', 'within'));
-    return L(` Siste måling ${fmtNum(status.value, dec)} ${unit} — ${pct}% av medianen, ${where} normalspennet.`, ` Latest reading ${status.value.toFixed(dec)} ${unit} — ${pct}% of median, ${where} the normal range.`);
+    const where = status.aboveBand ? L('over normalspennet', 'above the normal range')
+                : status.belowBand ? L('under normalspennet', 'below the normal range')
+                : L('innenfor normalspennet', 'within the normal range');
+    return L(` Siste måling ${fmtNum(status.value, dec)} ${unit} — ${pct}% av medianen, ${where}.`, ` Latest reading ${status.value.toFixed(dec)} ${unit} — ${pct}% of median, ${where}.`);
 }
 
 // ── TREND OVER TID ───────────────────────────────────────────────────────
@@ -5984,13 +5987,9 @@ function renderWtNormalChart(wtData, wtNormal) {
             }
             if (status && thr) {
                 const diff = status.value - thr;
-                txt += no
-                    ? (diff >= 0
-                        ? ` Klekketerskelen på ${thr} °C er passert.`
-                        : ` Det er ${fmtNum(Math.abs(diff), 1)} °C igjen til klekketerskelen på ${thr} °C.`)
-                    : (diff >= 0
-                        ? ` The ${thr} °C hatch threshold has been passed.`
-                        : ` ${Math.abs(diff).toFixed(1)} °C remaining to the ${thr} °C hatch threshold.`);
+                txt += diff >= 0   // uten terskeltallet (Stian 2026-10-17)
+                    ? L(' Vannet er varmt nok for klekking.', ' The water is warm enough for the hatch.')
+                    : L(' Vannet er ikke varmt nok for klekking ennå.', ' The water is not warm enough for the hatch yet.');
             }
             return txt;
         }
@@ -6137,13 +6136,10 @@ function renderSeasonStatus(status) {
         // ukalibrerte lokasjoner er de tersklene kvalifiserte gjett. Teksten
         // skal si hva MODELLEN anslo, ikke hva naturen gjorde.
         const hd = fmt(status.hatchDate);
-        banner.innerHTML = no
-            ? offSeasonHtml(`Sesongen ${YEAR} er over`,
-                `<b>Modellen anslo klekkestart rundt ${hd}</b>, for ${status.daysSince} dager siden.`,
-                `Prognosen for ${_openYear} åpner 1. april. Vanntemperatur, vannføring og historiske klekkedatoer oppdateres i mellomtiden. Under ser du hvordan modellen så sesongen.`)
-            : offSeasonHtml(`The ${YEAR} season is over`,
-                `<b>The model estimated hatch onset around ${hd}</b>, ${status.daysSince} days ago.`,
-                `The ${_openYear} forecast opens on 1 April. Water temperature, flow and historical hatch dates keep updating. Below is how the model saw the season.`);
+        banner.innerHTML = offSeasonHtml(L(`Sesongen ${YEAR} er over`, `The ${YEAR} season is over`),
+            L(`<b>Modellen anslo klekkestart rundt ${hd}</b>, for ${status.daysSince} dager siden.`, `<b>The model estimated hatch onset around ${hd}</b>, ${status.daysSince} days ago.`),
+            L(`Prognosen for ${_openYear} åpner 1. april. Vanntemperatur, vannføring og historiske klekkedatoer oppdateres i mellomtiden. Under ser du hvordan modellen så sesongen.`,
+              `The ${_openYear} forecast opens on 1 April. Water temperature, flow and historical hatch dates keep updating. Below is how the model saw the season.`));
         banner.style.display = '';
         setHeroInner(true);
         bindOffSeason();
@@ -6151,13 +6147,9 @@ function renderSeasonStatus(status) {
     }
 
     // closedBefore — skjul prediksjonen, den bygger ikke på noe ennå
-    banner.innerHTML = no
-        ? offSeasonHtml(`Sesongen ${YEAR} åpner 1. april`,
-            `<b>Varmesummen nullstilles 1. januar</b> og har ennå ikke bygget seg nok til å si noe.`,
-            `Snødybde, isgang og historiske klekkedatoer oppdateres gjennom hele vinteren.`)
-        : offSeasonHtml(`The ${YEAR} season opens on 1 April`,
-            `<b>Growing degree days reset on 1 January</b> and have not yet accumulated enough to be informative.`,
-            `Snow depth, ice-off and historical hatch dates keep updating through the winter.`);
+    banner.innerHTML = offSeasonHtml(L(`Sesongen ${YEAR} åpner 1. april`, `The ${YEAR} season opens on 1 April`),
+        L(`<b>Varmesummen nullstilles 1. januar</b> og har ennå ikke bygget seg nok til å si noe.`, `<b>Growing degree days reset on 1 January</b> and have not yet accumulated enough to be informative.`),
+        L(`Snødybde, isgang og historiske klekkedatoer oppdateres gjennom hele vinteren.`, `Snow depth, ice-off and historical hatch dates keep updating through the winter.`));
     banner.style.display = '';
     setHeroInner(false);
     bindOffSeason();
@@ -6466,7 +6458,7 @@ function renderWaterTempChart(wtData) {
             borderColor: '#C0392B', borderWidth: 3, pointRadius: 0, tension: 0.35, spanGaps: false });
     }
     const _wtTrigger = getWtThreshold(LOC);
-    datasets.push({ label: `${_wtTrigger}°C threshold`, data: doys.map(() => _wtTrigger),
+    datasets.push({ label: L('Klekketemperatur', 'Hatch temperature'), data: doys.map(() => _wtTrigger),
         borderColor: 'rgba(230,100,20,0.6)', borderWidth: 1.5, borderDash: [7,4], pointRadius: 0 });
     const ctx = document.getElementById('wtChart').getContext('2d');
     if (window._wtChart) window._wtChart.destroy();  // tillat re-render ved altitudeAdjustable-bytte
@@ -6816,8 +6808,8 @@ function renderIndicators(snowData, airData, currentADG) {
           avg: histSnowFreeStr,
           signal: snowFreeSignal },
         { name: t('indGddRate'),
-          val: `${adgRate} GDD/day`,
-          avg: histAdgRate != null ? `${histAdgRate} GDD/day` : '—',
+          val: `${adgRate} ${L('GDD/dag', 'GDD/day')}`,
+          avg: histAdgRate != null ? `${histAdgRate} ${L('GDD/dag', 'GDD/day')}` : '—',
           signal: rateSignal },
     ];
     const tbody = document.getElementById('indBody');
@@ -9856,11 +9848,12 @@ if ('serviceWorker' in navigator) {
                     } else {
                         // Oppdater backend med oppdatert lokasjonsliste
                         var p2 = await getSubPayload();
-                        await fetch('/api/push?action=subscribe', {
+                        var r2 = await fetch('/api/push?action=subscribe', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(Object.assign({}, p2, { locations: prefs.triggers, lang: lang })),
                         });
+                        if (r2.ok) try { localStorage.setItem('hw_push_lang', lang); } catch (e) {}
                     }
                     status(T.saved);
                     setTimeout(close, 800);
@@ -9876,6 +9869,7 @@ if ('serviceWorker' in navigator) {
                     body: JSON.stringify(Object.assign({}, p, { locations: prefs.triggers, lang: lang })),
                 });
                 if (!resp.ok) throw new Error('Server-feil: ' + resp.status);
+                try { localStorage.setItem('hw_push_lang', lang); } catch (e) {}   // hw-lang.js sender på nytt når språket byttes
                 status(T.saved);
                 setTimeout(close, 800);
             } catch (err) {
@@ -10140,14 +10134,14 @@ if ('serviceWorker' in navigator) {
     var no = (typeof LANG === 'undefined') || LANG !== 'en';
     var area = (typeof LOC === 'object' && LOC && LOC.area) || '';
     function txt(id, s) { var el = document.getElementById(id); if (el) el.textContent = s; }
-    if (!no) {
-        txt('evidenceHeading', 'Evidence and background'); txt('evPredLbl', 'Prediction history');
-        txt('evModelLbl', 'How we calculate'); txt('evDataLbl', 'Water, snow and ice'); txt('evSourcesLbl', 'Data sources and stations');
+    if (LANG !== 'no') {   // engelsk, svensk og finsk (2026-10-17)
+        txt('evidenceHeading', L('Bevis og bakgrunn', 'Evidence and background')); txt('evPredLbl', L('Prediksjonshistorikk', 'Prediction history'));
+        txt('evModelLbl', L('Slik regner vi', 'How we calculate')); txt('evDataLbl', L('Vann, snø og is', 'Water, snow and ice')); txt('evSourcesLbl', L('Datakilder og stasjoner', 'Data sources and stations'));
         var q = function (id) { var b = document.querySelector('#' + id + ' span'); return b; };
-        if (q('actNotif')) q('actNotif').textContent = 'Set alert';
-        if (q('actCal')) q('actCal').textContent = 'Calendar';
-        if (q('actShare')) q('actShare').textContent = 'Share';
-        if (q('actObs')) q('actObs').textContent = 'Seen a hatch here? Report it';
+        if (q('actNotif')) q('actNotif').textContent = L('Sett varsel', 'Set alert');
+        if (q('actCal')) q('actCal').textContent = L('Kalender', 'Calendar');
+        if (q('actShare')) q('actShare').textContent = L('Del', 'Share');
+        if (q('actObs')) q('actObs').textContent = L('Så du klekking her? Meld observasjon', 'Seen a hatch here? Report it');
     }
     var obs = document.getElementById('actObs');
     if (obs) obs.href = '/observasjon.html?area=' + encodeURIComponent(area);
@@ -10198,9 +10192,9 @@ if ('serviceWorker' in navigator) {
         if (LOC.frostStation) rows.push([L('Luft og snø', 'Air and snow'), (LOC.airStationName || '') + ' · ' + LOC.frostStation + ' · MET Norway (Frost)']);
         var nveId = LOC.nveWaterTempStation || LOC.nveStation;
         if (nveId) rows.push([L('Vann', 'Water'), (LOC.waterStationName || '') + ' · ' + nveId + ' · NVE HydAPI']);
-        rows.push([L('Vær', 'Weather'), 'MET Norway (yr.no) · ' + LOC.lat + '°N ' + LOC.lon + '°Ø']);
+        rows.push([L('Vær', 'Weather'), 'MET Norway (yr.no) · ' + LOC.lat + '°N ' + LOC.lon + (LANG === 'no' ? '°Ø' : '°E')]);
         rows.push([L('Isgang', 'Ice-out'), L('Sentinel-observasjoner der de finnes, ellers graddager fra 1. mars mot stedets egen terskel', 'Sentinel observations where available, otherwise degree days from 1 March against the site\'s own threshold')]);
-        rows.push([L('Høyde', 'Altitude'), (typeof getCurrentAltitude === 'function' ? getCurrentAltitude(LOC) : LOC.altitude) + ' moh']);
+        rows.push([L('Høyde', 'Altitude'), (typeof getCurrentAltitude === 'function' ? getCurrentAltitude(LOC) : LOC.altitude) + ' ' + L('moh', 'm a.s.l.')]);
         src.innerHTML = '<table class="hw-src"><tbody>' + rows.map(function (r) { return '<tr><th>' + r[0] + '</th><td>' + r[1] + '</td></tr>'; }).join('') + '</tbody></table>' +
             '<p class="hero-method" style="margin-top:8px">' + (L('Oppdateres hver morgen. Prognoser lagres når noen åpner vannet.', 'Updated every morning. Forecasts are stored when someone opens the water.')) + '</p>';
     }

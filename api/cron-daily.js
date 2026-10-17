@@ -30,8 +30,8 @@
 // Innført 2026-05-19.
 
 import { redis, k, hashEndpoint } from '../lib/redis.js';
-import { sendPush, buildPayload } from '../lib/push.js';
-import { hentVann, regnVann, datoTekst, finnes, doyOf, spinnerfallSjanse, SPINNER_HOY } from '../lib/vannmodell.js';
+import { sendPush, buildPayload, buildVannPayload, pushDato } from '../lib/push.js';
+import { hentVann, regnVann, finnes, doyOf, spinnerfallSjanse, SPINNER_HOY } from '../lib/vannmodell.js';
 import { internNokkel } from '../lib/fartsgrense.js';
 import crypto from 'crypto';
 
@@ -150,8 +150,10 @@ async function handleVann(r, hash, sub, locId, triggers, stats, vannCache) {
     const idag = new Date();
     const mnd = idag.getUTCMonth();
     if (mnd < 2 || mnd > 7) return;
-    const id = parseInt(locId.slice(5), 10);
-    if (!id) return;
+    // «vann:<NVE-id>», eller «vann:se<id>» / «vann:fi<id>» for svenske og finske vann (2026-10-17). Der finnes ingen
+    // isgang ennå, så bare vulgata og spinnerfall kan utløses.
+    const id = locId.slice(5);
+    if (!/^(se|fi)?\d+$/.test(id)) return;
     if (!vannCache.has(id)) {
         if (vannCache.size >= MAX_VANN_PER_RUN) return;
         let rec = null;
@@ -166,8 +168,8 @@ async function handleVann(r, hash, sub, locId, triggers, stats, vannCache) {
     const rec = vannCache.get(id);
     if (!rec) return;
     const { v, m } = rec;
-    const en = sub.lang === 'en';
-    const navn = v.navn || (en ? 'Your lake' : 'Vannet ditt');
+    // Tekstene ligger i lib/push.js (buildVannPayload), på språket som er lagret med abonnementet (no/en/sv/fi).
+    const dato = (doy) => pushDato(new Date(Date.UTC(m.S, 0, doy)), sub.lang);
     const iDag = doyOf(idag);
     for (const trigger of triggers) {
         if (!VANN_TRIGGERS.includes(trigger)) continue;
@@ -185,30 +187,16 @@ async function handleVann(r, hash, sub, locId, triggers, stats, vannCache) {
             const p = spinnerfallSjanse(w, dager);
             if (p < SPINNER_HOY) continue;
             const her = finnes(v, 'Ephemera vulgata', 'vulgata');
-            payload = {
-                title: en ? `${navn}: spinner fall tonight?` : `${navn}: spinnerfall i kveld?`,
-                body: (en ? `Calm, mild evening (19–22: ${w.wind} m/s, ${Math.round(w.temp)} °C), and the model puts vulgata in season. Chance ${Math.round(p * 100)} %.`
-                          : `Rolig og mild kveld (19–22: ${String(w.wind).replace('.', ',')} m/s, ${Math.round(w.temp)} °C), og modellen anslår at vulgata er i sesong. Sjanse ${Math.round(p * 100)} %.`)
-                    + (her ? (en ? ' The species has been found here.' : ' Arten er funnet her.') : (en ? ' Only applies if the species lives in the lake.' : ' Gjelder bare hvis arten finnes i vannet.')),
-            };
+            payload = buildVannPayload('spinnerfall', v.navn, { wind: w.wind, temp: w.temp, p, her }, sub.lang);
         } else if (trigger === 'isgang' && m.isgang && m.isgang.sat) {
-            payload = {
-                title: en ? `${navn}: the ice is out` : `${navn}: isen har gått`,
-                body: (en ? `The satellite saw ice-out on ${datoTekst(m.S, m.isgang.doy, true)}.` : `Satellitten så isgangen ${datoTekst(m.S, m.isgang.doy)}.`)
-                    + (m.marginata ? (en ? ` The model estimates marginata from around ${datoTekst(m.S, m.marginata, true)}.` : ` Modellen anslår marginata fra rundt ${datoTekst(m.S, m.marginata)}.`) : ''),
-            };
+            payload = buildVannPayload('isgang', v.navn, { dato: dato(m.isgang.doy), marginata: m.marginata ? dato(m.marginata) : null }, sub.lang);
         } else if ((trigger === 'marginata' || trigger === 'vulgata') && m[trigger]) {
             const dager = m[trigger] - iDag, maks = trigger === 'marginata' ? 4 : 5;
             if (dager >= 0 && dager <= maks) {
                 const art = trigger === 'marginata' ? 'Marginata' : 'Vulgata';
                 const latin = trigger === 'marginata' ? 'Leptophlebia marginata' : 'Ephemera vulgata';
                 const her = finnes(v, latin, trigger);
-                const naar = dager === 0 ? (en ? 'today' : 'i dag') : (en ? `in ${dager} day${dager === 1 ? '' : 's'}` : `om ${dager} dag${dager === 1 ? '' : 'er'}`);
-                payload = {
-                    title: en ? `${navn}: ${art} soon` : `${navn}: ${art} nærmer seg`,
-                    body: (en ? `The model estimates the start around ${datoTekst(m.S, m[trigger], true)} (${naar}).` : `Modellen anslår start rundt ${datoTekst(m.S, m[trigger])} (${naar}).`)
-                        + (her ? (en ? ' The species has been found here.' : ' Arten er funnet her.') : (en ? ' Only applies if the species lives in the lake.' : ' Gjelder bare hvis arten finnes i vannet.')),
-                };
+                payload = buildVannPayload(trigger, v.navn, { art, dato: dato(m[trigger]), dager, her }, sub.lang);
             }
         }
         if (!payload) continue;
@@ -279,10 +267,8 @@ async function evaluateTrigger(trigger, locId) {
             if (cur.predDoy <= todayDoy) return { fire: false };
             const delta = cur.predDoy - prev.predDoy;
             if (Math.abs(delta) < 2) return { fire: false };  // Krev ≥ 2 dager
-            const isEarlier = delta < 0;
-            const deltaText = `${Math.abs(delta)} dager ${isEarlier ? 'tidligere' : 'senere'}`;
-            const predDate = formatNorwegianDate(cur.predDate);
-            return { fire: true, data: { predDate, deltaText, delta } };
+            // Rå verdier; teksten skrives på abonnentens språk i buildPayload (lib/push.js).
+            return { fire: true, data: { predIso: cur.predDate, delta } };
         }
 
         case 'klekkeImminent': {
@@ -291,11 +277,7 @@ async function evaluateTrigger(trigger, locId) {
             const todayDoy = dayOfYear(new Date());
             const daysUntil = cur.predDoy - todayDoy;
             if (daysUntil < 1 || daysUntil > 2) return { fire: false };
-            const predDate = formatNorwegianDate(cur.predDate);
-            return {
-                fire: true,
-                data: { predDate, info: `Klekking om ${daysUntil} dag${daysUntil === 1 ? '' : 'er'}.` },
-            };
+            return { fire: true, data: { predIso: cur.predDate, daysUntil } };
         }
 
         case 'seasonstart': {
@@ -304,8 +286,7 @@ async function evaluateTrigger(trigger, locId) {
             const todayDoy = dayOfYear(new Date());
             const daysUntil = cur.predDoy - todayDoy;
             if (daysUntil < 7 || daysUntil > 10) return { fire: false };  // Litt før klekking
-            const predDate = formatNorwegianDate(cur.predDate);
-            return { fire: true, data: { species: 'Vulgata · Grandis', predDate } };
+            return { fire: true, data: { species: 'Vulgata · Grandis', predIso: cur.predDate } };
         }
 
         case 'spinnerfall': {
@@ -323,7 +304,7 @@ async function evaluateTrigger(trigger, locId) {
             const w = kveld && kveld[osloDato()];
             const p = spinnerfallSjanse(w, dager);
             if (p < SPINNER_HOY) return { fire: false };
-            return { fire: true, data: { info: `Kveld 19–22: ${String(w.wind).replace('.', ',')} m/s, ${Math.round(w.temp)} °C. Sjanse ${Math.round(p * 100)} %.` } };
+            return { fire: true, data: { wind: w.wind, temp: w.temp, p } };
         }
 
         case 'stokkmaur': {
@@ -398,12 +379,7 @@ async function evaluateTrigger(trigger, locId) {
                 // 80 ≈ "varmt + lite vind + lite skyer + tørt" — verdt å bli varslet om.
                 if (score < 80) return { fire: false };
 
-                return {
-                    fire: true,
-                    data: {
-                        info: `Maks ${Math.round(maxTemp)}°C, vind ${avgWind.toFixed(1)} m/s, skyer ${Math.round(avgClouds)} %. Skår ${score}/100.`,
-                    },
-                };
+                return { fire: true, data: { maxTemp, wind: avgWind, clouds: avgClouds, score } };
             } catch (e) {
                 console.error('stokkmaur eval error:', e);
                 return { fire: false };
@@ -420,13 +396,6 @@ async function evaluateTrigger(trigger, locId) {
 function dayOfYear(date) {
     const start = Date.UTC(date.getUTCFullYear(), 0, 1);
     return Math.floor((Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) - start) / 86400000) + 1;
-}
-
-function formatNorwegianDate(isoStr) {
-    if (!isoStr) return '—';
-    const months = ['jan','feb','mar','apr','mai','jun','jul','aug','sep','okt','nov','des'];
-    const d = new Date(isoStr);
-    return `${d.getDate()}. ${months[d.getMonth()]}`;
 }
 
 // Dagens dato i Oslo (YYYY-MM-DD) — nøklene fra /api/spinnerfall er Oslo-datoer.

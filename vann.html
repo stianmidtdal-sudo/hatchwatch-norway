@@ -253,7 +253,7 @@ function render(v) {
 
   // ── Varsler for vannet (2026-10-14) ──
   if (pushStottet()) {
-    var valgt = (getPrefs().triggers['vann:' + ID]) || [];
+    var valgt = (getPrefs().triggers['vann:' + FAV_ID]) || [];
     var rad = function (t, tittel, tekst) { return '<label><input type="checkbox" data-t="' + t + '"' + (valgt.indexOf(t) >= 0 ? ' checked' : '') + '><div><b>' + tittel + '</b><span>' + tekst + '</span></div></label>'; };
     h += '<div class="card varsel" id="varselCard"><h2>' + tx('Varsler for dette vannet', 'Notifications for this lake') + '</h2>' +
       '<p class="lead">' + tx('Vi sender bare når noe skjer. Isgang, marginata og vulgata kommer én gang per sesong.', 'We only send when something happens. Ice-out, marginata and vulgata come once per season.') + '</p>' +
@@ -290,6 +290,47 @@ function render(v) {
   visFisk();
 }
 
+// Klekking og varsler for svenske og finske vann (2026-10-17, Stian «kjør»): samme vulgata- og grandis-regel som på de
+// norske vannsidene (bare været, ingen isgang; ikke over 3000 ha). Uten isgangdata vises ikke marginata/vespertina.
+// Varsler: vulgata og spinnerfall, nøkkel «vann:se<id>» / «vann:fi<id>» (cron-daily.js, lib/vannmodell.js).
+function klekkKortHtml(v, navn) {
+  return '<div class="card" id="klekkCard"><h2>' + tx('Klekking', 'Hatch') + '<span class="hw-chip soon"><i></i>' + tx('Anslag', 'Estimate') + '</span></h2>' +
+    '<div id="klekk" class="skel">' + tx('Henter været ved vannet…', 'Fetching the weather at the lake…') + '</div>' +
+    '<div class="row2"><a class="hw-btn ghost" href="/observasjon.html?navn=' + encodeURIComponent(navn) + (v.moh != null ? '&moh=' + v.moh : '') + '">' + tx('Meld klekking her', 'Report a hatch here') + '</a></div>' +
+    '<p class="note" style="margin-top:6px">' + tx('Så du klekking i dette vannet? Én melding med dato gjør anslagene bedre for alle.', 'Saw a hatch in this lake? One report with a date makes the estimates better for everyone.') + '</p></div>';
+}
+// Målt isgang (SMHI i Sverige, Syke i Finland) i samme form som satellittdatoene {år: [dag, null]}, bare år fra 1991
+// (2026-10-17, Stian «kjør» marginata/vespertina der vi har isgang). SPEILER isgFraMalt i lib/vannmodell.js.
+function maltIsg(v) {
+  var m = v.is_smhi || v.is_syke; if (!m || !m.aar) return null;
+  var ut = {}, n = 0;
+  Object.keys(m.aar).forEach(function (y) { if (+y >= 1991) { ut[y] = [m.aar[y], null]; n++; } });
+  return n ? ut : null;
+}
+function varselKortHtml(v) {
+  if (!pushStottet()) return '';
+  var harIs = Object.keys(maltIsg(v) || {}).length >= 4, harVulg = !(v.ha > 3000);   // marginata krever isgang, vulgata ikke over 3000 ha
+  if (!harIs && !harVulg) return '';
+  var valgt = (getPrefs().triggers['vann:' + FAV_ID]) || [];
+  var rad = function (t, tittel, tekst) { return '<label><input type="checkbox" data-t="' + t + '"' + (valgt.indexOf(t) >= 0 ? ' checked' : '') + '><div><b>' + tittel + '</b><span>' + tekst + '</span></div></label>'; };
+  return '<div class="card varsel" id="varselCard"><h2>' + tx('Varsler for dette vannet', 'Notifications for this lake') + '</h2>' +
+    '<p class="lead">' + (harIs && harVulg ? tx('Vi sender bare når noe skjer. Marginata og vulgata kommer én gang per sesong.', 'We only send when something happens. Marginata and vulgata come once per season.')
+      : harIs ? tx('Vi sender bare når noe skjer. Marginata kommer én gang per sesong.', 'We only send when something happens. Marginata comes once per season.')
+      : tx('Vi sender bare når noe skjer. Vulgata kommer én gang per sesong.', 'We only send when something happens. Vulgata comes once per season.')) + '</p>' +
+    (harIs ? rad('marginata', tx('Marginata nærmer seg', 'Marginata soon'), tx('Noen dager før modellens anslåtte start.', 'A few days before the model\'s estimated start.')) : '') +
+    (harVulg ? rad('vulgata', tx('Vulgata nærmer seg', 'Vulgata soon'), tx('Noen dager før modellens anslåtte start.', 'A few days before the model\'s estimated start.')) +
+      rad('spinnerfall', tx('Spinnerfall i kveld', 'Spinner fall tonight'), tx('Om morgenen, de kveldene været passer og modellen anslår at vulgata er i sesong (opptil tre uker etter start).', 'In the morning, on evenings when the weather fits and the model puts vulgata in season (up to three weeks after the start).')) : '') +
+    '<div class="row2"><button class="hw-btn primary" type="button" id="varselLagre">' + tx('Lagre varsler', 'Save notifications') + '</button></div>' +
+    '<div class="status" id="varselStatus"></div></div>';
+}
+function startKlekkingOgVarsler(v, navn) {
+  var lagre = document.getElementById('varselLagre');
+  if (lagre) lagre.addEventListener('click', function () { lagreVarsler(navn); });
+  // Klekkingen regnes med den målte isgangen som om den var satellittdatoer (uten snøjustering: seNorge dekker bare Norge)
+  var vK = Object.assign({}, v, { isg: maltIsg(v) || {} });
+  hentVaer(v).then(function (w) { klekking(vK, w); }).catch(function () { klekking(vK, null); });
+}
+
 // Svensk vann: samme oppbygning som det norske, men bare det vi har data for nå
 function renderSE(v) {
   var navn = v.navn || tx('Navnløst vann', 'Unnamed lake');
@@ -315,9 +356,7 @@ function renderSE(v) {
     : '<div class="stat"><div class="k">' + tx('Isgang', 'Ice-out') + '</div><div class="v">' + tx('Kommer', 'Coming') + '</div><div class="s">' + tx('Fra satellitt, som i Norge.', 'From satellite, as in Norway.') + '</div></div>' +
       '<div class="stat"><div class="k">' + tx('Middeldyp', 'Mean depth') + '</div><div class="v">' + dypTxt + '</div><div class="s">' + tx('Beregnet, usikkert.', 'Modelled, uncertain.') + '</div></div>') +
     '</div>';
-  h += '<div class="card"><h2>' + tx('Klekking', 'Hatch') + '</h2><p class="lead">' + (ly
-    ? tx('Svenske vann er nye i HatchWatch. Klekkeanslag kommer.', 'Swedish lakes are new in HatchWatch. Hatch estimates are coming.')
-    : tx('Svenske vann er nye i HatchWatch. Isgang og klekkeanslag kommer når satellittdatoene for Sverige er regnet ut.', 'Swedish lakes are new in HatchWatch. Ice-out and hatch estimates will come once the satellite dates for Sweden are worked out.')) + '</p></div>';
+  h += klekkKortHtml(v, navn);
   if (nyIs.length >= 2) {
     var forste = isAar[0];
     h += '<div class="card"><h2>' + tx('Isgang år for år', 'Ice-out year by year') + '</h2>' +
@@ -329,6 +368,7 @@ function renderSE(v) {
   h += '<div class="card"><h2>' + tx('Registrerte arter', 'Recorded species') + '</h2><div id="fisk"></div>' + arterHtml(v.arter) + '</div>';
   // Snø (punkt 6) og dybde: målt dybdekart hos SMHI der det finnes, ellers bare HydroLAKES' beregning
   h += '<div class="card" id="snoCard"><h2>' + tx('Snø ved vannet', 'Snow at the lake') + '</h2><div id="sno" class="skel">' + tx('Henter snødata…', 'Fetching snow data…') + '</div></div>';
+  h += varselKortHtml(v);
   h += '<div class="card"><h2>' + tx('Dybde', 'Depth') + '</h2>' +
     '<p class="lead">' + tx('Middeldyp ', 'Mean depth ') + '<b>' + dypTxt + '</b>. ' +
     tx('Tallet er beregnet ut fra terrenget rundt vannet (HydroLAKES), ikke målt. I vår test mot NVEs målte dyp i Norge bommet beregningen typisk med rundt en tredjedel.', 'The figure is modelled from the terrain around the lake (HydroLAKES), not measured. In our test against measured depths in Norway, it was typically off by about a third.') + '</p>' +
@@ -343,6 +383,7 @@ function renderSE(v) {
   favOppsett(navn);
   visFisk(v.fisk || []);
   hentSnoSE(v);
+  startKlekkingOgVarsler(v, navn);
 }
 // Finsk vann (2026-10-17): som det svenske, men dypet er målt og isgangen notert av Sykes observatører
 function renderFI(v) {
@@ -367,9 +408,7 @@ function renderFI(v) {
       '<div class="stat"><div class="k">' + tx('Vanlig isgang', 'Usual ice-out') + '</div><div class="v">' + (med != null ? fmt(ly, med) : '–') + '</div><div class="s">' + (med != null ? tx('midtverdi for ' + nyIs.length + ' år', 'median of ' + nyIs.length + ' years') : tx('for få år ennå', 'too few years yet')) + '</div></div>'
     : '<div class="stat"><div class="k">' + tx('Isgang', 'Ice-out') + '</div><div class="v">' + tx('Kommer', 'Coming') + '</div><div class="s">' + tx('Fra satellitt, som i Norge.', 'From satellite, as in Norway.') + '</div></div>' + dypStat) +
     '</div>';
-  h += '<div class="card"><h2>' + tx('Klekking', 'Hatch') + '</h2><p class="lead">' + (ly
-    ? tx('Finske vann er nye i HatchWatch. Klekkeanslag kommer.', 'Finnish lakes are new in HatchWatch. Hatch estimates are coming.')
-    : tx('Finske vann er nye i HatchWatch. Isgang og klekkeanslag kommer når satellittdatoene for Finland er regnet ut.', 'Finnish lakes are new in HatchWatch. Ice-out and hatch estimates will come once the satellite dates for Finland are worked out.')) + '</p></div>';
+  h += klekkKortHtml(v, navn);
   if (nyIs.length >= 2) {
     var forste = isAar[0];
     h += '<div class="card"><h2>' + tx('Isgang år for år', 'Ice-out year by year') + '</h2>' +
@@ -380,6 +419,7 @@ function renderFI(v) {
   }
   h += '<div class="card"><h2>' + tx('Registrerte arter', 'Recorded species') + '</h2><div id="fisk"></div>' + arterHtml(v.arter) + '</div>';
   h += '<div class="card" id="snoCard"><h2>' + tx('Snø ved vannet', 'Snow at the lake') + '</h2><div id="sno" class="skel">' + tx('Henter snødata…', 'Fetching snow data…') + '</div></div>';
+  h += varselKortHtml(v);
   h += '<div class="card"><h2>' + tx('Dybde', 'Depth') + '</h2><p class="lead">' + (v.dyp != null || v.dmax != null
     ? [v.dyp != null ? tx('Middeldyp <b>' + m(v.dyp) + '</b>', 'Mean depth <b>' + m(v.dyp) + '</b>') : '', v.dmax != null ? tx('største dyp <b>' + m(v.dmax) + '</b>', 'max depth <b>' + m(v.dmax) + '</b>') : ''].filter(Boolean).join(', ').replace(/^./, function (c) { return c.toUpperCase(); }) + '. ' +
       tx('Tallene er målt (loddet) og kommer fra Sykes innsjøregister.', 'The figures are measured (sounded) and come from Syke\'s lake register.')
@@ -392,6 +432,7 @@ function renderFI(v) {
   favOppsett(navn);
   visFisk(v.fisk || []);
   hentSnoSE(v);
+  startKlekkingOgVarsler(v, navn);
 }
 // Minikart for svenske og finske vann (fi = true: finland.pmtiles), OpenFreeMap under — Kartverket dekker ikke dem
 function miniMapSE(v, fi) {
@@ -645,10 +686,10 @@ function lagreVarsler(navn) {
   var st = document.getElementById('varselStatus');
   var valgte = Array.prototype.map.call(document.querySelectorAll('#varselCard input:checked'), function (c) { return c.getAttribute('data-t'); });
   var prefs = getPrefs(); prefs.triggers = prefs.triggers || {};
-  prefs.triggers['vann:' + ID] = valgte;
+  prefs.triggers['vann:' + FAV_ID] = valgte;   // «vann:<NVE-id>» eller «vann:se<id>» / «vann:fi<id>» (cron-daily.js)
   var noenAktive = Object.keys(prefs.triggers).some(function (k) { return (prefs.triggers[k] || []).length > 0; });
   st.className = 'status'; st.textContent = tx('Lagrer…', 'Saving…');
-  var lang = EN || window.HW_LANG === 'fi' ? 'en' : 'no';   // varslene skrives bare på norsk/engelsk ennå: svensk får norsk, finsk engelsk
+  var lang = window.HW_LANG || 'no';   // no/en/sv/fi — varslene skrives på alle fire (lib/push.js, 2026-10-17)
   var jobb = noenAktive
     ? subPayload().then(function (p) { return fetch('/api/push?action=subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({}, p, { locations: prefs.triggers, lang: lang })) }); })
     : (NATIVE ? Promise.resolve(localStorage.getItem('hw_apns_token')).then(function (t) { return t ? { platform: 'ios', token: t } : null; })
@@ -656,7 +697,7 @@ function lagreVarsler(navn) {
       .then(function (u) { return u ? fetch('/api/push?action=unsubscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(u) }) : { ok: true }; });
   jobb.then(function (r) {
     if (!r.ok) throw new Error(tx('Serverfeil ', 'Server error ') + r.status);
-    try { localStorage.setItem('hw_notif_prefs', JSON.stringify(prefs)); } catch (e) {}
+    try { localStorage.setItem('hw_notif_prefs', JSON.stringify(prefs)); if (noenAktive) localStorage.setItem('hw_push_lang', lang); } catch (e) {}
     if (valgte.length && !erFav()) { settFav(true, navn); var b = document.getElementById('fav'); if (b) b.classList.add('on'); }
     st.textContent = valgte.length ? tx('Lagret. Vannet ligger også i Favoritter.', 'Saved. The lake is also in Favourites.') : tx('Varslene for vannet er slått av.', 'Notifications for the lake are off.');
   }).catch(function (e) {
@@ -686,7 +727,7 @@ function doyOf(d) { return Math.floor((Date.UTC(d.getFullYear(), d.getMonth(), d
 // open-meteos kvote (den gjelder per IP-adresse, og mobilnett deler ofte adresse).
 var VAER_CACHE_TIMER = 6;
 function hentVaer(v) {
-  var nokkel = 'hw_vaer_' + ID;
+  var nokkel = 'hw_vaer_' + FAV_ID;   // med se/fi foran for svenske og finske vann (ID-ene kan kollidere med NVEs)
   try {
     var c = JSON.parse(localStorage.getItem(nokkel) || 'null');
     if (c && Date.now() - c.ts < VAER_CACHE_TIMER * 3600000 && c.dag === ymd(TODAY)) return Promise.resolve(c.w);
@@ -800,13 +841,14 @@ function isgangPrognose(v, w, S, swe) {
   return { n: g ? g.n : Math.round(klima), maalt: g && g.maalt, sno: sno };
 }
 
+var ARTSKILDE = SE ? 'Artportalen' : FIN ? 'Laji.fi' : 'Artsdatabanken';   // hvor artsfunnene kommer fra (2026-10-17)
 function tilstede(v, latin, nokkel) {
   var x = (v.arter || []).filter(function (a) { return a[0] === latin; })[0];
   var ofa = v.bekreftet && v.bekreftet[nokkel] === 'ofa';
   if (x || ofa) {
     var deler = [];
     if (ofa) deler.push(tx('OFA regner vannet blant de beste vulgata-vannene i Nordmarka', 'OFA counts the lake among the best vulgata lakes in Nordmarka'));
-    if (x) deler.push(tx('Artsdatabanken: ' + x[2] + ' funn' + (x[3] ? ', sist ' + x[3] : ''), 'Artsdatabanken: ' + x[2] + ' record' + (x[2] === 1 ? '' : 's') + (x[3] ? ', last ' + x[3] : '')));
+    if (x) deler.push(tx(ARTSKILDE + ': ' + x[2] + ' funn', ARTSKILDE + ': ' + x[2] + ' record' + (x[2] === 1 ? '' : 's')) + (x[3] ? tx(', sist ', ', last ') + x[3] : ''));
     return '<span class="pres ja"><i></i>' + tx('Funnet her', 'Found here') + '</span> ' + deler.join(' · ');
   }
   return '<span class="pres"><i></i>' + tx('Ikke registrert her', 'Not recorded here') + '</span> ' + tx('Anslaget gjelder bare hvis arten finnes i vannet.', 'The estimate only applies if the species lives in the lake.');
@@ -836,9 +878,14 @@ function klekking(v, w, swe) {
     : (ferdig ? tx(' Det lå mindre snø enn vanlig ved vannet i april, og det trakk anslaget tidligere.', ' There was less snow than usual at the lake in April, which pulled the estimate earlier.')
               : tx(' Det ligger mindre snø enn vanlig ved vannet, og det trekker anslaget tidligere.', ' There is less snow than usual at the lake, which pulls the estimate earlier.'));
   // Linje om isgangen
-  if (ig && ig.sat) h += '<p class="lead">' + tx('Isen gikk ' + fmt(S, ig.n) + ' (satellitt). ', 'The ice went out on ' + fmt(S, ig.n) + ' (satellite). ') + (ferdig ? tx('Med været i ' + S + ' gir modellen dette:', 'With the weather in ' + S + ' the model gives this:') : tx('Med målt vær og varsel gir modellen dette:', 'With measured weather and the forecast the model gives this:')) + '</p>';
+  // Kilde for isgangen (2026-10-17): satellitt i Norge, målt av SMHI i Sverige, notert av Syke i Finland
+  var isKilde = SE ? tx('målt av SMHI', 'measured by SMHI') : FIN ? tx('notert av Syke', 'observed by Syke') : tx('satellitt', 'satellite');
+  var isMalt = SE ? 'SMHI' : FIN ? 'Syke' : null;
+  if (ig && ig.sat) h += '<p class="lead">' + tx('Isen gikk ' + fmt(S, ig.n) + ' (' + isKilde + '). ', 'The ice went out on ' + fmt(S, ig.n) + ' (' + isKilde + '). ') + (ferdig ? tx('Med været i ' + S + ' gir modellen dette:', 'With the weather in ' + S + ' the model gives this:') : tx('Med målt vær og varsel gir modellen dette:', 'With measured weather and the forecast the model gives this:')) + '</p>';
   else if (ig && ig.tidlig) h += '<p class="lead">' + tx('Isen går vanligvis tidlig her, rundt ' + fmt(S, ig.n) + '. Da styrer varmen klekkingen mer enn isgangen.', 'The ice usually goes early here, around ' + fmt(S, ig.n) + '. Then warmth governs the hatch more than ice-out.') + '</p>';
+  else if (ig && ig.prognose && ferdig && isMalt) h += '<p class="lead">' + tx(isMalt + ' har ingen isgangdato for ' + S + '. Ut fra varmen anslår modellen at isen gikk rundt <b>' + fmt(S, ig.n) + '</b>, med typisk en ukes usikkerhet.', isMalt + ' has no ice-out date for ' + S + '. From the warmth, the model estimates the ice went out around <b>' + fmt(S, ig.n) + '</b>, with typically a week of uncertainty.') + '</p>';
   else if (ig && ig.prognose && ferdig) h += '<p class="lead">' + tx('Satellitten fant ingen sikker isgangdato i ' + S + '. Ut fra varmen anslår modellen at isen gikk rundt <b>' + fmt(S, ig.n) + '</b>, med typisk en ukes usikkerhet.', 'The satellite found no reliable ice-out date in ' + S + '. From the warmth, the model estimates the ice went out around <b>' + fmt(S, ig.n) + '</b>, with typically a week of uncertainty.') + snoTekst + '</p>';
+  else if (ig && ig.prognose && isMalt) h += '<p class="lead">' + tx(isMalt + ' har ikke registrert isgangen for ' + S + ' ennå. Modellen anslår at isen går rundt <b>' + fmt(S, ig.n) + '</b>, ut fra hvor mye varme som pleier å trengs i dette vannet og varmen hittil i år. To uker i forveien bommer den typisk med en uke.', isMalt + ' has not recorded ice-out for ' + S + ' yet. The model estimates the ice goes around <b>' + fmt(S, ig.n) + '</b>, from how much warmth this lake usually needs and the warmth so far this year. Two weeks ahead it typically misses by a week.') + '</p>';
   else if (ig && ig.prognose) h += '<p class="lead">' + tx('Satellitten har ikke sett isgangen for ' + S + ' ennå. Modellen anslår at isen går rundt <b>' + fmt(S, ig.n) + '</b>, ut fra hvor mye varme som pleier å trengs i dette vannet' + (ig.sno ? ', varmen hittil i år og snømengden' : ' og varmen hittil i år') + '. To uker i forveien bommer den typisk med en uke.', 'The satellite has not seen ice-out for ' + S + ' yet. The model estimates the ice goes around <b>' + fmt(S, ig.n) + '</b>, from how much warmth this lake usually needs' + (ig.sno ? ', the warmth so far this year and the amount of snow' : ' and the warmth so far this year') + '. Two weeks ahead it typically misses by a week.') + snoTekst + '</p>';
   var rows = '';
   // Marginata og vespertina
@@ -849,7 +896,7 @@ function klekking(v, w, swe) {
     rows += '<div class="art"><b>Marginata</b><span class="d">' + fmtRange(S, ms, ms + 7) + '</span><span class="s"><i>Leptophlebia marginata</i> · ' + tx('topp rundt ', 'peak around ') + fmt(S, ms + 3) + ' · ' + styrt + ' · ' + etikett(maalt) + '</span><span class="s">' + tilstede(v, 'Leptophlebia marginata', 'marginata') + '</span></div>';
     rows += '<div class="art"><b>Vespertina</b><span class="d">' + fmtRange(S, ms + 7, ms + 21) + '</span><span class="s"><i>Leptophlebia vespertina</i> · ' + tx('topp rundt ', 'peak around ') + fmt(S, ms + 14) + ' · ' + etikett(maalt) + '</span><span class="s">' + tilstede(v, 'Leptophlebia vespertina', 'vespertina') + '</span></div>';
   } else {
-    rows += '<div class="art muted"><b>Marginata · Vespertina</b><span class="d">–</span><span class="s">' + (stor ? tx('Vannet er for stort for satellittmetoden, så vi har ingen isgang å regne fra.', 'The lake is too large for the satellite method, so we have no ice-out to work from.') : tx('Vi har for få isgangdatoer fra satellitt for dette vannet ennå.', 'We have too few satellite ice-out dates for this lake yet.')) + '</span></div>';
+    rows += '<div class="art muted"><b>Marginata · Vespertina</b><span class="d">–</span><span class="s">' + (isMalt ? tx('Vi har ikke nok isgangdatoer for dette vannet ennå.', 'We do not have enough ice-out dates for this lake yet.') : stor ? tx('Vannet er for stort for satellittmetoden, så vi har ingen isgang å regne fra.', 'The lake is too large for the satellite method, so we have no ice-out to work from.') : tx('Vi har for få isgangdatoer fra satellitt for dette vannet ennå.', 'We have too few satellite ice-out dates for this lake yet.')) + '</span></div>';
   }
   // Vulgata
   var g450 = naar(s, 91, T_VULG);
@@ -886,7 +933,7 @@ function klekking(v, w, swe) {
   }
   rows += vulgataRow(v);
   h += '<div class="arts">' + rows + '</div>';
-  if (krepsdyr) h += '<p class="note">' + tx('Skjoldkreps og marflo vises bare der Artsdatabanken har funn. Kilder: Qvenild m.fl. 2018 og 2020, Qvenild og Hesthagen 2019 (Fauna norvegica, Hardangervidda). Fem uker etter isgang er vår grove omregning av varmen skjoldkrepsen trenger.', 'Tadpole shrimp and freshwater shrimp are only shown where Artsdatabanken has records. Sources: Qvenild et al. 2018 and 2020, Qvenild and Hesthagen 2019 (Fauna norvegica, Hardangervidda). Five weeks after ice-out is our rough conversion of the warmth the tadpole shrimp needs.') + '</p>';
+  if (krepsdyr) h += '<p class="note">' + tx('Skjoldkreps og marflo vises bare der ' + ARTSKILDE + ' har funn. Kilder: Qvenild m.fl. 2018 og 2020, Qvenild og Hesthagen 2019 (Fauna norvegica, Hardangervidda). Fem uker etter isgang er vår grove omregning av varmen skjoldkrepsen trenger.', 'Tadpole shrimp and freshwater shrimp are only shown where ' + ARTSKILDE + ' has records. Sources: Qvenild et al. 2018 and 2020, Qvenild and Hesthagen 2019 (Fauna norvegica, Hardangervidda). Five weeks after ice-out is our rough conversion of the warmth the tadpole shrimp needs.') + '</p>';
   h += '<p class="note">' + tx('Slik regner vi: marginata starter når isen har gått og våren har gitt nok varme, vespertina en uke senere. Vulgata starter når varmesummen fra 1. april har nådd et fast nivå, grandis når den har nådd et høyere nivå. Temperaturen er luft ved vannet, skalert til vannets høyde. For vulgata bommer modellen typisk med rundt 5 dager der den er testet (Østlandet og Kautokeino); for marginata og vespertina er den bare sjekket mot spredte artsfunn. Vannene der vi har en kalibrert prognose, har egen side.',
                                'How we work it out: marginata starts when the ice has gone and spring has given enough warmth, vespertina a week later. Vulgata starts when the warmth sum from 1 April reaches a fixed level, grandis when it reaches a higher one. Temperature is air at the lake, scaled to its altitude. For vulgata the model typically misses by about 5 days where it has been tested (eastern Norway and Kautokeino); for marginata and vespertina it has only been checked against scattered species records. Lakes with a calibrated forecast have their own page.') + '</p>';
   el.className = ''; el.innerHTML = h;

@@ -281,10 +281,12 @@ function modellLinje(e) {
   if (e.modell && e.modell.spinner != null && e.modell.spinner > 0) s += (s ? ' · ' : '') + tx('spinnerfall i kveld ', 'spinner fall tonight ') + Math.round(e.modell.spinner * 100) + ' %';
   return s ? tx('Modellen anslo: ', 'The model estimated: ') + s : '';
 }
+// Hvem som har målt isgangen i år (2026-10-17): satellitt i Norge, SMHI i Sverige, Syke i Finland
+const isKilde = (e) => e.vann && e.vann.land === 'se' ? tx('målt av SMHI', 'measured by SMHI') : e.vann && e.vann.land === 'fi' ? tx('notert av Syke', 'observed by Syke') : tx('satellitt', 'satellite');
 function isgangTekst(e) {
   const m = e.modell; if (!m || m.isg == null) return '';
   const L = doy(oslo(e.t).dato), d = window.hwDato(new Date(m.S, 0, m.isg));
-  const kilde = m.isgSat ? tx('satellitt', 'satellite') : tx('anslått', 'estimated');
+  const kilde = m.isgSat ? isKilde(e) : tx('anslått', 'estimated');
   return L >= m.isg ? tx(`${d} (${kilde}), ${L - m.isg} dager før`, `${d} (${kilde}), ${L - m.isg} days before`) : tx(`${d} (${kilde}), ikke gått ennå`, `${d} (${kilde}), not yet gone`);
 }
 
@@ -316,13 +318,16 @@ async function berik(id) {
         e = oppdater(id, (x) => { x.berg = b; }); vis(id);
       } catch (err) {}
     }
-    if (e.vann && !e.vann.land && (!e.modell || e.modell.vannId !== e.vann.id)) {   // modellen bare for norske vann
+    // Modellen for alle vann (2026-10-17, Stian «kjør»: vulgata og grandis også i Sverige og Finland — der uten isgang,
+    // så uten marginata/vespertina). vannId: NVE-nummer for norske vann (som før), «se<id>»/«fi<id>» ellers.
+    const modellId = e.vann ? (e.vann.land ? vKey(e.vann) : e.vann.id) : null;
+    if (e.vann && (!e.modell || e.modell.vannId !== modellId)) {
       try {
-        const v = await vannRec(e.vann.id);
+        const v = await vannRecFor(e.vann);
         if (v) {
           const m = await regnVann(v, new Date(e.t));
           if (!m.feil) {
-            e = oppdater(id, (x) => { x.modell = { vannId: e.vann.id, S: m.S, isg: m.isgang ? m.isgang.doy : null, isgSat: !!(m.isgang && m.isgang.sat), marg: m.marginata, vulg: m.vulgata, grand: m.grandis == null ? null : m.grandis, spinner: null }; });
+            e = oppdater(id, (x) => { x.modell = { vannId: modellId, S: m.S, isg: m.isgang ? m.isgang.doy : null, isgSat: !!(m.isgang && m.isgang.sat), marg: m.marginata, vulg: m.vulgata, grand: m.grandis == null ? null : m.grandis, spinner: null }; });
             vis(id);
           }
         }
@@ -334,7 +339,7 @@ async function berik(id) {
     }
   } finally { pagaar.delete(id); }
 }
-function mangler(e) { return (e.pos && !e.vannSjekket) || (koord(e) && (!e.vaer || !e.berg)) || (e.vann && !e.vann.land && !e.modell); }
+function mangler(e) { return (e.pos && !e.vannSjekket) || (koord(e) && (!e.vaer || !e.berg)) || (e.vann && !e.modell); }
 function berikAlle() { les().filter(mangler).forEach((e) => berik(e.id)); }
 
 // ── Bilder (2026-10-17, Stian) ───────────────────────────────────────
@@ -430,7 +435,7 @@ function fangstTekst(f) {
   const perArt = {};
   f.forEach((x) => { const a = (x.art || tx('fisk', 'fish')).trim(); perArt[a] = (perArt[a] || 0) + (+x.antall || 1); });
   const l = f.map((x) => +x.lengde).filter((x) => x > 0);
-  return `<b>${n} ${n === 1 ? tx('fisk', 'fish') : tx('fisk', 'fish')}</b>: ` + Object.entries(perArt).map(([a, k]) => `${k} ${esc(a.toLowerCase())}`).join(', ') +
+  return `<b>${n === 1 ? tx('1 fisk', '1 fish') : tx(n + ' fisk', n + ' fish')}</b>: ` +   // finsk: «1 kala», «3 kalaa» Object.entries(perArt).map(([a, k]) => `${k} ${esc(a.toLowerCase())}`).join(', ') +
     (l.length ? ` (${l.length === 1 ? l[0] : Math.min(...l) + '–' + Math.max(...l)} cm)` : '');
 }
 const OBS = [['klekking', 'Klekking', 'Hatch'], ['spinnerfall', 'Spinnerfall', 'Spinner fall'], ['vak', 'Vak', 'Rises'], ['lite', 'Lite aktivitet', 'Little activity']];
@@ -486,8 +491,6 @@ function arkHtml(e) {
     const ig = isgangTekst(e), f = faser(e);
     if (ig) auto.push(`<div class="rad"><span>${tx('Isgang', 'Ice-out')}</span><span>${ig}</span></div>`);
     if (f.length) auto.push(`<div class="rad"><span>${tx('Modellen', 'Model')}</span><span>${f.map((x) => `${x.navn} <b>${x.tekst}</b>`).join(' · ')}${e.modell.spinner ? ` · ${tx('spinnerfall i kveld', 'spinner fall tonight')} <b>${Math.round(e.modell.spinner * 100)} %</b>` : ''}<br><span class="liten">${tx('Anslag fra modellen, ikke observert. Gjelder bare arter som finnes i vannet.', 'Model estimates, not observations. Only apply to species that live in the lake.')}</span></span></div>`);
-    else if (e.vann.land === 'se') auto.push(`<div class="rad"><span>${tx('Modellen', 'Model')}</span><span>${tx('Anslag for svenske vann kommer.', 'Estimates for Swedish lakes are coming.')}</span></div>`);
-    else if (e.vann.land === 'fi') auto.push(`<div class="rad"><span>${tx('Modellen', 'Model')}</span><span>${tx('Anslag for finske vann kommer.', 'Estimates for Finnish lakes are coming.')}</span></div>`);
     else if (!e.modell) auto.push(`<div class="rad"><span>${tx('Modellen', 'Model')}</span><span>${tx('regner …', 'working …')}</span></div>`);
   } else if (e.vannSjekket && e.pos) auto.push(`<div class="liten">${tx('Ingen vann med data innen 1,5 km. Modellens anslag krever et vann.', 'No lake with data within 1.5 km. Model estimates need a lake.')}</div>`);
 
@@ -634,7 +637,7 @@ function csv() {
     return [o.dato, o.hhmm, e.sted, e.vann ? vannNavn(e.vann) : '', e.vann ? vKey(e.vann) : '', v.kommune || '', v.moh == null ? '' : v.moh, num(v.ha, 0),
       k.lat == null ? '' : num(k.lat, 5), k.lon == null ? '' : num(k.lon, 5), e.pos ? e.pos.acc : '',
       num(w.temp), num(w.vind), num(w.kast), retning(w.retn), w.sky == null ? '' : Math.round(w.sky), num(w.nedbor), w.fukt == null ? '' : Math.round(w.fukt), w.trykk || '', num(w.trend), w.sol || '',
-      bergTekst(e.berg), md(e, 'isg'), m && m.isg != null ? (m.isgSat ? tx('satellitt', 'satellite') : tx('anslått', 'estimated')) : '', m && m.isg != null && L >= m.isg ? L - m.isg : '',
+      bergTekst(e.berg), md(e, 'isg'), m && m.isg != null ? (m.isgSat ? isKilde(e) : tx('anslått', 'estimated')) : '', m && m.isg != null && L >= m.isg ? L - m.isg : '',
       md(e, 'marg'), fd(e, 'Marginata'), fd(e, 'Vespertina'), md(e, 'vulg'), fd(e, 'Vulgata'), md(e, 'grand'), m && m.spinner != null ? Math.round(m.spinner * 100) : '',
       e.obs.map(obsNavn).join(', '), e.insekt.map(insNavn).join(', '), e.fangst.reduce((s, f) => s + (+f.antall || 1), 0) || '', fangst, e.notat, e.bilder || ''].map(celle).join(sep);
   });

@@ -17,7 +17,7 @@
 
 import { forMange } from '../lib/fartsgrense.js';
 import { redis, hashEndpoint, k } from '../lib/redis.js';
-import { sendPush, buildPayload, TRIGGER_TYPES } from '../lib/push.js';
+import { sendPush, buildPayload, pushSpraak, TRIGGER_TYPES } from '../lib/push.js';
 
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -73,14 +73,14 @@ async function handleSubscribe(req, res) {
             token,
             keys: null,
             locations,
-            lang: lang || 'no',
+            lang: pushSpraak(lang),   // no/en/sv/fi (2026-10-17); varslene skrives på dette språket
             updatedAt: new Date().toISOString(),
         }
         : {
             endpoint,
             keys: subscription.keys,
             locations,
-            lang: lang || 'no',
+            lang: pushSpraak(lang),
             updatedAt: new Date().toISOString(),
         };
     const existing = await r.get(k.sub(hash));
@@ -116,26 +116,13 @@ async function handleTestTrigger(req, res) {
         });
     }
 
-    const isNo = lang !== 'en';
+    // Eksempelverdier i samme form som cron-daily.js sender; buildPayload skriver teksten på språket (no/en/sv/fi).
     const stubData = {
-        klekkeChange: {
-            predDate: isNo ? '25. mai' : 'May 25',
-            deltaText: isNo ? '3 dager tidligere' : '3 days earlier',
-        },
-        klekkeImminent: {
-            predDate: isNo ? '23. mai' : 'May 23',
-            info: isNo ? 'Drivere peker tidlig — vulgata-klekkingen nærmer seg.' : 'Drivers point early — Vulgata window opens soon.',
-        },
-        spinnerfall: {
-            info: isNo ? 'Vindstille, klart, 16 °C — perfekt.' : 'Calm winds, clear, 16 °C — perfect.',
-        },
-        stokkmaur: {
-            info: isNo ? 'Varmt og vindstille de neste 3 dagene.' : 'Warm and calm for the next 3 days.',
-        },
-        seasonstart: {
-            species: 'Vulgata · Grandis',
-            predDate: isNo ? '25. mai → 8. juni' : 'May 25 → June 8',
-        },
+        klekkeChange: { predIso: '2027-05-25', delta: -3 },
+        klekkeImminent: { predIso: '2027-05-23', daysUntil: 2 },
+        spinnerfall: { wind: 1.5, temp: 16, p: 0.75 },
+        stokkmaur: { maxTemp: 22, wind: 2, clouds: 20, score: 85 },
+        seasonstart: { species: 'Vulgata · Grandis', predIso: '2027-05-25' },
     };
 
     const payload = buildPayload(

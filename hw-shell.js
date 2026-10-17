@@ -188,7 +188,9 @@
     }
     faner.innerHTML = FANER.map(function (x) {
       return '<button type="button" role="tab" data-fane="' + x.id + '" aria-selected="' + (x.id === favFane) + '"' + (x.id === favFane ? ' class="on"' : '') + '>' +
-        tx(x.no, x.en) + (antall[x.id] ? '<small>' + antall[x.id] + '</small>' : '') + '</button>';
+        // «Vann» er både entall og flertall på norsk; fanen betyr flertall (svensk/finsk har egne ord)
+        (x.id === 'vann' && (LANG === 'sv' || LANG === 'fi') ? { sv: 'Sjöar', fi: 'Järvet' }[LANG] : tx(x.no, x.en)) +
+        (antall[x.id] ? '<small>' + antall[x.id] + '</small>' : '') + '</button>';
     }).join('');
     var fane = FANER.filter(function (x) { return x.id === favFane; })[0];
     if (!antall[favFane]) {
