@@ -48,12 +48,30 @@ UA = {"User-Agent": "hatchwatch.no kartbygg"}
 os.makedirs(OUT, exist_ok=True)
 
 
+def gh_token():
+    """Token for det private repoet (2026-10-17): GH_TOKEN/GITHUB_TOKEN i jobben, ellers «GitHub token.txt» på PC-en.
+    Sendes bare til GitHub, aldri til de andre kildene."""
+    t = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
+    if t:
+        return t.strip()
+    fil = os.path.join(ROOT, "GitHub token.txt")
+    if os.path.exists(fil):
+        with open(fil, encoding="utf-8") as f:
+            return f.read().strip()
+    return ""
+
+
 def hent(url, params=None, raw=False):
     if params:
         url = url + "?" + urllib.parse.urlencode(params)
+    hoder = dict(UA)
+    if url.startswith(("https://api.github.com/", "https://raw.githubusercontent.com/")):
+        t = gh_token()
+        if t:
+            hoder["Authorization"] = "token " + t
     for forsok in range(4):
         try:
-            with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=120) as r:
+            with urllib.request.urlopen(urllib.request.Request(url, headers=hoder), timeout=120) as r:
                 b = r.read()
                 return b if raw else json.loads(b.decode("utf-8"))
         except Exception as e:
@@ -441,7 +459,7 @@ def bygg_sverige():
         dyp   = HydroLAKES' beregnede middeldyp (modell, ikke loddet)
     data/kart/sverige.pmtiles  lag vann_se (omriss, id/navn/ha/moh) og vannpunkt_se (ett punkt per vann, z8+).
     Ingen isgang ennå (venter på Earth Engine-kvoten)."""
-    import mapbox_vector_tile, mercantile, shapely, numpy as np
+    import mapbox_vector_tile, mercantile, shapely, shapely.errors, numpy as np
     from shapely.geometry import shape, box
     from shapely.strtree import STRtree
     from pmtiles.writer import Writer
@@ -518,12 +536,30 @@ def bygg_sverige():
     def min_ha(z):
         return {3: 3000, 4: 1500, 5: 600, 6: 200, 7: 60, 8: 20}.get(z, 0)
     bounds_ll = (10.5, 55.0, 24.5, 69.2)
+    # Skog og bre på oversiktsnivå (tools/kart/se_skog.py, OSM via OpenFreeMap z9): lag skog_se, k 1 = skog, 2 = bre
+    SKOG_MAXZ, skog = 9, []
+    sfil = os.path.join(sv, "skog_se.wkb.gz")
+    if os.path.exists(sfil):
+        import pickle
+        for k, w in pickle.load(gzip.open(sfil, "rb")):
+            g = shapely.from_wkb(w)
+            if not g.is_valid:
+                g = g.buffer(0)
+            skog += [(k, p) for p in (g.geoms if hasattr(g, "geoms") else [g]) if not p.is_empty]
+        print(f"  skog_se: {len(skog)} flater")
     tiles_out, t0 = {}, time.time()
     for z in range(MINZ, MAXZ + 1):
         tol = (2 * math.pi * R / (256 * 2 ** z)) * 0.6
         vz = [(g.simplify(tol, preserve_topology=True), p) for g, p in vann if p["ha"] >= min_ha(z)]
         vz = [(g, p) for g, p in vz if not g.is_empty]
         tre_v = STRtree([g for g, _ in vz]) if vz else None
+        sz = []
+        if skog and z <= SKOG_MAXZ:
+            min_a = (tol * 3) ** 2
+            sz = [(k, g.simplify(tol, preserve_topology=True)) for k, g in skog if g.area >= min_a]
+            sz = [(k, g if g.is_valid else g.buffer(0)) for k, g in sz if not g.is_empty]
+            sz = [(k, g) for k, g in sz if not g.is_empty]
+        tre_s = STRtree([g for _, g in sz]) if sz else None
         n = 0
         for t in mercantile.tiles(*bounds_ll, zooms=[z]):
             b = mercantile.xy_bounds(t)
@@ -545,6 +581,28 @@ def bygg_sverige():
                     feats.append({"geometry": c, "properties": {k: v for k, v in p.items() if v is not None}, "id": p["id"]})
                 if feats:
                     lag.append({"name": "vann_se", "features": feats})
+            if tre_s is not None:
+                per_k = collections.defaultdict(list)
+                for i in tre_s.query(tb, predicate="intersects"):
+                    k, g = sz[i]
+                    try:
+                        c = g.intersection(tb)
+                    except shapely.errors.GEOSException:
+                        continue
+                    if not c.is_empty:
+                        per_k[k].append(c)
+                feats = []
+                for k, deler in sorted(per_k.items()):
+                    try:
+                        u = shapely.union_all(deler)
+                    except shapely.errors.GEOSException:
+                        u = shapely.union_all([d.buffer(0) for d in deler])
+                    if u.geom_type == "GeometryCollection":
+                        u = shapely.union_all([x for x in u.geoms if x.geom_type in ("Polygon", "MultiPolygon")])
+                    if not u.is_empty and u.geom_type in ("Polygon", "MultiPolygon"):
+                        feats.append({"geometry": u, "properties": {"k": k}})
+                if feats:
+                    lag.insert(0, {"name": "skog_se", "features": feats})
             if z >= PUNKT_MINZ:
                 tb0 = box(b.left, b.bottom, b.right, b.top)
                 feats = [{"geometry": punkter[i][0], "properties": punkter[i][1], "id": punkter[i][1]["id"]} for i in tre_p.query(tb0, predicate="intersects")]
@@ -567,7 +625,8 @@ def bygg_sverige():
                     "center_zoom": 5, "center_lon_e7": int(16 * 1e7), "center_lat_e7": int(62 * 1e7)},
                    {"name": "HatchWatch Sverige", "attribution": "HydroLAKES (CC BY 4.0) · OpenStreetMap",
                     "vector_layers": [{"id": "vann_se", "fields": {"id": "Number", "navn": "String", "ha": "Number", "moh": "Number"}, "minzoom": MINZ, "maxzoom": MAXZ},
-                                      {"id": "vannpunkt_se", "fields": {"id": "Number", "ha": "Number"}, "minzoom": PUNKT_MINZ, "maxzoom": MAXZ}]})
+                                      {"id": "vannpunkt_se", "fields": {"id": "Number", "ha": "Number"}, "minzoom": PUNKT_MINZ, "maxzoom": MAXZ},
+                                      {"id": "skog_se", "fields": {"k": "Number"}, "minzoom": MINZ, "maxzoom": SKOG_MAXZ}]})
     print(f"sverige.pmtiles: {len(tiles_out)} fliser, {os.path.getsize(path) / 1e6:.1f} MB ({time.time() - t0:.0f} s)")
 
 

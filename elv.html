@@ -57,7 +57,9 @@ svg.ssb polyline.vekt { fill: none; stroke: var(--hw-fg); stroke-width: 2; strok
 svg.ssb circle.vekt { fill: var(--hw-bg-2); stroke: var(--hw-fg); stroke-width: 1.8; }
 svg.ssb circle.vekt.siste { fill: var(--hw-hatch); stroke: var(--hw-hatch); }
 svg.ssb line.akse { stroke: var(--hw-line); }
-svg.ssb text.kg { fill: var(--hw-fg-2); font-size: 8px; }
+svg.ssb text.kg { fill: var(--hw-fg-3); font-size: 8px; }
+svg.ssb line.snitt { stroke: var(--hw-fg-2); stroke-width: 1.2; stroke-dasharray: 4 3; }
+svg.ssb text.snitt { fill: var(--hw-fg); font-size: 8px; font-weight: 600; }
 svg.ssb text.aar { font-size: 7.5px; letter-spacing: -.02em; }
 .legendrow i.linje { width: 14px; height: 2px; background: var(--hw-fg); border-radius: 1px; }
 .ssbtab { overflow-x: auto; margin-top: 10px; }
@@ -317,25 +319,36 @@ function ssbKort(rader) {
   med.forEach(function (r) { var n = r[3] + r[4] + r[5]; if (r[2] != null && n) { vSum += r[2] * n; vN += n; } });
   var snittVekt = vN ? vSum / vN : null;
   // To små grafer i stedet for én med to akser (2026-10-17, Stian: «rotete med de to i samme graf»):
-  // 1) søyler for antall laks per sesong (siste i gull), 2) linje for snittvekt. Samme årsakse, hver med egen skala til høyre.
-  var W = 420, L = 8, R = 40, B = 14, maks = Math.max.apply(null, rader.map(function (r) { return r[1]; })) || 1;
+  // 1) søyler for antall laks per sesong (siste i gull), 2) linje for snittvekt. Samme årsakse.
+  // Stiplet linje = SNITT (Stian 2026-10-17: stiplet leses som snitt, ikke som maks). Samme tall og samme
+  // sesonger som boksene over (de siste ti, sesonger med fangst), så linja går bare over de sesongene.
+  // Skalaen står som små tall med et lite merke i kanten, uten linjer på tvers.
+  var W = 420, L = 8, R = 72, B = 14, maks = Math.max.apply(null, rader.map(function (r) { return r[1]; })) || 1;
   var bw = (W - L - R) / rader.length, midt = function (i) { return L + i * bw + bw / 2; };
+  var i0 = rader.length - siste10.length, xSnitt = L + i0 * bw + 2, xKant = W - R + 2;
   var aarRad = function (H) {
     return rader.map(function (r, i) { return '<text class="aar" x="' + midt(i).toFixed(1) + '" y="' + (H + 11) + '" text-anchor="middle">' + r[0] + '</text>'; }).join('');
   };
-  var skala = function (y, tekst) {
-    return '<line class="akse" x1="' + L + '" x2="' + (W - R + 2) + '" y1="' + y.toFixed(1) + '" y2="' + y.toFixed(1) + '" stroke-dasharray="2 3"/>' +
-      '<text class="kg" x="' + (W - R + 6) + '" y="' + (y + 3).toFixed(1) + '">' + tekst + '</text>';
+  var skalaTall = function (y, tekst) {
+    return '<line class="akse" x1="' + xKant + '" x2="' + (xKant + 3) + '" y1="' + y.toFixed(1) + '" y2="' + y.toFixed(1) + '"/>' +
+      '<text class="kg" x="' + (xKant + 6) + '" y="' + (y + 3).toFixed(1) + '">' + tekst + '</text>';
+  };
+  var snittLinje = function (y, tekst) {
+    return '<line class="snitt" x1="' + xSnitt.toFixed(1) + '" x2="' + xKant + '" y1="' + y.toFixed(1) + '" y2="' + y.toFixed(1) + '"/>' +
+      '<text class="snitt" x="' + (xKant + 6) + '" y="' + (y + 3).toFixed(1) + '">' + tx('snitt ', 'avg ') + tekst + '</text>';
   };
   // 1) Laks per sesong
-  var H1 = 92, TOPP1 = 8;
+  var H1 = 92, TOPP1 = 8, yLaks = function (n) { return H1 - (H1 - TOPP1) * n / maks; };
   var svg = '<div class="hw-eyebrow" style="margin-top:14px">' + tx('Laks per sesong', 'Salmon per season') + '</div>' +
     '<svg class="ssb" style="margin-top:4px" viewBox="0 0 ' + W + ' ' + (H1 + B) + '" role="img" aria-label="' + tx('Laks fanget per sesong', 'Salmon caught per season') + '">' +
-    skala(TOPP1, fmt(maks)) + '<line class="akse" x1="' + L + '" x2="' + (W - R + 2) + '" y1="' + H1 + '" y2="' + H1 + '"/>';
+    '<line class="akse" x1="' + L + '" x2="' + xKant + '" y1="' + H1 + '" y2="' + H1 + '"/>';
   rader.forEach(function (r, i) {
     var hgt = Math.max(r[1] ? 2 : 0, (H1 - TOPP1) * r[1] / maks), x = L + i * bw + bw * 0.14, y = H1 - hgt;
     svg += '<rect class="' + (i === rader.length - 1 ? 'b siste' : 'b') + '" x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + (bw * 0.72).toFixed(1) + '" height="' + hgt.toFixed(1) + '"><title>' + r[0] + ': ' + fmt(r[1]) + tx(' laks', ' salmon') + '</title></rect>';
   });
+  // Skalatallet for toppen vises bare når det ikke kolliderer med snitt-teksten
+  if (!med.length || Math.abs(yLaks(snitt) - TOPP1) > 10) svg += skalaTall(TOPP1, fmt(maks));
+  if (med.length) svg += snittLinje(yLaks(snitt), fmt(snitt));
   svg += aarRad(H1) + '</svg>';
   // 2) Snittvekt: bare sesonger med fangst (stengte år gir ingen vekt)
   var vp = rader.map(function (r, i) { return r[1] > 0 && r[2] != null ? { i: i, v: r[2] } : null; }).filter(Boolean);
@@ -345,11 +358,14 @@ function ssbKort(rader) {
     if (vhi - vlo < 2) vhi = vlo + 2;
     var yv = function (v) { return TOPP2 + (H2 - TOPP2 - 4) * (1 - (v - vlo) / (vhi - vlo)); };
     var kgAkse = function (v) { return (EN ? String(v) : String(v).replace('.', ',')) + ' kg'; };
+    var ySnittV = snittVekt != null ? yv(snittVekt) : null;
+    var ledig = function (y) { return ySnittV == null || Math.abs(y - ySnittV) > 10; };
     svg += '<div class="hw-eyebrow" style="margin-top:14px">' + tx('Snittvekt per sesong', 'Average weight per season') + '</div>' +
       '<svg class="ssb" style="margin-top:4px" viewBox="0 0 ' + W + ' ' + (H2 + B) + '" role="img" aria-label="' + tx('Snittvekt per sesong', 'Average weight per season') + '">' +
-      skala(yv(vhi), kgAkse(vhi)) + skala(yv(vlo), kgAkse(vlo)) +
+      (ledig(yv(vhi)) ? skalaTall(yv(vhi), kgAkse(vhi)) : '') + (ledig(yv(vlo)) ? skalaTall(yv(vlo), kgAkse(vlo)) : '') +
+      (ySnittV != null ? snittLinje(ySnittV, kg(snittVekt)) : '') +
       '<polyline class="vekt" points="' + vp.map(function (p) { return midt(p.i).toFixed(1) + ',' + yv(p.v).toFixed(1); }).join(' ') + '"/>';
-    vp.forEach(function (p, j) {
+    vp.forEach(function (p) {
       svg += '<circle class="vekt' + (p.i === rader.length - 1 ? ' siste' : '') + '" cx="' + midt(p.i).toFixed(1) + '" cy="' + yv(p.v).toFixed(1) + '" r="3"><title>' + rader[p.i][0] + ': ' + kg(p.v) + '</title></circle>';
     });
     svg += aarRad(H2) + '</svg>';

@@ -22,7 +22,8 @@
 // Debounce: notif:{hash}:{trigger}:{loc} settes med TTL 22 t etter send.
 // Hvis nøkkelen finnes, hopper vi over (unngår dupliserte pushes).
 //
-// Vercel Cron har ingen body — vi støtter også manuell GET for testing.
+// Vercel Cron har ingen body. Manuell GET for testing krever samme header som Vercel sender
+// (Authorization: Bearer <CRON_SECRET>) når CRON_SECRET er satt.
 // Hvis en push-server returnerer 404/410, fjernes subscription automatisk
 // (bruker har avinstallert appen eller skrudd av varsler).
 //
@@ -32,6 +33,18 @@ import { redis, k, hashEndpoint } from '../lib/redis.js';
 import { sendPush, buildPayload } from '../lib/push.js';
 import { hentVann, regnVann, datoTekst, finnes, doyOf, spinnerfallSjanse, SPINNER_HOY } from '../lib/vannmodell.js';
 import { internNokkel } from '../lib/fartsgrense.js';
+import crypto from 'crypto';
+
+// 2026-10-17: bare Vercel Cron får starte runden. Når CRON_SECRET er satt i Vercel, sender Vercel
+// «Authorization: Bearer <CRON_SECRET>» med de planlagte kallene; alle andre får 401. Mangler
+// variabelen, slippes kallet gjennom som før (så ingenting stopper før den er lagt inn).
+function fraVercelCron(req) {
+    const hemmelig = (process.env.CRON_SECRET || '').trim();
+    if (!hemmelig) return true;
+    const a = crypto.createHash('sha256').update(String(req.headers.authorization || '')).digest();
+    const b = crypto.createHash('sha256').update('Bearer ' + hemmelig).digest();
+    return crypto.timingSafeEqual(a, b);
+}
 
 // Maks antall subs vi prosesserer i én kjøring — beskytt mot timeout.
 const MAX_SUBS_PER_RUN = 200;
@@ -46,6 +59,9 @@ export default async function handler(req, res) {
     // Tillat både GET (Vercel Cron / manuell test) og POST
     if (req.method !== 'GET' && req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
+    }
+    if (!fraVercelCron(req)) {
+        return res.status(401).json({ error: 'Ikke tillatt' });
     }
 
     try {

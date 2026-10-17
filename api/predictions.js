@@ -108,11 +108,44 @@ async function handleHistory(req, res) {
     return res.status(200).json({ loc, species, year, history });
 }
 
+// 2026-10-17: hvem som helst kan POSTe hit, og lagrede prediksjoner styrer konvergensgrafen og
+// klekkeChange-varslene i cron-daily. Derfor tas bare imot det dashboardet faktisk sender:
+// kjente lokasjoner (SYNK med LOCATIONS i dashboard.html — ny lokasjon der må inn her), kjent art,
+// en ekte dato og et dagnummer som passer med datoen. Alt annet avvises med 400.
+const LAGRE_LOK = [
+    'kautokeino', 'kautokeino_test', 'alta', 'porsanger', 'roros', 'romeriksasen', 'oslo',
+    'nordmarka_dyn', 'nordmarka_test_a', 'ostmarka', 'ostmarka_tb5', 'vestfjella', 'ifjordfjellet',
+    'dividalen', 'bardu', 'narvik', 'mo_i_rana', 'borgefjell', 'lierne', 'trondheim', 'rena',
+    'finnemarka', 'hardangervidda', 'bergen',
+];
+const LAGRE_ARTER = ['vulgata', 'grandis', 'marginata', 'vespertina'];
+
+function sjekkPrediksjon(b) {
+    if (!LAGRE_LOK.includes(b.loc)) return 'ukjent lokasjon';
+    if (!LAGRE_ARTER.includes(b.species)) return 'ukjent art';
+    if (typeof b.predDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(b.predDate)) return 'ugyldig dato';
+    const d = new Date(b.predDate + 'T00:00:00Z');
+    if (isNaN(d) || d.toISOString().slice(0, 10) !== b.predDate) return 'ugyldig dato';
+    const aar = d.getUTCFullYear(), iAar = new Date().getUTCFullYear();
+    if (aar < iAar - 1 || aar > iAar + 1) return 'dato utenfor sesongen';
+    if (!Number.isInteger(b.predDoy) || b.predDoy < 1 || b.predDoy > 366) return 'ugyldig dagnummer';
+    const doy = Math.round((d - Date.UTC(aar, 0, 1)) / 86400000) + 1;
+    if (Math.abs(doy - b.predDoy) > 1) return 'dagnummer passer ikke med datoen';   // ±1: dashboardet bruker lokal dato
+    if (b.info != null && typeof b.info !== 'string') return 'ugyldig info';
+    return null;
+}
+
 async function handleStore(req, res) {
-    const { loc, species, predDate, predDoy, info } = req.body || {};
-    if (!loc || !species) {
-        return res.status(400).json({ error: 'Mangler loc eller species' });
+    // Dashboardet lagrer én gang per sidevisning; 20 per 10 min per IP er god margin.
+    if (forMange(req, res, 'pred-lagre', 20, 600)) return;
+    const body = req.body || {};
+    const feil = sjekkPrediksjon(body);
+    if (feil) {
+        if (feil === 'ukjent lokasjon') console.warn('store-prediction: ukjent loc avvist:', String(body.loc).slice(0, 40));
+        return res.status(400).json({ error: feil });
     }
+    const { loc, species, predDate, predDoy } = body;
+    const info = body.info ? body.info.slice(0, 80) : null;
 
     const r = redis();
     const key = k.pred(loc, species);
@@ -120,9 +153,9 @@ async function handleStore(req, res) {
     const todayIso = now.toISOString().slice(0, 10);
     const year = now.getUTCFullYear();
     const newRecord = {
-        predDate: predDate || null,
-        predDoy: predDoy != null ? predDoy : null,
-        info: info || null,
+        predDate,
+        predDoy,
+        info,
         ts: now.toISOString(),
     };
 

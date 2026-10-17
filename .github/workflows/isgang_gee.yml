@@ -7,7 +7,7 @@
 # Hva som ligger hvor (se RAPPORT_G5.md):
 #   * i git (committes av jobben): norge/lett/*.csv (fylkesfilene uten passlista),
 #     isgang_norge_index.csv, norge_plan.json, rapport_norge.md
-#   * som workflow-artifact «gee-lager» (90 dager, de 5 nyeste beholdes): de
+#   * som workflow-artifact «gee-lager» (90 dager, de 2 nyeste beholdes): de
 #     FULLE fylkesfilene norge/*.json+*.csv, rådata data/, vannlister vann/ og
 #     kjorelogg_g2.json — for store for et offentlig repo, men --fortsett
 #     trenger dem. Hver kjøring henter forrige kjørings artifact før start.
@@ -85,8 +85,9 @@ jobs:
             gh run download "$RUN" -n gee-lager -D /tmp/lager
             unzip -oq /tmp/lager/lager.zip -d .
             echo "Lager hentet fra artifact gee-lager (kjøring $RUN)."
-          elif curl -fsSL -o /tmp/lager.zip "https://github.com/$GITHUB_REPOSITORY/releases/download/gee-lager-seed/gee-lager.zip"; then
-            unzip -oq /tmp/lager.zip -d .
+          elif gh release download gee-lager-seed -R "$GITHUB_REPOSITORY" -p gee-lager.zip -D /tmp --clobber; then
+            # gh i stedet for curl (2026-10-17): virker også når repoet er privat
+            unzip -oq /tmp/gee-lager.zip -d .
             echo "Lager hentet fra release gee-lager-seed (engangs-såing fra PC-en)."
           else
             echo "FEIL: fant verken artifact «gee-lager» eller release «gee-lager-seed». Kjør g5_lager_til_github.py på PC-en først" >&2
@@ -211,14 +212,16 @@ jobs:
           compression-level: 0
           if-no-files-found: error
 
-      - name: Rydd gamle artifacts (behold de 5 nyeste)
+      # 2026-10-17: 2 i stedet for 5 — privat repo på GitHub Free har bare 500 MB lagerplass til artifacts,
+      # og jobben trenger bare den nyeste (den forrige er reserve).
+      - name: Rydd gamle artifacts (behold de 2 nyeste)
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?name=gee-lager&per_page=100" \
-            --jq '[.artifacts[] | select(.expired | not)] | sort_by(.created_at) | reverse | .[5:] | .[].id' \
+            --jq '[.artifacts[] | select(.expired | not)] | sort_by(.created_at) | reverse | .[2:] | .[].id' \
           | while read -r id; do
               gh api --method DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$id" && echo "Slettet artifact $id"
             done
