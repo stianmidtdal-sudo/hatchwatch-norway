@@ -43,7 +43,7 @@
 
   // Svensk og finsk: ordboka lastes synkront her, så den er klar før sidens eget skript kjører.
   // Bytt I18N_V når oversettelsene endres (tvinger ny henting forbi hurtigbufferen).
-  var I18N_V = '4';
+  var I18N_V = '6';
   if (lang === 'sv' || lang === 'fi') {
     document.write('<script src="/i18n/' + lang + '.js?v=' + I18N_V + '"><\/script>');
     if (/\/artikler(\.html)?$/.test(location.pathname)) document.write('<script src="/i18n/' + lang + '-artikler.js?v=' + I18N_V + '"><\/script>');

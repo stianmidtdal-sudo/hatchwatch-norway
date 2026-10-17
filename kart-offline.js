@@ -30,10 +30,13 @@
   // (kd_verneomradegrense). PNG8 er halvparten så stor som PNG og ser lik ut. 512 px = færre forespørsler og færre
   // flisskjøter for navn. Én definisjon for forsiden og nedlastingen (nøkkelen må bli lik). Utenfor Norge er
   // bildet gjennomsiktig. Riksgrensen tegner forsiden selv (tu-grense).
+  // Veiene (2026-10-17, Stian «kjør»): «kd_veger» er byttet med undernivåene UTEN N5000Veger (1:1,3–6,5 mill.), så
+  // oversiktskartet ikke får tykke røde veier som er kraftigere enn riksgrensen. Veiene kommer med N2000Veger fra
+  // flis-zoom 8 (kartzoom 7,5) — samme zoom som veiene i Sverige og Finland (tu-vei på forsiden).
   var KV_LAG = ['kd_hoydelag', 'kd_arealdekkeflate', 'fkb_arealdekke', 'fkb_vann', 'kd_hoydekurver', 'fkb_hoydekurver', 'fjellskygge',
     'kd_vannflate', 'kd_elver', 'Dybdelag', 'Dybdekontur', 'Torrfall', 'MudretOmrade_Grense', 'MudretOmrade', 'grunne', 'flytedokk_grense',
     'flytedokk', 'Torrdokk_Grense', 'Torrdokk', 'mudret_dybdetall', 'skjaer_punkt', 'Dybdepunkt', 'Konstruertkystkontur', 'Vannkontur',
-    'kd_vannkontur', 'vannkontur', 'kd_veger', 'privatveg', 'kommunalveg', 'fylkesveg', 'riksveg', 'europaveg', 'bilferjestrekning',
+    'kd_vannkontur', 'vannkontur', 'N2000Veger', 'N1000Veger', 'N500Veger', 'N250Veger', 'N100Veger', 'N50Veger', 'N50Vegbom', 'privatveg', 'kommunalveg', 'fylkesveg', 'riksveg', 'europaveg', 'bilferjestrekning',
     'passasjerferje', 'fkb_bygningsmessigeanlegg', 'fkb_samferdsel', 'kd_jernbane', 'kd_ferger', 'kd_anleggslinjer', 'fkb_bygning',
     'fkb_ledning', 'kd_bygninger', 'kd_spesiell_detalj', 'kd_hoydepunkt', 'kd_jernbanestasjon', 'kd_anleggspunkt', 'kd_bygningspunkt',
     'kd_turisthytte', 'kd_arealdekkepunkt', 'kd_tettsted', 'kd_stedsnavn', 'fkb_presentasjonsdata', 'vegnavn_fylk_nr', 'vegnavn_eur_riks_nr',
