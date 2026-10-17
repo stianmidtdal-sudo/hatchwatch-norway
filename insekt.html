@@ -19,6 +19,7 @@
      med som støtte. Egen side: rører ikke kart, modell eller dagbok, bortsett fra «Lagre i dagboka»,
      som skriver en vanlig dagbokslogg (hw_dagbok + bilde i IndexedDB «hw-dagbok», samme format). */
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  [hidden] { display: none !important; }      /* .hw-btn, .kort og .knapper har egen display som ellers vinner over hidden */
   body { min-height: 100vh; }
   .top { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: center; padding: calc(env(safe-area-inset-top, 0px) + 10px) 16px 10px; background: color-mix(in srgb, var(--hw-bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--hw-line); }
   .top .brand { display: flex; align-items: center; gap: 6px; color: var(--hw-fg); text-decoration: none; font-family: var(--hw-display); font-weight: 700; font-size: 17px; letter-spacing: -.02em; }
