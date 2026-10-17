@@ -225,6 +225,7 @@
                 <li data-i18n-html="src19"><b>SMHI</b> (CC BY 4.0): målt isgang i svenske sjøer, og lenker til SMHIs dybdekart</li>
                 <li data-i18n-html="src20"><b>Syke</b> (Finlands miljøinstitutt, CC BY 4.0): finske vann (Ranta10 og innsjøregisteret), målt dyp og notert isgang</li>
                 <li data-i18n-html="src21"><b>Laji.fi (FinBIF), Syke og Luke</b> via GBIF: arter og fisk i finske vann</li>
+                <li data-i18n-html="src22"><b>Natural Earth</b>: landgrenser, brukt til å tone ned landene vi ikke dekker</li>
                 <li data-i18n-html="src14"><b>EOX</b>: satellittkartet (EOxCloudless, bearbeidede Copernicus Sentinel-2-data)</li>
                 <li data-i18n-html="src10"><b>Oslomarka Fiskeadministrasjon (OFA)</b>: vulgata-vann og fisk satt ut i Oslomarka</li>
                 <li data-i18n-html="src11"><b>Forskning</b>: blant annet Qvenild m.fl. (skjoldkreps og marflo), Brittain (døgnfluer) og Gullefors (vårfluer)</li>
@@ -265,7 +266,7 @@
 <script>
 // Engelsk (2026-10-08): hw-lang.js velger språk; norsk står i HTML-en, engelsk legges over her.
 (function () {
-    if (window.HW_LANG !== 'en') return;
+    if (window.HW_LANG === 'no') return;   // engelsk, svensk og finsk (2026-10-17)
     var EN = {
         navHome: 'Front page', navNotif: 'Notifications', navArticles: 'Articles', navFeedback: 'Send feedback',
         h1: 'About HatchWatch', tagline: 'Hatches, ice-out and fishing conditions for fly fishers all over Norway',
@@ -308,6 +309,7 @@
         src19: '<b>SMHI</b> (CC BY 4.0): measured ice-out in Swedish lakes, and links to SMHI\'s depth maps',
         src20: '<b>Syke</b> (Finnish Environment Institute, CC BY 4.0): Finnish lakes (Ranta10 and the lake register), measured depth and observed ice-out',
         src21: '<b>Laji.fi (FinBIF), Syke and Luke</b> via GBIF: species and fish in Finnish lakes',
+        src22: '<b>Natural Earth</b>: country borders, used to tone down the countries we do not cover',
         src14: '<b>EOX</b>: the satellite map (EOxCloudless, modified Copernicus Sentinel-2 data)',
         src10: '<b>Oslomarka Fiskeadministrasjon (OFA)</b>: vulgata lakes and fish stocked in Oslomarka',
         src11: '<b>Research</b>: among others Qvenild et al. (tadpole shrimp and freshwater shrimp), Brittain (mayflies) and Gullefors (caddis)',
@@ -321,11 +323,9 @@
         appAnd: 'An Android app is coming. Until then you can open hatchwatch.no in Chrome and choose “Add to Home screen” in the menu.',
         appBtn: 'Get it on the App Store', appQr: 'Scan with your iPhone camera'
     };
-    document.title = 'About HatchWatch · HatchWatch';
-    document.querySelectorAll('[data-i18n]').forEach(function (el) { var v = EN[el.getAttribute('data-i18n')]; if (v) el.textContent = v; });
-    document.querySelectorAll('[data-i18n-html]').forEach(function (el) { var v = EN[el.getAttribute('data-i18n-html')]; if (v) el.innerHTML = v; });
+    window.hwI18nSide(EN, 'om', 'About HatchWatch · HatchWatch');
     var mb = document.getElementById('hwMenuBtn');
-    if (mb) { mb.setAttribute('aria-label', 'Menu'); mb.title = 'Menu'; }
+    if (mb) { mb.setAttribute('aria-label', window.hwT('Meny', 'Menu')); mb.title = window.hwT('Meny', 'Menu'); }
 })();
 
 (function() {

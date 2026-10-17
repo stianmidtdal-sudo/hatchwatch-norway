@@ -74,7 +74,7 @@
     telt: { no: 'Teltplass', en: 'Campsite', c: '#2f9d63' },
     annet: { no: 'Punkt', en: 'Point', c: '#6b5b95' }
   };
-  function katNavn(k) { var x = KAT[k] || KAT.annet; return EN ? x.en : x.no; }
+  function katNavn(k) { var x = KAT[k] || KAT.annet; return tx(x.no, x.en); }
   function punkter() { return les('hw_punkter'); }
   function dagbokLogger() {
     return les('hw_dagbok').map(function (e) {

@@ -296,7 +296,7 @@
 // beholder norske verdier, så lagrede observasjoner ser like ut uansett språk.
 var OBS_EN = window.HW_LANG === 'en';
 (function () {
-    if (!OBS_EN) return;
+    if (window.HW_LANG === 'no') return;   // engelsk, svensk og finsk (2026-10-17)
     var EN = {
         h1: 'Report an observation',
         intro: 'Seen a hatch or a spinner fall? Tell us. Every report makes the model stronger and the forecasts better for everyone. Thank you!',
@@ -313,10 +313,8 @@ var OBS_EN = window.HW_LANG === 'en';
         thanksH: 'Thank you!', thanksP: 'Your observation has been received and goes straight into the calibration data. Every single observation makes the forecasts better, for everyone.',
         oneMore: 'Send another'
     };
-    document.title = 'Report an observation — HatchWatch';
     document.querySelector('nav .back').setAttribute('aria-label', 'To the front page');
-    document.querySelectorAll('[data-i18n]').forEach(function (el) { var v = EN[el.getAttribute('data-i18n')]; if (v) el.textContent = v; });
-    document.querySelectorAll('[data-i18n-html]').forEach(function (el) { var v = EN[el.getAttribute('data-i18n-html')]; if (v) el.innerHTML = v; });
+    window.hwI18nSide(EN, 'observasjon', 'Report an observation — HatchWatch');
 })();
 (function () {
     var qs = new URLSearchParams(location.search);
@@ -386,20 +384,20 @@ var OBS_EN = window.HW_LANG === 'en';
         };
 
         if (!payload.date || !payload.insect || !payload.area || !payload.name || !payload.email) {
-            err.textContent = OBS_EN ? 'Please fill in date, insect, area, name and email.' : 'Fyll ut dato, insekt, lokasjonsområde, navn og e-post.';
+            err.textContent = window.hwT('Fyll ut dato, insekt, lokasjonsområde, navn og e-post.', 'Please fill in date, insect, area, name and email.');
             err.style.display = 'block';
             return;
         }
 
         var btn = document.getElementById('submitBtn');
-        btn.disabled = true; btn.textContent = OBS_EN ? 'Sending …' : 'Sender …';
+        btn.disabled = true; btn.textContent = window.hwT('Sender …', 'Sending …');
 
         fetch('/api/observation', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         }).then(function (r) {
-            if (!r.ok) return r.json().then(function (j) { throw new Error(j.error || (OBS_EN ? 'Something went wrong' : 'Noe gikk galt')); });
+            if (!r.ok) return r.json().then(function (j) { throw new Error(j.error || window.hwT('Noe gikk galt', 'Something went wrong')); });
             try {
                 localStorage.setItem('hw_obs_name', payload.name);
                 localStorage.setItem('hw_obs_email', payload.email);
@@ -408,10 +406,10 @@ var OBS_EN = window.HW_LANG === 'en';
             document.getElementById('thanksCard').style.display = 'block';
             window.scrollTo(0, 0);
         }).catch(function (e2) {
-            err.textContent = e2.message + (OBS_EN ? '. Please try again.' : ' — prøv igjen.');
+            err.textContent = e2.message + (window.hwT(' — prøv igjen.', '. Please try again.'));
             err.style.display = 'block';
         }).finally(function () {
-            btn.disabled = false; btn.textContent = OBS_EN ? 'Send' : 'Send inn';
+            btn.disabled = false; btn.textContent = window.hwT('Send inn', 'Send');
         });
     });
 

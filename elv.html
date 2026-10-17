@@ -117,15 +117,16 @@ svg.ssb text.aar { font-size: 7.5px; letter-spacing: -.02em; }
 //  Ordlyd: tallene beskriver tidligere år. Barometeret vises bare i elvene
 //  der det besto hold-ut-testen («ja»), med forbehold der svaret var usikkert.
 // ═══════════════════════════════════════════════════════════════════
+// Språk (hw-lang.js): tekst via tx → hwT, datoer via hwDato; svensk/finsk følger den norske grenen for tall (2026-10-17)
 var EN = window.HW_LANG === 'en';
-function tx(no, en) { return EN ? en : no; }
-if (EN) { document.documentElement.lang = 'en'; document.getElementById('backTxt').textContent = 'Map'; document.getElementById('fav').setAttribute('aria-label', 'Add to My rivers'); document.getElementById('loading').textContent = 'Loading the river…'; }
-var MON = EN ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] : ['jan', 'feb', 'mars', 'april', 'mai', 'juni', 'juli', 'aug', 'sep', 'okt', 'nov', 'des'];
+function tx(no, en) { return window.hwT(no, en); }
+if (window.HW_LANG !== 'no') { document.getElementById('backTxt').textContent = tx('Kart', 'Map'); document.getElementById('fav').setAttribute('aria-label', tx('Legg til i Mine elver', 'Add to My rivers')); document.getElementById('loading').textContent = tx('Laster elva…', 'Loading the river…'); }
+var MON = window.hwMnd();
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 function num(v, d) { if (v == null || isNaN(v)) return '–'; var s = (+v).toFixed(d == null ? 0 : d); return EN ? s : s.replace('.', ','); }
-function dmTxt(s) { var p = String(s).split('.'); var d = +p[0], m = +p[1]; return EN ? d + ' ' + MON[m - 1] : d + '. ' + MON[m - 1]; }
+function dmTxt(s) { var p = String(s).split('.'); return window.hwDato(new Date(2001, +p[1] - 1, +p[0])); }
 function rangeTxt(s) { var p = String(s).split('–'); return p.length === 2 ? dmTxt(p[0]) + '–' + dmTxt(p[1]) : esc(s); }
-function dateTxt(d) { return EN ? d.getDate() + ' ' + MON[d.getMonth()] : d.getDate() + '. ' + MON[d.getMonth()]; }
+function dateTxt(d) { return window.hwDato(d); }
 function ymd(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 function doyOf(d) { return Math.floor((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - Date.UTC(d.getFullYear(), 0, 1)) / 86400000) + 1; }
 // «90–300 %», «over 110 %», «under 14 °C» → [fra, til]
@@ -311,7 +312,7 @@ function render(e) {
 
 // rader: [år, laks, snittvekt kg, smålaks, mellomlaks, storlaks, gjenutsatt] (bygg_kart.py elver, fra SSB tabell 08991)
 function ssbKort(rader) {
-  var fmt = function (n) { return Number(n).toLocaleString(EN ? 'en-GB' : 'nb-NO'); };
+  var fmt = function (n) { return Number(n).toLocaleString(window.HW_LOCALE); };
   var kg = function (x) { return x == null ? '–' : (EN ? x.toFixed(1) : x.toFixed(1).replace('.', ',')) + ' kg'; };
   var siste10 = rader.slice(-10), med = siste10.filter(function (r) { return r[1] > 0; });
   var snitt = med.length ? Math.round(med.reduce(function (s, r) { return s + r[1]; }, 0) / med.length) : 0;

@@ -105,8 +105,9 @@
     if (kort) n = n.slice(0, 3);
     return lang === 'no' ? dd + '. ' + n : dd + ' ' + n;
   };
-  // Sider med data-i18n / data-i18n-html: engelsk fra sidens egen ordbok, svensk/finsk fra HW_I18N.k['<side>:<nøkkel>']
-  window.hwI18nSide = function (EN, side) {
+  // Sider med data-i18n / data-i18n-html: engelsk fra sidens egen ordbok, svensk/finsk fra HW_I18N.k['<side>:<nøkkel>'].
+  // tittelEN: sidens engelske <title>; svensk/finsk tittel ligger under nøkkelen '<side>:__title'.
+  window.hwI18nSide = function (EN, side, tittelEN) {
     if (lang === 'no') return;
     var K = (window.HW_I18N && window.HW_I18N.k) || {};
     var hent = function (key) {
@@ -118,6 +119,10 @@
     };
     document.querySelectorAll('[data-i18n]').forEach(function (el) { var v = hent(el.getAttribute('data-i18n')); if (v) el.textContent = v; });
     document.querySelectorAll('[data-i18n-html]').forEach(function (el) { var v = hent(el.getAttribute('data-i18n-html')); if (v) el.innerHTML = v; });
+    if (tittelEN != null) {
+      var t = lang === 'en' ? tittelEN : (K[side + ':__title'] || (lang === 'fi' ? tittelEN : null));
+      if (t) document.title = t;
+    }
   };
   window.hwSettSpraak = function (l) {
     if (SPRAK.indexOf(l) < 0) return;

@@ -120,18 +120,23 @@
 //  Ordlyd: «modellen anslo», aldri «det klekket». Vi ser isgang fra satellitt,
 //  ikke klekking.
 // ═══════════════════════════════════════════════════════════════════
+// Språk (hw-lang.js): EN = engelsk. Svensk og finsk følger den norske grenen for tall og formater (desimalkomma),
+// mens tekst går gjennom tx → hwT og datoer gjennom hwDato (2026-10-17).
 var EN = window.HW_LANG === 'en';
-function tx(no, en) { return EN ? en : no; }
-if (EN) { document.documentElement.lang = 'en'; document.getElementById('backTxt').textContent = 'Map'; document.getElementById('loading').textContent = 'Loading the lake…'; }
-var MON = EN ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] : ['jan', 'feb', 'mars', 'april', 'mai', 'juni', 'juli', 'aug', 'sep', 'okt', 'nov', 'des'];
+function tx(no, en) { return window.hwT(no, en); }
+if (window.HW_LANG !== 'no') { document.getElementById('backTxt').textContent = tx('Kart', 'Map'); document.getElementById('loading').textContent = tx('Laster vannet…', 'Loading the lake…'); }
+var MON = window.hwMnd();
 var MOH = tx('moh', 'm a.s.l.');
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 function num(v, d) { if (v == null || isNaN(v)) return '–'; var s = (+v).toFixed(d == null ? 0 : d); return EN ? s : s.replace('.', ','); }
 function dateOf(year, doy) { return new Date(year, 0, doy); }
-function fmt(year, doy) { var d = dateOf(year, doy); return EN ? d.getDate() + ' ' + MON[d.getMonth()] : d.getDate() + '. ' + MON[d.getMonth()]; }
+function fmt(year, doy) { return window.hwDato(dateOf(year, doy)); }
 function fmtRange(year, a, b) {
-  var da = dateOf(year, a), db = dateOf(year, b);
-  if (da.getMonth() === db.getMonth()) return EN ? da.getDate() + '–' + db.getDate() + ' ' + MON[db.getMonth()] : da.getDate() + '.–' + db.getDate() + '. ' + MON[db.getMonth()];
+  var da = dateOf(year, a), db = dateOf(year, b), L = window.HW_LANG;
+  if (da.getMonth() === db.getMonth()) {
+    if (L === 'fi') return da.getDate() + '.–' + db.getDate() + '.' + (db.getMonth() + 1) + '.';
+    return L === 'no' ? da.getDate() + '.–' + db.getDate() + '. ' + MON[db.getMonth()] : da.getDate() + '–' + db.getDate() + ' ' + MON[db.getMonth()];
+  }
   return fmt(year, a) + '–' + fmt(year, b);
 }
 function haversine(a, b, c, d) { var R = 6371, t = Math.PI / 180, x = (c - a) * t, y = (d - b) * t, h = Math.sin(x / 2) * Math.sin(x / 2) + Math.cos(a * t) * Math.cos(c * t) * Math.sin(y / 2) * Math.sin(y / 2); return 2 * R * Math.asin(Math.sqrt(h)); }
@@ -181,8 +186,11 @@ var EN_NAVN = {
   'Phryganea grandis': 'Great red sedge', 'Gammarus lacustris': 'Freshwater shrimp', 'Gammarus pulex': 'Freshwater shrimp', 'Lepidurus arcticus': 'Tadpole shrimp'
 };
 // Visningsnavn: språkets navn hvis det finnes, ellers latin (i kursiv, siden det da er det vitenskapelige navnet)
+// Svensk/finsk (2026-10-17): navnet fra ordboka (HW_I18N.arter); mangler det, norsk navn på svensk, engelsk på finsk.
 function artsnavn(latin, norsk) {
-  var n = EN ? EN_NAVN[latin] : (norsk ? norsk.charAt(0).toUpperCase() + norsk.slice(1) : '');
+  var L = window.HW_LANG, I = window.HW_I18N;
+  var n = L === 'en' ? EN_NAVN[latin] : L === 'no' ? norsk : ((I && I.arter && I.arter[latin]) || (L === 'sv' ? norsk : EN_NAVN[latin]));
+  n = n ? n.charAt(0).toUpperCase() + n.slice(1) : '';
   return n ? esc(n) : '<i>' + esc(latin) + '</i>';
 }
 var KEY_SPECIES = ['Ephemera vulgata', 'Ephemera danica', 'Leptophlebia marginata', 'Leptophlebia vespertina', 'Siphlonurus lacustris', 'Siphlonurus aestivalis', 'Ephemerella aurivillii', 'Heptagenia dalecarlica', 'Phryganea grandis', 'Phryganea bipunctata', 'Lepidurus arcticus', 'Gammarus lacustris'];
@@ -291,8 +299,8 @@ function renderSE(v) {
   h += '<div class="sub">' + [v.moh != null ? v.moh + ' ' + MOH : '', num(v.ha, v.ha < 100 ? 1 : 0) + ' ha'].filter(Boolean).join(' · ') + '</div>';
   // Berggrunn: SGU-bergart, kalkklassen er HatchWatchs oversettelse etter NGUs tabell (s5_berggrunn.py)
   var kl = v.berg && v.berg[0];
-  if (kl) h += '<div class="berggrunn"><span class="kalkprikk" style="background:' + (KALK_FARGE[kl] || '#ccc') + '"></span>' + tx('Berggrunn: ', 'Bedrock: ') + '<b>' + esc(EN ? KALK_EN[kl] : KALK_NO[kl]) + '</b>' +
-    (!EN && v.berg[1] ? ' · ' + esc(v.berg[1].charAt(0).toUpperCase() + v.berg[1].slice(1)) : '') +
+  if (kl) h += '<div class="berggrunn"><span class="kalkprikk" style="background:' + (KALK_FARGE[kl] || '#ccc') + '"></span>' + tx('Berggrunn: ', 'Bedrock: ') + '<b>' + esc(tx(KALK_NO[kl], KALK_EN[kl])) + '</b>' +
+    (window.HW_LANG === 'no' && v.berg[1] ? ' · ' + esc(v.berg[1].charAt(0).toUpperCase() + v.berg[1].slice(1)) : '') +
     '<span class="kilde">' + tx('SGU (1:50 000–1:250 000), kalkklasse satt av HatchWatch etter NGUs inndeling', 'SGU (1:50,000–1:250,000), lime class set by HatchWatch after NGU\'s scheme') + '</span></div>';
   // Målt isgang fra SMHI (s7_isgang_smhi.py, 2026-10-17): «vanlig» = midtverdi av år fra 1991 (minst fem)
   var isA = (v.is_smhi && v.is_smhi.aar) || {}, isAar = Object.keys(isA).map(Number).sort(function (a, b) { return a - b; });
@@ -470,9 +478,9 @@ function hentBerggrunn(v) {
     var kl = parseInt(f('kalkinnhold_hovedbergart'), 10), tekst = f('kalkinnhold_tekst');
     if (!kl || !tekst) return;
     var bergarter = [f('hovedbergart_tekst'), f('tilleggsbergart1_tekst'), f('tilleggsbergart2_tekst'), f('tilleggsbergart3_tekst')].filter(Boolean);
-    var navn = EN ? KALK_EN[kl] || tekst : tekst;
+    var navn = window.HW_LANG === 'no' ? tekst : tx(KALK_NO[kl] || tekst, KALK_EN[kl] || tekst);
     el.innerHTML = '<span class="kalkprikk" style="background:' + (KALK_FARGE[kl] || '#ccc') + '"></span>' + tx('Berggrunn: ', 'Bedrock: ') + '<b>' + esc(navn) + '</b>' +
-      (bergarter.length && !EN ? ' · ' + esc(bergarter.map(function (b, i) { return i ? b.toLowerCase() : b; }).join(', ')) : '') +
+      (bergarter.length && window.HW_LANG === 'no' ? ' · ' + esc(bergarter.map(function (b, i) { return i ? b.toLowerCase() : b; }).join(', ')) : '') +
       '<span class="kilde">' + tx('NGU, grovt kart (1:250 000)', 'NGU, coarse map (1:250,000)') + '</span>';
   }).catch(function () {});
 }
@@ -604,7 +612,7 @@ function settFav(paa, navn) {
 }
 function favOppsett(navn) {
   var b = document.getElementById('fav'); if (!b) return;
-  if (EN) b.setAttribute('aria-label', 'Add to favourites');
+  if (window.HW_LANG !== 'no') b.setAttribute('aria-label', tx('Legg til i favoritter', 'Add to favourites'));
   b.classList.toggle('on', erFav());
   b.onclick = function () { settFav(!erFav(), navn); b.classList.toggle('on', erFav()); };
 }
@@ -640,7 +648,7 @@ function lagreVarsler(navn) {
   prefs.triggers['vann:' + ID] = valgte;
   var noenAktive = Object.keys(prefs.triggers).some(function (k) { return (prefs.triggers[k] || []).length > 0; });
   st.className = 'status'; st.textContent = tx('Lagrer…', 'Saving…');
-  var lang = EN ? 'en' : 'no';
+  var lang = EN || window.HW_LANG === 'fi' ? 'en' : 'no';   // varslene skrives bare på norsk/engelsk ennå: svensk får norsk, finsk engelsk
   var jobb = noenAktive
     ? subPayload().then(function (p) { return fetch('/api/push?action=subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({}, p, { locations: prefs.triggers, lang: lang })) }); })
     : (NATIVE ? Promise.resolve(localStorage.getItem('hw_apns_token')).then(function (t) { return t ? { platform: 'ios', token: t } : null; })
@@ -902,7 +910,7 @@ function yrsSvg(isg, years, med, ly) {
   // datolinjer: 1. og 15. i hver måned i spennet
   for (var m = 2; m <= 7; m++) [1, 15].forEach(function (dd) {
     var doy = Math.round((Date.UTC(2021, m, dd) - Date.UTC(2021, 0, 1)) / 86400000) + 1;
-    if (doy > lo && doy < hi) s += '<line class="grid" x1="' + L + '" x2="' + (W - 10) + '" y1="' + y(doy) + '" y2="' + y(doy) + '"/><text x="' + (L - 6) + '" y="' + (y(doy) + 3) + '" text-anchor="end">' + (EN ? dd + ' ' + MON[m] : dd + '. ' + MON[m].slice(0, 3)) + '</text>';
+    if (doy > lo && doy < hi) s += '<line class="grid" x1="' + L + '" x2="' + (W - 10) + '" y1="' + y(doy) + '" y2="' + y(doy) + '"/><text x="' + (L - 6) + '" y="' + (y(doy) + 3) + '" text-anchor="end">' + window.hwDato(new Date(2001, m, dd), true) + '</text>';
   });
   if (med != null) s += '<line class="med" x1="' + L + '" x2="' + (W - 10) + '" y1="' + y(med) + '" y2="' + y(med) + '"/>';
   years.forEach(function (yy, i) {

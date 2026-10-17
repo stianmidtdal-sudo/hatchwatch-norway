@@ -322,7 +322,7 @@
 <script>
 // Engelsk (2026-10-08): hw-lang.js velger språk; norsk står i HTML-en, engelsk legges over her.
 (function () {
-    if (window.HW_LANG !== 'en') return;
+    if (window.HW_LANG === 'no') return;   // engelsk, svensk og finsk (2026-10-17)
     var EN = {
         navHome: 'Front page', navArticles: 'Articles', navAbout: 'About HatchWatch', navFeedback: 'Send feedback',
         h1: 'Notifications',
@@ -367,11 +367,9 @@
         lookP: 'A notification has the location name, what is happening, and a short bit of context (for example the new estimated date or today’s score). Tap it and HatchWatch opens straight on that location.',
         iosTip: '<b>iOS tip:</b> if notifications arrive silently in the notification centre, check Settings → Notifications → HatchWatch and make sure <b>Sounds</b> is on and <b>Banner style</b> is set to “Persistent”. Also check that a Focus mode is not hiding the app.'
     };
-    document.title = 'Notifications · HatchWatch';
-    document.querySelectorAll('[data-i18n]').forEach(function (el) { var v = EN[el.getAttribute('data-i18n')]; if (v) el.textContent = v; });
-    document.querySelectorAll('[data-i18n-html]').forEach(function (el) { var v = EN[el.getAttribute('data-i18n-html')]; if (v) el.innerHTML = v; });
+    window.hwI18nSide(EN, 'varsler', 'Notifications · HatchWatch');
     var mb = document.getElementById('hwMenuBtn');
-    if (mb) { mb.setAttribute('aria-label', 'Menu'); mb.title = 'Menu'; }
+    if (mb) { mb.setAttribute('aria-label', window.hwT('Meny', 'Menu')); mb.title = window.hwT('Meny', 'Menu'); }
 })();
 
 // Vis riktig seksjon basert på om brukeren er i PWA-modus eller nettleser

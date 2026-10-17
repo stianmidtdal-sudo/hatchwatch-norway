@@ -79,18 +79,19 @@
 </main>
 
 <script type="module">
+// Språk (hw-lang.js): tekst via hwT; svaret fra gjenkjenneren kommer på brukerens språk (kontekst.lang, 2026-10-17)
 const EN = window.HW_LANG === 'en';
-const tx = (no, en) => EN ? en : no;
+const tx = (no, en) => window.hwT(no, en);
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-if (EN) {
-  document.title = 'What insect is this? — HatchWatch';
-  $('eyebrow').textContent = 'Identification';
-  $('tittel').textContent = 'What insect is this?';
-  $('ingress').textContent = 'Take a photo of the insect and find out what it probably is, and how sure the answer is. If you are by a lake, the place and date are taken into account.';
-  $('taTxt').textContent = 'Take a photo or choose one';
-  $('fot').innerHTML = 'The answer is an automatic assessment of the photo and can be wrong, especially between species that look alike. The photo is sent to Anthropic for assessment and is not stored by us. <a href="/personvern.html">Privacy</a>';
+if (window.HW_LANG !== 'no') {
+  document.title = tx('Hvilket insekt er dette? — HatchWatch', 'What insect is this? — HatchWatch');
+  $('eyebrow').textContent = tx('Gjenkjenning', 'Identification');
+  $('tittel').textContent = tx('Hvilket insekt er dette?', 'What insect is this?');
+  $('ingress').textContent = tx('Ta et bilde av insektet, så får du vite hva det trolig er, og hvor sikkert svaret er. Står du ved et vann, tas stedet og datoen med i vurderingen.', 'Take a photo of the insect and find out what it probably is, and how sure the answer is. If you are by a lake, the place and date are taken into account.');
+  $('taTxt').textContent = tx('Ta bilde eller velg fra bildene', 'Take a photo or choose one');
+  $('fot').innerHTML = tx('Svaret er en automatisk vurdering av bildet og kan ta feil, særlig mellom arter som ligner mye. Bildet sendes til Anthropic for vurdering og lagres ikke hos oss. <a href="/personvern.html">Personvern</a>', 'The answer is an automatic assessment of the photo and can be wrong, especially between species that look alike. The photo is sent to Anthropic for assessment and is not stored by us. <a href="/personvern.html">Privacy</a>');
 }
 
 // ── iPhone-appen: kameraet krever versjon 1.0.2 (kameratillatelse i skallet). Eldre app krasjer på «Ta bilde». ──
@@ -155,7 +156,7 @@ const tilBase64 = (blob) => new Promise((ok, feil) => { const r = new FileReader
 const GRUPPE = { 'døgnflue': ['Døgnflue', 'Mayfly'], 'vårflue': ['Vårflue', 'Caddisfly'], 'steinflue': ['Steinflue', 'Stonefly'], 'fjærmygg': ['Fjærmygg', 'Midge'], 'maur': ['Maur', 'Ant'], 'annet insekt': ['Annet insekt', 'Other insect'], 'ikke insekt': ['Ikke et insekt', 'Not an insect'] };
 const STADIUM = { nymfe: ['nymfe', 'nymph'], larve: ['larve', 'larva'], puppe: ['puppe', 'pupa'], dun: ['dun (subimago)', 'dun (subimago)'], spinner: ['spinner (imago)', 'spinner (imago)'], voksen: ['voksen', 'adult'] };
 const SIKKER = { 'høy': ['Sikker', 'Confident'], middels: ['Trolig', 'Probably'], lav: ['Usikker', 'Uncertain'] };
-const t2 = (par) => par ? (EN ? par[1] : par[0]) : '';
+const t2 = (par) => par ? tx(par[0], par[1]) : '';
 const stor = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
 
 function tittelFor(s) {
@@ -226,7 +227,7 @@ async function vurder(fil) {
   const pos = await posP;
   const vann = await naermesteVann(pos);
   const idag = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Oslo' }).format(new Date());
-  const kontekst = { lang: EN ? 'en' : 'no', dato: idag, land: 'Norge' };
+  const kontekst = { lang: window.HW_LANG, dato: idag, land: 'Norge' };
   if (vann) Object.assign(kontekst, { vann: vann.navn || ('NVE ' + vann.id), moh: vann.moh, avst: vann.avst });
   let r;
   try {

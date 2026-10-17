@@ -9,9 +9,10 @@
 //
 //  Hva som lastes ned (vilkårene, sjekket 2026-10-16):
 //    - OpenFreeMap (OpenStreetMap, ODbL): vektorfliser z5–14, med stier, bekker, myr og navn.
-//    - Kartverkets topografiske kart (CC BY 4.0) BARE z5–11. Kartverkets vilkår: nivå 12–20 i cache- og
-//      WMS-tjenestene er Geovekst-data, og kopiering krever egen tillatelse. Lagring for bruk uten nett er
-//      kopiering, så de detaljerte nivåene tas ikke med før vi eventuelt har tillatelse.
+//    - Kartverkets topografiske kart (CC BY 4.0) BARE oversiktsnivåene. Kartverkets vilkår: nivå 12–20 i cache-
+//      og WMS-tjenestene er Geovekst-data, og kopiering krever egen tillatelse. Lagring for bruk uten nett er
+//      kopiering, så de detaljerte nivåene tas ikke med før vi eventuelt har tillatelse. Fra 17.10.2026 hentes
+//      kartet som WMS uten grenselag (HW_KV_TOPO under): 512-px-fliser z4–10 = samme detaljnivå som cache-nivå 5–11.
 //    - Turrutebasen (Kartverket, CC BY 4.0): merkede ruter z10–15.
 //    - Våre egne vanndata (hatchwatch.pmtiles) z5–12.
 //  Uten nett viser forsiden derfor Kartverket på oversiktsnivå og OpenStreetMap-detaljer innover (kart-
@@ -23,6 +24,25 @@
 // ═══════════════════════════════════════════════════════════════════
 (function () {
   'use strict';
+  // Kartverkets topografiske kart uten grenselinjer (2026-10-17, Stian «kjør»): samme kart som cache-flisene, men
+  // fra WMS-tjenesten der lagene kan velges. Alle lag i «topo» unntatt kommune-/fylkes-/riksgrenser og sjøgrenser
+  // (kd_administrative_grenser, adm_grenser), skytefelt/statsallmenning (kd_andre_grenser) og verneområdegrenser
+  // (kd_verneomradegrense). PNG8 er halvparten så stor som PNG og ser lik ut. 512 px = færre forespørsler og færre
+  // flisskjøter for navn. Én definisjon for forsiden og nedlastingen (nøkkelen må bli lik). Utenfor Norge er
+  // bildet gjennomsiktig. Riksgrensen tegner forsiden selv (tu-grense).
+  var KV_LAG = ['kd_hoydelag', 'kd_arealdekkeflate', 'fkb_arealdekke', 'fkb_vann', 'kd_hoydekurver', 'fkb_hoydekurver', 'fjellskygge',
+    'kd_vannflate', 'kd_elver', 'Dybdelag', 'Dybdekontur', 'Torrfall', 'MudretOmrade_Grense', 'MudretOmrade', 'grunne', 'flytedokk_grense',
+    'flytedokk', 'Torrdokk_Grense', 'Torrdokk', 'mudret_dybdetall', 'skjaer_punkt', 'Dybdepunkt', 'Konstruertkystkontur', 'Vannkontur',
+    'kd_vannkontur', 'vannkontur', 'kd_veger', 'privatveg', 'kommunalveg', 'fylkesveg', 'riksveg', 'europaveg', 'bilferjestrekning',
+    'passasjerferje', 'fkb_bygningsmessigeanlegg', 'fkb_samferdsel', 'kd_jernbane', 'kd_ferger', 'kd_anleggslinjer', 'fkb_bygning',
+    'fkb_ledning', 'kd_bygninger', 'kd_spesiell_detalj', 'kd_hoydepunkt', 'kd_jernbanestasjon', 'kd_anleggspunkt', 'kd_bygningspunkt',
+    'kd_turisthytte', 'kd_arealdekkepunkt', 'kd_tettsted', 'kd_stedsnavn', 'fkb_presentasjonsdata', 'vegnavn_fylk_nr', 'vegnavn_eur_riks_nr',
+    'vegnavn', 'presentasjonsdata'];
+  window.HW_KV_TOPO = {
+    tileSize: 512,
+    url: 'https://wms.geonorge.no/skwms1/wms.topo?service=WMS&version=1.3.0&request=GetMap&layers=' + KV_LAG.join(',') +
+      '&styles=&format=image/png8&transparent=true&crs=EPSG:3857&width=512&height=512&bbox={bbox-epsg-3857}'
+  };
   if (!window.maplibregl) return;
 
   var DB_NAVN = 'hw-kart', DB_VER = 1;
@@ -118,14 +138,15 @@
   var KILDER = {
     omt: 'https://tiles.openfreemap.org/planet',
     glyfer: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
-    topo: 'https://cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator/{z}/{y}/{x}.png',
+    topo: window.HW_KV_TOPO.url,
     tur: 'https://wms.geonorge.no/skwms1/wms.friluftsruter2?service=WMS&version=1.3.0&request=GetMap&layers=Fotrute,Ruteinfopunkt&styles=&format=image/png&transparent=true&crs=EPSG:3857&width=256&height=256&bbox={bbox-epsg-3857}'
   };
   var SKRIFTER = ['Noto Sans Regular', 'Noto Sans Bold', 'Noto Sans Italic'];
   var TEGNSETT = ['0-255', '256-511', '8192-8447'];   // latin med æøå, utvidet latin (samisk), tegnsetting
-  // Rasterflisene (256 px) hentes på kartzoom + 1, så turrutene trenger flis-z15 for å synes helt inn til kartzoom 14
-  var NIVAA = { omt: [5, 14], topo: [5, 11], tur: [10, 15], hw: [5, 12] };
-  var SNITT_KB = { omt: 45, topo: 25, tur: 3, hw: 10 };   // grovt anslag for størrelsen (målt rundt Sognsvann)
+  // Rasterflisene (256 px) hentes på kartzoom + 1, så turrutene trenger flis-z15 for å synes helt inn til kartzoom 14.
+  // Kartverket (512 px, WMS) hentes på kartzoom: z4–10 dekker kartzoom under 10,5 = samme detaljnivå som cache-nivå 5–11.
+  var NIVAA = { omt: [5, 14], topo: [4, 10], tur: [10, 15], hw: [5, 12] };
+  var SNITT_KB = { omt: 45, topo: 160, tur: 3, hw: 10 };   // grovt anslag for størrelsen (målt rundt Sognsvann; topo: PNG8 512 px)
   var MAKS_FLISER = 6000;
 
   function plan(b) {
@@ -164,7 +185,7 @@
           legg(nokkel(u), hentBin(u), 'bin');
         }); });
         for (z = NIVAA.topo[0]; z <= NIVAA.topo[1]; z++) fliser(b, z).forEach(function (f) {
-          var u = KILDER.topo.replace('{z}', f[0]).replace('{x}', f[1]).replace('{y}', f[2]);
+          var u = nokkel(KILDER.topo.replace('{bbox-epsg-3857}', bboxMerc(f[0], f[1], f[2]).join(',')));
           legg(u, hentBin(u), 'bin');
         });
         for (z = NIVAA.tur[0]; z <= NIVAA.tur[1]; z++) fliser(b, z).forEach(function (f) {

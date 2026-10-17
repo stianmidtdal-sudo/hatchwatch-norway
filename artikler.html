@@ -710,7 +710,7 @@
 // Nøklene (data-i18n-html) er satt maskinelt i dokumentrekkefølge. Ny norsk tekst: gi den
 // neste ledige nøkkel og legg engelsk inn i EN under.
 (function () {
-    if (window.HW_LANG !== 'en') return;
+    if (window.HW_LANG === 'no') return;   // engelsk, svensk og finsk (2026-10-17)
     var EN = {
 "a1": "Front page",
 "a2": "Notifications",
@@ -926,10 +926,9 @@
 "a212": "Two reasons. First, <em>planning</em>. If you know you have a free weekend on 12–14 June, you can choose the location by which phenomenon interests you most: Nordmarka for late marginata, Østmarka for the vulgata peak, or a lowland tarn for the first ants. Second, <em>identification</em>. When you are standing by the water and see unusual rising activity, it helps to know which insects are typically active that very week. Then you arrive with an expectation instead of guessing afterwards.",
 "a213": "<b>Sources:</b> Norwegian fly fishing tradition documented over several decades. HatchWatch model estimates based on MET data and NVE water temperatures. Lars Nilssen, larsoglars.no, for qualitative season descriptions."
 };
-    document.title = 'Articles · HatchWatch';
-    document.querySelectorAll('[data-i18n-html]').forEach(function (el) { var v = EN[el.getAttribute('data-i18n-html')]; if (v) el.innerHTML = v; });
+    window.hwI18nSide(EN, 'artikler', 'Articles · HatchWatch');
     var mb = document.getElementById('hwMenuBtn');
-    if (mb) { mb.setAttribute('aria-label', 'Menu'); mb.title = 'Menu'; }
+    if (mb) { mb.setAttribute('aria-label', window.hwT('Meny', 'Menu')); mb.title = window.hwT('Meny', 'Menu'); }
 })();
 </script>
 

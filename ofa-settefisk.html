@@ -380,7 +380,7 @@
 // Engelsk (2026-10-08): hw-lang.js velger språk; norsk står i HTML-en, engelsk legges over her.
 var OFA_EN = window.HW_LANG === 'en';
 (function () {
-  if (!OFA_EN) return;
+  if (window.HW_LANG === 'no') return;   // engelsk, svensk og finsk (2026-10-17)
   var EN = {
     navHome: 'Back to the front page', navArticles: 'Articles', navAbout: 'About HatchWatch',
     h1: 'OFA stocking history',
@@ -401,12 +401,10 @@ var OFA_EN = window.HW_LANG === 'en';
     f4: 'Big favourites <span class="badge badge-blue">Top 10</span>', f4p: 'Waters with the highest total stocking 2021–2025',
     allAreas: 'All areas', thLake: 'Water ↕', thArea: 'Area ↕', thTotal: 'Total ↕', thTrend: 'Trend'
   };
-  document.title = 'OFA stocking history · HatchWatch';
-  document.querySelectorAll('[data-i18n]').forEach(function (el) { var v = EN[el.getAttribute('data-i18n')]; if (v) el.textContent = v; });
-  document.querySelectorAll('[data-i18n-html]').forEach(function (el) { var v = EN[el.getAttribute('data-i18n-html')]; if (v) el.innerHTML = v; });
+  window.hwI18nSide(EN, 'ofa', 'OFA stocking history · HatchWatch');
   document.getElementById('searchInput').placeholder = 'Search water or area...';
   var mb = document.getElementById('hwMenuBtn');
-  if (mb) { mb.setAttribute('aria-label', 'Menu'); mb.title = 'Menu'; }
+  if (mb) { mb.setAttribute('aria-label', window.hwT('Meny', 'Menu')); mb.title = window.hwT('Meny', 'Menu'); }
   var sub = document.querySelector('.logo-sub'); if (sub) sub.textContent = 'OFA STOCKING HISTORY';
   var back = document.querySelector('nav a[aria-label]'); if (back) back.setAttribute('aria-label', 'To the front page');
 })();
@@ -443,7 +441,7 @@ new Chart(document.getElementById('yearChart'), {
   },
   options: {
     responsive: true, maintainAspectRatio: true,
-    plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: c => ` ${c.parsed.y.toLocaleString('no')} ${OFA_EN ? 'fish' : 'fisk'}` } } },
+    plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: c => ` ${c.parsed.y.toLocaleString('no')} ${window.hwT('fisk', 'fish')}` } } },
     scales: {
       y: { grid:{color:'#e8e8e8'}, ticks:{color:'#666'} },
       x: { grid:{display:false}, ticks:{color:'#666'} }
@@ -464,7 +462,7 @@ new Chart(document.getElementById('vannCountChart'), {
   },
   options: {
     responsive: true, maintainAspectRatio: true,
-    plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: c => ` ${c.parsed.y} ${OFA_EN ? 'waters' : 'vann'}` } } },
+    plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: c => ` ${c.parsed.y} ${window.hwT('vann', 'waters')}` } } },
     scales: {
       y: { grid:{color:'#e8e8e8'}, ticks:{color:'#666'} },
       x: { grid:{display:false}, ticks:{color:'#666'} }
@@ -486,7 +484,7 @@ new Chart(document.getElementById('topVannChart'), {
   },
   options: {
     indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-    plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: c => ` ${c.parsed.x.toLocaleString('no')} ${OFA_EN ? 'fish in total' : 'fisk totalt'}` } } },
+    plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: c => ` ${c.parsed.x.toLocaleString('no')} ${window.hwT('fisk totalt', 'fish in total')}` } } },
     scales: {
       x: { grid:{color:'#e8e8e8'}, ticks:{color:'#666'} },
       y: { grid:{display:false}, ticks:{color:'#1a3a2a', font:{size:11}} }
@@ -503,7 +501,7 @@ function initFunn() {
   DATA.dropped.slice(0,12).forEach(r => {
     document.getElementById('droppedList').insertAdjacentHTML('beforeend',
       `<li><span><div class="item-name">${r.vann}</div><div class="item-area">${r.omrade}</div></span>
-       <span class="item-val red">−${r.satt_2021} ${OFA_EN ? 'fish' : 'fisk'}</span></li>`);
+       <span class="item-val red">−${r.satt_2021} ${window.hwT('fisk', 'fish')}</span></li>`);
   });
 
   DATA.growing.forEach(r => {
@@ -516,7 +514,7 @@ function initFunn() {
     const tot = (r.satt_2024||0)+(r.satt_2025||0);
     document.getElementById('newList').insertAdjacentHTML('beforeend',
       `<li><span><div class="item-name">${r.vann}</div><div class="item-area">${r.omrade}</div></span>
-       <span class="item-val yellow">${tot} ${OFA_EN ? 'fish' : 'fisk'}</span></li>`);
+       <span class="item-val yellow">${tot} ${window.hwT('fisk', 'fish')}</span></li>`);
   });
 
   DATA.top20.slice(0,10).forEach(r => {
@@ -545,7 +543,7 @@ function initOmradeCharts() {
       responsive: true, maintainAspectRatio: false,
       plugins: {
         legend: { position:'right', labels:{color:'#666', font:{size:11}, padding:10} },
-        tooltip: { callbacks:{ label: c => ` ${c.label}: ${c.parsed.toLocaleString('no')} ${OFA_EN ? 'fish' : 'fisk'}` } }
+        tooltip: { callbacks:{ label: c => ` ${c.label}: ${c.parsed.toLocaleString('no')} ${window.hwT('fisk', 'fish')}` } }
       }
     }
   });
@@ -623,16 +621,15 @@ function renderTable() {
       <td class="num ${r.total>500?'high':''}">${r.total>0?r.total.toLocaleString('no'):'–'}</td>
       <td>${sparkline(r)}</td>
     </tr>`).join('');
-  document.getElementById('rowCount').textContent = OFA_EN
-    ? `Showing ${Math.min(tableData.length,500)} of ${tableData.length} waters`
-    : `Viser ${Math.min(tableData.length,500)} av ${tableData.length} vann`;
+  document.getElementById('rowCount').textContent = window.hwT(`Viser ${Math.min(tableData.length,500)} av ${tableData.length} vann`,
+    `Showing ${Math.min(tableData.length,500)} of ${tableData.length} waters`);
 }
 </script>
 
 <div class="hw-footer">
   <span id="ofaFoot">Data: Oslomarkas Fiskeadministrasjon (utsettingslister 2021–2025).</span> · <a href="/index.html">HatchWatch</a>
 </div>
-<script>if (OFA_EN) document.getElementById('ofaFoot').textContent = 'Data: Oslomarka fisheries association (OFA), stocking lists 2021–2025.';</script>
+<script>if (window.HW_LANG !== 'no') document.getElementById('ofaFoot').textContent = window.hwT('Data: Oslomarkas Fiskeadministrasjon (utsettingslister 2021–2025).', 'Data: Oslomarka fisheries association (OFA), stocking lists 2021–2025.');</script>
 <script>
   // Burger meny toggle
   document.addEventListener('DOMContentLoaded', function() {

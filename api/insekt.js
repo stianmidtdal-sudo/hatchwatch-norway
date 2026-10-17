@@ -55,7 +55,7 @@ export default async function handler(req, res) {
 
     const k = body.kontekst || {};
     const kontekst = {
-        lang: k.lang === 'en' ? 'en' : 'no',
+        lang: ['en', 'sv', 'fi'].includes(k.lang) ? k.lang : 'no',
         dato: klipp(k.dato, 20),
         vann: klipp(k.vann, 80),
         moh: Number.isFinite(+k.moh) && k.moh !== null && k.moh !== '' ? Math.round(+k.moh) : null,

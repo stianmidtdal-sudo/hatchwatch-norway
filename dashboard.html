@@ -1582,7 +1582,9 @@
 // ═══════════════════════════════════════════════════════════════════
 // Språket velges av hw-lang.js (delt med forsiden og undersidene; første besøk
 // følger telefonens språk). Reserve: lagret valg, ellers norsk.
-const LANG = (window.HW_LANG === 'en' || window.HW_LANG === 'no') ? window.HW_LANG : (localStorage.getItem('lang') || 'no');
+const LANG = ['no', 'en', 'sv', 'fi'].includes(window.HW_LANG) ? window.HW_LANG : (localStorage.getItem('lang') || 'no');
+// Svensk og finsk (2026-10-17): L(norsk, engelsk) går via hwT (ordbøkene i /i18n/), T.sv/T.fi kommer fra HW_I18N.dash.
+const L = (no, en) => window.hwT ? window.hwT(no, en) : (LANG === 'en' ? en : no);
 // Tall-formatering med locale-bevisst desimaltegn. Brukes for ±X.Y dager o.l.
 // hvor NO-UI bruker komma (5,8) og EN-UI bruker punktum (5.8).
 // Heltall renderes uten desimal (14, ikke 14,0). Float runder til `decimals`.
@@ -1594,7 +1596,7 @@ function fmtNum(n, decimals = 1) {
     } else {
         s = String(n);
     }
-    return LANG === 'no' ? s.replace('.', ',') : s;
+    return LANG === 'en' ? s : s.replace('.', ',');
 }
 const T = {
   no: {
@@ -2060,7 +2062,13 @@ const T = {
     explainEarlySeasonNote: 'Early in the season the model weights future weather (climate average) heavily, and a warm spring alone does not shift the prediction as far forward as one might expect. It takes a lot for today\'s surplus to translate into a strongly earlier forecast.',
   }
 };
-function t(key) { return (T[LANG] && T[LANG][key] != null) ? T[LANG][key] : (T['en'][key] || key); }
+if ((LANG === 'sv' || LANG === 'fi') && window.HW_I18N && window.HW_I18N.dash) T[LANG] = window.HW_I18N.dash;
+// Mangler en nøkkel: svensk faller tilbake til norsk, de andre til engelsk (som før)
+function t(key) {
+    if (T[LANG] && T[LANG][key] != null) return T[LANG][key];
+    const reserve = LANG === 'sv' ? T.no : T.en;
+    return (reserve && reserve[key] != null) ? reserve[key] : (T['en'][key] || key);
+}
 function toggleLang() {
     localStorage.setItem('lang', LANG === 'no' ? 'en' : 'no');
     location.reload();
@@ -3069,10 +3077,10 @@ function getCurrentAltitude(loc) {
 // Synlig kalibreringstekst uten modellens tall (2026-10-16, Stian: «si litt mindre om modellen»).
 // Beholder antall år (n=…) og «indikativ», dropper terskler og metode-notater.
 function kalibKort(loc, lang) {
-    const s = (lang === 'no' ? loc.calibShortNo : loc.calibShortEn) || '';
+    const s = (lang === 'en' ? loc.calibShortEn : loc.calibShortNo) || '';
     const n = (s.match(/n=\d+(\+\d+)?/) || [''])[0];
-    const ind = /indikativ|indicative/.test(s) ? (lang === 'no' ? 'indikativ' : 'indicative') : '';
-    return [n ? n.replace('n=', '') + (lang === 'no' ? ' observasjoner' : ' observations') : '', ind].filter(Boolean).join(' · ');
+    const ind = /indikativ|indicative/.test(s) ? (L('indikativ', 'indicative')) : '';
+    return [n ? n.replace('n=', '') + (L(' observasjoner', ' observations')) : '', ind].filter(Boolean).join(' · ');
 }
 function getWtThreshold(loc) {
     return (loc && loc.wtThreshold != null) ? loc.wtThreshold : 12;
@@ -3154,7 +3162,7 @@ document.getElementById('headerTitle').textContent = LOC.area;
 // Stasjonskodene (SN/NVE) er tatt ut av headeren; de står i KPI-kortene og Datakilder.
 function headerStationLine() {
     const lake = (LOC.altitudeAdjustable && userSelectedLakeName) ? userSelectedLakeName : null;
-    const bits = [LOC.region, lake, `${getCurrentAltitude(LOC)} ${LANG === 'no' ? 'moh' : 'm a.s.l.'}`];
+    const bits = [LOC.region, lake, `${getCurrentAltitude(LOC)} ${L('moh', 'm a.s.l.')}`];
     return bits.filter(Boolean).join(' · ');
 }
 document.getElementById('headerSub').textContent = headerStationLine();
@@ -3252,9 +3260,7 @@ if (!LOC.nveStation) {
     const tempStnName = LOC.waterStationName || LOC.name || LOC.place;
     // wtNote oppdateres i renderWaterTempChart med evt. høydekorreksjon
     document.getElementById('wtHeading').textContent =
-        LANG === 'no'
-            ? `Vanntemperatur mai–juli · År for år · ${tempStnName} (${wtStnNote})`
-            : `Water Temperature May–July · Year-by-Year · ${tempStnName} (${wtStnNote})`;
+        L(`Vanntemperatur mai–juli · År for år · ${tempStnName} (${wtStnNote})`, `Water Temperature May–July · Year-by-Year · ${tempStnName} (${wtStnNote})`);
 }
 
 // Snø-note under snøgraf
@@ -3280,9 +3286,7 @@ const snowHdrName = LOC.snowStationName
     || (_snowHdrStnId === LOC.frostStation ? LOC.airStationName : null)
     || LOC.place;
 document.getElementById('snowHeading').textContent =
-    LANG === 'no'
-        ? `Snødybde nov–mai · År for år · ${snowHdrName} (${_snowHdrStnId})`
-        : `Snow Depth Nov–May · Year-by-Year · ${snowHdrName} (${_snowHdrStnId})`;
+    L(`Snødybde nov–mai · År for år · ${snowHdrName} (${_snowHdrStnId})`, `Snow Depth Nov–May · Year-by-Year · ${snowHdrName} (${_snowHdrStnId})`);
 
 // ═══════════════════════════════════════════════════════════════════
 //  DATE HELPERS
@@ -3308,7 +3312,7 @@ function dateFromDoy(year, d) {
 function fmt(date) {
     if (!date) return '–';
     // Bruk norsk locale når LANG === 'no' så månedsnavn vises på norsk (mai/jun/jul...)
-    const locale = LANG === 'no' ? 'nb-NO' : 'en-GB';
+    const locale = window.HW_LOCALE;
     return date.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
 }
 function addDays(dateStr, n) {
@@ -3870,7 +3874,7 @@ function renderHistoricalGDDSection(stats, correctionDelta, snowData, airData) {
     for (const c of allRows.sort((a, b) => b.year - a.year)) {
         const isCur = stats.currentYear && c.year === stats.currentYear.year;
         const curTag = isCur
-            ? ` <span style="font-size:0.68rem;color:#888;font-weight:400">· ${LANG === 'no' ? 'i år' : 'this year'}</span>`
+            ? ` <span style="font-size:0.68rem;color:#888;font-weight:400">· ${L('i år', 'this year')}</span>`
             : '';
         const diff = c.doy - stats.median;
         const sign = diff >= 0 ? '+' : '';
@@ -3900,11 +3904,8 @@ function renderHistoricalGDDSection(stats, correctionDelta, snowData, airData) {
 
     if (Math.abs(correctionDelta) >= 0.1) {
         const sign = correctionDelta > 0 ? '+' : '';
-        const msg = LANG === 'no'
-            ? `${t('altCorrection')} ${sign}${correctionDelta}°C på alle daglige lufttemperaturer `
-              + `(stasjon ${LOC.stationAltitude}m → fiskeplass ~${getCurrentAltitude(LOC)}m, temperaturgradient 0,6°C/100m)`
-            : `${t('altCorrection')} ${sign}${correctionDelta}°C on all daily air temperatures `
-              + `(station ${LOC.stationAltitude}m → fishing area ~${getCurrentAltitude(LOC)}m, lapse rate 0.6°C/100m)`;
+        const msg = t('altCorrection') + ' ' + L(`${sign}${correctionDelta}°C på alle daglige lufttemperaturer (stasjon ${LOC.stationAltitude}m → fiskeplass ~${getCurrentAltitude(LOC)}m, temperaturgradient 0,6°C/100m)`,
+            `${sign}${correctionDelta}°C on all daily air temperatures (station ${LOC.stationAltitude}m → fishing area ~${getCurrentAltitude(LOC)}m, lapse rate 0.6°C/100m)`);
         html += `<div style="font-size:0.74rem;color:#888;margin-top:8px;padding:0 4px">${msg}</div>`;
     }
     document.getElementById('gddHistContent').innerHTML = html;
@@ -4438,7 +4439,7 @@ function renderKPIs(airData, snowData, flowData, wtData) {
     const nveIds  = LOC.nveWaterTempStation && LOC.nveWaterTempStation !== LOC.nveStation
         ? `${LOC.nveStation} / ${LOC.nveWaterTempStation}` : (LOC.nveStation || '');
     // Bruk språk-spesifikk dato-formatering (nb-NO på norsk, en-GB på engelsk).
-    const _updLocale = LANG === 'no' ? 'nb-NO' : 'en-GB';
+    const _updLocale = window.HW_LOCALE;
     // Stasjons-ID-ene bor nå i header-sub — her kun datoen (i heroen)
     document.getElementById('lastUpdated').innerHTML =
         `${t('updatedLabel')} ${parseDate(dateStr).toLocaleDateString(_updLocale,{day:'numeric',month:'short'})}`;
@@ -4472,9 +4473,7 @@ function renderModel(airData, currentADG, histADG, adgDate, wtDate, histStats) {
     const uncDaysBaseline = LOC.uncertaintyDays;
     const uncDays = getDynamicUncertainty(uncDaysBaseline, currentADG, effThr);
     const uncSource = LOC.calibrated
-        ? (LANG === 'no'
-            ? `typisk avvik, validert mot observerte klekkedatoer`
-            : `typical error, validated against observed hatch dates`)
+        ? (L(`typisk avvik, validert mot observerte klekkedatoer`, `typical error, validated against observed hatch dates`))
         : t('priorEstimateText');
     const unc = document.getElementById('uncertaintyBand');
     if (LOC.calibrated) {
@@ -4854,31 +4853,23 @@ function renderSpinnerfallSection(eveningData, vulgataDate, historyData) {
     }
 
     const lang = (typeof LANG !== 'undefined' && LANG) ? LANG : 'no';
-    const dayNames = lang === 'no'
-        ? ['søn','man','tir','ons','tor','fre','lør']
-        : ['sun','mon','tue','wed','thu','fri','sat'];
-    const monthNames = lang === 'no'
-        ? ['jan','feb','mar','apr','mai','jun','jul','aug','sep','okt','nov','des']
-        : ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
-    const labelText = ({
-        no: { high:'Høy sjanse', moderate:'Moderat', low:'Lav', veryLow:'Svært lav', outOfSeason:'Utenfor sesong' },
-        en: { high:'High chance', moderate:'Moderate', low:'Low', veryLow:'Very low', outOfSeason:'Out of season' }
-    })[lang] || {};
+    const dayNames = ({
+        no: ['søn','man','tir','ons','tor','fre','lør'], en: ['sun','mon','tue','wed','thu','fri','sat'],
+        sv: ['sön','mån','tis','ons','tor','fre','lör'], fi: ['su','ma','ti','ke','to','pe','la']
+    })[lang] || ['søn','man','tir','ons','tor','fre','lør'];
+    const labelText = { high: L('Høy sjanse', 'High chance'), moderate: L('Moderat', 'Moderate'), low: L('Lav', 'Low'),
+        veryLow: L('Svært lav', 'Very low'), outOfSeason: L('Utenfor sesong', 'Out of season') };
 
     // Test-modus-indikator
     const subEl = document.getElementById('spinnerfallSub');
     if (subEl) {
         if (testMode) {
-            subEl.innerHTML = (lang === 'no'
-                ? 'TEST-MODUS · simulert klekkestart 4 dager siden'
-                : 'TEST MODE · simulated hatch onset 4 days ago');
+            subEl.innerHTML = (L('TEST-MODUS · simulert klekkestart 4 dager siden', 'TEST MODE · simulated hatch onset 4 days ago'));
             subEl.style.color = '#ff9d50';
             subEl.style.fontWeight = '700';
         } else {
             // Reset til vanlig undertittel hvis tidligere overstyrt
-            const defaultSub = lang === 'no'
-                ? 'Sannsynlighet for vulgataspinnerfall · kveld 19–22'
-                : 'Probability of vulgata spinner fall · evening 19–22';
+            const defaultSub = L('Sannsynlighet for vulgataspinnerfall · kveld 19–22', 'Probability of vulgata spinner fall · evening 19–22');
             subEl.textContent = defaultSub;
             subEl.style.color = 'rgba(244,228,193,0.72)';
             subEl.style.fontWeight = '';
@@ -4889,7 +4880,7 @@ function renderSpinnerfallSection(eveningData, vulgataDate, historyData) {
         const pct = Math.round(f.prob * 100);
         const labelStr = labelText[f.label] || '';
         const day = dayNames[f.date.getDay()];
-        const dateStr = `${f.date.getDate()}. ${monthNames[f.date.getMonth()]}`;
+        const dateStr = window.hwDato(f.date, true);
 
         // Fargeskjema basert på sannsynlighet
         let probColor, barFill, cardBorder;
@@ -4907,19 +4898,17 @@ function renderSpinnerfallSection(eveningData, vulgataDate, historyData) {
         // Faktorlinjer — vind (+ kast hvis tilgjengelig) | temp | skydekke
         const w = f.weather;
         const gustSuffix = (w.gust != null && w.gust > w.wind + 0.5)
-            ? ` <span style="opacity:0.65;">(kast ${Math.round(w.gust)})</span>`
+            ? ` <span style="opacity:0.65;">(${L('kast', 'gust')} ${Math.round(w.gust)})</span>`
             : '';
         const windStr = `${w.wind} m/s${gustSuffix}`;
         const tempStr = `${Math.round(w.temp)}°C`;
-        const cloudStr = `${w.cloud}% sky`;
+        const cloudStr = `${w.cloud}% ${L('sky', 'cloud')}`;
         const precipStr = w.precip > 0.1 ? ` · ${w.precip.toFixed(1)} mm` : '';
 
         // Backlog-boost-badge (kun synlig når boost > 1.1)
         let boostBadge = '';
         if (f.boost > 1.1) {
-            const boostText = lang === 'no'
-                ? `+${Math.round((f.boost - 1) * 100)}% pga. akkumulasjon`
-                : `+${Math.round((f.boost - 1) * 100)}% from accumulation`;
+            const boostText = L(`+${Math.round((f.boost - 1) * 100)}% pga. akkumulasjon`, `+${Math.round((f.boost - 1) * 100)}% from accumulation`);
             boostBadge = `<div style="display:inline-block; margin-top:6px; padding:2px 7px; background:rgba(255,179,71,0.18); border:1px solid rgba(255,179,71,0.4); border-radius:4px; font-size:0.66rem; color:#ffb347; font-weight:600;">↑ ${boostText}</div>`;
         }
 
@@ -4937,7 +4926,7 @@ function renderSpinnerfallSection(eveningData, vulgataDate, historyData) {
                 <div style="height:100%; width:${pct}%; background:${barFill};"></div>
             </div>
             <div style="font-size:0.7rem; color:rgba(244,228,193,0.62); margin-top:9px; line-height:1.5;">
-                ${lang === 'no' ? 'Vind' : 'Wind'} ${windStr}<br>${lang === 'no' ? 'Temp' : 'Temp'} ${tempStr}<br>${lang === 'no' ? 'Sky' : 'Cloud'} ${cloudStr}${precipStr}
+                ${L('Vind', 'Wind')} ${windStr}<br>${L('Temp', 'Temp')} ${tempStr}<br>${L('Sky', 'Cloud')} ${cloudStr}${precipStr}
             </div>
         </div>`;
     }).join('');
@@ -4945,9 +4934,7 @@ function renderSpinnerfallSection(eveningData, vulgataDate, historyData) {
     // Forklarings-tekst hvis minst én indikativ dag finnes
     const hasIndicative = forecast.some(f => f.weather && f.weather.n != null && f.weather.n < 3);
     if (hasIndicative) {
-        const indFootNote = lang === 'no'
-            ? 'De første to dagene har time-oppløst værprognose. Senere dager baseres på 6-timers oppløsning og er mer indikative — bruk dem som retning, ikke planlegging.'
-            : 'The first two days use hour-resolution weather forecasts. Later days are based on 6-hour resolution and are more indicative — use them as a direction, not for planning.';
+        const indFootNote = L('De første to dagene har time-oppløst værprognose. Senere dager baseres på 6-timers oppløsning og er mer indikative — bruk dem som retning, ikke planlegging.', 'The first two days use hour-resolution weather forecasts. Later days are based on 6-hour resolution and are more indicative — use them as a direction, not for planning.');
         grid.innerHTML += `<div style="grid-column: 1 / -1; margin-top:8px; font-size:0.72rem; color:rgba(244,228,193,0.55); line-height:1.5; font-style:italic;">${indFootNote}</div>`;
     }
 
@@ -5295,21 +5282,21 @@ function wxDirName(dirFrom, no) {
 // Vindstyrke i ord — kalibrert for fluekast, ikke etter Beaufort.
 function wxWindWord(w, no) {
     if (w == null) return null;
-    if (w < 1.5) return no ? 'Nesten vindstille' : 'Almost calm';
-    if (w < 3.5) return no ? 'Lett'    : 'Light';
-    if (w < 6)   return no ? 'Frisk'   : 'Fresh';
-    if (w < 9)   return no ? 'Mye'     : 'Strong';
-    return           no ? 'Kraftig' : 'Very strong';
+    if (w < 1.5) return L('Nesten vindstille', 'Almost calm');
+    if (w < 3.5) return L('Lett', 'Light');
+    if (w < 6)   return L('Frisk', 'Fresh');
+    if (w < 9)   return L('Mye', 'Strong');
+    return           L('Kraftig', 'Very strong');
 }
 
 // Temperatur i ord — terskler satt der døgnflueaktiviteten endrer seg merkbart.
 function wxTempWord(t, no) {
     if (t == null) return null;
-    if (t < 6)  return no ? 'kaldt'            : 'cold';
-    if (t < 10) return no ? 'relativt kjølig'  : 'fairly cool';
-    if (t < 15) return no ? 'mildt'            : 'mild';
-    if (t < 21) return no ? 'lunt'             : 'pleasantly mild';
-    return          no ? 'varmt'           : 'warm';
+    if (t < 6)  return L('kaldt', 'cold');
+    if (t < 10) return L('relativt kjølig', 'fairly cool');
+    if (t < 15) return L('mildt', 'mild');
+    if (t < 21) return L('lunt', 'pleasantly mild');
+    return          L('varmt', 'warm');
 }
 
 // Samlet vurdering i fire trinn. Ingen tall ut — bare ord vi kan stå for.
@@ -5331,10 +5318,10 @@ function wxVerdict(wind, gustMax, tempMax, precip, no) {
     }
     if (precip != null && precip >= 5) burden += 1;
 
-    if (burden >= 4) return no ? 'vanskelige forhold' : 'difficult conditions';
-    if (burden >= 2) return no ? 'krevende forhold'   : 'demanding conditions';
-    if (burden >= 1) return no ? 'brukbare forhold'   : 'workable conditions';
-    return               no ? 'fine forhold'      : 'good conditions';
+    if (burden >= 4) return L('vanskelige forhold', 'difficult conditions');
+    if (burden >= 2) return L('krevende forhold', 'demanding conditions');
+    if (burden >= 1) return L('brukbare forhold', 'workable conditions');
+    return               L('fine forhold', 'good conditions');
 }
 
 function wxComment(d, hours, no) {
@@ -5352,20 +5339,19 @@ function wxComment(d, hours, no) {
         // «Mye nordavind» / «Lett sønnavind» — retningen bærer betydning
         // Engelsk: «A strong northerly wind» — artikkelen i dirName («a northerly»)
         // flyttes foran styrkeordet (rettet 2026-10-08, sto «Strong a northerly wind»).
-        lead = no ? `${wWord} ${dirName}` : `A ${wWord.toLowerCase()} ${dirName.replace(/^an? /, '')} wind`;
+        lead = L(`${wWord} ${dirName}`, `A ${wWord.toLowerCase()} ${dirName.replace(/^an? /, '')} wind`);
     } else if (wWord) {
-        lead = no ? `${wWord}${d.wind != null && d.wind >= 1.5 ? ' vind' : ''}`
-                  : `${wWord}${d.wind != null && d.wind >= 1.5 ? ' wind' : ''}`;
+        lead = L(`${wWord}${d.wind != null && d.wind >= 1.5 ? ' vind' : ''}`, `${wWord}${d.wind != null && d.wind >= 1.5 ? ' wind' : ''}`);
     } else {
-        lead = no ? 'Vind' : 'Wind';
+        lead = L('Vind', 'Wind');
     }
-    if (tWord) lead += (no ? ' og ' : ' and ') + tWord;
+    if (tWord) lead += (L(' og ', ' and ')) + tWord;
     lead += ` — <b>${wxVerdict(d.wind, d.gustMax, tmax, p, no)}</b>.`;
     bits.push(lead);
 
     // ── Setning 2: nedbør, kun når den betyr noe ──────────────────────────
     if (p != null && p >= 2) {
-        bits.push(no ? `Nedbør ${fmtNum(p, 1)} mm.` : `Precipitation ${p} mm.`);
+        bits.push(L(`Nedbør ${fmtNum(p, 1)} mm.`, `Precipitation ${p} mm.`));
     }
 
     // ── Setning 3: kveldsutvikling ────────────────────────────────────────
@@ -5377,13 +5363,9 @@ function wxComment(d, hours, no) {
             const eveWind = eve.reduce((s, h) => s + h.wind, 0) / eve.length;
             const diff = eveWind - d.wind;
             if (diff <= -1.5) {
-                bits.push(no
-                    ? `Vinden løyer utover kvelden — <b>${fmtNum(eveWind, 1)} m/s kl. 21</b>.`
-                    : `Wind eases through the evening — <b>${eveWind.toFixed(1)} m/s at 21</b>.`);
+                bits.push(L(`Vinden løyer utover kvelden — <b>${fmtNum(eveWind, 1)} m/s kl. 21</b>.`, `Wind eases through the evening — <b>${eveWind.toFixed(1)} m/s at 21</b>.`));
             } else if (diff >= 1.5) {
-                bits.push(no
-                    ? `Vinden friskner mot kvelden — <b>${fmtNum(eveWind, 1)} m/s kl. 21</b>.`
-                    : `Wind picks up towards evening — <b>${eveWind.toFixed(1)} m/s at 21</b>.`);
+                bits.push(L(`Vinden friskner mot kvelden — <b>${fmtNum(eveWind, 1)} m/s kl. 21</b>.`, `Wind picks up towards evening — <b>${eveWind.toFixed(1)} m/s at 21</b>.`));
             }
         }
     }
@@ -5456,12 +5438,12 @@ function wxFactsHtml(d, no) {
         ? ` <span class="wv-fresh">↑${Math.round(d.gustMax)}</span>` : '';
     const p = d.precip24 != null ? d.precip24 : d.precip;
     const cells = [
-        [no ? 'Vind' : 'Wind',
+        [L('Vind', 'Wind'),
          `<span class="${wxWindClass(d.wind)}">${fmtNum(d.wind, 1)}</span> <small>m/s</small>${gustTxt}`],
-        [no ? 'Skydekke' : 'Cloud', `${d.cloud != null ? d.cloud : '–'} <small>%</small>`],
-        [no ? 'Nedbør' : 'Precip.', `${p != null ? fmtNum(p, 1) : '–'} <small>mm</small>`],
-        [no ? 'Luftfukt' : 'Humidity', `${d.humid != null ? d.humid : '–'} <small>%</small>`],
-        [no ? 'Trykk' : 'Pressure',
+        [L('Skydekke', 'Cloud'), `${d.cloud != null ? d.cloud : '–'} <small>%</small>`],
+        [L('Nedbør', 'Precip.'), `${p != null ? fmtNum(p, 1) : '–'} <small>mm</small>`],
+        [L('Luftfukt', 'Humidity'), `${d.humid != null ? d.humid : '–'} <small>%</small>`],
+        [L('Trykk', 'Pressure'),
          d.pressure != null ? `${Math.round(d.pressure)} <small>hPa${wxPressureArrow(d.pressureTrend)}</small>` : '–'],
     ];
     return `<div class="wx-facts">` + cells.map(c =>
@@ -5501,26 +5483,16 @@ function renderTodayScore(args) {
     const body = document.getElementById('todayScoreBody');
     if (!section || !body) return;
     const no = LANG !== 'en';
-    const T2 = no ? {
-        label: 'Er det verdt å dra i dag?', indic: 'Indikativ · ukalibrert',
-        phase: 'Klekkefase', water: 'Vannet', weather: 'Været', window: 'Kvelden time for time',
-        go: 'Dra i kveld.', maybe: 'Kanskje. Sjekk igjen i morgen.', no: 'Ikke ennå.', over: 'Årets klekking er over.', closed: 'Sesongen har ikke åpnet.',
-        underway: 'i gang', soon: 'snart', notyet: 'ikke ennå', done: 'ferdig', nopred: 'ingen prognose',
-        warm: 'varmt nok', near: 'nesten', cold: 'kaldt', nomeas: 'ingen måling',
-        calm: 'rolig', ok: 'brukbart', rough: 'krevende', nowx: 'ingen prognose',
-        today: 'i dag', tomorrow: 'i morgen',
-        hoursNote: 'Søylene er antatt klekkeaktivitet per time, tallene er temperatur og vind i m/s. Kveldstimer med lite vind gir mest.',
-        foot: 'Data: MET Norway · NVE · modellens klekkedato. Scoren er ikke validert mot observasjoner ennå.'
-    } : {
-        label: 'Worth going today?', indic: 'Indicative · uncalibrated',
-        phase: 'Hatch phase', water: 'Water', weather: 'Weather', window: 'The evening, hour by hour',
-        go: 'Go tonight.', maybe: 'Maybe. Check again tomorrow.', no: 'Not yet.', over: 'This year’s hatch is over.', closed: 'The season has not opened.',
-        underway: 'underway', soon: 'soon', notyet: 'not yet', done: 'done', nopred: 'no forecast',
-        warm: 'warm enough', near: 'almost', cold: 'cold', nomeas: 'no reading',
-        calm: 'calm', ok: 'usable', rough: 'rough', nowx: 'no forecast',
-        today: 'today', tomorrow: 'tomorrow',
-        hoursNote: 'Bars are assumed hatch activity per hour, numbers are temperature and wind in m/s. Calm evening hours score highest.',
-        foot: 'Data: MET Norway · NVE · model hatch date. The score is not yet validated against observations.'
+    const T2 = {
+        label: L('Er det verdt å dra i dag?', 'Worth going today?'), indic: L('Indikativ · ukalibrert', 'Indicative · uncalibrated'),
+        phase: L('Klekkefase', 'Hatch phase'), water: L('Vannet', 'Water'), weather: L('Været', 'Weather'), window: L('Kvelden time for time', 'The evening, hour by hour'),
+        go: L('Dra i kveld.', 'Go tonight.'), maybe: L('Kanskje. Sjekk igjen i morgen.', 'Maybe. Check again tomorrow.'), no: L('Ikke ennå.', 'Not yet.'), over: L('Årets klekking er over.', 'This year’s hatch is over.'), closed: L('Sesongen har ikke åpnet.', 'The season has not opened.'),
+        underway: L('i gang', 'underway'), soon: L('snart', 'soon'), notyet: L('ikke ennå', 'not yet'), done: L('ferdig', 'done'), nopred: L('ingen prognose', 'no forecast'),
+        warm: L('varmt nok', 'warm enough'), near: L('nesten', 'almost'), cold: L('kaldt', 'cold'), nomeas: L('ingen måling', 'no reading'),
+        calm: L('rolig', 'calm'), ok: L('brukbart', 'usable'), rough: L('krevende', 'rough'), nowx: L('ingen prognose', 'no forecast'),
+        today: L('i dag', 'today'), tomorrow: L('i morgen', 'tomorrow'),
+        hoursNote: L('Søylene er antatt klekkeaktivitet per time, tallene er temperatur og vind i m/s. Kveldstimer med lite vind gir mest.', 'Bars are assumed hatch activity per hour, numbers are temperature and wind in m/s. Calm evening hours score highest.'),
+        foot: L('Data: MET Norway · NVE · modellens klekkedato. Scoren er ikke validert mot observasjoner ennå.', 'Data: MET Norway · NVE · model hatch date. The score is not yet validated against observations.')
     };
     document.getElementById('tsLabel').textContent = T2.label;
     document.getElementById('tsIndic').textContent = T2.indic;
@@ -5542,15 +5514,15 @@ function renderTodayScore(args) {
         if (ds < 0) {
             const to = -ds;
             phaseScore = to <= 7 ? 35 : to <= 14 ? 25 : 10; phaseKey = to <= 14 ? 'soon' : 'coming';
-            phaseTxt = no ? `Om ${to} dager (${fmt(onset)})` : `In ${to} days (${fmt(onset)})`; phasePill = T2.soon; phaseCls = to <= 7 ? 'mid' : 'bad';
+            phaseTxt = L(`Om ${to} dager (${fmt(onset)})`, `In ${to} days (${fmt(onset)})`); phasePill = T2.soon; phaseCls = to <= 7 ? 'mid' : 'bad';
         } else if (ds <= 3) {
-            phaseScore = 70; phaseKey = 'now'; phaseTxt = no ? `Dag ${ds + 1} av klekkingen · bygger seg opp` : `Day ${ds + 1} of the hatch · building`; phasePill = T2.underway; phaseCls = 'good';
+            phaseScore = 70; phaseKey = 'now'; phaseTxt = L(`Dag ${ds + 1} av klekkingen · bygger seg opp`, `Day ${ds + 1} of the hatch · building`); phasePill = T2.underway; phaseCls = 'good';
         } else if (ds <= 14) {
-            phaseScore = 100; phaseKey = 'now'; phaseTxt = no ? `Dag ${ds + 1} av klekkingen` : `Day ${ds + 1} of the hatch`; phasePill = T2.underway; phaseCls = 'good';
+            phaseScore = 100; phaseKey = 'now'; phaseTxt = L(`Dag ${ds + 1} av klekkingen`, `Day ${ds + 1} of the hatch`); phasePill = T2.underway; phaseCls = 'good';
         } else if (ds <= 21) {
-            phaseScore = 60; phaseKey = 'now'; phaseTxt = no ? `Dag ${ds + 1} · etterslep` : `Day ${ds + 1} · tail end`; phasePill = T2.underway; phaseCls = 'mid';
+            phaseScore = 60; phaseKey = 'now'; phaseTxt = L(`Dag ${ds + 1} · etterslep`, `Day ${ds + 1} · tail end`); phasePill = T2.underway; phaseCls = 'mid';
         } else {
-            phaseScore = 15; phaseKey = 'done'; phaseTxt = no ? `Over. Modellen anslo start for ${ds} dager siden` : `Over. The model estimated the start ${ds} days ago`; phasePill = T2.done; phaseCls = 'bad';
+            phaseScore = 15; phaseKey = 'done'; phaseTxt = L(`Over. Modellen anslo start for ${ds} dager siden`, `Over. The model estimated the start ${ds} days ago`); phasePill = T2.done; phaseCls = 'bad';
         }
     }
     // Utenfor sesongen (over 21 d etter anslått start, eller før 1. april) skjules
@@ -5585,13 +5557,11 @@ function renderTodayScore(args) {
         waterScore = diff >= 0 ? 95 : diff >= -1 ? 65 : diff >= -2 ? 45 : diff >= -4 ? 25 : 10;
         waterPill = diff >= 0 ? T2.warm : diff >= -2 ? T2.near : T2.cold;
         waterCls = diff >= 0 ? 'good' : diff >= -2 ? 'mid' : 'bad';
-        waterTxt = no
-            ? `${fmtNum(wtNow, 1)} °C · ${diff >= 0 ? 'over terskelen ' + thr + ' °C' : fmtNum(-diff, 1) + ' °C til terskelen ' + thr + ' °C'}`
-            : `${wtNow.toFixed(1)} °C · ${diff >= 0 ? 'above the ' + thr + ' °C threshold' : (-diff).toFixed(1) + ' °C to the ' + thr + ' °C threshold'}`;
+        waterTxt = L(`${fmtNum(wtNow, 1)} °C · ${diff >= 0 ? 'over terskelen ' + thr + ' °C' : fmtNum(-diff, 1) + ' °C til terskelen ' + thr + ' °C'}`, `${wtNow.toFixed(1)} °C · ${diff >= 0 ? 'above the ' + thr + ' °C threshold' : (-diff).toFixed(1) + ' °C to the ' + thr + ' °C threshold'}`);
     }
     if (flowRatio != null) {
         if (flowRatio > 1.6) waterScore -= 20; else if (flowRatio > 1.25) waterScore -= 8; else if (flowRatio < 0.6) waterScore -= 5;
-        waterTxt += no ? ` · vannføring ${Math.round(flowRatio * 100)} % av median` : ` · flow ${Math.round(flowRatio * 100)}% of median`;
+        waterTxt += L(` · vannføring ${Math.round(flowRatio * 100)} % av median`, ` · flow ${Math.round(flowRatio * 100)}% of median`);
     }
     waterScore = Math.max(0, Math.min(100, waterScore));
 
@@ -5607,8 +5577,8 @@ function renderTodayScore(args) {
         weatherScore = Math.round(todayHourScore(w) * 100);
         weatherPill = weatherScore >= 70 ? T2.calm : weatherScore >= 45 ? T2.ok : T2.rough;
         weatherCls = weatherScore >= 70 ? 'good' : weatherScore >= 45 ? 'mid' : 'bad';
-        const cl = w.cloud == null ? '' : w.cloud >= 80 ? (no ? 'overskyet' : 'overcast') : w.cloud >= 40 ? (no ? 'delvis skyet' : 'partly cloudy') : (no ? 'klart' : 'clear');
-        weatherTxt = `${eve ? (no ? 'Kveld' : 'Evening') : (no ? 'Dag' : 'Day')}: ${Math.round(w.temp)}°, ${fmtNum(w.wind, 1)} m/s${cl ? ', ' + cl : ''}${w.precip > 0.1 ? (no ? ', nedbør' : ', rain') : ''}`;
+        const cl = w.cloud == null ? '' : w.cloud >= 80 ? (L('overskyet', 'overcast')) : w.cloud >= 40 ? (L('delvis skyet', 'partly cloudy')) : (L('klart', 'clear'));
+        weatherTxt = `${eve ? (L('Kveld', 'Evening')) : (L('Dag', 'Day'))}: ${Math.round(w.temp)}°, ${fmtNum(w.wind, 1)} m/s${cl ? ', ' + cl : ''}${w.precip > 0.1 ? (L(', nedbør', ', rain')) : ''}`;
     }
 
     // ── Sum + dom ──
@@ -5617,15 +5587,15 @@ function renderTodayScore(args) {
     // er ikke en god klekkekveld. Tak på 25 når fasen er ferdig/ikke åpnet.
     if (phaseKey === 'done' || phaseKey === 'closed' || phaseKey === 'unknown') score = Math.min(score, 25);
     let verdict, expl;
-    if (phaseKey === 'closed') { verdict = T2.closed; expl = no ? 'Prognosen åpner 1. april. Fram til da er scoren bare vann og vær.' : 'The forecast opens on 1 April. Until then the score is water and weather only.'; }
-    else if (phaseKey === 'done') { verdict = T2.over; expl = no ? 'Vulgata-klekkingen er over. Se etter spinnerfall og vespertina i skumringen.' : 'The vulgata hatch is over. Look for spinner falls and vespertina at dusk.'; }
-    else if (score >= 65) { verdict = T2.go; expl = no ? 'Klekkingen er i gang, vannet er varmt nok og kvelden ser brukbar ut.' : 'The hatch is underway, the water is warm enough and the evening looks usable.'; }
+    if (phaseKey === 'closed') { verdict = T2.closed; expl = L('Prognosen åpner 1. april. Fram til da er scoren bare vann og vær.', 'The forecast opens on 1 April. Until then the score is water and weather only.'); }
+    else if (phaseKey === 'done') { verdict = T2.over; expl = L('Vulgata-klekkingen er over. Se etter spinnerfall og vespertina i skumringen.', 'The vulgata hatch is over. Look for spinner falls and vespertina at dusk.'); }
+    else if (score >= 65) { verdict = T2.go; expl = L('Klekkingen er i gang, vannet er varmt nok og kvelden ser brukbar ut.', 'The hatch is underway, the water is warm enough and the evening looks usable.'); }
     else if (score >= 40) {
         verdict = T2.maybe;
         expl = phaseKey === 'now'
-            ? (no ? `Klekkingen er i gang, men ${weatherCls === 'bad' ? 'kvelden blir krevende' : 'vannet holder igjen'}.` : `The hatch is underway, but ${weatherCls === 'bad' ? 'the evening looks rough' : 'the water is holding it back'}.`)
-            : (no ? 'Klekkingen har ikke startet, men vannet nærmer seg terskelen. Første rolige kveld kan åpne det.' : 'The hatch has not started, but the water is closing in on the threshold. The first calm evening may open it.');
-    } else { verdict = T2.no; expl = phaseKey === 'unknown' ? (no ? 'Ingen lagret prognose for dette vannet ennå.' : 'No stored forecast for this water yet.') : (no ? 'Vannet er for kaldt. Følg vanntemperaturen, ikke kalenderen.' : 'The water is too cold. Watch the water temperature, not the calendar.'); }
+            ? (L(`Klekkingen er i gang, men ${weatherCls === 'bad' ? 'kvelden blir krevende' : 'vannet holder igjen'}.`, `The hatch is underway, but ${weatherCls === 'bad' ? 'the evening looks rough' : 'the water is holding it back'}.`))
+            : (L('Klekkingen har ikke startet, men vannet nærmer seg terskelen. Første rolige kveld kan åpne det.', 'The hatch has not started, but the water is closing in on the threshold. The first calm evening may open it.'));
+    } else { verdict = T2.no; expl = phaseKey === 'unknown' ? (L('Ingen lagret prognose for dette vannet ennå.', 'No stored forecast for this water yet.')) : (L('Vannet er for kaldt. Følg vanntemperaturen, ikke kalenderen.', 'The water is too cold. Watch the water temperature, not the calendar.')); }
 
     // ── Fiskevinduet: timer 14–23 i dag, ellers i morgen ──
     let hoursHtml = '';
@@ -5663,7 +5633,7 @@ function renderTodayScore(args) {
             ${drv('<svg viewBox="0 0 24 24"><path d="M17 18a4 4 0 0 0 0-8 6 6 0 0 0-11.5 1.5A3.5 3.5 0 0 0 6 18z"/></svg>', T2.weather, weatherTxt, weatherPill, weatherCls)}
         </div>
         ${hoursHtml}
-        <div class="hero-method" style="margin-top:10px">${T2.foot} ${no ? 'Vekter' : 'Weights'}: ${Math.round(TODAY_WEIGHTS.phase * 100)} / ${Math.round(TODAY_WEIGHTS.water * 100)} / ${Math.round(TODAY_WEIGHTS.weather * 100)}.</div>`;
+        <div class="hero-method" style="margin-top:10px">${T2.foot} ${L('Vekter', 'Weights')}: ${Math.round(TODAY_WEIGHTS.phase * 100)} / ${Math.round(TODAY_WEIGHTS.water * 100)} / ${Math.round(TODAY_WEIGHTS.weather * 100)}.</div>`;
     markSelfHidden(section, false);
 }
 
@@ -5679,12 +5649,21 @@ function renderWeatherSection(dayData, hourlyData) {
 
     const lang = (typeof LANG !== 'undefined' && LANG) ? LANG : 'no';
     const no = lang !== 'en';
-    const dayNamesLong = no
-        ? ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag']
-        : ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-    const monthsLong = no
-        ? ['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember']
-        : ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const dayNamesLong = ({
+        no: ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'],
+        en: ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
+        sv: ['Söndag','Måndag','Tisdag','Onsdag','Torsdag','Fredag','Lördag'],
+        fi: ['Sunnuntai','Maanantai','Tiistai','Keskiviikko','Torstai','Perjantai','Lauantai']
+    })[lang] || ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'];
+    const monthsLong = ({
+        no: ['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember'],
+        en: ['January','February','March','April','May','June','July','August','September','October','November','December'],
+        sv: ['januari','februari','mars','april','maj','juni','juli','augusti','september','oktober','november','december']
+    })[lang] || ['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember'];
+    // Dag og dato slik språket skriver det (finsk: «Maanantai 16.4.»)
+    const langDato = (dt) => lang === 'fi' ? `${dayNamesLong[dt.getDay()]} ${dt.getDate()}.${dt.getMonth() + 1}.`
+        : lang === 'no' ? `${dayNamesLong[dt.getDay()]} ${dt.getDate()}. ${monthsLong[dt.getMonth()]}`
+        : `${dayNamesLong[dt.getDay()]} ${dt.getDate()} ${monthsLong[dt.getMonth()]}`;
 
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const keyOf = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -5703,10 +5682,8 @@ function renderWeatherSection(dayData, hourlyData) {
     // ── Storbolker: i dag og i morgen ──────────────────────────────────
     bigWrap.innerHTML = days.slice(0, 2).map((it, idx) => {
         const d = it.d;
-        const when = idx === 0 ? (no ? 'I dag' : 'Today') : (no ? 'I morgen' : 'Tomorrow');
-        const dateStr = no
-            ? `${dayNamesLong[it.date.getDay()]} ${it.date.getDate()}. ${monthsLong[it.date.getMonth()]}`
-            : `${dayNamesLong[it.date.getDay()]} ${it.date.getDate()} ${monthsLong[it.date.getMonth()]}`;
+        const when = idx === 0 ? (L('I dag', 'Today')) : (L('I morgen', 'Tomorrow'));
+        const dateStr = langDato(it.date);
         const tmax = d.tempMax24 != null ? d.tempMax24 : d.tempMax;
         const tmin = d.tempMin24;
         return `<div class="wx-big">
@@ -5718,7 +5695,7 @@ function renderWeatherSection(dayData, hourlyData) {
                 </div>
                 <div>
                     <div class="wx-temp ${wxTempClass(tmax)}">${tmax != null ? Math.round(tmax) : '–'}°</div>
-                    <div class="wx-tmin">${tmin != null ? (no ? `ned mot ${Math.round(tmin)}°` : `down to ${Math.round(tmin)}°`) : ''}</div>
+                    <div class="wx-tmin">${tmin != null ? (L(`ned mot ${Math.round(tmin)}°`, `down to ${Math.round(tmin)}°`)) : ''}</div>
                 </div>
             </div>
             <div class="wx-comment">${wxComment(d, it.hours, no)}</div>
@@ -5729,9 +5706,7 @@ function renderWeatherSection(dayData, hourlyData) {
 
     const footEl = document.getElementById('weatherFoot');
     if (footEl) {
-        footEl.textContent = no
-            ? 'Data: MET Norway (yr.no). Dagverdiene er snitt for kl. 10–18; maks- og minimumstemperatur gjelder hele døgnet.'
-            : 'Data: MET Norway (yr.no). Daily values are averages for 10:00–18:00; max and min temperatures cover the full day.';
+        footEl.textContent = L('Data: MET Norway (yr.no). Dagverdiene er snitt for kl. 10–18; maks- og minimumstemperatur gjelder hele døgnet.', 'Data: MET Norway (yr.no). Daily values are averages for 10:00–18:00; max and min temperatures cover the full day.');
     }
 
     markSelfHidden(section, false);
@@ -5804,15 +5779,15 @@ function renderBandChart(cfg) {
                 { label: '_p25', data: p25, borderColor: 'transparent', borderWidth: 0,
                   pointRadius: 0, fill: false, tension: 0.3 },
                 // Øvre båndkant — fyller ned til forrige datasett (p25)
-                { label: no ? 'Normalt nivå' : 'Normal range', data: p75,
+                { label: L('Normalt nivå', 'Normal range'), data: p75,
                   borderColor: 'transparent', borderWidth: 0, pointRadius: 0,
                   backgroundColor: 'rgba(116,198,157,0.32)', fill: '-1', tension: 0.3 },
                 // Median
-                { label: no ? 'Median' : 'Median', data: p50,
+                { label: L('Median', 'Median'), data: p50,
                   borderColor: 'rgba(45,106,79,0.45)', borderWidth: 1.5,
                   borderDash: [5, 4], pointRadius: 0, fill: false, tension: 0.3 },
                 // I år
-                { label: no ? `I år (${YEAR})` : `This year (${YEAR})`, data: cur,
+                { label: L(`I år (${YEAR})`, `This year (${YEAR})`), data: cur,
                   borderColor: '#2f5fc4', borderWidth: 2.5, pointRadius: 0,
                   fill: false, tension: 0.25, spanGaps: true },
             ]
@@ -5900,12 +5875,10 @@ document.addEventListener('DOMContentLoaded', function () {
 function _bandStatusSentence(status, no, unit, dec) {
     if (!status) return '';
     const pct = Math.round(status.ratio * 100);
-    const where = status.aboveBand ? (no ? 'over' : 'above')
-                : status.belowBand ? (no ? 'under' : 'below')
-                : (no ? 'innenfor' : 'within');
-    return no
-        ? ` Siste måling ${fmtNum(status.value, dec)} ${unit} — ${pct}% av medianen, ${where} normalspennet.`
-        : ` Latest reading ${status.value.toFixed(dec)} ${unit} — ${pct}% of median, ${where} the normal range.`;
+    const where = status.aboveBand ? (L('over', 'above'))
+                : status.belowBand ? (L('under', 'below'))
+                : (L('innenfor', 'within'));
+    return L(` Siste måling ${fmtNum(status.value, dec)} ${unit} — ${pct}% av medianen, ${where} normalspennet.`, ` Latest reading ${status.value.toFixed(dec)} ${unit} — ${pct}% of median, ${where} the normal range.`);
 }
 
 // ── TREND OVER TID ───────────────────────────────────────────────────────
@@ -5948,8 +5921,8 @@ function _trendOverDays(data, endDateStr, days) {
 // Beskriver spennet i ord: "den siste uka" når det er 6-8 dager, ellers
 // det faktiske antallet dager.
 function _spanPhrase(spanDays, no) {
-    if (spanDays >= 6 && spanDays <= 8) return no ? 'den siste uka' : 'over the past week';
-    return no ? `de siste ${spanDays} dagene` : `over the past ${spanDays} days`;
+    if (spanDays >= 6 && spanDays <= 8) return L('den siste uka', 'over the past week');
+    return L(`de siste ${spanDays} dagene`, `over the past ${spanDays} days`);
 }
 
 function renderFlowChart(flowData, flowNormal) {
@@ -5960,9 +5933,7 @@ function renderFlowChart(flowData, flowNormal) {
         data: flowData, normal: flowNormal,
         unit: 'm³/s', decimals: 1, yTitle: 'm³/s', beginAtZero: false,
         noteBuilder: (status, no, trend) => {
-            let txt = no
-                ? `Stasjon: ${stn} (${LOC.nveStation}). Normalspennet er 25.–75. persentil fra ${flowNormal.nYears} tidligere år.`
-                : `Station: ${stn} (${LOC.nveStation}). The normal range is the 25th–75th percentile from ${flowNormal.nYears} previous years.`;
+            let txt = L(`Stasjon: ${stn} (${LOC.nveStation}). Normalspennet er 25.–75. persentil fra ${flowNormal.nYears} tidligere år.`, `Station: ${stn} (${LOC.nveStation}). The normal range is the 25th–75th percentile from ${flowNormal.nYears} previous years.`);
             txt += _bandStatusSentence(status, no, 'm³/s', 1);
             // Trend i prosent — for vannføring er relativ endring det som betyr
             // noe. 20% mer vann er 20% mer vann enten elva er stor eller liten.
@@ -5970,18 +5941,14 @@ function renderFlowChart(flowData, flowNormal) {
                 const span = _spanPhrase(trend.spanDays, no);
                 const p = Math.abs(Math.round(trend.pct));
                 if (p < 8) {
-                    txt += no ? ` Vannføringen har vært stabil ${span}.`
-                              : ` Water flow has been stable ${span}.`;
+                    txt += L(` Vannføringen har vært stabil ${span}.`, ` Water flow has been stable ${span}.`);
                 } else {
-                    const dir = trend.pct > 0 ? (no ? 'steget' : 'risen') : (no ? 'falt' : 'fallen');
-                    txt += no ? ` Vannføringen har ${dir} ${p} % ${span}.`
-                              : ` Water flow has ${dir} ${p}% ${span}.`;
+                    const dir = trend.pct > 0 ? (L('steget', 'risen')) : (L('falt', 'fallen'));
+                    txt += L(` Vannføringen har ${dir} ${p} % ${span}.`, ` Water flow has ${dir} ${p}% ${span}.`);
                 }
             }
             if (LOC.flowRegulated) {
-                txt += no
-                    ? ' Merk: vassdraget er regulert, så "normalen" gjenspeiler driftsmønster like mye som natur.'
-                    : ' Note: this watercourse is regulated, so the "normal" reflects operating patterns as much as nature.';
+                txt += L(' Merk: vassdraget er regulert, så "normalen" gjenspeiler driftsmønster like mye som natur.', ' Note: this watercourse is regulated, so the "normal" reflects operating patterns as much as nature.');
             }
             return txt;
         }
@@ -6000,9 +5967,7 @@ function renderWtNormalChart(wtData, wtNormal) {
         data: wtData, normal: wtNormal,
         unit: '°C', decimals: 1, yTitle: '°C', beginAtZero: false,
         noteBuilder: (status, no, trend) => {
-            let txt = no
-                ? `Stasjon: ${stn} (${stnId}). Normalspennet er 25.–75. persentil fra ${wtNormal.nYears} tidligere år.`
-                : `Station: ${stn} (${stnId}). The normal range is the 25th–75th percentile from ${wtNormal.nYears} previous years.`;
+            let txt = L(`Stasjon: ${stn} (${stnId}). Normalspennet er 25.–75. persentil fra ${wtNormal.nYears} tidligere år.`, `Station: ${stn} (${stnId}). The normal range is the 25th–75th percentile from ${wtNormal.nYears} previous years.`);
             txt += _bandStatusSentence(status, no, '°C', 1);
             // Trend i grader — for temperatur er den ABSOLUTTE endringen det
             // relevante. "10% varmere" sier ingenting; "2 grader varmere" sier
@@ -6011,12 +5976,10 @@ function renderWtNormalChart(wtData, wtNormal) {
                 const span = _spanPhrase(trend.spanDays, no);
                 const dAbs = Math.abs(trend.delta);
                 if (dAbs < 0.5) {
-                    txt += no ? ` Vanntemperaturen har vært stabil ${span}.`
-                              : ` Water temperature has been stable ${span}.`;
+                    txt += L(` Vanntemperaturen har vært stabil ${span}.`, ` Water temperature has been stable ${span}.`);
                 } else {
-                    const dir = trend.delta > 0 ? (no ? 'steget' : 'risen') : (no ? 'falt' : 'fallen');
-                    txt += no ? ` Vanntemperaturen har ${dir} ${fmtNum(dAbs, 1)} °C ${span}.`
-                              : ` Water temperature has ${dir} ${dAbs.toFixed(1)} °C ${span}.`;
+                    const dir = trend.delta > 0 ? (L('steget', 'risen')) : (L('falt', 'fallen'));
+                    txt += L(` Vanntemperaturen har ${dir} ${fmtNum(dAbs, 1)} °C ${span}.`, ` Water temperature has ${dir} ${dAbs.toFixed(1)} °C ${span}.`);
                 }
             }
             if (status && thr) {
@@ -6141,11 +6104,11 @@ function renderSeasonStatus(status) {
     function offSeasonHtml(eyebrow, text, sub) {
         return `<div class="hw-off">
             <div class="hw-eyebrow gold">${eyebrow}</div>
-            <div class="hw-off-count">${_daysToOpen}<small>${no ? 'dager til 1. april' : 'days to 1 April'}</small></div>
+            <div class="hw-off-count">${_daysToOpen}<small>${L('dager til 1. april', 'days to 1 April')}</small></div>
             <p class="hero-line" style="margin-top:6px">${text} <span class="hw-muted">${sub}</span></p>
             <div class="hw-ctas" style="margin-top:12px">
-                <button type="button" class="hw-btn primary" id="offNotif"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10 21a2 2 0 0 0 4 0"/></svg><span>${no ? 'Varsle meg i ' + _openYear : 'Notify me in ' + _openYear}</span></button>
-                <button type="button" class="hw-btn ghost" id="offWinter"><span>${no ? 'Se vinteren' : 'See the winter'}</span></button>
+                <button type="button" class="hw-btn primary" id="offNotif"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10 21a2 2 0 0 0 4 0"/></svg><span>${L('Varsle meg i ' + _openYear, 'Notify me in ' + _openYear)}</span></button>
+                <button type="button" class="hw-btn ghost" id="offWinter"><span>${L('Se vinteren', 'See the winter')}</span></button>
             </div>
         </div>`;
     }
@@ -6720,13 +6683,11 @@ function renderIceChart(airData, snowData) {
         const note = document.createElement('div');
         note.className = 'ice-note';
         note.style.cssText = 'font-size:0.74rem;color:#888;margin-top:6px;padding:0 4px';
-        note.textContent = LANG === 'no'
-            ? (todayMo >= 3
-                ? `Estimert fra akkumulerte frost-døgngrader via Stefans likning (α = 0,6), standard for snødekket subarktisk innsjøis. Sesong W${YEAR}-toppen er estimert til ${todayLabel} — isvekst antas fullført innen april. Ingen lokal kalibreringsdata; behandle som relativ indikator mellom år.`
-                : `Estimert fra akkumulerte frost-døgngrader via Stefans likning (α = 0,6), standard for snødekket subarktisk innsjøis. W${YEAR} vises som "Per ${todayLabel}". Ingen lokal kalibreringsdata; behandle som relativ indikator mellom år.`)
-            : (todayMo >= 3
-                ? `Estimated from accumulated freezing degree days using the Stefan equation (α = 0.6), standard for snow-covered sub-arctic lake ice. W${YEAR} season peak estimated to ${todayLabel} — ice growth assumed complete by April. No local calibration data; treat as a relative indicator between years.`
-                : `Estimated from accumulated freezing degree days using the Stefan equation (α = 0.6), standard for snow-covered sub-arctic lake ice. W${YEAR} shown as "As of ${todayLabel}". No local calibration data; treat as a relative indicator between years.`);
+        note.textContent = todayMo >= 3
+            ? L(`Estimert fra akkumulerte frost-døgngrader via Stefans likning (α = 0,6), standard for snødekket subarktisk innsjøis. Sesong W${YEAR}-toppen er estimert til ${todayLabel} — isvekst antas fullført innen april. Ingen lokal kalibreringsdata; behandle som relativ indikator mellom år.`,
+                `Estimated from accumulated freezing degree days using the Stefan equation (α = 0.6), standard for snow-covered sub-arctic lake ice. W${YEAR} season peak estimated to ${todayLabel} — ice growth assumed complete by April. No local calibration data; treat as a relative indicator between years.`)
+            : L(`Estimert fra akkumulerte frost-døgngrader via Stefans likning (α = 0,6), standard for snødekket subarktisk innsjøis. W${YEAR} vises som "Per ${todayLabel}". Ingen lokal kalibreringsdata; behandle som relativ indikator mellom år.`,
+                `Estimated from accumulated freezing degree days using the Stefan equation (α = 0.6), standard for snow-covered sub-arctic lake ice. W${YEAR} shown as "As of ${todayLabel}". No local calibration data; treat as a relative indicator between years.`);
         iceSection.appendChild(note);
     }
 }
@@ -7528,7 +7489,7 @@ function composeExplanation(drivers, deltaDays, ctx) {
     const frags = sorted.slice(0, 3).map(driverFragmentText).filter(Boolean);
 
     // Sett sammen første setning. Norsk og engelsk har samme struktur men ulik konjunksjon.
-    const andWord = LANG === 'no' ? 'og' : 'and';
+    const andWord = L('og', 'and');
     let firstSentence;
     if (frags.length === 1) {
         firstSentence = capitalizeFirst(frags[0]) + '.';
@@ -7613,7 +7574,7 @@ function renderSeasonExplain(args) {
 
     // Header
     document.getElementById('seasonExplainLabel').textContent = t('seasonExplainLabel');
-    const todayLabel = new Date().toLocaleDateString(LANG === 'no' ? 'nb-NO' : 'en-GB',
+    const todayLabel = new Date().toLocaleDateString(window.HW_LOCALE,
         { day: 'numeric', month: 'short' });
     document.getElementById('seasonExplainMeta').textContent =
         t('seasonExplainMeta')(LOC.area || LOC.place, todayLabel);
@@ -7675,7 +7636,7 @@ function renderSpeciesCalendar(isgangResult, vulgataDate, best) {
     const label = document.querySelector('.best-label');
     if (!grid) return;
     const no = LANG !== 'en';
-    if (label) label.textContent = no ? 'Klekkeprognose' : 'Hatch forecast';
+    if (label) label.textContent = L('Klekkeprognose', 'Hatch forecast');
     grid.style.display = 'block';
 
     const compressed = ['Finnmark', 'Troms', 'Nordland'].includes(LOC.region);
@@ -7693,25 +7654,24 @@ function renderSpeciesCalendar(isgangResult, vulgataDate, best) {
     if (_calBtn) _calBtn.style.display = (vulgataDate && vulgataDate >= today) ? '' : 'none';
 
     // Tilstand + hovedlinje
-    let st = 'unknown', line = no ? 'Ingen prognose ennå.' : 'No forecast yet.';
+    let st = 'unknown', line = L('Ingen prognose ennå.', 'No forecast yet.');
     if (vulgataDate) {
         const diff = Math.round((vulgataDate - today) / 86400000);
-        if (diff > 14)      { st = 'coming'; line = no ? `<b>Om ${diff} dager.</b>` : `<b>In ${diff} days.</b>`; }
-        else if (diff > 0)  { st = 'soon';   line = no ? `<b>Om ${diff} dager.</b>` : `<b>In ${diff} days.</b>`; }
-        else if (-diff <= 21) { st = 'now';  line = no ? `<b>Dag ${1 - diff} av klekkingen.</b> Vulgata er trolig i gang.` : `<b>Day ${1 - diff} of the hatch.</b> Vulgata is likely underway.`; }
-        else                { st = 'done';   line = no ? `Årets klekking er over. Modellen anslo start for ${-diff} dager siden.` : `This year’s hatch is over. The model estimated the start ${-diff} days ago.`; }
+        if (diff > 14)      { st = 'coming'; line = L(`<b>Om ${diff} dager.</b>`, `<b>In ${diff} days.</b>`); }
+        else if (diff > 0)  { st = 'soon';   line = L(`<b>Om ${diff} dager.</b>`, `<b>In ${diff} days.</b>`); }
+        else if (-diff <= 21) { st = 'now';  line = L(`<b>Dag ${1 - diff} av klekkingen.</b> Vulgata er trolig i gang.`, `<b>Day ${1 - diff} of the hatch.</b> Vulgata is likely underway.`); }
+        else                { st = 'done';   line = L(`Årets klekking er over. Modellen anslo start for ${-diff} dager siden.`, `This year’s hatch is over. The model estimated the start ${-diff} days ago.`); }
     }
-    const LBL = no ? { now: 'Pågår', soon: 'Snart', coming: 'På vei', done: 'Ferdig', unknown: 'Ingen prognose' }
-                   : { now: 'Underway', soon: 'Soon', coming: 'Coming', done: 'Done', unknown: 'No forecast' };
+    const LBL = { now: L('Pågår', 'Underway'), soon: L('Snart', 'Soon'), coming: L('På vei', 'Coming'), done: L('Ferdig', 'Done'), unknown: L('Ingen prognose', 'No forecast') };
 
     // Kalibrering: stjerner som på kartet (Kautokeino 3, øvrige kalibrerte 1, ukalibrerte 0)
     const starsN = LOC.calibrated ? (LOC.id === 'kautokeino' ? 3 : 1) : 0;
-    let starsHtml = `<span class="stars" aria-label="${no ? 'Kalibrering' : 'Calibration'} ${starsN}/3">`;
+    let starsHtml = `<span class="stars" aria-label="${L('Kalibrering', 'Calibration')} ${starsN}/3">`;
     for (let i = 0; i < 3; i++) starsHtml += `<svg class="${i < starsN ? '' : 'off'}"><use href="#star"/></svg>`;
     starsHtml += '</span>';
     const calTxt = LOC.calibrated
-        ? (no ? 'Kalibrert' : 'Calibrated') + (kalibKort(LOC, no ? 'no' : 'en') ? ' · ' + kalibKort(LOC, no ? 'no' : 'en') : '')
-        : (no ? 'Ukalibrert · indikativ prognose' : 'Uncalibrated · indicative forecast');
+        ? (L('Kalibrert', 'Calibrated')) + (kalibKort(LOC, LANG) ? ' · ' + kalibKort(LOC, LANG) : '')
+        : (L('Ukalibrert · indikativ prognose', 'Uncalibrated · indicative forecast'));
 
     // Tidslinje-akse: 25. april – 10. august, utvidet hvis prognosen faller utenfor
     const vDoy = vulgataDate ? doy(vulgataDate) : null;
@@ -7728,7 +7688,7 @@ function renderSpeciesCalendar(isgangResult, vulgataDate, best) {
         for (let m = 3; m <= 8; m++) {
             const n = doy(new Date(YEAR, m, 1));
             if (n < A0 || n > A1) continue;
-            const nm = new Date(YEAR, m, 1).toLocaleDateString(no ? 'nb-NO' : 'en-GB', { month: 'short' }).replace('.', '');
+            const nm = new Date(YEAR, m, 1).toLocaleDateString(window.HW_LOCALE, { month: 'short' }).replace('.', '');
             out += `<line class="axis" x1="${xOf(n, left)}" y1="${y - 4}" x2="${xOf(n, left)}" y2="${y}"/><text x="${xOf(n, left)}" y="${y + 11}" text-anchor="middle">${nm}</text>`;
         }
         return out;
@@ -7741,20 +7701,20 @@ function renderSpeciesCalendar(isgangResult, vulgataDate, best) {
         const bandW = xOf(vDoy + unc) - xOf(vDoy - unc);
         // Etiketter: «start» venstrestilt fra startpunktet, «slutt» til høyre for
         // den med garantert luft (ca. 5,8 px per tegn i 9,5 px mono).
-        const startTxt = `${no ? 'start' : 'onset'} ${mShort(vDoy)} ±${uncTxt}`;
-        const endTxt = `${no ? 'slutt' : 'end'} ${mShort(vDoy + 14)}`;
+        const startTxt = `${L('start', 'onset')} ${mShort(vDoy)} ±${uncTxt}`;
+        const endTxt = `${L('slutt', 'end')} ${mShort(vDoy + 14)}`;
         const startW = startTxt.length * 5.8, endW = endTxt.length * 5.8;
         let startX = Math.max(2, Math.min(xOf(vDoy) - startW / 2, WPX - startW - endW - 12));
         let endX = Math.max(xOf(vDoy + 14) + 6, startX + startW + 10);
         if (endX + endW > WPX) { endX = WPX - endW; startX = Math.min(startX, endX - startW - 10); }
-        windowSvg = `<svg class="tl" viewBox="0 0 ${WPX} ${H}" role="img" aria-label="${no ? 'Klekkeperiode' : 'Hatch period'}">
+        windowSvg = `<svg class="tl" viewBox="0 0 ${WPX} ${H}" role="img" aria-label="${L('Klekkeperiode', 'Hatch period')}">
             <line class="axis" x1="${xOf(A0)}" y1="${y}" x2="${xOf(A1)}" y2="${y}"/>${monthTicks(y + 14)}
             <rect class="band" x="${xOf(vDoy - unc)}" y="${y - 14}" width="${Math.max(2, bandW)}" height="28" rx="3"/>
             <rect class="bar" x="${xOf(vDoy)}" y="${y - 5}" width="${xOf(vDoy + 14) - xOf(vDoy)}" height="10" rx="3" opacity=".9"/>
             <circle class="peak" cx="${xOf(vDoy + 7)}" cy="${y}" r="4"/>
             <text class="lbl" x="${startX}" y="${y - 21}" text-anchor="start">${startTxt}</text>
             <text class="lbl" x="${endX}" y="${y - 21}" text-anchor="start">${endTxt}</text>
-            ${todayIn ? `<line class="today" x1="${tx}" y1="${y - 16}" x2="${tx}" y2="${y + 24}"/><text class="todaylbl" x="${tx}" y="${y + 37}" text-anchor="${tx > WPX - 40 ? 'end' : tx < 40 ? 'start' : 'middle'}">${no ? 'i dag' : 'today'}</text>` : ''}
+            ${todayIn ? `<line class="today" x1="${tx}" y1="${y - 16}" x2="${tx}" y2="${y + 24}"/><text class="todaylbl" x="${tx}" y="${y + 37}" text-anchor="${tx > WPX - 40 ? 'end' : tx < 40 ? 'start' : 'middle'}">${L('i dag', 'today')}</text>` : ''}
         </svg>`;
     }
 
@@ -7766,13 +7726,13 @@ function renderSpeciesCalendar(isgangResult, vulgataDate, best) {
         // Marginata-start: senest av isgang + 14 og varmesum fra 1. april >= 200 (resolveIsgang → margStart)
         const mA = doy((isgangResult && isgangResult.margStart) || dOff(isgangDate, 14));
         const rows = [
-            { key: 'mygg', name: no ? 'Mygg' : 'Midge', sub: no ? 'fra isgang' : 'from ice-out', a: doy(isgangDate), p: null, b: A1 },
-            { key: 'marg', name: 'Marginata', sub: no ? 'isgang og varme' : 'ice-out and warmth', a: mA, p: mA + 3, b: mA + 7 },
-            { key: 'vulg', name: 'Vulgata · Grandis', sub: no ? 'varmesum + vanntemp' : 'GDD + water temp', a: vDoy, p: vDoy != null ? vDoy + 7 : null, b: vDoy != null ? vDoy + 14 : null },
-            { key: 'vesp', name: 'Vespertina', sub: no ? 'en uke etter marginata' : 'a week after marginata', a: mA + 7, p: mA + 14, b: mA + 21 },
+            { key: 'mygg', name: L('Mygg', 'Midge'), sub: L('fra isgang', 'from ice-out'), a: doy(isgangDate), p: null, b: A1 },
+            { key: 'marg', name: 'Marginata', sub: L('isgang og varme', 'ice-out and warmth'), a: mA, p: mA + 3, b: mA + 7 },
+            { key: 'vulg', name: 'Vulgata · Grandis', sub: L('varmesum + vanntemp', 'GDD + water temp'), a: vDoy, p: vDoy != null ? vDoy + 7 : null, b: vDoy != null ? vDoy + 14 : null },
+            { key: 'vesp', name: 'Vespertina', sub: L('en uke etter marginata', 'a week after marginata'), a: mA + 7, p: mA + 14, b: mA + 21 },
         ];
         const rh = 26, top = 8, L = 82, H = top + rows.length * rh + 24;
-        let s = `<svg class="tl" viewBox="0 0 ${WPX} ${H}" role="img" aria-label="${no ? 'Artstidslinje' : 'Species timeline'}">`;
+        let s = `<svg class="tl" viewBox="0 0 ${WPX} ${H}" role="img" aria-label="${L('Artstidslinje', 'Species timeline')}">`;
         rows.forEach((sp, i) => {
             const y = top + i * rh + 12;
             // Kun artsnavn. Ankringen (isgang +14 osv.) vises ikke her (Stian 2026-10-01);
@@ -7791,15 +7751,15 @@ function renderSpeciesCalendar(isgangResult, vulgataDate, best) {
         s += `<line class="axis" x1="${xOf(A0, L)}" y1="${yb}" x2="${xOf(A1, L)}" y2="${yb}"/>${monthTicks(yb + 2, L)}`;
         if (todayIn) s += `<line class="today" x1="${xOf(todayDoy, L)}" y1="2" x2="${xOf(todayDoy, L)}" y2="${yb}"/>`;
         s += '</svg>';
-        const srcTxt = isgangSource ? (no ? `Isgang ${fmt(isgangDate)} (${isgangSource}).` : `Ice-out ${fmt(isgangDate)} (${isgangSource}).`) : '';
-        speciesHtml = `<div class="hero-species"><div class="hw-eyebrow">${no ? 'Alle arter' : 'All species'} · ${LOC.area}</div>${s}
-            <div class="hero-method">${no ? 'Ringen er ventet topp.' : 'Ring = expected peak.'}</div></div>`;
+        const srcTxt = isgangSource ? (L(`Isgang ${fmt(isgangDate)} (${isgangSource}).`, `Ice-out ${fmt(isgangDate)} (${isgangSource}).`)) : '';
+        speciesHtml = `<div class="hero-species"><div class="hw-eyebrow">${L('Alle arter', 'All species')} · ${LOC.area}</div>${s}
+            <div class="hero-method">${L('Ringen er ventet topp.', 'Ring = expected peak.')}</div></div>`;
     }
 
     const dateBig = vulgataDate ? `${fmt(vulgataDate)}<span>±${uncTxt} d</span>` : '–';
     const method = (best && best.note) ? `<div class="hero-method">${best.note}</div>` : '';
     grid.innerHTML = `
-        <div class="hero-eye"><span class="hw-chip ${st}"><i></i>${LBL[st]}</span><span class="hw-eyebrow gold">Vulgata · ${no ? 'anslått start' : 'estimated onset'}</span></div>
+        <div class="hero-eye"><span class="hw-chip ${st}"><i></i>${LBL[st]}</span><span class="hw-eyebrow gold">Vulgata · ${L('anslått start', 'estimated onset')}</span></div>
         <div class="hero-date">${dateBig}</div>
         <div class="hero-line">${line}</div>
         ${windowSvg}
@@ -7822,7 +7782,7 @@ function renderSpeciesCalendarV2(isgangResult, vulgataDate) {
 
     const species = [
         {
-            name: LANG === 'no' ? 'Mygg' : 'Midge',
+            name: L('Mygg', 'Midge'),
             sci: 'Culicidae',
             onset: isgangDate,
             peak: null,
@@ -8095,9 +8055,7 @@ async function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate,
     }
     const uncDays = getDynamicUncertainty(uncDaysBaseline, _currObservedGDD, getEffectiveGddThreshold(LOC));
     const uncSource = LOC.calibrated
-        ? (LANG === 'no'
-            ? `standardavvik, ${kalibKort(LOC, 'no') || 'kalibrert'}`
-            : `std. dev., ${kalibKort(LOC, 'en') || 'calibrated'}`)
+        ? (L(`standardavvik, ${kalibKort(LOC, 'no') || 'kalibrert'}`, `std. dev., ${kalibKort(LOC, 'en') || 'calibrated'}`))
         : t('priorLower');
 
     // Best-estimate-kandidater (samme logikk som før — feeder "Best estimate now")
@@ -8389,9 +8347,7 @@ async function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate,
             const _ongoing = _daysSince <= SEASON_CLOSE_DAYS;
             const bestLabel = document.querySelector('.best-label');
             if (bestLabel) {
-                bestLabel.textContent = LANG === 'no'
-                    ? (_ongoing ? 'Klekking pågår' : 'Anslått klekkestart')
-                    : (_ongoing ? 'Hatching in progress' : 'Estimated hatch onset');
+                bestLabel.textContent = _ongoing ? L('Klekking pågår', 'Hatching in progress') : L('Anslått klekkestart', 'Estimated hatch onset');
             }
         }
     }
@@ -8487,7 +8443,7 @@ async function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate,
             ctx2.fillStyle = 'rgba(40, 130, 80, 0.95)';
             ctx2.font = '600 10px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
             ctx2.textAlign = 'left';
-            const _label = LANG === 'no' ? 'Klekking starter' : 'Hatching starts';
+            const _label = L('Klekking starter', 'Hatching starts');
             ctx2.fillText(_label, x + 5, topY + 13);
             ctx2.restore();
         },
@@ -8525,10 +8481,10 @@ async function renderConvergence(snowFree, wtData, adgDate, histStats, fromDate,
             scales: {
                 x: {
                     ticks: { maxTicksLimit: 10, font: { size: 10 } },
-                    title: { display: true, text: LANG === 'no' ? 'Dato (prediksjonen gjort på)' : 'Date (prediction made on)', font: { size: 11 } },
+                    title: { display: true, text: L('Dato (prediksjonen gjort på)', 'Date (prediction made on)'), font: { size: 11 } },
                 },
                 y: {
-                    title: { display: true, text: LANG === 'no' ? 'Prediktert klekkedag (dag i år)' : 'Predicted hatch day (DOY)', font: { size: 11 } },
+                    title: { display: true, text: L('Prediktert klekkedag (dag i år)', 'Predicted hatch day (DOY)'), font: { size: 11 } },
                     ticks: {
                         font: { size: 10 },
                         callback: (v) => {
@@ -9644,9 +9600,7 @@ main();
 (function() {
     var _lang = localStorage.getItem('lang') || 'no';
     var _obsFab = document.getElementById('observationFAB');
-    if (_obsFab) _obsFab.innerHTML = _lang === 'no'
-        ? 'Bidra med<br>observasjon'
-        : 'Submit<br>observation';
+    if (_obsFab) _obsFab.innerHTML = L('Bidra med<br>observasjon', 'Submit<br>observation');
 })();
 </script>
 
@@ -9800,40 +9754,23 @@ if ('serviceWorker' in navigator) {
         var locTriggers = prefs.triggers[locId] || [];
         var lang = (typeof LANG !== 'undefined') ? LANG : (localStorage.getItem('lang') || 'no');
         var isNo = lang !== 'en';
-        var T = isNo ? {
-            title: 'Varsler', sub: 'for ' + locArea,
-            klekkeChange: 'Klekkedato har endret seg',
-            klekkeChangeDesc: 'Få varsel når prediksjonen flytter seg ≥ 2 dager',
-            klekkeImminent: 'Klekking starter snart',
-            klekkeImminentDesc: '1-2 dager før dual-trigger fyrer',
-            spinnerfall: 'Spinnerfall i kveld',
-            spinnerfallDesc: 'Når kveldsforholdene passer mens vulgata klekker',
-            stokkmaur: 'Stokkmaur-sverming ventet',
-            stokkmaurDesc: 'Når vær og kalender ligger an til stokkmaur-sverming',
-            seasonstart: 'Sesongstart',
-            seasonstartDesc: 'Når vulgata-klekkingen nærmer seg',
-            save: 'Lagre', cancel: 'Avbryt', testAll: 'Test alle varsler',
-            saving: 'Lagrer…', saved: 'Lagret ✓', testing: 'Sender test-push…',
-            error: 'Feil — prøv igjen',
-            permDenied: 'Du må tillate varsler i innstillinger.',
-            footer: 'Varsler sendes daglig kl. 07-08 norsk tid når noe interessant skjer for ' + locArea + '.',
-        } : {
-            title: 'Notifications', sub: 'for ' + locArea,
-            klekkeChange: 'Hatch date changed',
-            klekkeChangeDesc: 'Notify when prediction shifts ≥ 2 days',
-            klekkeImminent: 'Hatch starting soon',
-            klekkeImminentDesc: '1-2 days before dual-trigger fires',
-            spinnerfall: 'Spinner fall tonight',
-            spinnerfallDesc: 'When the evening conditions fit while vulgata is hatching',
-            stokkmaur: 'Carpenter ant swarm expected',
-            stokkmaurDesc: 'Weather and time of year fit an ant swarm',
-            seasonstart: 'Season start',
-            seasonstartDesc: 'When the vulgata hatch is getting close',
-            save: 'Save', cancel: 'Cancel', testAll: 'Test all notifications',
-            saving: 'Saving…', saved: 'Saved ✓', testing: 'Sending test push…',
-            error: 'Error — try again',
-            permDenied: 'You need to allow notifications in settings.',
-            footer: 'Notifications sent daily 07-08 Norwegian time when something interesting happens for ' + locArea + '.',
+        var T = {
+            title: L('Varsler', 'Notifications'), sub: L('for ', 'for ') + locArea,
+            klekkeChange: L('Klekkedato har endret seg', 'Hatch date changed'),
+            klekkeChangeDesc: L('Få varsel når prediksjonen flytter seg ≥ 2 dager', 'Notify when prediction shifts ≥ 2 days'),
+            klekkeImminent: L('Klekking starter snart', 'Hatch starting soon'),
+            klekkeImminentDesc: L('1-2 dager før dual-trigger fyrer', '1-2 days before dual-trigger fires'),
+            spinnerfall: L('Spinnerfall i kveld', 'Spinner fall tonight'),
+            spinnerfallDesc: L('Når kveldsforholdene passer mens vulgata klekker', 'When the evening conditions fit while vulgata is hatching'),
+            stokkmaur: L('Stokkmaur-sverming ventet', 'Carpenter ant swarm expected'),
+            stokkmaurDesc: L('Når vær og kalender ligger an til stokkmaur-sverming', 'Weather and time of year fit an ant swarm'),
+            seasonstart: L('Sesongstart', 'Season start'),
+            seasonstartDesc: L('Når vulgata-klekkingen nærmer seg', 'When the vulgata hatch is getting close'),
+            save: L('Lagre', 'Save'), cancel: L('Avbryt', 'Cancel'), testAll: L('Test alle varsler', 'Test all notifications'),
+            saving: L('Lagrer…', 'Saving…'), saved: L('Lagret ✓', 'Saved ✓'), testing: L('Sender test-push…', 'Sending test push…'),
+            error: L('Feil — prøv igjen', 'Error — try again'),
+            permDenied: L('Du må tillate varsler i innstillinger.', 'You need to allow notifications in settings.'),
+            footer: L('Varsler sendes daglig kl. 07-08 norsk tid når noe interessant skjer for ', 'Notifications sent daily 07-08 Norwegian time when something interesting happens for ') + locArea + '.',
         };
 
         var overlay = document.createElement('div');
@@ -9964,7 +9901,7 @@ if ('serviceWorker' in navigator) {
                     });
                     await new Promise(function(r) { setTimeout(r, 800); });  // spre ut
                 }
-                status(isNo ? 'Sendt ' + triggers.length + ' test-varsler ✓' : 'Sent ' + triggers.length + ' test notifications ✓');
+                status(L('Sendt ' + triggers.length + ' test-varsler ✓', 'Sent ' + triggers.length + ' test notifications ✓'));
             } catch (err) {
                 if (err.message === 'PERMISSION_DENIED') status(T.permDenied, true);
                 else status(T.error + ': ' + err.message, true);
@@ -10019,12 +9956,12 @@ if ('serviceWorker' in navigator) {
         var articlesEl = document.getElementById('hwMenuArticles');
         var aboutEl = document.getElementById('hwMenuAbout');
         var fbEl = document.getElementById('hwMenuFeedback');
-        if (notifEl) notifEl.textContent = isNo ? 'Varsler' : 'Notifications';
-        if (articlesEl) articlesEl.textContent = isNo ? 'Artikler' : 'Articles';
-        if (aboutEl) aboutEl.textContent = isNo ? 'Om HatchWatch' : 'About HatchWatch';
-        if (fbEl) fbEl.textContent = isNo ? 'Send tilbakemelding' : 'Submit feedback';
-        btn.setAttribute('aria-label', isNo ? 'Meny' : 'Menu');
-        btn.setAttribute('title', isNo ? 'Meny' : 'Menu');
+        if (notifEl) notifEl.textContent = L('Varsler', 'Notifications');
+        if (articlesEl) articlesEl.textContent = L('Artikler', 'Articles');
+        if (aboutEl) aboutEl.textContent = L('Om HatchWatch', 'About HatchWatch');
+        if (fbEl) fbEl.textContent = L('Send tilbakemelding', 'Submit feedback');
+        btn.setAttribute('aria-label', L('Meny', 'Menu'));
+        btn.setAttribute('title', L('Meny', 'Menu'));
     }
     applyMenuLang();
 
@@ -10060,11 +9997,11 @@ if ('serviceWorker' in navigator) {
     function openInstallGuideModal() {
         var lang = (typeof LANG !== 'undefined') ? LANG : (localStorage.getItem('lang') || 'no');
         var isNo = lang !== 'en';
-        var T = isNo ? {
-            title: 'Slik installerer du HatchWatch',
-            intro: 'For å få push-varsler om klekkinger, spinnerfall og stokkmaur må HatchWatch installeres som app. Det er gratis, tar 20 sekunder, og bruker ingen plass å snakke om — det er fortsatt nettsiden, bare pakket inn som et app-ikon på enheten din.',
-            mobileTitle: 'For mobil',
-            iosTitle: 'iPhone / iPad (Safari)',
+        var T = {
+            title: L('Slik installerer du HatchWatch', 'How to install HatchWatch'),
+            intro: L('For å få push-varsler om klekkinger, spinnerfall og stokkmaur må HatchWatch installeres som app. Det er gratis, tar 20 sekunder, og bruker ingen plass å snakke om — det er fortsatt nettsiden, bare pakket inn som et app-ikon på enheten din.', 'To receive push notifications about hatches, spinner falls, and carpenter ant swarms, HatchWatch needs to be installed as an app. It is free, takes 20 seconds, and uses negligible space — it is still the website, just wrapped as an app icon on your device.'),
+            mobileTitle: L('For mobil', 'On mobile'),
+            iosTitle: L('iPhone / iPad (Safari)', 'iPhone / iPad (Safari)'),
             iosSteps: [
                 'Sørg for at du er i <b>Safari</b> (ikke Chrome — Apple tillater bare installering fra Safari)',
                 'Trykk på <b>Del-knappen</b> nederst på skjermen — det er firkanten med en pil som peker oppover',
@@ -10072,7 +10009,7 @@ if ('serviceWorker' in navigator) {
                 'Trykk <b>«Legg til»</b> øverst til høyre',
                 'Du har nå et HatchWatch-ikon på hjemskjermen. <b>Åpne appen derfra</b> (ikke fra Safari) — så er Varsler-menyen aktiv',
             ],
-            androidTitle: 'Android (Chrome)',
+            androidTitle: L('Android (Chrome)', 'Android (Chrome)'),
             androidSteps: [
                 'Åpne hatchwatch.no i <b>Chrome</b>',
                 'Trykk på <b>meny-knappen (⋮)</b> øverst til høyre i Chrome',
@@ -10080,44 +10017,15 @@ if ('serviceWorker' in navigator) {
                 'Bekreft installasjonen — ikonet legger seg på hjemskjermen',
                 '<b>Åpne HatchWatch fra hjemskjermen</b> — så er Varsler-menyen aktiv',
             ],
-            desktopTitle: 'For PC / Mac',
+            desktopTitle: L('For PC / Mac', 'On PC / Mac'),
             desktopSteps: [
                 'Åpne hatchwatch.no i <b>Chrome</b> eller <b>Edge</b> (Safari på Mac støtter også PWA fra macOS 14)',
                 'Se etter et lite <b>install-ikon i adressefeltet</b> — vanligvis en dataskjerm med en pil ned. Alternativt: åpne meny-knappen (⋮) og finn <b>«Installer HatchWatch»</b>',
                 'Klikk <b>«Installer»</b> i dialogen som dukker opp',
                 'HatchWatch åpnes i sitt eget vindu og legger seg blant programmene dine. <b>Åpne appen derfra</b> for å aktivere Varsler-menyen',
             ],
-            note: 'Push-varsler i nettleser krever en installert PWA — vanlig nettleser-tab støtter ikke dette på iPhone, og er ustabilt på andre plattformer. Når appen er installert kan du skru av varsler når som helst via Varsler-menyen.',
-            close: 'Lukk',
-        } : {
-            title: 'How to install HatchWatch',
-            intro: 'To receive push notifications about hatches, spinner falls, and carpenter ant swarms, HatchWatch needs to be installed as an app. It is free, takes 20 seconds, and uses negligible space — it is still the website, just wrapped as an app icon on your device.',
-            mobileTitle: 'On mobile',
-            iosTitle: 'iPhone / iPad (Safari)',
-            iosSteps: [
-                'Make sure you are in <b>Safari</b> (not Chrome — Apple only allows installation from Safari)',
-                'Tap the <b>Share button</b> at the bottom of the screen — the square icon with an arrow pointing up',
-                'Scroll down in the menu until you see <b>"Add to Home Screen"</b> and tap it',
-                'Tap <b>"Add"</b> in the top right corner',
-                'You now have a HatchWatch icon on your home screen. <b>Open the app from there</b> (not from Safari) — and the Notifications menu will be active',
-            ],
-            androidTitle: 'Android (Chrome)',
-            androidSteps: [
-                'Open hatchwatch.no in <b>Chrome</b>',
-                'Tap the <b>menu button (⋮)</b> in the top right of Chrome',
-                'Select <b>"Install app"</b> or <b>"Add to Home screen"</b>',
-                'Confirm — the icon lands on your home screen',
-                '<b>Open HatchWatch from your home screen</b> — the Notifications menu will then be active',
-            ],
-            desktopTitle: 'On PC / Mac',
-            desktopSteps: [
-                'Open hatchwatch.no in <b>Chrome</b> or <b>Edge</b> (Safari on Mac also supports PWAs from macOS 14)',
-                'Look for a small <b>install icon in the address bar</b> — usually a monitor with a downward arrow. Alternatively: open the menu (⋮) and find <b>"Install HatchWatch"</b>',
-                'Click <b>"Install"</b> in the dialog that appears',
-                'HatchWatch opens in its own window and joins your installed apps. <b>Open the app from there</b> to enable the Notifications menu',
-            ],
-            note: 'Web push notifications require an installed PWA — a regular browser tab does not support this on iPhone, and is unreliable on other platforms. Once installed you can toggle notifications off at any time via the Notifications menu.',
-            close: 'Close',
+            note: L('Push-varsler i nettleser krever en installert PWA — vanlig nettleser-tab støtter ikke dette på iPhone, og er ustabilt på andre plattformer. Når appen er installert kan du skru av varsler når som helst via Varsler-menyen.', 'Web push notifications require an installed PWA — a regular browser tab does not support this on iPhone, and is unreliable on other platforms. Once installed you can toggle notifications off at any time via the Notifications menu.'),
+            close: L('Lukk', 'Close'),
         };
         function renderStepBlock(title, steps) {
             return '<div style="font-weight:700;color:#121413;font-size:0.92rem;margin:14px 0 8px">' + title + '</div>'
@@ -10169,32 +10077,19 @@ if ('serviceWorker' in navigator) {
     function openAboutModal() {
         var lang = (typeof LANG !== 'undefined') ? LANG : (localStorage.getItem('lang') || 'no');
         var isNo = lang !== 'en';
-        var T = isNo ? {
-            title: 'Om HatchWatch',
-            tagline: 'Klekkeprognose for fluefiskere',
-            body: 'HatchWatch er en åpen prediksjonsmodell for klekking av døgnfluer i norske vassdrag. Modellen kombinerer luft- og vanntemperatur-historikk, isgang-observasjoner og kalibrerte terskler per lokasjon for å estimere når klekkingen starter.',
-            sources: 'Datakilder',
-            sourceMet: 'MET Norge (Frost API) — luft- og snødata',
-            sourceNve: 'NVE (HydAPI) — vanntemperatur og vannføring',
-            sourceSentinel: 'Sentinel Hub — isgang-observasjoner',
-            sourceOfa: 'OFA (Oslomarka Fiskeadministrasjon) — kalibreringsdata for Nordmarka',
-            credits: 'Bygget av',
-            creditsBy: 'Stian Midtdal',
-            disclaimer: 'Modellen er en hjelpemiddel, ikke en fasit. Klekking varierer fra lokasjon til lokasjon og fra år til år. Bidra med observasjoner via tilbakemeldingsskjemaet — hver observasjon gjør modellen bedre.',
-            close: 'Lukk',
-        } : {
-            title: 'About HatchWatch',
-            tagline: 'Mayfly hatch forecast for fly fishers',
-            body: 'HatchWatch is an open prediction model for mayfly hatches in Norwegian waters. The model combines air and water temperature history, ice-out observations, and per-location calibrated thresholds to estimate when hatching starts.',
-            sources: 'Data sources',
-            sourceMet: 'MET Norway (Frost API) — air and snow data',
-            sourceNve: 'NVE (HydAPI) — water temperature and flow',
-            sourceSentinel: 'Sentinel Hub — ice-out observations',
-            sourceOfa: 'OFA (Oslomarka Fish Authority) — calibration data for Nordmarka',
-            credits: 'Built by',
-            creditsBy: 'Stian Midtdal',
-            disclaimer: 'The model is a guide, not a guarantee. Hatching varies by location and year. Contribute observations via the feedback form — every observation makes the model better.',
-            close: 'Close',
+        var T = {
+            title: L('Om HatchWatch', 'About HatchWatch'),
+            tagline: L('Klekkeprognose for fluefiskere', 'Mayfly hatch forecast for fly fishers'),
+            body: L('HatchWatch er en åpen prediksjonsmodell for klekking av døgnfluer i norske vassdrag. Modellen kombinerer luft- og vanntemperatur-historikk, isgang-observasjoner og kalibrerte terskler per lokasjon for å estimere når klekkingen starter.', 'HatchWatch is an open prediction model for mayfly hatches in Norwegian waters. The model combines air and water temperature history, ice-out observations, and per-location calibrated thresholds to estimate when hatching starts.'),
+            sources: L('Datakilder', 'Data sources'),
+            sourceMet: L('MET Norge (Frost API) — luft- og snødata', 'MET Norway (Frost API) — air and snow data'),
+            sourceNve: L('NVE (HydAPI) — vanntemperatur og vannføring', 'NVE (HydAPI) — water temperature and flow'),
+            sourceSentinel: L('Sentinel Hub — isgang-observasjoner', 'Sentinel Hub — ice-out observations'),
+            sourceOfa: L('OFA (Oslomarka Fiskeadministrasjon) — kalibreringsdata for Nordmarka', 'OFA (Oslomarka Fish Authority) — calibration data for Nordmarka'),
+            credits: L('Bygget av', 'Built by'),
+            creditsBy: L('Stian Midtdal', 'Stian Midtdal'),
+            disclaimer: L('Modellen er en hjelpemiddel, ikke en fasit. Klekking varierer fra lokasjon til lokasjon og fra år til år. Bidra med observasjoner via tilbakemeldingsskjemaet — hver observasjon gjør modellen bedre.', 'The model is a guide, not a guarantee. Hatching varies by location and year. Contribute observations via the feedback form — every observation makes the model better.'),
+            close: L('Lukk', 'Close'),
         };
 
         var overlay = document.createElement('div');
@@ -10277,8 +10172,8 @@ if ('serviceWorker' in navigator) {
             'UID:hw-' + (LOC && LOC.id) + '-' + ymd(d) + '@hatchwatch.no',
             'DTSTAMP:' + ymd(new Date()) + 'T080000Z',
             'DTSTART;VALUE=DATE:' + ymd(d), 'DTEND;VALUE=DATE:' + ymd(end),
-            'SUMMARY:' + (no ? 'Vulgata anslått start · ' : 'Vulgata estimated onset · ') + area,
-            'DESCRIPTION:' + (no ? 'Modellens anslag for klekkestart. Sjekk hatchwatch.no for oppdatert prognose.' : 'Model estimate for hatch onset. Check hatchwatch.no for the latest forecast.'),
+            'SUMMARY:' + (L('Vulgata anslått start · ', 'Vulgata estimated onset · ')) + area,
+            'DESCRIPTION:' + (L('Modellens anslag for klekkestart. Sjekk hatchwatch.no for oppdatert prognose.', 'Model estimate for hatch onset. Check hatchwatch.no for the latest forecast.')),
             'URL:https://www.hatchwatch.no/dashboard.html?loc=' + (LOC && LOC.id),
             'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
         cal.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics);
@@ -10289,10 +10184,10 @@ if ('serviceWorker' in navigator) {
     if (share) share.addEventListener('click', function () {
         var url = 'https://www.hatchwatch.no/dashboard.html?loc=' + (LOC && LOC.id);
         var d = window._hwHeroDate;
-        var text = area + (d ? (no ? ': vulgata anslått ' : ': vulgata estimated ') + fmt(d) : '') + ' · HatchWatch';
+        var text = area + (d ? (L(': vulgata anslått ', ': vulgata estimated ')) + fmt(d) : '') + ' · HatchWatch';
         var lbl = share.querySelector('span');
         if (navigator.share) { navigator.share({ title: 'HatchWatch · ' + area, text: text, url: url }).catch(function () {}); return; }
-        var done = function () { if (lbl) { var o = lbl.textContent; lbl.textContent = no ? 'Lenke kopiert' : 'Link copied'; setTimeout(function () { lbl.textContent = o; }, 1800); } };
+        var done = function () { if (lbl) { var o = lbl.textContent; lbl.textContent = L('Lenke kopiert', 'Link copied'); setTimeout(function () { lbl.textContent = o; }, 1800); } };
         if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, done); else done();
     });
 
@@ -10300,14 +10195,14 @@ if ('serviceWorker' in navigator) {
     var src = document.getElementById('evSourcesBody');
     if (src && typeof LOC === 'object' && LOC) {
         var rows = [];
-        if (LOC.frostStation) rows.push([no ? 'Luft og snø' : 'Air and snow', (LOC.airStationName || '') + ' · ' + LOC.frostStation + ' · MET Norway (Frost)']);
+        if (LOC.frostStation) rows.push([L('Luft og snø', 'Air and snow'), (LOC.airStationName || '') + ' · ' + LOC.frostStation + ' · MET Norway (Frost)']);
         var nveId = LOC.nveWaterTempStation || LOC.nveStation;
-        if (nveId) rows.push([no ? 'Vann' : 'Water', (LOC.waterStationName || '') + ' · ' + nveId + ' · NVE HydAPI']);
-        rows.push([no ? 'Vær' : 'Weather', 'MET Norway (yr.no) · ' + LOC.lat + '°N ' + LOC.lon + '°Ø']);
-        rows.push([no ? 'Isgang' : 'Ice-out', no ? 'Sentinel-observasjoner der de finnes, ellers graddager fra 1. mars mot stedets egen terskel' : 'Sentinel observations where available, otherwise degree days from 1 March against the site\'s own threshold']);
-        rows.push([no ? 'Høyde' : 'Altitude', (typeof getCurrentAltitude === 'function' ? getCurrentAltitude(LOC) : LOC.altitude) + ' moh']);
+        if (nveId) rows.push([L('Vann', 'Water'), (LOC.waterStationName || '') + ' · ' + nveId + ' · NVE HydAPI']);
+        rows.push([L('Vær', 'Weather'), 'MET Norway (yr.no) · ' + LOC.lat + '°N ' + LOC.lon + '°Ø']);
+        rows.push([L('Isgang', 'Ice-out'), L('Sentinel-observasjoner der de finnes, ellers graddager fra 1. mars mot stedets egen terskel', 'Sentinel observations where available, otherwise degree days from 1 March against the site\'s own threshold')]);
+        rows.push([L('Høyde', 'Altitude'), (typeof getCurrentAltitude === 'function' ? getCurrentAltitude(LOC) : LOC.altitude) + ' moh']);
         src.innerHTML = '<table class="hw-src"><tbody>' + rows.map(function (r) { return '<tr><th>' + r[0] + '</th><td>' + r[1] + '</td></tr>'; }).join('') + '</tbody></table>' +
-            '<p class="hero-method" style="margin-top:8px">' + (no ? 'Oppdateres hver morgen. Prognoser lagres når noen åpner vannet.' : 'Updated every morning. Forecasts are stored when someone opens the water.') + '</p>';
+            '<p class="hero-method" style="margin-top:8px">' + (L('Oppdateres hver morgen. Prognoser lagres når noen åpner vannet.', 'Updated every morning. Forecasts are stored when someone opens the water.')) + '</p>';
     }
 
     // Grafer inni lukkede trekkspill: tving resize når de åpnes

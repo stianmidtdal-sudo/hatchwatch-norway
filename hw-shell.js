@@ -57,33 +57,28 @@
   var pageTab = path === '/' ? (location.hash === '#sesong' ? 'sesong' : 'home') : path === '/dagbok.html' ? 'dagbok' : '';
 
   // Tekster: språket kommer fra hw-lang.js (window.HW_LANG); dashboardet kan
-  // overstyre via cfg.lang. Uten hw-lang.js: norsk.
-  var EN = (cfg.lang || window.HW_LANG) === 'en';
-  var S = EN ? {
-    map: 'Map', season: 'Season', fav: 'Favourites', logbook: 'Logbook', menu: 'Menu', close: 'Close', nav: 'Main navigation',
-    obs: 'Report a hatch', obsSub: 'Seen a hatch? It makes the model better.',
-    insekt: 'What insect is this?', insektSub: 'Take a photo, get an answer',
-    notif: 'Notifications', notifSub: 'Hatch, spinner fall, ants · push',
-    articles: 'Articles', articlesSub: 'Mayflies, spinner fall, ants',
-    ofa: 'OFA stocking', ofaSub: 'Nordmarka 2021–2025',
-    about: 'About HatchWatch', aboutSub: 'The model, data sources, stations',
-    feedback: 'Send feedback', feedbackSub: 'Beta · we read everything',
-    app: 'Get the app', appSub: 'iPhone · App Store',
-    lang: 'Norsk', langSub: 'Switch to Norwegian', terms: 'Terms', privacy: 'Privacy',
-    empty: '<b>No favourites yet.</b><br>Tap the heart on a water in the map or at the top of a forecast, and your waters gather here. Trips you save with the ruler in the map also end up here. Your notifications follow the waters.'
-  } : {
-    map: 'Kart', season: 'Sesong', fav: 'Favoritter', logbook: 'Dagbok', menu: 'Meny', close: 'Lukk', nav: 'Hovednavigasjon',
-    obs: 'Meld observasjon', obsSub: 'Så du klekking? Det gjør modellen bedre.',
-    insekt: 'Hvilket insekt er dette?', insektSub: 'Ta bilde, få svar',
-    notif: 'Varsler', notifSub: 'Klekking, spinnerfall, stokkmaur · push',
-    articles: 'Artikler', articlesSub: 'Døgnfluer, spinnerfall, stokkmaur',
-    ofa: 'OFA settefisk', ofaSub: 'Utsett i Nordmarka 2021–2025',
-    about: 'Om HatchWatch', aboutSub: 'Modellen, datakildene, stasjonene',
-    feedback: 'Send tilbakemelding', feedbackSub: 'Beta · vi leser alt',
-    app: 'Last ned appen', appSub: 'iPhone · App Store',
-    lang: 'English', langSub: 'Bytt til engelsk', terms: 'Vilkår', privacy: 'Personvern',
-    empty: '<b>Ingen favoritter ennå.</b><br>Trykk hjertet på et vann i kartet eller øverst på prognosen, så samler vannene dine seg her. Turer du lagrer med linjalen i kartet havner også her. Varslene dine følger vannene.'
+  // overstyre via cfg.lang. Uten hw-lang.js: norsk. Svensk og finsk (2026-10-17) går
+  // gjennom hwT (ordbøkene i /i18n/), med norsk og engelsk som nøkkel som før.
+  var LANG = cfg.lang || window.HW_LANG || 'no';
+  var EN = LANG === 'en';
+  var tx = function (no, en) { return window.hwT ? window.hwT(no, en) : (EN ? en : no); };
+  var S = {
+    map: tx('Kart', 'Map'), season: tx('Sesong', 'Season'), fav: tx('Favoritter', 'Favourites'), logbook: tx('Dagbok', 'Logbook'),
+    menu: tx('Meny', 'Menu'), close: tx('Lukk', 'Close'), nav: tx('Hovednavigasjon', 'Main navigation'),
+    obs: tx('Meld observasjon', 'Report a hatch'), obsSub: tx('Så du klekking? Det gjør modellen bedre.', 'Seen a hatch? It makes the model better.'),
+    insekt: tx('Hvilket insekt er dette?', 'What insect is this?'), insektSub: tx('Ta bilde, få svar', 'Take a photo, get an answer'),
+    notif: tx('Varsler', 'Notifications'), notifSub: tx('Klekking, spinnerfall, stokkmaur · push', 'Hatch, spinner fall, ants · push'),
+    articles: tx('Artikler', 'Articles'), articlesSub: tx('Døgnfluer, spinnerfall, stokkmaur', 'Mayflies, spinner fall, ants'),
+    ofa: tx('OFA settefisk', 'OFA stocking'), ofaSub: tx('Utsett i Nordmarka 2021–2025', 'Nordmarka 2021–2025'),
+    about: tx('Om HatchWatch', 'About HatchWatch'), aboutSub: tx('Modellen, datakildene, stasjonene', 'The model, data sources, stations'),
+    feedback: tx('Send tilbakemelding', 'Send feedback'), feedbackSub: tx('Beta · vi leser alt', 'Beta · we read everything'),
+    app: tx('Last ned appen', 'Get the app'), appSub: 'iPhone · App Store',
+    sprak: tx('Språk', 'Language'), terms: tx('Vilkår', 'Terms'), privacy: tx('Personvern', 'Privacy'),
+    empty: tx('<b>Ingen favoritter ennå.</b><br>Trykk hjertet på et vann i kartet eller øverst på prognosen, så samler vannene dine seg her. Turer du lagrer med linjalen i kartet havner også her. Varslene dine følger vannene.',
+              '<b>No favourites yet.</b><br>Tap the heart on a water in the map or at the top of a forecast, and your waters gather here. Trips you save with the ruler in the map also end up here. Your notifications follow the waters.')
   };
+  // Språkvalg i menyen (2026-10-17): fire knapper, hvert språk skrevet på seg selv
+  var SPRAK = [['no', 'Norsk'], ['sv', 'Svenska'], ['fi', 'Suomi'], ['en', 'English']];
 
   function row(href, icon, title, sub, extra) {
     return '<a class="hwp-row" href="' + href + '"' + (extra || '') + '>' + icon +
@@ -128,15 +123,20 @@
         appRad +
         row('https://tally.so/r/EkBErN', ICON.out, S.feedback, S.feedbackSub, ' target="_blank" rel="noopener"') +
         extras.map(function (x, i) { return btnRow(i, x.icon || ICON.out, x.title, x.sub); }).join('') +
-        '<button class="hwp-row" type="button" id="hwbLang">' + ICON.globe +
-          '<span><span class="mt">' + S.lang + '</span><span class="ms">' + S.langSub + '</span></span><span class="chev">›</span></button>' +
+        '<div class="hwp-row hwp-sprak" id="hwbLang">' + ICON.globe +
+          '<span><span class="mt">' + S.sprak + '</span><span class="hwp-sprakvalg">' +
+          SPRAK.map(function (x) { return '<button type="button" data-sprak="' + x[0] + '" lang="' + x[0] + '"' + (x[0] === LANG ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + '>' + x[1] + '</button>'; }).join('') +
+          '</span></span></div>' +
         '<div class="hwp-foot">© 2026 Stian Midtdal · <a href="/vilkar.html" style="color:inherit">' + S.terms + '</a> · <a href="/personvern.html" style="color:inherit">' + S.privacy + '</a></div>' +
       '</div>' +
     '</div>';
 
   var mount = document.createElement('div');
   mount.id = 'hwShell';
-  mount.innerHTML = html;
+  mount.innerHTML = html +
+    '<style>.hwp-sprak{cursor:default}.hwp-sprakvalg{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}' +
+    '.hwp-sprakvalg button{font:inherit;font-size:13px;padding:5px 10px;border-radius:999px;border:1px solid var(--hw-line,#c9d6d3);background:transparent;color:inherit;cursor:pointer}' +
+    '.hwp-sprakvalg button.on{background:var(--hw-gold,#c98a12);border-color:var(--hw-gold,#c98a12);color:#fff;font-weight:600}</style>';
   document.body.appendChild(mount);
   document.body.classList.add('hw-has-bar');
 
@@ -188,11 +188,11 @@
     }
     faner.innerHTML = FANER.map(function (x) {
       return '<button type="button" role="tab" data-fane="' + x.id + '" aria-selected="' + (x.id === favFane) + '"' + (x.id === favFane ? ' class="on"' : '') + '>' +
-        (EN ? x.en : x.no) + (antall[x.id] ? '<small>' + antall[x.id] + '</small>' : '') + '</button>';
+        tx(x.no, x.en) + (antall[x.id] ? '<small>' + antall[x.id] + '</small>' : '') + '</button>';
     }).join('');
     var fane = FANER.filter(function (x) { return x.id === favFane; })[0];
     if (!antall[favFane]) {
-      list.innerHTML = '<div class="hwp-empty">' + (EN ? fane.tom[1] : fane.tom[0]) + '</div>';
+      list.innerHTML = '<div class="hwp-empty">' + tx(fane.tom[0], fane.tom[1]) + '</div>';
       return;
     }
     var html = '';
@@ -201,24 +201,24 @@
       return row('/dashboard.html?loc=' + encodeURIComponent(id), ICON.drop, NAMES[id] || id, sub);
     }).join('');
     if (favFane === 'vann') html = vf.map(function (x) {
-      return row('/vann.html?id=' + encodeURIComponent(x.id), ICON.drop, esc(x.navn || x.id), EN ? 'Ice-out and hatch' : 'Isgang og klekking');
+      return row('/vann.html?id=' + encodeURIComponent(x.id), ICON.drop, esc(x.navn || x.id), tx('Isgang og klekking', 'Ice-out and hatch'));
     }).join('');
     if (favFane === 'elv') html = e.map(function (x) {
-      return row('/elv.html?id=' + encodeURIComponent(x.id), RIVER, esc(x.navn || x.id), EN ? 'Salmon river' : 'Lakseelv');
+      return row('/elv.html?id=' + encodeURIComponent(x.id), RIVER, esc(x.navn || x.id), tx('Lakseelv', 'Salmon river'));
     }).join('');
     if (favFane === 'tur') {
       html = tu.map(function (t) {
         var km = t.m >= 1000 ? (t.m / 1000).toFixed(1).replace('.', EN ? '.' : ',') + ' km' : t.m + ' m';
         var href = '/?tur=' + encodeURIComponent(t.tur) + '&navn=' + encodeURIComponent(t.navn || '');
         var dato = /^\d{4}-\d{2}-\d{2}$/.test(t.dato || '') ? (+t.dato.slice(8)) + '.' + (+t.dato.slice(5, 7)) + '.' + t.dato.slice(0, 4) : '';
-        return '<div class="hwp-tur">' + row(href, TUR, esc(t.navn || (EN ? 'Trip' : 'Tur')), km + (dato ? ' · ' + dato : '')) +
-          '<button type="button" class="hwp-fjern" data-tur="' + esc(t.id) + '" aria-label="' + (EN ? 'Remove trip' : 'Fjern turen') + '">×</button></div>';
+        return '<div class="hwp-tur">' + row(href, TUR, esc(t.navn || tx('Tur', 'Trip')), km + (dato ? ' · ' + dato : '')) +
+          '<button type="button" class="hwp-fjern" data-tur="' + esc(t.id) + '" aria-label="' + tx('Fjern turen', 'Remove trip') + '">×</button></div>';
       }).join('');
     }
     // Egne punkter (2026-10-16): hw_punkter fra kartet (trykk og hold)
     if (favFane === 'pkt') html = pk.map(function (x) {
-      return '<div class="hwp-tur">' + row('/?pkt=' + encodeURIComponent(x.id), PIN, esc(x.navn || (EN ? 'Point' : 'Punkt')), (PKT_KAT[x.kat] ? PKT_KAT[x.kat][EN ? 1 : 0] : '') + (x.dato ? ' · ' + x.dato.split('-').reverse().map(Number).join('.') : '')) +
-        '<button type="button" class="hwp-fjern" data-pkt="' + esc(x.id) + '" aria-label="' + (EN ? 'Remove point' : 'Fjern punktet') + '">×</button></div>';
+      return '<div class="hwp-tur">' + row('/?pkt=' + encodeURIComponent(x.id), PIN, esc(x.navn || tx('Punkt', 'Point')), (PKT_KAT[x.kat] ? tx(PKT_KAT[x.kat][0], PKT_KAT[x.kat][1]) : '') + (x.dato ? ' · ' + x.dato.split('-').reverse().map(Number).join('.') : '')) +
+        '<button type="button" class="hwp-fjern" data-pkt="' + esc(x.id) + '" aria-label="' + tx('Fjern punktet', 'Remove point') + '">×</button></div>';
     }).join('');
     list.innerHTML = html;
   }
@@ -267,9 +267,12 @@
   mount.querySelectorAll('[data-extra]').forEach(function (b) {
     b.addEventListener('click', function () { var x = extras[+b.getAttribute('data-extra')]; closeAll(); if (x && typeof x.onClick === 'function') x.onClick(); });
   });
-  document.getElementById('hwbLang').addEventListener('click', function () {
-    if (typeof window.hwToggleLang === 'function') { window.hwToggleLang(); return; }
-    try { localStorage.setItem('lang', EN ? 'no' : 'en'); } catch (e) {}
+  document.getElementById('hwbLang').addEventListener('click', function (ev) {
+    var b = ev.target.closest('[data-sprak]'); if (!b) return;
+    var l = b.getAttribute('data-sprak');
+    if (l === LANG) return;
+    if (typeof window.hwSettSpraak === 'function') { window.hwSettSpraak(l); return; }
+    try { localStorage.setItem('lang', l); } catch (e) {}
     location.reload();
   });
   mount.querySelectorAll('.hwp-close').forEach(function (b) { b.addEventListener('click', closeAll); });

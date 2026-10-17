@@ -145,7 +145,7 @@
 <script>
 // Engelsk (2026-10-08): hw-lang.js velger språk; norsk står i HTML-en, engelsk legges over her.
 (function () {
-    if (window.HW_LANG !== 'en') return;
+    if (window.HW_LANG === 'no') return;   // engelsk, svensk og finsk (2026-10-17)
     var EN = {
         h1: 'Privacy', updated: 'Last updated 17 October 2026',
         lead: 'HatchWatch has no user accounts, no ads, and sells no data. You can use the whole service without telling us anything about yourself. This page explains the little that is stored anyway, and how to get it deleted. It covers both the website hatchwatch.no and the HatchWatch app for iPhone.',
@@ -197,9 +197,7 @@
         changesH: 'Changes',
         changesP: 'If the service changes so that more or different data is stored, this page is updated and the date at the top changes.'
     };
-    document.title = 'Privacy · HatchWatch';
-    document.querySelectorAll('[data-i18n]').forEach(function (el) { var v = EN[el.getAttribute('data-i18n')]; if (v) el.textContent = v; });
-    document.querySelectorAll('[data-i18n-html]').forEach(function (el) { var v = EN[el.getAttribute('data-i18n-html')]; if (v) el.innerHTML = v; });
+    window.hwI18nSide(EN, 'personvern', 'Privacy · HatchWatch');
 })();
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});

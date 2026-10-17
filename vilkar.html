@@ -91,7 +91,7 @@
 
 <script>
 (function () {
-    if (window.HW_LANG !== 'en') return;
+    if (window.HW_LANG === 'no') return;   // engelsk, svensk og finsk (2026-10-17)
     var EN = {
         h1: 'Terms of use', updated: 'Last updated 16 October 2026',
         lead: 'HatchWatch is free for everyone who fishes. The terms below cover both the website hatchwatch.no and the HatchWatch app, and say what you can use the content for and what needs permission.',
@@ -116,10 +116,7 @@
         changesH: 'Changes',
         changesP: 'The terms may be updated when the service changes. The date at the top shows when they were last changed.'
     };
-    document.documentElement.lang = 'en';
-    document.title = 'Terms · HatchWatch';
-    document.querySelectorAll('[data-i18n]').forEach(function (el) { var v = EN[el.getAttribute('data-i18n')]; if (v) el.textContent = v; });
-    document.querySelectorAll('[data-i18n-html]').forEach(function (el) { var v = EN[el.getAttribute('data-i18n-html')]; if (v) el.innerHTML = v; });
+    window.hwI18nSide(EN, 'vilkar', 'Terms · HatchWatch');
 })();
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 </script>
