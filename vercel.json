@@ -8,7 +8,8 @@
     { "source": "/norway/verify-stations.html","destination": "/verify-stations.html" }
   ],
   "functions": {
-    "api/cron-daily.js": { "maxDuration": 60 }
+    "api/cron-daily.js": { "maxDuration": 60 },
+    "api/insekt.js": { "maxDuration": 60 }
   },
   "crons": [
     {

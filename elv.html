@@ -53,6 +53,11 @@ svg.ssb .b { fill: var(--hw-water); opacity: .75; }
 svg.ssb .b.siste { fill: var(--hw-hatch); opacity: 1; }
 svg.ssb text { font-family: var(--hw-mono); font-size: 10px; fill: var(--hw-fg-3); }
 svg.ssb text.v { fill: var(--hw-fg-2); font-size: 10.5px; }
+svg.ssb polyline.vekt { fill: none; stroke: var(--hw-fg); stroke-width: 2; stroke-linejoin: round; }
+svg.ssb circle.vekt { fill: var(--hw-bg-2); stroke: var(--hw-fg); stroke-width: 1.8; }
+svg.ssb line.akse { stroke: var(--hw-line); }
+svg.ssb text.kg { fill: var(--hw-fg-2); }
+.legendrow i.linje { width: 14px; height: 2px; background: var(--hw-fg); border-radius: 1px; }
 .ssbtab { overflow-x: auto; margin-top: 10px; }
 .ssbtab table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 .ssbtab th, .ssbtab td { padding: 6px 4px; border-bottom: 1px solid var(--hw-line); text-align: left; white-space: nowrap; }
@@ -268,7 +273,7 @@ function render(e) {
       '<div class="stat"><div class="k">' + tx('Beste uke i snitt', 'Best week on average') + '</div><div class="v gold">' + tx('Uke ', 'Week ') + k.beste_uke + '</div><div class="s">' + rangeTxt(k.beste_uke_dato) + (top != null ? tx(' · blant de 3 beste i ' + top + ' av ' + k.n_aar + ' år', ' · among the 3 best in ' + top + ' of ' + k.n_aar + ' years') : '') + '</div></div>' +
       '<div class="stat"><div class="k">' + tx('Halve fangsten', 'Half the catch') + '</div><div class="v">' + dmTxt(k.halv) + '</div><div class="s">' + tx('pleier å være tatt rundt denne datoen', 'is usually taken around this date') + '</div></div>' +
       '</div>';
-    h += '<div class="card"><h2>' + tx('Fangst gjennom sesongen', 'Catch through the season') + '</h2>' +
+    h += '<div class="card"><h2>' + tx('Beste tid å fiske', 'Best time to fish') + '</h2>' +
       '<p class="lead">' + tx('Andel av sesongfangsten per uke, snitt for ' + k.n_aar + ' år. ', 'Share of the season catch per week, average of ' + k.n_aar + ' years. ') +
       tx('Halve fangsten pleier å være tatt rundt <b>' + dmTxt(k.halv) + '</b>. Bom under ' + dager(k.bom50) + ' i halvparten av årene, under ' + dager(k.bom90) + ' i 9 av 10.',
          'Half the catch is usually taken around <b>' + dmTxt(k.halv) + '</b>. Off by less than ' + dager(k.bom50) + ' in half the years, less than ' + dager(k.bom90) + ' in 9 of 10.') +
@@ -280,13 +285,14 @@ function render(e) {
     h += '<div class="card"><h2>' + tx('Fangstkurve', 'Catch curve') + '</h2><p class="lead">' + tx('Fangstkurven krever minst fire sesonger med minst 100 laks i dataene våre. Denne elva har ikke nok ennå.', 'The catch curve needs at least four seasons with at least 100 salmon in our data. This river does not have enough yet.') + '</p></div>';
   }
 
-  // Fangst per sesong (2026-10-17, Stian): SSBs offisielle elvefangst, også for elver uten fangstkurve
-  if (e.ssb && e.ssb.some(function (r) { return r[1] > 0; })) h += ssbKort(e.ssb);
-
   // Vannet nå (bare analyserte elver med måler)
   if (k) h += '<div class="card" id="vannCard"><h2>' + tx('Vannet nå', 'The water now') + '</h2><div id="vannBody" class="skel">' + tx('Henter vannføring fra NVE…', 'Fetching flow from NVE…') + '</div></div>';
   var baroOk = b && /^(ja|usikkert)/.test(b.status || '');
   if (baroOk) h += '<div class="card"><h2>' + tx('Barometer', 'Barometer') + '</h2><div id="baroBody" class="skel">' + tx('Regner…', 'Working…') + '</div></div>';
+
+  // Fangst per sesong (2026-10-17, Stian): SSBs offisielle elvefangst, også for elver uten fangstkurve. Står under
+  // «Vannet nå» og barometeret: først når det er best å fiske, så hvor mye laks elva gir.
+  if (e.ssb && e.ssb.some(function (r) { return r[1] > 0; })) h += ssbKort(e.ssb);
 
   h += '<div class="card"><h2>' + tx('Kart', 'Map') + '</h2><div id="mini"></div>' +
     '<div class="row2"><a class="hw-btn primary" href="/?elv=' + encodeURIComponent(e.id) + '#laks">' + tx('Vis i kartet', 'Show on the map') + '</a>' +
@@ -308,17 +314,31 @@ function ssbKort(rader) {
   var vSum = 0, vN = 0;
   med.forEach(function (r) { var n = r[3] + r[4] + r[5]; if (r[2] != null && n) { vSum += r[2] * n; vN += n; } });
   var snittVekt = vN ? vSum / vN : null;
-  // Søyler: antall laks per sesong; siste sesong i gull
-  var W = 420, H = 130, L = 8, B = 18, maks = Math.max.apply(null, rader.map(function (r) { return r[1]; })) || 1;
-  var bw = (W - 2 * L) / rader.length;
-  var svg = '<svg class="ssb" viewBox="0 0 ' + W + ' ' + (H + B) + '" role="img" aria-label="' + tx('Laks fanget per sesong', 'Salmon caught per season') + '">';
+  // Søyler: antall laks per sesong (siste i gull). Linje: snittvekt per sesong på egen akse til høyre (2026-10-17, Stian)
+  var W = 420, H = 140, TOPP = 16, L = 8, R = 36, B = 18, maks = Math.max.apply(null, rader.map(function (r) { return r[1]; })) || 1;
+  var bw = (W - L - R) / rader.length, midt = function (i) { return L + i * bw + bw / 2; };
+  var svg = '<svg class="ssb" viewBox="0 0 ' + W + ' ' + (H + B) + '" role="img" aria-label="' + tx('Laks fanget og snittvekt per sesong', 'Salmon caught and average weight per season') + '">';
   rader.forEach(function (r, i) {
-    var hgt = Math.max(r[1] ? 2 : 0, (H - 14) * r[1] / maks), x = L + i * bw + bw * 0.14, y = H - hgt;
+    var hgt = Math.max(r[1] ? 2 : 0, (H - TOPP) * r[1] / maks), x = L + i * bw + bw * 0.14, y = H - hgt;
     svg += '<rect class="' + (i === rader.length - 1 ? 'b siste' : 'b') + '" x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + (bw * 0.72).toFixed(1) + '" height="' + hgt.toFixed(1) + '"><title>' + r[0] + ': ' + fmt(r[1]) + tx(' laks', ' salmon') + (r[2] != null ? ', ' + kg(r[2]) : '') + '</title></rect>';
-    if (i % 2 === 0 || i === rader.length - 1) svg += '<text x="' + (L + i * bw + bw / 2).toFixed(1) + '" y="' + (H + 13) + '" text-anchor="middle">' + String(r[0]).slice(2) + '</text>';
-    if (r[1] === maks || i === rader.length - 1) svg += '<text class="v" x="' + (L + i * bw + bw / 2).toFixed(1) + '" y="' + Math.max(10, y - 4).toFixed(1) + '" text-anchor="middle">' + fmt(r[1]) + '</text>';
+    if (i % 2 === 0 || i === rader.length - 1) svg += '<text x="' + midt(i).toFixed(1) + '" y="' + (H + 13) + '" text-anchor="middle">' + String(r[0]).slice(2) + '</text>';
   });
-  svg += '</svg>';
+  // Snittvekt: bare sesonger med fangst (stengte år gir ingen vekt)
+  var vp = rader.map(function (r, i) { return r[1] > 0 && r[2] != null ? { i: i, v: r[2] } : null; }).filter(Boolean);
+  if (vp.length >= 2) {
+    var vlo = Math.floor(Math.min.apply(null, vp.map(function (p) { return p.v; }))), vhi = Math.ceil(Math.max.apply(null, vp.map(function (p) { return p.v; })));
+    if (vhi - vlo < 2) vhi = vlo + 2;
+    var yv = function (v) { return TOPP + (H - TOPP - 6) * (1 - (v - vlo) / (vhi - vlo)); };
+    var kgAkse = function (v) { return (EN ? String(v) : String(v).replace('.', ',')) + ' kg'; };
+    svg += '<line class="akse" x1="' + (W - R + 4) + '" x2="' + (W - R + 4) + '" y1="' + yv(vhi).toFixed(1) + '" y2="' + yv(vlo).toFixed(1) + '"/>' +
+      '<text class="kg" x="' + (W - R + 8) + '" y="' + (yv(vhi) + 3).toFixed(1) + '">' + kgAkse(vhi) + '</text>' +
+      '<text class="kg" x="' + (W - R + 8) + '" y="' + (yv(vlo) + 3).toFixed(1) + '">' + kgAkse(vlo) + '</text>';
+    svg += '<polyline class="vekt" points="' + vp.map(function (p) { return midt(p.i).toFixed(1) + ',' + yv(p.v).toFixed(1); }).join(' ') + '"/>';
+    vp.forEach(function (p) { svg += '<circle class="vekt" cx="' + midt(p.i).toFixed(1) + '" cy="' + yv(p.v).toFixed(1) + '" r="3"><title>' + rader[p.i][0] + ': ' + kg(p.v) + '</title></circle>'; });
+  }
+  svg += '</svg>' +
+    '<div class="legendrow"><span><i style="background:var(--hw-water)"></i>' + tx('Laks per sesong', 'Salmon per season') + '</span>' +
+    (vp.length >= 2 ? '<span><i class="linje"></i>' + tx('Snittvekt (høyre akse)', 'Average weight (right axis)') + '</span>' : '') + '</div>';
   var tab = '<div class="ssbtab"><table><tr><th>' + tx('Sesong', 'Season') + '</th><th class="n">' + tx('Laks', 'Salmon') + '</th><th class="n">' + tx('Snittvekt', 'Average') + '</th><th class="n">' + tx('Små/mellom/stor', 'Small/med/large') + '</th><th class="n">' + tx('Ut igjen', 'Released') + '</th></tr>' +
     rader.slice(-5).reverse().map(function (r) {
       return '<tr><td>' + r[0] + '</td><td class="n">' + fmt(r[1]) + '</td><td class="n">' + kg(r[2]) + '</td><td class="n">' + fmt(r[3]) + '/' + fmt(r[4]) + '/' + fmt(r[5]) + '</td><td class="n">' + (r[1] ? Math.round(100 * r[6] / r[1]) + ' %' : '–') + '</td></tr>';

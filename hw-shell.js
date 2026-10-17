@@ -43,6 +43,7 @@
     season: '<svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 4 4-7 5 5"/><path d="M3 21h18"/></svg>',
     heart: '<svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.7-9.3-9A5.2 5.2 0 0 1 12 6.6a5.2 5.2 0 0 1 9.3 4.9c-1.8 4.3-9.3 9-9.3 9z"/></svg>',
     plus: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>',
+    camera: '<svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.6"/></svg>',
     menu: '<svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>',
     bell: '<svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>',
     book: '<svg viewBox="0 0 24 24"><path d="M4 19V5a2 2 0 0 1 2-2h13v18H6a2 2 0 0 1-2-2z"/><path d="M8 7h7M8 11h7"/></svg>',
@@ -61,6 +62,7 @@
   var S = EN ? {
     map: 'Map', season: 'Season', fav: 'Favourites', logbook: 'Logbook', menu: 'Menu', close: 'Close', nav: 'Main navigation',
     obs: 'Report a hatch', obsSub: 'Seen a hatch? It makes the model better.',
+    insekt: 'What insect is this?', insektSub: 'Take a photo, get an answer',
     notif: 'Notifications', notifSub: 'Hatch, spinner fall, ants · push',
     articles: 'Articles', articlesSub: 'Mayflies, spinner fall, ants',
     ofa: 'OFA stocking', ofaSub: 'Nordmarka 2021–2025',
@@ -72,6 +74,7 @@
   } : {
     map: 'Kart', season: 'Sesong', fav: 'Favoritter', logbook: 'Dagbok', menu: 'Meny', close: 'Lukk', nav: 'Hovednavigasjon',
     obs: 'Meld observasjon', obsSub: 'Så du klekking? Det gjør modellen bedre.',
+    insekt: 'Hva er dette insektet?', insektSub: 'Ta bilde, få svar',
     notif: 'Varsler', notifSub: 'Klekking, spinnerfall, stokkmaur · push',
     articles: 'Artikler', articlesSub: 'Døgnfluer, spinnerfall, stokkmaur',
     ofa: 'OFA settefisk', ofaSub: 'Utsett i Nordmarka 2021–2025',
@@ -116,6 +119,7 @@
     '<div class="hwpanel" id="hwbMenuPanel" role="dialog" aria-label="' + S.menu + '">' +
       '<div class="hwp-title"><span>' + S.menu + '</span><button class="hwp-close" type="button" data-close="hwbMenuPanel" aria-label="' + S.close + '">×</button></div>' +
       '<div class="hwp-scroll">' +
+        row('/insekt.html', ICON.camera, S.insekt, S.insektSub) +       // insektgjenkjenner (2026-10-17)
         row(cfg.obsHref || '/observasjon.html', ICON.plus, S.obs, S.obsSub) +
         row('/varsler.html', ICON.bell, S.notif, S.notifSub, ' id="hwbNotif"') +
         row('/artikler.html', ICON.book, S.articles, S.articlesSub) +
