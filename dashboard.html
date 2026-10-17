@@ -7723,25 +7723,25 @@ function renderSpeciesCalendar(isgangResult, vulgataDate, best) {
             { key: 'vulg', name: 'Vulgata · Grandis', sub: L('varmesum + vanntemp', 'GDD + water temp'), a: vDoy, p: vDoy != null ? vDoy + 7 : null, b: vDoy != null ? vDoy + 14 : null },
             { key: 'vesp', name: 'Vespertina', sub: L('en uke etter marginata', 'a week after marginata'), a: mA + 7, p: mA + 14, b: mA + 21 },
         ];
-        const rh = 26, top = 8, L = 82, H = top + rows.length * rh + 24;
+        const rh = 26, top = 8, LM = 82, H = top + rows.length * rh + 24;
         let s = `<svg class="tl" viewBox="0 0 ${WPX} ${H}" role="img" aria-label="${L('Artstidslinje', 'Species timeline')}">`;
         rows.forEach((sp, i) => {
             const y = top + i * rh + 12;
             // Kun artsnavn. Ankringen (isgang +14 osv.) vises ikke her (Stian 2026-10-01);
             // den står forklart i «Slik regner vi» og på Om-siden.
             s += `<text class="rowlbl" x="0" y="${y + 4}">${sp.name}</text>`;
-            s += `<line class="axis" x1="${xOf(A0, L)}" y1="${y}" x2="${xOf(A1, L)}" y2="${y}" opacity=".5"/>`;
+            s += `<line class="axis" x1="${xOf(A0, LM)}" y1="${y}" x2="${xOf(A1, LM)}" y2="${y}" opacity=".5"/>`;
             if (sp.a != null && sp.b != null) {
-                const x0 = Math.max(xOf(A0, L), xOf(sp.a, L)), x1 = Math.min(xOf(A1, L), xOf(sp.b, L));
+                const x0 = Math.max(xOf(A0, LM), xOf(sp.a, LM)), x1 = Math.min(xOf(A1, LM), xOf(sp.b, LM));
                 s += `<rect class="bar ${sp.key}" x="${x0}" y="${y - 4}" width="${Math.max(2, x1 - x0)}" height="8" rx="3"${sp.key === 'mygg' ? ' opacity=".55"' : ''}/>`;
-                if (sp.p != null) s += `<circle class="peak" cx="${xOf(sp.p, L)}" cy="${y}" r="3.2"/>`;
+                if (sp.p != null) s += `<circle class="peak" cx="${xOf(sp.p, LM)}" cy="${y}" r="3.2"/>`;
             } else {
-                s += `<text class="rowsub" x="${xOf(A0, L) + 4}" y="${y + 3}">–</text>`;
+                s += `<text class="rowsub" x="${xOf(A0, LM) + 4}" y="${y + 3}">–</text>`;
             }
         });
         const yb = top + rows.length * rh + 2;
-        s += `<line class="axis" x1="${xOf(A0, L)}" y1="${yb}" x2="${xOf(A1, L)}" y2="${yb}"/>${monthTicks(yb + 2, L)}`;
-        if (todayIn) s += `<line class="today" x1="${xOf(todayDoy, L)}" y1="2" x2="${xOf(todayDoy, L)}" y2="${yb}"/>`;
+        s += `<line class="axis" x1="${xOf(A0, LM)}" y1="${yb}" x2="${xOf(A1, LM)}" y2="${yb}"/>${monthTicks(yb + 2, LM)}`;
+        if (todayIn) s += `<line class="today" x1="${xOf(todayDoy, LM)}" y1="2" x2="${xOf(todayDoy, LM)}" y2="${yb}"/>`;
         s += '</svg>';
         const srcTxt = isgangSource ? (L(`Isgang ${fmt(isgangDate)} (${isgangSource}).`, `Ice-out ${fmt(isgangDate)} (${isgangSource}).`)) : '';
         speciesHtml = `<div class="hero-species"><div class="hw-eyebrow">${L('Alle arter', 'All species')} · ${LOC.area}</div>${s}

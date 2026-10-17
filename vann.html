@@ -78,6 +78,13 @@
   .pres.ja { color: #5fbf7a; }
   .pres.ja i { background: currentColor; }
   svg.yrs { width: 100%; max-width: 520px; height: auto; display: block; margin: 12px auto 0; }
+  /* Klekking år for år (2026-10-17) */
+  .histtab { overflow-x: auto; margin-top: 8px; }
+  .histtab table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .histtab th, .histtab td { padding: 6px 4px; border-bottom: 1px solid var(--hw-line); text-align: left; white-space: nowrap; }
+  .histtab th { font-family: var(--hw-mono); font-size: 9.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--hw-fg-3); font-weight: 500; }
+  .histtab td:first-child { font-variant-numeric: tabular-nums; color: var(--hw-fg-2); }
+  .histtab tr:last-child td { border-bottom: 0; }
   svg.yrs text { font-family: var(--hw-mono); font-size: 12px; fill: var(--hw-fg-3); }
   svg.yrs .iv { stroke: var(--hw-water); stroke-width: 3; stroke-linecap: round; opacity: .45; }
   svg.yrs .pt { fill: var(--hw-water); stroke: var(--hw-bg-2); stroke-width: 2; }
@@ -235,6 +242,7 @@ function render(v) {
        // Meld klekking her: skjemaet får vannets ID, så meldingen kobles til satellittisgangen for akkurat dette vannet
        '<div class="row2"><a class="hw-btn ghost" href="/observasjon.html?vann=' + ID + '&navn=' + encodeURIComponent(navn) + (v.moh != null ? '&moh=' + v.moh : '') + '">' + tx('Meld klekking her', 'Report a hatch here') + '</a></div>' +
        '<p class="note" style="margin-top:6px">' + tx('Så du klekking i dette vannet? Én melding med dato gjør anslagene bedre for alle.', 'Saw a hatch in this lake? One report with a date makes the estimates better for everyone.') + '</p></div>';
+  h += histKortHtml();
 
   // ── Isgang år for år ──
   if (years.length) {
@@ -279,6 +287,7 @@ function render(v) {
   var lagre = document.getElementById('varselLagre');
   if (lagre) lagre.addEventListener('click', function () { lagreVarsler(navn); });
   hentVaer(v).then(function (w) {
+    klekkHistorikk(v, w);
     var S = TODAY.getMonth() < 2 ? YEAR - 1 : YEAR;            // samme sesong som klekking() viser
     if (!trengerSno(v, S)) return klekking(v, w);
     return hentSwe(v, S).then(function (swe) { klekking(v, w, swe); });
@@ -297,7 +306,43 @@ function klekkKortHtml(v, navn) {
   return '<div class="card" id="klekkCard"><h2>' + tx('Klekking', 'Hatch') + '<span class="hw-chip soon"><i></i>' + tx('Anslag', 'Estimate') + '</span></h2>' +
     '<div id="klekk" class="skel">' + tx('Henter været ved vannet…', 'Fetching the weather at the lake…') + '</div>' +
     '<div class="row2"><a class="hw-btn ghost" href="/observasjon.html?navn=' + encodeURIComponent(navn) + (v.moh != null ? '&moh=' + v.moh : '') + '">' + tx('Meld klekking her', 'Report a hatch here') + '</a></div>' +
-    '<p class="note" style="margin-top:6px">' + tx('Så du klekking i dette vannet? Én melding med dato gjør anslagene bedre for alle.', 'Saw a hatch in this lake? One report with a date makes the estimates better for everyone.') + '</p></div>';
+    '<p class="note" style="margin-top:6px">' + tx('Så du klekking i dette vannet? Én melding med dato gjør anslagene bedre for alle.', 'Saw a hatch in this lake? One report with a date makes the estimates better for everyone.') + '</p></div>' +
+    histKortHtml();
+}
+// Klekking år for år (2026-10-17, Stian «kjør»): hva modellen ville anslått de ti foregående sesongene, regnet i ettertid
+// med været som kom. Samme regler som klekking(): vulgata og grandis fra varmesummen (ikke over 3000 ha), marginata =
+// senest av isgang + 14 og varmesummen, bare de årene vi har isgang (satellitt, SMHI eller Syke). Kortet er skjult til
+// været er hentet, og vises bare med minst to år.
+function histKortHtml() {
+  return '<div class="card" id="histCard" style="display:none"><h2>' + tx('Klekking år for år', 'Hatch year by year') + '</h2><div id="klekkHist"></div></div>';
+}
+function klekkHistorikk(v, w) {
+  var el = document.getElementById('klekkHist'), kort = document.getElementById('histCard');
+  if (!el || !kort || !w) return;
+  var S = TODAY.getMonth() < 2 ? YEAR - 1 : YEAR, isg = v.isg || {}, stor = v.ha > 3000, rader = [];
+  for (var y = S - 1; y >= S - 10; y--) {
+    var s = serie(w, y);
+    var vu = stor ? null : naar(s, 91, T_VULG), gr = stor ? null : naar(s, 91, T_GRAND);
+    var gm = isg[y] ? naar(s, 91, T_MARG) : null;
+    var r = { y: y, ma: isg[y] && gm ? Math.max(isg[y][0] + 14, gm.n) : null, vu: vu ? vu.n : null, gr: gr ? gr.n : null };
+    if (r.ma || r.vu || r.gr) rader.push(r);
+  }
+  if (rader.length < 2) return;
+  var harMa = rader.some(function (r) { return r.ma; }), harVu = rader.some(function (r) { return r.vu; }), harGr = rader.some(function (r) { return r.gr; });
+  var celle = function (y, d) { return '<td>' + (d ? fmt(y, d) : '–') + '</td>'; };
+  var h = '<p class="lead">' + tx('Slik ville modellen anslått klekkingen de siste årene, regnet med været som faktisk kom.', 'This is what the model would have estimated in recent years, worked out with the weather that actually came.') + '</p>';
+  if (harVu) {
+    var d = rader.filter(function (r) { return r.vu; }).map(function (r) { return r.vu; }).sort(function (a, b) { return a - b; });
+    h += '<p class="lead">' + tx('Vulgata: tidligst <b>' + fmt(YEAR, d[0]) + '</b>, vanligvis <b>' + fmt(YEAR, Math.round(median(d))) + '</b>, senest <b>' + fmt(YEAR, d[d.length - 1]) + '</b>.',
+      'Vulgata: earliest <b>' + fmt(YEAR, d[0]) + '</b>, usually <b>' + fmt(YEAR, Math.round(median(d))) + '</b>, latest <b>' + fmt(YEAR, d[d.length - 1]) + '</b>.') + '</p>';
+  }
+  h += '<div class="histtab"><table><tr><th>' + tx('År', 'Year') + '</th>' + (harMa ? '<th>Marginata</th>' : '') + (harVu ? '<th>Vulgata</th>' : '') + (harGr ? '<th>Grandis</th>' : '') + '</tr>' +
+    rader.map(function (r) { return '<tr><td>' + r.y + '</td>' + (harMa ? celle(r.y, r.ma) : '') + (harVu ? celle(r.y, r.vu) : '') + (harGr ? celle(r.y, r.gr) : '') + '</tr>'; }).join('') + '</table></div>';
+  h += '<p class="note">' + tx('Regnet i ettertid med målt vær, så tallene viser modellen på sitt beste. Anslagene i forkant av sesongen er mer usikre, fordi værvarselet bommer. Marginata vises bare de årene vi har isgang for vannet. Alle anslag gjelder bare hvis arten finnes i vannet.',
+    'Worked out afterwards with measured weather, so the figures show the model at its best. Estimates ahead of the season are less certain, because the forecast misses. Marginata is only shown for years when we have ice-out for the lake. All estimates only apply if the species lives in the lake.') +
+    (stor ? ' ' + tx('Vulgata og grandis vises ikke for vann over 30 km².', 'Vulgata and grandis are not shown for lakes over 30 km².') : '') + '</p>';
+  el.innerHTML = h;
+  kort.style.display = '';
 }
 // Målt isgang (SMHI i Sverige, Syke i Finland) i samme form som satellittdatoene {år: [dag, null]}, bare år fra 1991
 // (2026-10-17, Stian «kjør» marginata/vespertina der vi har isgang). SPEILER isgFraMalt i lib/vannmodell.js.
@@ -328,7 +373,7 @@ function startKlekkingOgVarsler(v, navn) {
   if (lagre) lagre.addEventListener('click', function () { lagreVarsler(navn); });
   // Klekkingen regnes med den målte isgangen som om den var satellittdatoer (uten snøjustering: seNorge dekker bare Norge)
   var vK = Object.assign({}, v, { isg: maltIsg(v) || {} });
-  hentVaer(v).then(function (w) { klekking(vK, w); }).catch(function () { klekking(vK, null); });
+  hentVaer(v).then(function (w) { klekking(vK, w); klekkHistorikk(vK, w); }).catch(function () { klekking(vK, null); });
 }
 
 // Svensk vann: samme oppbygning som det norske, men bare det vi har data for nå
@@ -727,7 +772,7 @@ function doyOf(d) { return Math.floor((Date.UTC(d.getFullYear(), d.getMonth(), d
 // open-meteos kvote (den gjelder per IP-adresse, og mobilnett deler ofte adresse).
 var VAER_CACHE_TIMER = 6;
 function hentVaer(v) {
-  var nokkel = 'hw_vaer_' + FAV_ID;   // med se/fi foran for svenske og finske vann (ID-ene kan kollidere med NVEs)
+  var nokkel = 'hw_vaer2_' + FAV_ID;   // se/fi foran for svenske og finske vann; «2» = ti års vær (klekkehistorikken)
   try {
     var c = JSON.parse(localStorage.getItem(nokkel) || 'null');
     if (c && Date.now() - c.ts < VAER_CACHE_TIMER * 3600000 && c.dag === ymd(TODAY)) return Promise.resolve(c.w);
@@ -746,7 +791,7 @@ function hentVaer(v) {
 function hentVaerNett(v) {
   var q ='?latitude=' + v.lat + '&longitude=' + v.lon + (v.moh != null ? '&elevation=' + v.moh : '') + '&daily=temperature_2m_mean&timezone=Europe%2FOslo';
   var slutt = new Date(TODAY); slutt.setDate(slutt.getDate() - 5);
-  var start = new Date(YEAR - 6, 2, 1);
+  var start = new Date(YEAR - 11, 2, 1);   // ti foregående sesonger til «Klekking år for år» (2026-10-17; før: seks)
   var j = function (r) { if (!r.ok) throw new Error(r.status); return r.json(); };
   return Promise.all([
     fetch('https://archive-api.open-meteo.com/v1/archive' + q + '&start_date=' + ymd(start) + '&end_date=' + ymd(slutt)).then(j),
