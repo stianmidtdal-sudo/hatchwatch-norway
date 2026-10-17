@@ -203,8 +203,30 @@ def bygg_elver():
                           "andel_roed": _f(o["tre_nivaa_roed_andel_dager"])}
         e["region"] = o["region_E"]
         e["rang"] = int(o["rang"])
+    # Fangst per sesong (2026-10-17, Stian): SSBs offisielle elvefangst (tabell 08991, avlivet + gjenutsatt), hentet
+    # i laksedata/analyse/M_aarsprognose. Per vassdragsnr og år (summert når SSB deler et vassdrag i flere elver):
+    # [år, laks, snittvekt kg, smålaks < 3 kg, mellomlaks 3–7 kg, storlaks >= 7 kg, gjenutsatt]. Siste 15 sesonger.
+    ssb_sti = os.path.join(an, "M_aarsprognose", "M_elvaar_ssb.csv")
+    ssb_n = 0
+    if os.path.exists(ssb_sti):
+        sum_ = collections.defaultdict(lambda: [0, 0.0, 0, 0, 0, 0])
+        for r in les(ssb_sti):
+            if r["vassdragsnr"] not in elver or int(r["aar"]) < 2011:
+                continue
+            s = sum_[(r["vassdragsnr"], int(r["aar"]))]
+            s[0] += int(r["laks"] or 0)
+            s[1] += sum(float(r[k] or 0) for k in ("smaa_kg", "mellom_kg", "stor_kg"))
+            s[2] += int(r["smaa"] or 0); s[3] += int(r["mellom"] or 0); s[4] += int(r["stor"] or 0)
+            s[5] += int(r["laks_gjenutsatt"] or 0)
+        per_elv = collections.defaultdict(list)
+        for (vnr, aar), s in sorted(sum_.items()):
+            n_klasse = s[2] + s[3] + s[4]
+            per_elv[vnr].append([aar, s[0], round(s[1] / n_klasse, 1) if n_klasse else None, s[2], s[3], s[4], s[5]])
+        for vnr, rader in per_elv.items():
+            if any(r[1] for r in rader):
+                elver[vnr]["ssb"] = rader; ssb_n += 1
     meta = {"bygget": datetime.datetime.now().isoformat(timespec="seconds"), "elver": len(elver),
-            "analysert": len(oversikt),
+            "analysert": len(oversikt), "ssb_fangst": ssb_n,
             "kilde": "Lakseregisteret (Miljødirektoratet) + HatchWatch-analyse H, bare aggregerte tall"}
     with open(os.path.join(OUT, "elver.json"), "w", encoding="utf-8") as fh:
         json.dump({"meta": meta, "elver": elver}, fh, ensure_ascii=False, separators=(",", ":"))

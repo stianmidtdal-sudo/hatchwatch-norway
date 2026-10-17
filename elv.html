@@ -47,6 +47,18 @@
   svg.kurve { width: 100%; height: auto; display: block; margin-top: 12px; }
   svg.kurve .bar { fill: var(--hw-far); }
   svg.kurve .bar.top { fill: var(--hw-hatch); }
+/* Fangst per sesong (2026-10-17, SSB) */
+svg.ssb { width: 100%; height: auto; display: block; margin-top: 12px; }
+svg.ssb .b { fill: var(--hw-water); opacity: .75; }
+svg.ssb .b.siste { fill: var(--hw-hatch); opacity: 1; }
+svg.ssb text { font-family: var(--hw-mono); font-size: 10px; fill: var(--hw-fg-3); }
+svg.ssb text.v { fill: var(--hw-fg-2); font-size: 10.5px; }
+.ssbtab { overflow-x: auto; margin-top: 10px; }
+.ssbtab table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.ssbtab th, .ssbtab td { padding: 6px 4px; border-bottom: 1px solid var(--hw-line); text-align: left; white-space: nowrap; }
+.ssbtab th { white-space: normal; vertical-align: bottom; font-family: var(--hw-mono); font-size: 9.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--hw-fg-3); font-weight: 500; }
+.ssbtab .n { text-align: right; font-variant-numeric: tabular-nums; }
+.ssbtab tr:last-child td { border-bottom: 0; }
   svg.kurve .wh { stroke: var(--hw-fg-3); stroke-width: 1; }
   svg.kurve .today { stroke: var(--hw-fg); stroke-width: 1.5; stroke-dasharray: 3 3; }
   svg.kurve text { font-family: var(--hw-mono); font-size: 10px; fill: var(--hw-fg-3); }
@@ -268,6 +280,9 @@ function render(e) {
     h += '<div class="card"><h2>' + tx('Fangstkurve', 'Catch curve') + '</h2><p class="lead">' + tx('Fangstkurven krever minst fire sesonger med minst 100 laks i dataene våre. Denne elva har ikke nok ennå.', 'The catch curve needs at least four seasons with at least 100 salmon in our data. This river does not have enough yet.') + '</p></div>';
   }
 
+  // Fangst per sesong (2026-10-17, Stian): SSBs offisielle elvefangst, også for elver uten fangstkurve
+  if (e.ssb && e.ssb.some(function (r) { return r[1] > 0; })) h += ssbKort(e.ssb);
+
   // Vannet nå (bare analyserte elver med måler)
   if (k) h += '<div class="card" id="vannCard"><h2>' + tx('Vannet nå', 'The water now') + '</h2><div id="vannBody" class="skel">' + tx('Henter vannføring fra NVE…', 'Fetching flow from NVE…') + '</div></div>';
   var baroOk = b && /^(ja|usikkert)/.test(b.status || '');
@@ -277,11 +292,43 @@ function render(e) {
     '<div class="row2"><a class="hw-btn primary" href="/?elv=' + encodeURIComponent(e.id) + '#laks">' + tx('Vis i kartet', 'Show on the map') + '</a>' +
     (e.url ? '<a class="hw-btn ghost" href="' + esc(e.url) + '" target="_blank" rel="noopener">' + tx('Lakseregisteret', 'Salmon register') + '</a>' : '') + '</div></div>';
 
-  h += '<p class="note">' + tx('Elv og lakseførende strekning: Lakseregisteret (Miljødirektoratet).' + (k ? ' Fangstkurve: data sammenstilt av HatchWatch (år ' + esc(k.aar.replace(/,/g, ', ')) + '). Vannføring og vanntemperatur: NVE.' : ''),
-                           'River and anadromous stretch: Norwegian Environment Agency salmon register.' + (k ? ' Catch curve: data compiled by HatchWatch (years ' + esc(k.aar.replace(/,/g, ', ')) + '). Flow and water temperature: NVE.' : '')) + '</p>';
+  h += '<p class="note">' + tx('Elv og lakseførende strekning: Lakseregisteret (Miljødirektoratet).' + (k ? ' Fangstkurve: data sammenstilt av HatchWatch (år ' + esc(k.aar.replace(/,/g, ', ')) + '). Vannføring og vanntemperatur: NVE.' : '') + (e.ssb ? ' Fangst per sesong: SSB.' : ''),
+                           'River and anadromous stretch: Norwegian Environment Agency salmon register.' + (k ? ' Catch curve: data compiled by HatchWatch (years ' + esc(k.aar.replace(/,/g, ', ')) + '). Flow and water temperature: NVE.' : '') + (e.ssb ? ' Catch per season: Statistics Norway.' : '')) + '</p>';
   main.innerHTML = h;
   miniMap(e);
   if (k) water(e, season);
+}
+
+// rader: [år, laks, snittvekt kg, smålaks, mellomlaks, storlaks, gjenutsatt] (bygg_kart.py elver, fra SSB tabell 08991)
+function ssbKort(rader) {
+  var fmt = function (n) { return Number(n).toLocaleString(EN ? 'en-GB' : 'nb-NO'); };
+  var kg = function (x) { return x == null ? '–' : (EN ? x.toFixed(1) : x.toFixed(1).replace('.', ',')) + ' kg'; };
+  var siste10 = rader.slice(-10), med = siste10.filter(function (r) { return r[1] > 0; });
+  var snitt = med.length ? Math.round(med.reduce(function (s, r) { return s + r[1]; }, 0) / med.length) : 0;
+  var vSum = 0, vN = 0;
+  med.forEach(function (r) { var n = r[3] + r[4] + r[5]; if (r[2] != null && n) { vSum += r[2] * n; vN += n; } });
+  var snittVekt = vN ? vSum / vN : null;
+  // Søyler: antall laks per sesong; siste sesong i gull
+  var W = 420, H = 130, L = 8, B = 18, maks = Math.max.apply(null, rader.map(function (r) { return r[1]; })) || 1;
+  var bw = (W - 2 * L) / rader.length;
+  var svg = '<svg class="ssb" viewBox="0 0 ' + W + ' ' + (H + B) + '" role="img" aria-label="' + tx('Laks fanget per sesong', 'Salmon caught per season') + '">';
+  rader.forEach(function (r, i) {
+    var hgt = Math.max(r[1] ? 2 : 0, (H - 14) * r[1] / maks), x = L + i * bw + bw * 0.14, y = H - hgt;
+    svg += '<rect class="' + (i === rader.length - 1 ? 'b siste' : 'b') + '" x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + (bw * 0.72).toFixed(1) + '" height="' + hgt.toFixed(1) + '"><title>' + r[0] + ': ' + fmt(r[1]) + tx(' laks', ' salmon') + (r[2] != null ? ', ' + kg(r[2]) : '') + '</title></rect>';
+    if (i % 2 === 0 || i === rader.length - 1) svg += '<text x="' + (L + i * bw + bw / 2).toFixed(1) + '" y="' + (H + 13) + '" text-anchor="middle">' + String(r[0]).slice(2) + '</text>';
+    if (r[1] === maks || i === rader.length - 1) svg += '<text class="v" x="' + (L + i * bw + bw / 2).toFixed(1) + '" y="' + Math.max(10, y - 4).toFixed(1) + '" text-anchor="middle">' + fmt(r[1]) + '</text>';
+  });
+  svg += '</svg>';
+  var tab = '<div class="ssbtab"><table><tr><th>' + tx('Sesong', 'Season') + '</th><th class="n">' + tx('Laks', 'Salmon') + '</th><th class="n">' + tx('Snittvekt', 'Average') + '</th><th class="n">' + tx('Små/mellom/stor', 'Small/med/large') + '</th><th class="n">' + tx('Ut igjen', 'Released') + '</th></tr>' +
+    rader.slice(-5).reverse().map(function (r) {
+      return '<tr><td>' + r[0] + '</td><td class="n">' + fmt(r[1]) + '</td><td class="n">' + kg(r[2]) + '</td><td class="n">' + fmt(r[3]) + '/' + fmt(r[4]) + '/' + fmt(r[5]) + '</td><td class="n">' + (r[1] ? Math.round(100 * r[6] / r[1]) + ' %' : '–') + '</td></tr>';
+    }).join('') + '</table></div>';
+  return '<div class="card"><h2>' + tx('Fangst per sesong', 'Catch per season') + '</h2>' +
+    '<div class="hero" style="margin-top:10px"><div class="stat"><div class="k">' + tx('Laks per sesong', 'Salmon per season') + '</div><div class="v">' + fmt(snitt) + '</div><div class="s">' + tx('snitt for ' + med.length + ' sesonger', 'average of ' + med.length + ' seasons') + ' (' + siste10[0][0] + '–' + siste10[siste10.length - 1][0] + ')</div></div>' +
+    '<div class="stat"><div class="k">' + tx('Snittvekt', 'Average weight') + '</div><div class="v gold">' + kg(snittVekt) + '</div><div class="s">' + tx('samme sesonger', 'same seasons') + '</div></div></div>' +
+    svg + tab +
+    '<p class="note">' + tx('Kilde: SSB, elvefangst (avlivet og gjenutsatt laks). Smålaks er under 3 kg, mellomlaks 3–7 kg, storlaks 7 kg og mer. Lave tall eller 0 kan bety at elva var stengt eller sesongen avkortet, for eksempel stansen sommeren 2024.',
+                           'Source: Statistics Norway, river catch (killed and released salmon). Small salmon are under 3 kg, medium 3–7 kg, large 7 kg and more. Low numbers or 0 can mean the river was closed or the season cut short, such as the halt in summer 2024.') + '</p></div>';
 }
 
 function water(e, season) {

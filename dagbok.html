@@ -75,6 +75,16 @@
   .knapper { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 20px; }
   .knapper .hw-btn { flex: 1; }
   .slett { color: var(--hw-bad) !important; }
+  /* Bilder (2026-10-17) */
+  .liten { font-size: 12px; color: var(--hw-fg-3); }
+  .bilder { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 6px; margin-bottom: 8px; }
+  .bilder:empty { display: none; }
+  .tommel { aspect-ratio: 1; max-width: 100%; border: 1px solid var(--hw-line); border-radius: 10px; background: var(--hw-bg-3) center / cover no-repeat; cursor: pointer; padding: 0; }
+  .bildevis { position: fixed; inset: 0; z-index: 1100; background: rgba(5, 12, 14, .92); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+    padding: calc(env(safe-area-inset-top, 0px) + 16px) max(16px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 16px) max(16px, env(safe-area-inset-left, 0px)); }
+  .bildevis img { max-width: 100%; max-height: 74vh; border-radius: 10px; object-fit: contain; }
+  .bv-knapper { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .bv-knapper .hw-btn.ghost { color: #ffffff; border-color: rgba(255, 255, 255, .35); }
   @media (max-width: 420px) { h1 { font-size: 30px; } }
 </style>
 </head>
@@ -102,6 +112,7 @@
 <div class="ark" id="ark" role="dialog" aria-modal="true" aria-labelledby="arkTittel"></div>
 
 <datalist id="fiskeliste"></datalist>
+<div class="bildevis" id="bildeVis" hidden></div>
 
 <script type="module">
 import { regnVann, spinnerfallSjanse, datoTekst } from '/lib/vannmodell.js';
@@ -295,6 +306,72 @@ async function berik(id) {
 function mangler(e) { return (e.pos && !e.vannSjekket) || (koord(e) && (!e.vaer || !e.berg)) || (e.vann && !e.modell); }
 function berikAlle() { les().filter(mangler).forEach((e) => berik(e.id)); }
 
+// ── Bilder (2026-10-17, Stian) ───────────────────────────────────────
+// localStorage er for lite til bilder, så de ligger i IndexedDB «hw-dagbok» (lager «bilder», indeks på logg),
+// nedskalert til maks 1600 px som JPEG (~200–400 kB). Antallet står også på loggen (e.bilder) for lista og Excel.
+let bildeDbP = null;
+function bildeDb() {
+  if (bildeDbP) return bildeDbP;
+  bildeDbP = new Promise((ok, feil) => {
+    if (!window.indexedDB) return feil(new Error('ingen IndexedDB'));
+    const r = indexedDB.open('hw-dagbok', 1);
+    r.onupgradeneeded = () => { const s = r.result.createObjectStore('bilder', { keyPath: 'id' }); s.createIndex('logg', 'logg'); };
+    r.onsuccess = () => ok(r.result); r.onerror = () => feil(r.error);
+  });
+  bildeDbP.catch(() => { bildeDbP = null; });
+  return bildeDbP;
+}
+const idbReq = (r) => new Promise((ok, feil) => { r.onsuccess = () => ok(r.result); r.onerror = () => feil(r.error); });
+async function bilderFor(logg) { const d = await bildeDb(); return (await idbReq(d.transaction('bilder').objectStore('bilder').index('logg').getAll(logg))).sort((a, b) => a.t - b.t); }
+async function skaler(fil) {
+  const bm = await createImageBitmap(fil, { imageOrientation: 'from-image' });
+  const k = Math.min(1, 1600 / Math.max(bm.width, bm.height));
+  const c = document.createElement('canvas'); c.width = Math.round(bm.width * k); c.height = Math.round(bm.height * k);
+  c.getContext('2d').drawImage(bm, 0, 0, c.width, c.height); bm.close && bm.close();
+  return new Promise((ok, feil) => c.toBlob((b) => b ? ok(b) : feil(new Error('toBlob')), 'image/jpeg', 0.82));
+}
+async function lagreBilder(logg, filer) {
+  const d = await bildeDb();
+  for (const fil of filer) {
+    const blob = await skaler(fil);
+    await idbReq(d.transaction('bilder', 'readwrite').objectStore('bilder').put({ id: 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), logg, blob, t: Date.now() }));
+  }
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+  const n = (await bilderFor(logg)).length; oppdater(logg, (x) => { x.bilder = n; });
+}
+async function slettBilde(id, logg) {
+  const d = await bildeDb(); await idbReq(d.transaction('bilder', 'readwrite').objectStore('bilder').delete(id));
+  const n = (await bilderFor(logg)).length; oppdater(logg, (x) => { x.bilder = n; });
+}
+async function slettBilderFor(logg) {
+  try { const d = await bildeDb(); for (const b of await bilderFor(logg)) await idbReq(d.transaction('bilder', 'readwrite').objectStore('bilder').delete(b.id)); } catch (e) {}
+}
+let bildeUrler = [];
+async function tegnBilder(logg) {
+  const el = $('fBilder'); if (!el) return;
+  let liste = [];
+  try { liste = await bilderFor(logg); } catch (e) { el.innerHTML = `<span class="liten">${tx('Telefonen kan ikke lagre bilder her.', 'This phone cannot store photos here.')}</span>`; return; }
+  if (aapen !== logg || !$('fBilder')) return;
+  bildeUrler.forEach((u) => URL.revokeObjectURL(u)); bildeUrler = [];
+  $('fBilder').innerHTML = liste.map((b) => { const u = URL.createObjectURL(b.blob); bildeUrler.push(u); return `<button type="button" class="tommel" data-bilde="${b.id}" style="background-image:url('${u}')" aria-label="${tx('Vis bildet', 'Show photo')}"></button>`; }).join('');
+}
+async function visBilde(id, logg) {
+  const b = (await bilderFor(logg)).find((x) => x.id === id); if (!b) return;
+  const u = URL.createObjectURL(b.blob), v = $('bildeVis');
+  v.innerHTML = `<img src="${u}" alt=""><div class="bv-knapper"><button type="button" class="hw-btn ghost" data-bv="del">${tx('Del', 'Share')}</button><button type="button" class="hw-btn ghost slett" data-bv="slett">${tx('Slett bildet', 'Delete photo')}</button><button type="button" class="hw-btn primary" data-bv="lukk">${tx('Lukk', 'Close')}</button></div>`;
+  v.hidden = false;
+  v.onclick = async (ev) => {
+    const h = ev.target.closest('[data-bv]'); if (!h && ev.target.tagName === 'IMG') return;
+    const hva = h ? h.dataset.bv : 'lukk';
+    if (hva === 'del') {
+      try { const fil = new File([b.blob], 'hatchwatch-dagbok.jpg', { type: 'image/jpeg' }); if (navigator.canShare && navigator.canShare({ files: [fil] })) await navigator.share({ files: [fil] }); } catch (e) {}
+      return;
+    }
+    if (hva === 'slett') { if (!confirm(tx('Slette bildet?', 'Delete the photo?'))) return; await slettBilde(id, logg); tegnBilder(logg); tegnListe(); }
+    v.hidden = true; v.innerHTML = ''; URL.revokeObjectURL(u);
+  };
+}
+
 // ── Logg nå ──────────────────────────────────────────────────────────
 function posisjon() {
   return new Promise((ok) => {
@@ -333,6 +410,7 @@ function postHtml(e) {
   const o = oslo(e.t), ms = [];
   if (e.obs.length || e.insekt.length) ms.push(e.obs.map(obsNavn).concat(e.insekt.map(insNavn)).join(' · '));
   const ft = fangstTekst(e.fangst); if (ft) ms.push(ft);
+  if (e.bilder) ms.push(e.bilder + (e.bilder === 1 ? tx(' bilde', ' photo') : tx(' bilder', ' photos')));
   const ml = modellLinje(e), venter = mangler(e) && !e.posFeil;
   return `<button class="post" type="button" data-id="${e.id}">
     <span class="t">${datoPen(o.dato)} · ${o.hhmm}</span>
@@ -404,6 +482,8 @@ function arkHtml(e) {
     <div class="felt"><span class="hw-eyebrow">${tx('Insekter', 'Insects')}</span><div class="chips" data-gruppe="insekt">${INSEKT.map((o) => `<button type="button" class="chip${e.insekt.includes(o[0]) ? ' on' : ''}" data-v="${o[0]}">${o[1]}</button>`).join('')}</div></div>
     <div class="felt"><span class="hw-eyebrow">${tx('Fangst', 'Catch')}</span><div id="fFangst">${e.fangst.map(fiskRad).join('')}</div>
       <button class="hw-btn ghost" type="button" id="leggTilFisk">${tx('Legg til fisk', 'Add fish')}</button></div>
+    <div class="felt"><span class="hw-eyebrow">${tx('Bilder', 'Photos')}</span><div class="bilder" id="fBilder"></div>
+      <label class="hw-btn ghost" for="fBildeInn">${tx('Legg til bilde', 'Add photo')}</label><input type="file" id="fBildeInn" accept="image/*" multiple hidden></div>
     <div class="felt"><label class="hw-eyebrow" for="fNotat">${tx('Notat', 'Notes')}</label><textarea id="fNotat" placeholder="${tx('Flue, vannstand, hvem du fisket med …', 'Fly, water level, who you fished with …')}">${esc(e.notat)}</textarea></div>
     <div class="knapper"><button class="hw-btn primary" type="button" id="arkFerdig">${tx('Ferdig', 'Done')}</button>${meld}</div>
     <div class="knapper"><button class="hw-btn ghost slett" type="button" id="arkSlett">${tx('Slett loggen', 'Delete this log')}</button></div>`;
@@ -424,6 +504,7 @@ function vis(id) {
   const ark = $('ark'), fokus = document.activeElement && ark.contains(document.activeElement) ? document.activeElement : null;
   if (fokus && /INPUT|TEXTAREA|SELECT/.test(fokus.tagName)) { const a = ark.querySelector('.auto'); const tmp = document.createElement('div'); tmp.innerHTML = arkHtml(e); a.innerHTML = tmp.querySelector('.auto').innerHTML; return; }
   const top = ark.scrollTop; ark.innerHTML = arkHtml(e); ark.scrollTop = top;
+  tegnBilder(id);
 }
 async function fyllFiskeliste(e) {
   const std = EN ? ['Brown trout', 'Arctic char', 'Grayling', 'Salmon', 'Pike', 'Perch', 'Whitefish'] : ['Ørret', 'Røye', 'Harr', 'Laks', 'Gjedde', 'Abbor', 'Sik'];
@@ -438,8 +519,9 @@ $('ark').addEventListener('click', (ev) => {
   if (t.id === 'arkLukk' || t.id === 'arkFerdig') return lukk();
   if (t.id === 'arkSlett') {
     if (!confirm(tx('Slette denne loggen? Det kan ikke angres.', 'Delete this log? This cannot be undone.'))) return;
-    lagre(les().filter((e) => e.id !== id)); return lukk();
+    lagre(les().filter((e) => e.id !== id)); slettBilderFor(id); return lukk();
   }
+  if (t.dataset.bilde) return visBilde(t.dataset.bilde, id);
   if (t.id === 'leggTilFisk') { oppdater(id, (x) => { x.fangst.push({ art: EN ? 'Brown trout' : 'Ørret', antall: 1, lengde: '', flue: '', ut: false }); }); vis(id); const r = $('fFangst').lastElementChild; if (r) r.querySelector('[data-k=lengde]').focus(); return; }
   if (t.dataset.fjern != null) { oppdater(id, (x) => { x.fangst.splice(+t.dataset.fjern, 1); }); return vis(id); }
   const gruppe = t.closest('[data-gruppe]');
@@ -471,6 +553,11 @@ $('ark').addEventListener('change', (ev) => {
     if (!vid) sett(null);
     else if (kjent) sett(kjent);
     else vannRec(vid).then((v) => v && sett({ id: vid, navn: v.navn || '', moh: v.moh, ha: v.ha, kommune: v.kommune, lat: v.lat, lon: v.lon })).catch(() => {});
+  } else if (el.id === 'fBildeInn' && el.files && el.files.length) {
+    const filer = [...el.files]; el.value = '';
+    $('fBilder').insertAdjacentHTML('beforeend', `<span class="liten">${tx('Lagrer …', 'Saving …')}</span>`);
+    lagreBilder(id, filer).then(() => { tegnBilder(id); tegnListe(); })
+      .catch(() => alert(tx('Fikk ikke lagret bildet på telefonen.', 'Could not save the photo on this phone.')));
   } else if (el.dataset.k === 'ut') tegnListe();
 });
 $('arkBak').addEventListener('click', lukk);
@@ -498,8 +585,8 @@ function csv() {
   const fd = (e, k) => { const f = faser(e).find((x) => x.navn === k); return f ? f.tekst : ''; };
   const md = (e, k) => e.modell && e.modell[k] != null ? datoTekst(e.modell.S, e.modell[k], EN) : '';
   const hode = EN
-    ? ['Date', 'Time', 'Place', 'Lake', 'Lake ID (NVE)', 'Municipality', 'Altitude (m)', 'Area (ha)', 'Latitude', 'Longitude', 'GPS accuracy (m)', 'Temp (°C)', 'Wind (m/s)', 'Gusts (m/s)', 'Wind from', 'Cloud (%)', 'Precip (mm/h)', 'Humidity (%)', 'Pressure (hPa)', 'Pressure change 3 h (hPa)', 'Sunset', 'Bedrock', 'Ice-out', 'Ice-out source', 'Days since ice-out', 'Model: marginata start', 'Model: marginata', 'Model: vespertina', 'Model: vulgata start', 'Model: vulgata', 'Model: grandis from', 'Model: spinner fall chance tonight (%)', 'Seen', 'Insects', 'Fish caught', 'Catch', 'Notes']
-    : ['Dato', 'Tid', 'Sted', 'Vann', 'Vann-ID (NVE)', 'Kommune', 'Moh', 'Areal (ha)', 'Breddegrad', 'Lengdegrad', 'GPS-nøyaktighet (m)', 'Temp (°C)', 'Vind (m/s)', 'Vindkast (m/s)', 'Vind fra', 'Skydekke (%)', 'Nedbør (mm/t)', 'Luftfuktighet (%)', 'Lufttrykk (hPa)', 'Trykkendring 3 t (hPa)', 'Solnedgang', 'Berggrunn', 'Isgang', 'Isgang kilde', 'Dager siden isgang', 'Modell: marginata start', 'Modell: marginata', 'Modell: vespertina', 'Modell: vulgata start', 'Modell: vulgata', 'Modell: grandis fra', 'Modell: spinnerfall-sjanse kveld (%)', 'Observert', 'Insekter', 'Antall fisk', 'Fangst', 'Notat'];
+    ? ['Date', 'Time', 'Place', 'Lake', 'Lake ID (NVE)', 'Municipality', 'Altitude (m)', 'Area (ha)', 'Latitude', 'Longitude', 'GPS accuracy (m)', 'Temp (°C)', 'Wind (m/s)', 'Gusts (m/s)', 'Wind from', 'Cloud (%)', 'Precip (mm/h)', 'Humidity (%)', 'Pressure (hPa)', 'Pressure change 3 h (hPa)', 'Sunset', 'Bedrock', 'Ice-out', 'Ice-out source', 'Days since ice-out', 'Model: marginata start', 'Model: marginata', 'Model: vespertina', 'Model: vulgata start', 'Model: vulgata', 'Model: grandis from', 'Model: spinner fall chance tonight (%)', 'Seen', 'Insects', 'Fish caught', 'Catch', 'Notes', 'Photos']
+    : ['Dato', 'Tid', 'Sted', 'Vann', 'Vann-ID (NVE)', 'Kommune', 'Moh', 'Areal (ha)', 'Breddegrad', 'Lengdegrad', 'GPS-nøyaktighet (m)', 'Temp (°C)', 'Vind (m/s)', 'Vindkast (m/s)', 'Vind fra', 'Skydekke (%)', 'Nedbør (mm/t)', 'Luftfuktighet (%)', 'Lufttrykk (hPa)', 'Trykkendring 3 t (hPa)', 'Solnedgang', 'Berggrunn', 'Isgang', 'Isgang kilde', 'Dager siden isgang', 'Modell: marginata start', 'Modell: marginata', 'Modell: vespertina', 'Modell: vulgata start', 'Modell: vulgata', 'Modell: grandis fra', 'Modell: spinnerfall-sjanse kveld (%)', 'Observert', 'Insekter', 'Antall fisk', 'Fangst', 'Notat', 'Bilder'];
   const rader = les().filter((e) => valgtAar === 'alle' || oslo(e.t).aar === valgtAar).sort((a, b) => a.t.localeCompare(b.t)).map((e) => {
     const o = oslo(e.t), v = e.vann || {}, w = e.vaer || {}, k = koord(e) || {}, m = e.modell;
     const L = doy(o.dato);
@@ -509,7 +596,7 @@ function csv() {
       num(w.temp), num(w.vind), num(w.kast), retning(w.retn), w.sky == null ? '' : Math.round(w.sky), num(w.nedbor), w.fukt == null ? '' : Math.round(w.fukt), w.trykk || '', num(w.trend), w.sol || '',
       bergTekst(e.berg), md(e, 'isg'), m && m.isg != null ? (m.isgSat ? tx('satellitt', 'satellite') : tx('anslått', 'estimated')) : '', m && m.isg != null && L >= m.isg ? L - m.isg : '',
       md(e, 'marg'), fd(e, 'Marginata'), fd(e, 'Vespertina'), md(e, 'vulg'), fd(e, 'Vulgata'), md(e, 'grand'), m && m.spinner != null ? Math.round(m.spinner * 100) : '',
-      e.obs.map(obsNavn).join(', '), e.insekt.map(insNavn).join(', '), e.fangst.reduce((s, f) => s + (+f.antall || 1), 0) || '', fangst, e.notat].map(celle).join(sep);
+      e.obs.map(obsNavn).join(', '), e.insekt.map(insNavn).join(', '), e.fangst.reduce((s, f) => s + (+f.antall || 1), 0) || '', fangst, e.notat, e.bilder || ''].map(celle).join(sep);
   });
   return '﻿' + [hode.map(celle).join(sep)].concat(rader).join('\r\n');
 }
