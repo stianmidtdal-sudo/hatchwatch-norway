@@ -279,6 +279,14 @@
   .yrs div { text-align: center; font-family: var(--hw-mono); font-size: 9.5px; color: var(--hw-fg-3); }
   .yrs div b { display: block; font-size: 10.5px; color: var(--hw-fg); font-weight: 600; margin-top: 2px; }
   .yrs div.cur b { color: var(--hw-water); }
+  /* Vannkortet (2026-10-17): fire ruter + fisk og insekter */
+  .vk-ruter { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
+  .vk-rute { background: var(--hw-bg-3); border-radius: 10px; padding: 7px 10px 8px; min-width: 0; }
+  .vk-rute > span { display: block; font-size: 11px; color: var(--hw-fg-3); line-height: 1.35; }
+  .vk-rute b { display: block; font-family: var(--hw-display); font-weight: 700; font-size: 15.5px; letter-spacing: -.01em; color: var(--hw-fg); margin: 1px 0; line-height: 1.25; }
+  .vk-lab { font-family: var(--hw-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--hw-fg-3); margin: 12px 0 5px; }
+  .vk-chips span { display: inline-block; font-size: 12.5px; padding: 3px 10px; border-radius: 999px; background: var(--hw-bg-3); color: var(--hw-fg-2); margin: 0 4px 4px 0; }
+  .vk-chips span.ja { background: color-mix(in srgb, var(--hw-good) 15%, transparent); color: var(--hw-good); font-weight: 600; }
   .arter { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--hw-line); }
   .arter .list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
   .arter .sp { font-size: 12px; padding: 3px 8px; border-radius: 999px; background: var(--hw-bg-3); color: var(--hw-fg-2); font-style: italic; }
@@ -1820,36 +1828,96 @@ function openLake(f, keep) {
   if (!keep) setSel({ kind: 'lake', id: id, f: f }); else sel.f = f;
   document.getElementById('shName').textContent = p.navn || tx('Navnløst vann', 'Unnamed lake');
   document.getElementById('shSub').textContent = (p.moh != null ? p.moh + ' ' + MOH + ' · ' : '') + p.ha + ' ha' + (p.kommune ? ' · ' + p.kommune : '');
-  document.getElementById('shEye').innerHTML = '<span class="hw-chip soon"><i></i>' + tx('Isgang ', 'Ice-out ') + iceYear + '</span>';
-  var big = document.getElementById('shBig'), line = document.getElementById('shLine');
-  if (rec) {
-    var v = rec[0], half = rec[1] != null ? Math.max(1, Math.round(rec[1] / 2)) : null;
-    big.innerHTML = fmtDoy(iceYear, v) + '<span>' + (half ? '±' + half + ' d' : '') + '</span>';
-    var dTxt = fmtDoy(YEAR, T), cmp = isToday ? TODAY_DOY : T;
-    line.innerHTML = (isToday
-      ? (cmp >= v ? tx('Isen gikk ' + fmtDoy(iceYear, v) + ' i ' + iceYear + '.', 'The ice went out on ' + fmtDoy(iceYear, v) + ' in ' + iceYear + '.')
-                  : tx('På denne datoen i ' + iceYear + ' var vannet islagt. Isen gikk ' + (v - cmp) + ' dager senere.', 'On this date in ' + iceYear + ' the lake was ice-covered. The ice went out ' + (v - cmp) + ' days later.'))
-      : (T >= v ? tx('Isfritt ' + dTxt + ' ' + iceYear + '.', 'Ice-free on ' + dTxt + ' ' + iceYear + '.')
-                : tx('Islagt ' + dTxt + ' ' + iceYear + '. Isen gikk ' + (v - T) + ' dager senere.', 'Ice-covered on ' + dTxt + ' ' + iceYear + '. The ice went out ' + (v - T) + ' days later.'))) +
-      '<br><span class="hw-eyebrow">' + tx('Satellittanslag · Sentinel-2 · midt i observert intervall', 'Satellite estimate · Sentinel-2 · middle of observed interval') + '</span>';
-  } else {
-    big.innerHTML = '<span style="margin:0;font-size:15px">' + tx('Ingen satellittdato for ', 'No satellite date for ') + iceYear + '</span>';
-    line.innerHTML = p.ha > 3000 ? tx('Vannet er for stort for metoden.', 'The lake is too large for the method.')
-                                 : tx('Skyer eller manglende bilder ga ingen sikker dato dette året, eller vannet er ikke behandlet ennå.', 'Clouds or missing images gave no reliable date this year, or the lake has not been processed yet.');
-  }
-  var yrs = '<div class="yrs">' + ICE_YEARS.map(function (y) { var r = (ISG[y] || {})[id]; return '<div class="' + (y === iceYear ? 'cur' : '') + '">' + String(y).slice(2) + '<b>' + (r ? shortDoy(y, r[0]) : '–') + '</b></div>'; }).join('') + '</div>';
-  // Klekkeanslagene regnes ut fra været på vannsiden (vann.html); kortet peker dit
-  var marg = '<div class="arter"><div class="line" style="margin-top:0">' + tx('Åpne vannet for anslag på marginata, vespertina og vulgata, og hvilke arter som er funnet her.', 'Open the lake for estimates of marginata, vespertina and vulgata, and which species have been found here.') + '</div></div>';
+  // Vannkortet (2026-10-17, Stian forslag A): fire ruter (isgang i år, berggrunn, vanlig isgang, tidligst–senest),
+  // fisk og insekter funnet her. År for år ligger på vannsiden. Berggrunn, fisk, insekter og dybde fylles inn
+  // etterpå (fyllVannkort); dybden står i undertittelen bare der NVE har loddet vannet.
+  document.getElementById('shEye').innerHTML = '';
+  document.getElementById('shBig').innerHTML = '';
+  document.getElementById('shLine').innerHTML = '';
+  var aarIsg = ICE_YEARS.map(function (y) { var r = (ISG[y] || {})[id]; return r ? { y: y, d: r[0] } : null; }).filter(Boolean);
+  var dgr = aarIsg.map(function (a) { return a.d; }).sort(function (a, b) { return a - b; }), nd = dgr.length;
+  var medIsg = nd ? (nd % 2 ? dgr[(nd - 1) / 2] : Math.round((dgr[nd / 2 - 1] + dgr[nd / 2]) / 2)) : null;
+  var rute = function (k, v, s) { return '<div class="vk-rute"><span>' + k + '</span><b>' + v + '</b><span>' + s + '</span></div>'; };
+  var halv = rec && rec[1] != null ? Math.max(1, Math.round(rec[1] / 2)) : null;
+  var ruter = '<div class="vk-ruter">' +
+    rute(tx('Isgang ', 'Ice-out ') + iceYear, rec ? fmtDoy(iceYear, rec[0]) : '–',
+      rec ? tx('satellitt', 'satellite') + (halv ? ' ±' + halv + ' d' : '') : (p.ha > 3000 ? tx('for stort for metoden', 'too large for the method') : tx('ingen sikker dato', 'no reliable date'))) +
+    rute(tx('Berggrunn', 'Bedrock'), '<span id="vkBerg">…</span>', '<span id="vkBergart">NGU</span>') +
+    rute(tx('Vanlig isgang', 'Usual ice-out'), medIsg != null ? tx('ca. ', 'about ') + fmtDoy(YEAR, medIsg) : '–', nd ? aarIsg[0].y + '–' + aarIsg[nd - 1].y : '') +
+    rute(tx('Tidligst–senest', 'Earliest–latest'), nd >= 2 ? shortDoy(YEAR, dgr[0]) + ' – ' + shortDoy(YEAR, dgr[nd - 1]) : '–', nd ? nd + tx(' år', ' years') : '') +
+    '</div>' +
+    '<div class="vk-lab">' + tx('Fisk', 'Fish') + '</div><div class="vk-chips" id="vkFisk"><span>…</span></div>' +
+    '<div class="vk-lab">' + tx('Insekter funnet her', 'Insects found here') + '</div><div class="vk-chips" id="vkIns"><span>…</span></div>';
   // Nærmeste HatchWatch-prognose som lenke i kortet
   var best = null, bd = 1e9, pt = f.geometry && f.geometry.coordinates ? centroid(f.geometry) : null;
   if (pt) LOCS.forEach(function (l) { var d = haversine(pt[1], pt[0], l.lat, l.lon); if (d < bd) { bd = d; best = l; } });
   var near = best && bd < 40 ? '<div class="note" style="margin-top:10px">' + tx('Vulgata: nærmeste klekkeprognose er ', 'Vulgata: the nearest hatch forecast is ') +
     '<a href="/dashboard.html?loc=' + encodeURIComponent(best.id) + '" style="color:var(--hw-water)">' + best.name + '</a>, ' + Math.round(bd) + ' km.</div>' : '';
-  shExtra.innerHTML = yrs + marg + near;
+  shExtra.innerHTML = ruter + near;
+  fyllVannkort(id, p, pt);
   shFav.style.display = ''; shFav.classList.toggle('on', isVannFav(id)); shFav.setAttribute('aria-label', tx('Legg til i favoritter', 'Add to favourites'));
   shOpen.style.display = ''; shOpen.textContent = tx('Åpne vannet', 'Open the lake');
   shOpen.setAttribute('href', '/vann.html?id=' + encodeURIComponent(id));
   if (!keep) showSheet();
+}
+// Fyller vannkortet etter at det er åpnet: dybde (undertittel), berggrunn (NGU), fisk og insekter funnet her.
+// Alt hurtigbufres per vann/gruppe, så tidsskyveren (refreshSheet) ikke henter på nytt.
+var VK = { grp: {}, fisk: {}, dybde: null, berg: {} };
+var VK_GULL = ['Salmo trutta', 'Salvelinus alpinus', 'Thymallus thymallus', 'Salmo salar'];
+var VK_FISK_EN = { 'Salmo trutta': 'Brown trout', 'Salvelinus alpinus': 'Arctic char', 'Thymallus thymallus': 'Grayling', 'Salmo salar': 'Atlantic salmon',
+  'Perca fluviatilis': 'Perch', 'Esox lucius': 'Pike', 'Coregonus lavaretus': 'Whitefish', 'Phoxinus phoxinus': 'Minnow', 'Lota lota': 'Burbot',
+  'Gasterosteus aculeatus': 'Three-spined stickleback', 'Rutilus rutilus': 'Roach', 'Salvelinus fontinalis': 'Brook trout', 'Anguilla anguilla': 'European eel',
+  'Oncorhynchus mykiss': 'Rainbow trout', 'Coregonus albula': 'Vendace', 'Osmerus eperlanus': 'Smelt', 'Abramis brama': 'Bream', 'Tinca tinca': 'Tench' };
+var VK_INSEKT = [['Ephemera vulgata', 'vulgata', 'Vulgata', 'Vulgata'], ['Leptophlebia marginata', 'marginata', 'Marginata', 'Marginata'],
+  ['Leptophlebia vespertina', 'vespertina', 'Vespertina', 'Vespertina'], ['Phryganea grandis', 'grandis', 'Grandis', 'Grandis'], ['Ephemera danica', '', 'Danica', 'Danica'],
+  ['Lepidurus arcticus', '', 'Skjoldkreps', 'Tadpole shrimp'], ['Gammarus lacustris', '', 'Marflo', 'Freshwater shrimp']];
+function vkJson(url, lager, nokkel) {
+  if (lager[nokkel]) return lager[nokkel];
+  return (lager[nokkel] = fetch(url).then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { delete lager[nokkel]; return {}; }));
+}
+function fyllVannkort(id, p, pt) {
+  var aktiv = function () { return sel && sel.kind === 'lake' && sel.id === id; };
+  var sett = function (elId, html) { var el = document.getElementById(elId); if (el && aktiv()) el.innerHTML = html; };
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  // Dybde i undertittelen (bare der NVE har loddet vannet)
+  (VK.dybde || (VK.dybde = fetch(DATA + 'dybde.json').then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { VK.dybde = null; return {}; }))).then(function (j) {
+    var d = j[String(id)]; if (!d || !d[0] || !aktiv()) return;
+    var m = Math.round(d[0]);
+    document.getElementById('shSub').textContent = (p.moh != null ? p.moh + ' ' + MOH + ' · ' : '') + p.ha + ' ha · ' + m + tx(' m dypt', ' m deep') + (p.kommune ? ' · ' + p.kommune : '');
+  });
+  // Insekter (og skjoldkreps/marflo) funnet her: Artsdatabanken-funn eller OFAs vulgata-vann
+  vkJson(DATA + 'vann/' + (id % 64) + '.json', VK.grp, id % 64).then(function (g) {
+    var v = g[String(id)] || {}, arter = (v.arter || []).map(function (a) { return a[0]; }), bekr = v.bekreftet || {};
+    var funnet = VK_INSEKT.filter(function (x) { return arter.indexOf(x[0]) >= 0 || (x[1] && bekr[x[1]]); });
+    sett('vkIns', funnet.length ? funnet.map(function (x) { return '<span class="ja">' + (EN ? x[3] : x[2]) + '</span>'; }).join('') : '<span>' + tx('Ingen registrert ennå', 'None recorded yet') + '</span>');
+  });
+  // Fisk: ørret, røye, harr og laks først, så flest funn; maks fire og «+N»
+  vkJson(DATA + 'fisk/' + (id % 64) + '.json', VK.fisk, id % 64).then(function (j) {
+    var liste = (j[String(id)] || []).slice().sort(function (a, b) {
+      var ka = VK_GULL.indexOf(a[0]) >= 0 ? VK_GULL.indexOf(a[0]) : 9, kb = VK_GULL.indexOf(b[0]) >= 0 ? VK_GULL.indexOf(b[0]) : 9;
+      return ka - kb || b[2] - a[2];
+    });
+    var navn = function (f) { var n = EN ? VK_FISK_EN[f[0]] : f[1]; return n ? esc(n.charAt(0).toUpperCase() + n.slice(1)) : '<i>' + esc(f[0]) + '</i>'; };
+    sett('vkFisk', liste.length ? liste.slice(0, 4).map(function (f) { return '<span>' + navn(f) + '</span>'; }).join('') + (liste.length > 4 ? '<span>+' + (liste.length - 4) + '</span>' : '')
+      : '<span>' + tx('Ingen registrert', 'None recorded') + '</span>');
+  });
+  // Berggrunn: NGUs kalkklasse i punktet (samme oppslag som vannsiden)
+  if (!pt) { sett('vkBerg', '–'); return; }
+  if (!VK.berg[id]) {
+    var x = pt[0] * 20037508.34 / 180, y = Math.log(Math.tan((90 + pt[1]) * Math.PI / 360)) * 6378137, r = 50;
+    VK.berg[id] = fetch('https://geo.ngu.no/mapserver/BerggrunnOkologiWMS?service=WMS&version=1.3.0&request=GetFeatureInfo&layers=Kalkinnhold_N250&query_layers=Kalkinnhold_N250&styles=&crs=EPSG:3857' +
+      '&bbox=' + [x - r, y - r, x + r, y + r].join(',') + '&width=101&height=101&i=50&j=50&info_format=application%2Fvnd.ogc.gml&feature_count=1')
+      .then(function (res) { return res.ok ? res.text() : ''; }).then(function (t) {
+        var d = new DOMParser().parseFromString(t, 'text/xml');
+        var f = function (n) { var e = d.getElementsByTagName(n)[0]; return e ? e.textContent.trim() : ''; };
+        return { kl: parseInt(f('kalkinnhold_hovedbergart'), 10) || 0, art: f('hovedbergart_tekst') };
+      }).catch(function () { delete VK.berg[id]; return { kl: 0 }; });
+  }
+  VK.berg[id].then(function (b) {
+    var k = b.kl ? KALK_KLASSER[b.kl - 1] : null;
+    sett('vkBerg', k ? (EN ? k[2] : k[1]) : '–');
+    sett('vkBergart', k ? (b.art && !EN ? esc(b.art.toLowerCase()) : 'NGU') : tx('ukjent', 'unknown'));
+  });
 }
 function centroid(g) {
   var ring = g.type === 'Polygon' ? g.coordinates[0] : g.type === 'MultiPolygon' ? g.coordinates[0][0] : null;
