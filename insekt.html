@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-itunes-app" content="app-id=6817913220">
+<title>Hva er dette insektet? — HatchWatch</title>
+<meta name="theme-color" content="#f2f6f5">
+<meta name="description" content="Ta bilde av et insekt ved vannet, så får du vite hva det trolig er: døgnflue, vårflue, maur eller noe annet.">
+<link rel="icon" type="image/png" sizes="32x32" href="/logos/favicon-32.png?v=2">
+<link rel="apple-touch-icon" href="/logos/apple-touch-icon-180.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="stylesheet" href="/hw.css">
+<script src="/hw-lang.js"></script>
+<style>
+  /* ═══ INSEKTGJENKJENNER (2026-10-17, Stian «bygg») ═══
+     Bilde → /api/insekt (Claude, instruks i lib/insekt_instruks.js) → svar med gruppe, slekt, art når
+     den tør, stadium og sikkerhet. Sted (nærmeste vann fra data/kart/vannpunkt.json) og dato sendes
+     med som støtte. Egen side: rører ikke kart, modell eller dagbok, bortsett fra «Lagre i dagboka»,
+     som skriver en vanlig dagbokslogg (hw_dagbok + bilde i IndexedDB «hw-dagbok», samme format). */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { min-height: 100vh; }
+  .top { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: center; padding: calc(env(safe-area-inset-top, 0px) + 10px) 16px 10px; background: color-mix(in srgb, var(--hw-bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--hw-line); }
+  .top .brand { display: flex; align-items: center; gap: 6px; color: var(--hw-fg); text-decoration: none; font-family: var(--hw-display); font-weight: 700; font-size: 17px; letter-spacing: -.02em; }
+  .top .brand b { color: var(--hw-hatch); font-weight: 700; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 18px 16px 40px; }
+  h1 { font-family: var(--hw-display); font-weight: 800; font-size: 34px; letter-spacing: -.03em; line-height: 1.05; margin-top: 6px; }
+  .sub { color: var(--hw-fg-2); font-size: 14px; margin-top: 6px; line-height: 1.5; }
+  .ta { width: 100%; margin-top: 16px; padding: 18px; font-size: 18px; border-radius: 16px; cursor: pointer; }
+  .ta svg { width: 24px; height: 24px; }
+  .forhånd { margin-top: 16px; border-radius: 16px; overflow: hidden; border: 1px solid var(--hw-line); background: var(--hw-bg-3); position: relative; }
+  .forhånd img { display: block; width: 100%; max-height: 52vh; object-fit: contain; background: #0b1418; }
+  .forhånd .jobber { position: absolute; inset: auto 0 0 0; padding: 12px 14px; background: linear-gradient(transparent, rgba(5, 12, 14, .75)); color: #fff; font-size: 14px; display: flex; align-items: center; gap: 10px; }
+  .spinner { width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid rgba(255, 255, 255, .35); border-top-color: #fff; animation: snu .9s linear infinite; flex: none; }
+  @keyframes snu { to { transform: rotate(360deg); } }
+  .kort { margin-top: 14px; background: var(--hw-bg-2); border: 1px solid var(--hw-line); border-radius: 16px; padding: 16px; display: grid; gap: 10px; }
+  .kort .hode { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .kort h2 { font-family: var(--hw-display); font-weight: 800; font-size: 26px; letter-spacing: -.02em; line-height: 1.1; }
+  .kort h2 i { font-style: italic; }
+  .kort .navn { font-size: 14px; color: var(--hw-fg-2); margin-top: 4px; }
+  .sikker { font-family: var(--hw-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding: 5px 9px; border-radius: 999px; white-space: nowrap; border: 1px solid var(--hw-line); }
+  .sikker.høy { background: var(--hw-water-soft); border-color: var(--hw-water); color: var(--hw-fg); }
+  .sikker.middels { background: var(--hw-hatch-soft); border-color: var(--hw-hatch); color: var(--hw-fg); }
+  .sikker.lav { color: var(--hw-fg-2); }
+  .kort p { font-size: 14.5px; line-height: 1.55; color: var(--hw-fg-2); }
+  .alt { display: grid; gap: 6px; }
+  .alt .rad { font-size: 13.5px; line-height: 1.45; color: var(--hw-fg-2); padding-left: 10px; border-left: 2px solid var(--hw-line); }
+  .alt .rad b { color: var(--hw-fg); font-weight: 600; }
+  .lenke { display: flex; align-items: center; justify-content: space-between; gap: 10px; text-decoration: none; color: var(--hw-fg); background: var(--hw-bg); border: 1px solid var(--hw-line); border-radius: 12px; padding: 12px 14px; font-size: 14px; }
+  .lenke span:last-child { color: var(--hw-fg-3); }
+  .knapper { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .knapper .hw-btn { flex: 1; }
+  .melding { margin-top: 14px; font-size: 14px; line-height: 1.5; color: var(--hw-fg-2); background: var(--hw-bg-2); border: 1px solid var(--hw-line); border-radius: 14px; padding: 14px; }
+  .melding b { color: var(--hw-fg); }
+  .melding a { color: var(--hw-water); }
+  .note { font-size: 12.5px; color: var(--hw-fg-3); line-height: 1.5; margin-top: 18px; }
+  .note a { color: var(--hw-water); }
+  @media (max-width: 420px) { h1 { font-size: 30px; } }
+</style>
+</head>
+<body class="hw-dark">
+
+<header class="top">
+  <a class="brand" href="/" aria-label="HatchWatch"><span class="hw-fly" style="width:26px;color:var(--hw-hatch)" aria-hidden="true"></span><span>Hatch<b>Watch</b></span></a>
+</header>
+
+<main class="wrap">
+  <div class="hw-eyebrow gold" id="eyebrow">Gjenkjenning</div>
+  <h1 id="tittel">Hva er dette insektet?</h1>
+  <p class="sub" id="ingress">Ta et bilde av insektet, så får du vite hva det trolig er, og hvor sikkert svaret er. Står du ved et vann, tas stedet og datoen med i vurderingen.</p>
+
+  <label class="hw-btn primary ta" id="taKnapp" for="filInn"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.6"/></svg><span id="taTxt">Ta bilde eller velg fra bildene</span></label>
+  <input type="file" id="filInn" accept="image/*" hidden>
+
+  <div id="omraade"></div>
+
+  <p class="note" id="fot">Svaret er en automatisk vurdering av bildet og kan ta feil, særlig mellom arter som ligner mye. Bildet sendes til Anthropic for vurdering og lagres ikke hos oss. <a href="/personvern.html">Personvern</a></p>
+</main>
+
+<script type="module">
+const EN = window.HW_LANG === 'en';
+const tx = (no, en) => EN ? en : no;
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+if (EN) {
+  document.title = 'What insect is this? — HatchWatch';
+  $('eyebrow').textContent = 'Identification';
+  $('tittel').textContent = 'What insect is this?';
+  $('ingress').textContent = 'Take a photo of the insect and find out what it probably is, and how sure the answer is. If you are by a lake, the place and date are taken into account.';
+  $('taTxt').textContent = 'Take a photo or choose one';
+  $('fot').innerHTML = 'The answer is an automatic assessment of the photo and can be wrong, especially between species that look alike. The photo is sent to Anthropic for assessment and is not stored by us. <a href="/personvern.html">Privacy</a>';
+}
+
+// ── iPhone-appen: kameraet krever versjon 1.0.2 (kameratillatelse i skallet). Eldre app krasjer på «Ta bilde». ──
+const iAppen = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+const nyApp = /HatchWatchApp\//.test(navigator.userAgent);
+if (iAppen && !nyApp) {
+  $('taKnapp').hidden = true;
+  $('omraade').innerHTML = `<div class="melding"><b>${tx('Oppdater appen for å bruke kameraet.', 'Update the app to use the camera.')}</b><br>${tx('Gjenkjenneren trenger den nyeste versjonen av HatchWatch fra App Store.', 'The identifier needs the latest version of HatchWatch from the App Store.')} <a href="https://apps.apple.com/app/id6817913220">App Store</a></div>`;
+}
+
+// ── Sted: nærmeste vann fra vannpunkt.json (samme kilde som dagboka) ──
+function avstand(la1, lo1, la2, lo2) {
+  const R = 6371000, r = Math.PI / 180, dla = (la2 - la1) * r, dlo = (lo2 - lo1) * r;
+  const a = Math.sin(dla / 2) ** 2 + Math.cos(la1 * r) * Math.cos(la2 * r) * Math.sin(dlo / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+function posisjon() {
+  return new Promise((ok) => {
+    if (!navigator.geolocation) return ok(null);
+    navigator.geolocation.getCurrentPosition(
+      (p) => ok({ lat: +p.coords.latitude.toFixed(5), lon: +p.coords.longitude.toFixed(5), acc: Math.round(p.coords.accuracy) }),
+      () => ok(null), { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 });
+  });
+}
+async function naermesteVann(pos) {
+  if (!pos) return null;
+  try {
+    const f = await fetch('/data/kart/vannpunkt.json').then((r) => r.ok ? r.json() : Promise.reject());
+    let best = null;
+    for (let i = 0; i < f.length; i += 3) {
+      const la = f[i + 1] / 1e4, lo = f[i + 2] / 1e4;
+      if (Math.abs(la - pos.lat) > 0.03 || Math.abs(lo - pos.lon) > 0.06) continue;
+      const d = avstand(pos.lat, pos.lon, la, lo);
+      if (!best || d < best.d) best = { id: f[i], d };
+    }
+    if (!best || best.d > 1500) return null;
+    const g = best.id % 64;
+    const rec = await fetch(`/data/kart/vann/${g}.json`).then((r) => r.ok ? r.json() : null).then((j) => j && j[String(best.id)]);
+    if (!rec) return null;
+    return { id: best.id, navn: rec.navn || '', moh: rec.moh, avst: Math.round(best.d) };
+  } catch (e) { return null; }
+}
+
+// ── Bildet: skaleres til maks 1280 px JPEG før det sendes (raskere, billigere, nok detalj) ──
+async function skaler(fil, maks, kval) {
+  let kilde, b, h;
+  try {
+    kilde = await createImageBitmap(fil, { imageOrientation: 'from-image' }); b = kilde.width; h = kilde.height;
+  } catch (e) {
+    kilde = await new Promise((ok, feil) => { const im = new Image(); im.onload = () => ok(im); im.onerror = feil; im.src = URL.createObjectURL(fil); });
+    b = kilde.naturalWidth; h = kilde.naturalHeight;
+  }
+  const k = Math.min(1, maks / Math.max(b, h));
+  const c = document.createElement('canvas'); c.width = Math.round(b * k); c.height = Math.round(h * k);
+  c.getContext('2d').drawImage(kilde, 0, 0, c.width, c.height);
+  if (kilde.close) kilde.close();
+  return new Promise((ok, feil) => c.toBlob((bl) => bl ? ok(bl) : feil(new Error('toBlob')), 'image/jpeg', kval));
+}
+const tilBase64 = (blob) => new Promise((ok, feil) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1]); r.onerror = feil; r.readAsDataURL(blob); });
+
+// ── Visning ──
+const GRUPPE = { 'døgnflue': ['Døgnflue', 'Mayfly'], 'vårflue': ['Vårflue', 'Caddisfly'], 'steinflue': ['Steinflue', 'Stonefly'], 'fjærmygg': ['Fjærmygg', 'Midge'], 'maur': ['Maur', 'Ant'], 'annet insekt': ['Annet insekt', 'Other insect'], 'ikke insekt': ['Ikke et insekt', 'Not an insect'] };
+const STADIUM = { nymfe: ['nymfe', 'nymph'], larve: ['larve', 'larva'], puppe: ['puppe', 'pupa'], dun: ['dun (subimago)', 'dun (subimago)'], spinner: ['spinner (imago)', 'spinner (imago)'], voksen: ['voksen', 'adult'] };
+const SIKKER = { 'høy': ['Sikker', 'Confident'], middels: ['Trolig', 'Probably'], lav: ['Usikker', 'Uncertain'] };
+const t2 = (par) => par ? (EN ? par[1] : par[0]) : '';
+const stor = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
+
+function tittelFor(s) {
+  if (s.art) return `<i>${esc(s.art)}</i>`;
+  if (s.slekt) return `<i>${esc(s.slekt)}</i> sp.`;
+  return esc(t2(GRUPPE[s.gruppe]) || tx('Ukjent', 'Unknown'));
+}
+const MALARTER = ['vulgata', 'danica', 'marginata', 'vespertina', 'grandis'];
+function dagbokNokkel(s) {
+  const a = (s.art || '').toLowerCase();
+  for (const m of MALARTER) if (a.includes(m)) return m;
+  if (/camponotus/.test(a) || /camponotus/i.test(s.slekt || '')) return 'stokkmaur';
+  if (s.gruppe === 'fjærmygg') return 'fjaermygg';
+  return 'annet';
+}
+
+let siste = null;   // { blob, svar, pos, vann }
+
+function visSvar(r) {
+  const s = r.svar;
+  const stadium = s.stadium && s.stadium !== 'ukjent' ? t2(STADIUM[s.stadium]) : '';
+  const navnLinje = [stor(s.navn) || t2(GRUPPE[s.gruppe]), stadium].filter(Boolean).join(' · ');
+  const alt = (s.alternativer || []).slice(0, 3).map((a) => `<div class="rad"><b>${esc(a.navn)}</b>: ${esc(a.hvorfor)}</div>`).join('');
+  const vannLenke = r.vann && s.er_insekt && ['døgnflue', 'vårflue'].includes(s.gruppe)
+    ? `<a class="lenke" href="/vann.html?id=${encodeURIComponent(r.vann.id)}"><span>${tx('Se klekkeanslaget for', 'See the hatch estimate for')} <b>${esc(r.vann.navn || tx('vannet', 'the lake'))}</b></span><span>›</span></a>` : '';
+  $('kort').innerHTML = `
+    <div class="hode"><div><h2>${tittelFor(s)}</h2><div class="navn">${esc(navnLinje)}</div></div>
+      <span class="sikker ${esc(s.sikkerhet)}">${esc(t2(SIKKER[s.sikkerhet]))}</span></div>
+    <p>${esc(s.kjennetegn)}</p>
+    ${alt ? `<div class="hw-eyebrow">${tx('Kan også være', 'Could also be')}</div><div class="alt">${alt}</div>` : ''}
+    ${vannLenke}`;
+  $('kort').hidden = false;
+  $('knapper').hidden = false;
+  $('lagre').hidden = !s.er_insekt;
+}
+
+function visFeil(kode) {
+  const tekst = {
+    ikke_satt_opp: tx('Gjenkjenneren er ikke slått på ennå.', 'The identifier is not switched on yet.'),
+    kvote_brukt: tx('Gjenkjenneren har brukt opp kvoten sin denne måneden. Prøv igjen neste måned.', 'The identifier has used up its quota this month. Try again next month.'),
+    dagstak: tx('Gjenkjenneren har nådd dagens grense. Prøv igjen i morgen.', 'The identifier has reached today’s limit. Try again tomorrow.'),
+    opptatt: tx('Gjenkjenneren er opptatt akkurat nå. Prøv igjen om litt.', 'The identifier is busy right now. Try again in a moment.'),
+    ugyldig_bilde: tx('Bildet kunne ikke leses. Prøv et annet bilde.', 'The photo could not be read. Try another photo.'),
+    for_mange: tx('Du har sendt mange bilder på kort tid. Vent litt og prøv igjen.', 'You have sent many photos in a short time. Wait a little and try again.'),
+    avslatt: tx('Fikk ikke vurdert dette bildet. Prøv et annet.', 'Could not assess this photo. Try another one.'),
+    nett: tx('Fikk ikke kontakt. Sjekk nettet og prøv igjen.', 'Could not connect. Check your connection and try again.'),
+  }[kode] || tx('Noe gikk galt. Prøv igjen.', 'Something went wrong. Try again.');
+  $('kort').hidden = false;
+  $('kort').innerHTML = `<p>${esc(tekst)}</p>`;
+  $('knapper').hidden = false;
+  $('lagre').hidden = true;
+}
+
+async function vurder(fil) {
+  $('omraade').innerHTML = `
+    <div class="forhånd"><img id="forhånd" alt=""><div class="jobber" id="jobber"><span class="spinner"></span><span>${tx('Ser på bildet … tar 10–20 sekunder', 'Looking at the photo … takes 10–20 seconds')}</span></div></div>
+    <div class="kort" id="kort" hidden></div>
+    <div class="knapper" id="knapper" hidden>
+      <button class="hw-btn primary" type="button" id="lagre">${tx('Lagre i dagboka', 'Save to logbook')}</button>
+      <label class="hw-btn ghost" for="filInn">${tx('Nytt bilde', 'New photo')}</label>
+    </div>`;
+  $('taKnapp').hidden = true;
+  $('lagre').addEventListener('click', lagreIDagbok);
+  const posP = posisjon();
+  let blob;
+  try { blob = await skaler(fil, 1280, 0.85); } catch (e) { $('jobber').remove(); return visFeil('ugyldig_bilde'); }
+  $('forhånd').src = URL.createObjectURL(blob);
+  const pos = await posP;
+  const vann = await naermesteVann(pos);
+  const idag = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Oslo' }).format(new Date());
+  const kontekst = { lang: EN ? 'en' : 'no', dato: idag, land: 'Norge' };
+  if (vann) Object.assign(kontekst, { vann: vann.navn || ('NVE ' + vann.id), moh: vann.moh, avst: vann.avst });
+  let r;
+  try {
+    const svar = await fetch('/api/insekt', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bilde: await tilBase64(blob), type: 'image/jpeg', kontekst }) });
+    const j = await svar.json().catch(() => ({}));
+    if (svar.status === 429 && !j.error) j.error = 'for_mange';
+    if (svar.status === 429 && /For mange/.test(j.error || '')) j.error = 'for_mange';
+    if (!svar.ok || !j.svar) { $('jobber').remove(); return visFeil(j.error || j.grunn || 'feil'); }
+    r = { svar: j.svar, vann };
+  } catch (e) { $('jobber').remove(); return visFeil('nett'); }
+  $('jobber').remove();
+  siste = { blob, svar: r.svar, pos, vann };
+  visSvar(r);
+}
+
+// ── Lagre i dagboka: vanlig logg (samme format som «Logg nå») + bildet i IndexedDB «hw-dagbok» ──
+function bildeDb() {
+  return new Promise((ok, feil) => {
+    if (!window.indexedDB) return feil(new Error('ingen IndexedDB'));
+    const r = indexedDB.open('hw-dagbok', 1);
+    r.onupgradeneeded = () => { const s = r.result.createObjectStore('bilder', { keyPath: 'id' }); s.createIndex('logg', 'logg'); };
+    r.onsuccess = () => ok(r.result); r.onerror = () => feil(r.error);
+  });
+}
+async function lagreIDagbok() {
+  if (!siste) return;
+  const s = siste.svar;
+  const navn = s.art || (s.slekt ? s.slekt + ' sp.' : t2(GRUPPE[s.gruppe]));
+  const id = 'd' + Date.now().toString(36);
+  const e = { id, t: new Date().toISOString(), pos: siste.pos || null, vann: null, sted: '', obs: [], insekt: [dagbokNokkel(s)], fangst: [],
+    notat: tx('Gjenkjent: ', 'Identified: ') + navn + ' (' + t2(SIKKER[s.sikkerhet]).toLowerCase() + ')' + (s.stadium && s.stadium !== 'ukjent' ? ', ' + t2(STADIUM[s.stadium]) : ''),
+    henterPos: false, bilder: 0 };
+  try {
+    const alle = JSON.parse(localStorage.getItem('hw_dagbok') || '[]');
+    alle.push(e); localStorage.setItem('hw_dagbok', JSON.stringify(alle));
+  } catch (err) { alert(tx('Fikk ikke lagret i dagboka på denne telefonen.', 'Could not save to the logbook on this phone.')); return; }
+  try {
+    const d = await bildeDb();
+    await new Promise((ok, feil) => {
+      const tr = d.transaction('bilder', 'readwrite');
+      tr.objectStore('bilder').put({ id: 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), logg: id, blob: siste.blob, t: Date.now() });
+      tr.oncomplete = ok; tr.onerror = () => feil(tr.error);
+    });
+    const alle = JSON.parse(localStorage.getItem('hw_dagbok') || '[]');
+    const x = alle.find((y) => y.id === id); if (x) { x.bilder = 1; localStorage.setItem('hw_dagbok', JSON.stringify(alle)); }
+  } catch (err) { /* loggen er lagret; bildet ble bare ikke med */ }
+  location.href = '/dagbok.html';
+}
+
+$('filInn').addEventListener('change', (ev) => {
+  const f = ev.target.files && ev.target.files[0];
+  ev.target.value = '';
+  if (f) vurder(f);
+});
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+</script>
+<script src="/hw-shell.js" defer></script>
+</body>
+</html>

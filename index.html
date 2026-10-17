@@ -117,8 +117,8 @@
   .offpille { position: absolute; left: 50%; bottom: calc(var(--scrub-h, 190px) + 26px); transform: translateX(-50%); z-index: 26; display: none; max-width: calc(100% - 32px); padding: 8px 14px; border-radius: 999px; background: var(--hw-bg-2); border: 1px solid var(--hw-line); box-shadow: var(--hw-shadow); font-size: 13px; color: var(--hw-fg); text-align: center; }
   .offpille.vis { display: block; }
   /* På tur (2026-10-16): opptak, punktkort */
-  .zoomctl #sporBtn { display: grid; place-items: center; }
-  .zoomctl #sporBtn svg { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+  .zoomctl #insektBtn { display: grid; place-items: center; }
+  .zoomctl #insektBtn svg { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 1.8; }
   .zoomctl #sporBtn svg .rec { fill: #e5484d; stroke: none; }
   .zoomctl #sporBtn.on { color: #e5484d; border-color: color-mix(in srgb, #e5484d 55%, transparent); animation: hw-puls 1.6s ease-in-out infinite; }
   @keyframes hw-puls { 50% { box-shadow: 0 0 0 5px rgba(229, 72, 77, .18); } }
@@ -411,7 +411,9 @@
   <div class="zoomctl">
     <button id="lagBtn" type="button" aria-label="Kartlag" title="Kartlag"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg></button>
     <button id="maalBtn" type="button" aria-label="Lag tur og mål avstand" title="Lag tur og mål avstand"><svg viewBox="0 0 24 24"><path d="M3 17L17 3l4 4L7 21z"/><path d="M7 13l2 2M10 10l2 2M13 7l2 2"/></svg></button>
-    <button id="sporBtn" type="button" aria-label="Registrer turen mens du går" title="Registrer turen mens du går"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle class="rec" cx="12" cy="12" r="3.6"/></svg></button>
+    <!-- Insektgjenkjenner (2026-10-17, Stian): erstatter opptaksknappen (#sporBtn). GPS-opptak i nettleseren stopper når
+         skjermen låses, så knappen ble lite brukt. Lagrede turer, GPX og deling i kart-tur.js er uendret (koden tåler at knappen mangler). -->
+    <button id="insektBtn" type="button" aria-label="Hva er dette insektet? Ta bilde" title="Hva er dette insektet? Ta bilde" onclick="location.href='/insekt.html'"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.6"/></svg></button>
     <button id="tegnBtn" type="button" aria-label="Tegnforklaring" title="Tegnforklaring"><svg viewBox="0 0 24 24"><circle cx="6" cy="7" r="1.8"/><circle cx="6" cy="12" r="1.8"/><circle cx="6" cy="17" r="1.8"/><path d="M11 7h8M11 12h8M11 17h8"/></svg></button>
     <button id="zin" aria-label="Zoom inn">+</button>
     <button id="zout" aria-label="Zoom ut">−</button>
@@ -518,7 +520,7 @@ function tx(no, en) { return EN ? en : no; }
   document.getElementById('lagHode').textContent = 'On top of the map';
   document.getElementById('lagBakHode').textContent = 'Background';
   document.getElementById('bakTurTxt').textContent = 'Hiking map'; document.getElementById('bakSatTxt').textContent = 'Satellite';
-  document.getElementById('kalkTxt').textContent = 'Lime in bedrock'; document.getElementById('kalkSub').textContent = 'NGU, on top of the map'; document.getElementById('offHode').textContent = 'Map without coverage'; document.getElementById('eiendomTxt').textContent = 'Property boundaries'; document.getElementById('eiendomSub').textContent = 'Kartverket, visible up close'; document.getElementById('vernTxt').textContent = 'Protected areas'; document.getElementById('vernSub').textContent = 'Norwegian Environment Agency'; document.getElementById('svakisTxt').textContent = 'Weakened ice'; document.getElementById('svakisSub').textContent = 'NVE: where the ice is often weak. No guarantee of safe ice.'; document.getElementById('maalImporter').textContent = 'Import GPX'; document.getElementById('sporBtn').setAttribute('aria-label', 'Record the trip as you walk'); document.getElementById('sporBtn').title = 'Record the trip as you walk'; document.getElementById('offLast').textContent = 'Download the area you see';
+  document.getElementById('kalkTxt').textContent = 'Lime in bedrock'; document.getElementById('kalkSub').textContent = 'NGU, on top of the map'; document.getElementById('offHode').textContent = 'Map without coverage'; document.getElementById('eiendomTxt').textContent = 'Property boundaries'; document.getElementById('eiendomSub').textContent = 'Kartverket, visible up close'; document.getElementById('vernTxt').textContent = 'Protected areas'; document.getElementById('vernSub').textContent = 'Norwegian Environment Agency'; document.getElementById('svakisTxt').textContent = 'Weakened ice'; document.getElementById('svakisSub').textContent = 'NVE: where the ice is often weak. No guarantee of safe ice.'; document.getElementById('maalImporter').textContent = 'Import GPX'; document.getElementById('insektBtn').setAttribute('aria-label', 'What insect is this? Take a photo'); document.getElementById('insektBtn').title = 'What insect is this? Take a photo'; document.getElementById('offLast').textContent = 'Download the area you see';
   document.getElementById('tegnBtn').setAttribute('aria-label', 'Map legend'); document.getElementById('tegnBtn').title = 'Map legend';
   document.getElementById('shFav').setAttribute('aria-label', 'Add to favourites');
   document.getElementById('shOpen').textContent = 'Open the forecast';

@@ -69,7 +69,7 @@
 
 <main>
     <h1 data-i18n="h1">Personvern</h1>
-    <p class="updated" data-i18n="updated">Sist oppdatert 16. oktober 2026</p>
+    <p class="updated" data-i18n="updated">Sist oppdatert 17. oktober 2026</p>
 
     <p class="lead" data-i18n="lead">HatchWatch har ingen brukerkontoer, ingen reklame og selger ingen data. Du kan bruke hele tjenesten uten å oppgi noe om deg selv. Denne siden forklarer det lille som likevel lagres, og hvordan du får det slettet. Den gjelder både nettsiden hatchwatch.no og HatchWatch-appen for iPhone.</p>
 
@@ -90,6 +90,10 @@
     <p data-i18n-html="obsP1">Når du sender inn en klekkeobservasjon, lagrer vi det du fyller ut: dato, art, område, eventuelt vann og høyde, hva du så, kommentar, samt <b>navn og e-postadresse</b>.</p>
     <p data-i18n="obsP2">Navn og e-post brukes til å vurdere observasjonen og til å kunne stille oppfølgingsspørsmål. De vises ikke offentlig og deles ikke med andre. Selve observasjonen, uten navn og e-post, kan brukes til å forbedre modellen og kan inngå i statistikk og omtale.</p>
     <p data-i18n="obsP3">Observasjoner lagres til du ber om at de slettes. Send en e-post, så sletter vi navn og e-post, eller hele observasjonen om du ønsker det.</p>
+
+    <h2 data-i18n="insH">Bilder du sender til insektgjenkjenneren</h2>
+    <p data-i18n="insP1">Når du tar eller velger et bilde i «Hva er dette insektet?», sendes bildet til Anthropic, som vurderer hva insektet er, og svaret sendes tilbake til deg. Sammen med bildet sendes dagens dato og navnet på nærmeste innsjø, hvis du har gitt tilgang til posisjon, men ikke selve posisjonen og ikke noe som sier hvem du er.</p>
+    <p data-i18n="insP2">Vi lagrer ikke bildet. Anthropic bruker det bare til å gi deg svaret og lagrer det etter sine egne regler for tjenesten. Velger du «Lagre i dagboka», legges bildet i dagboka på din egen enhet.</p>
 
     <h2 data-i18n="posH">Posisjon</h2>
     <p data-i18n="posP">Knappen for å finne nærmeste vann spør om posisjonen din. Posisjonen brukes der og da, på din egen enhet, til å regne ut hvilket vann som ligger nærmest. Den sendes ikke til oss og lagres ikke.</p>
@@ -118,6 +122,7 @@
         <li data-i18n-html="thirdL2"><b>Upstash</b> — databasen der varselabonnementer og observasjoner ligger</li>
         <li data-i18n-html="thirdL3"><b>Google Fonts</b> og <b>cdnjs (Cloudflare)</b> — skrifttyper og et grafbibliotek</li>
         <li data-i18n-html="thirdL4"><b>Tally</b> — skjemaet «Send tilbakemelding». Det du skriver der, behandles av Tally og sendes til oss</li>
+        <li data-i18n-html="thirdL5"><b>Anthropic</b> — vurderer bilder du sender til insektgjenkjenneren</li>
     </ul>
     <p data-i18n="thirdP2">Vær- og vanndata fra MET Norge og NVE hentes av våre servere. De får ingen opplysninger om deg.</p>
 
@@ -142,7 +147,7 @@
 (function () {
     if (window.HW_LANG !== 'en') return;
     var EN = {
-        h1: 'Privacy', updated: 'Last updated 16 October 2026',
+        h1: 'Privacy', updated: 'Last updated 17 October 2026',
         lead: 'HatchWatch has no user accounts, no ads, and sells no data. You can use the whole service without telling us anything about yourself. This page explains the little that is stored anyway, and how to get it deleted. It covers both the website hatchwatch.no and the HatchWatch app for iPhone.',
         whoH: 'Who is responsible',
         whoP: 'HatchWatch is run by Stian Midtdal as a private hobby project. Questions about privacy, or requests to see or delete your data, go to <a href="mailto:stian.midtdal@gmail.com">stian.midtdal@gmail.com</a>.',
@@ -157,6 +162,9 @@
         obsP1: 'When you send in a hatch observation, we store what you fill in: date, species, area, lake and altitude if given, what you saw, your comment, and your <b>name and email address</b>.',
         obsP2: 'Name and email are used to assess the observation and to ask follow-up questions. They are not shown publicly and not shared with anyone. The observation itself, without name and email, may be used to improve the model and may appear in statistics and write-ups.',
         obsP3: 'Observations are kept until you ask for them to be deleted. Send an email and we delete the name and email, or the whole observation if you prefer.',
+        insH: 'Photos you send to the insect identifier',
+        insP1: 'When you take or choose a photo in “What insect is this?”, the photo is sent to Anthropic, which assesses what the insect is, and the answer is sent back to you. Along with the photo we send today’s date and the name of the nearest lake, if you have allowed location access, but not your position itself and nothing that says who you are.',
+        insP2: 'We do not store the photo. Anthropic only uses it to give you the answer and keeps it under its own rules for the service. If you choose “Save to logbook”, the photo is stored in the logbook on your own device.',
         posH: 'Location',
         posP: 'The button for finding the nearest water asks for your location. It is used there and then, on your own device, to work out which water is closest. It is not sent to us and not stored.',
         posP2: 'When you tap “Log now” in the logbook, the position is saved in the logbook on your own device. To fill in weather and bedrock, only the coordinates, with nothing that says who you are, are sent to Open-Meteo (weather) and NGU (bedrock). The position is not sent to us.',
@@ -178,6 +186,7 @@
         thirdL2: '<b>Upstash</b>: the database where notification subscriptions and observations are kept',
         thirdL3: '<b>Google Fonts</b> and <b>cdnjs (Cloudflare)</b>: fonts and a charting library',
         thirdL4: '<b>Tally</b>: the “Send feedback” form. What you write there is processed by Tally and sent to us',
+        thirdL5: '<b>Anthropic</b>: assesses photos you send to the insect identifier',
         thirdP2: 'Weather and water data from MET Norway and NVE are fetched by our servers. They get no information about you.',
         notH: 'What we do not do',
         notL1: 'We have no user accounts and do not ask you to log in.',

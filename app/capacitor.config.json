@@ -7,6 +7,7 @@
     "cleartext": false
   },
   "backgroundColor": "#f2f6f5",
+  "appendUserAgent": "HatchWatchApp/1.0.2",
   "plugins": {
     "PushNotifications": {
       "presentationOptions": ["badge", "sound", "alert"]

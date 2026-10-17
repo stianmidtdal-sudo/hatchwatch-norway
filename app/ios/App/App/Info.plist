@@ -26,6 +26,8 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>HatchWatch bruker kameraet når du tar bilde av et insekt for å få vite hva det er, eller legger et bilde i fangstdagboka. Kameraet brukes bare når du trykker.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>HatchWatch bruker posisjonen din til å finne nærmeste vann på kartet. Posisjonen brukes bare på telefonen og lagres ikke.</string>
 	<key>UIApplicationSceneManifest</key>
