@@ -38,7 +38,7 @@ jobs:
         if: always()
         run: |
           git config user.name "kandidat-prove"
-          git config user.email "actions@users.noreply.github.com"
+          git config user.email "276699382+stianmidtdal-sudo@users.noreply.github.com"   # Vercel Hobby + privat repo
           git add tools/kandidat/KANDIDATMODELL_artsdatabanken.md tools/kandidat/data/artsdatabanken_test.json tools/kandidat/data/artsdatabanken_steder.json
           if git diff --cached --quiet; then
             echo "Ingen endringer."

@@ -169,7 +169,8 @@ jobs:
         run: |
           set -euo pipefail
           git config user.name "isgang-gee"
-          git config user.email "actions@users.noreply.github.com"
+          # Stians noreply-adresse (2026-10-17): Vercel Hobby bygger bare commits fra eieren når repoet er privat
+          git config user.email "276699382+stianmidtdal-sudo@users.noreply.github.com"
           for p in "$G/norge/lett" "$G/norge_plan.json" "$G/rapport_norge.md" "$G/isgang_norge_index.csv" \
                    data/kart/isgang_meta.json data/kart/vann; do
             if [ -e "$p" ]; then git add -A -- "$p"; fi

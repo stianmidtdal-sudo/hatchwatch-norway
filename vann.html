@@ -141,8 +141,11 @@ var YEAR = TODAY.getFullYear();
 // klekking, snø, berggrunn eller varsler ennå — bare arter, fisk og beregnet middeldyp.
 var ID_PARAM = new URLSearchParams(location.search).get('id') || '';
 var SE = /^se\d+$/.test(ID_PARAM);
-var ID = SE ? +ID_PARAM.slice(2) : parseInt(ID_PARAM, 10);
-var FAV_ID = SE ? 'se' + ID : ID;
+// Finske vann (2026-10-17, Stian «KJØR FINLAND»): ?id=fi<Jarvi_Id>, data i /data/kart/fi/vann/ (bygg_kart.py finland).
+// Målt dyp og notert isgang fra Syke; ingen klekking, berggrunn eller varsler ennå.
+var FIN = /^fi\d+$/.test(ID_PARAM);
+var ID = SE || FIN ? +ID_PARAM.slice(2) : parseInt(ID_PARAM, 10);
+var FAV_ID = SE ? 'se' + ID : FIN ? 'fi' + ID : ID;
 var GRUPPER = 64;   // samme som VANN_GRUPPER i tools/kart/bygg_kart.py
 
 // HatchWatch-lokasjonene (samme som forsiden) for «nærmeste klekkeprognose»
@@ -186,10 +189,10 @@ var KEY_SPECIES = ['Ephemera vulgata', 'Ephemera danica', 'Leptophlebia marginat
 
 var main = document.getElementById('main');
 if (!ID) main.innerHTML = '<div class="miss">' + tx('Mangler vann.', 'No lake given.') + ' <a href="/">' + tx('Til kartet', 'To the map') + '</a></div>';
-else fetch('/data/kart/' + (SE ? 'se/' : '') + 'vann/' + (ID % GRUPPER) + '.json').then(function (r) { return r.json(); }).then(function (d) {
+else fetch('/data/kart/' + (SE ? 'se/' : FIN ? 'fi/' : '') + 'vann/' + (ID % GRUPPER) + '.json').then(function (r) { return r.json(); }).then(function (d) {
   var v = d[String(ID)];
   if (!v) { main.innerHTML = '<div class="miss"><h1 style="font-size:24px">' + tx('Fant ikke vannet', 'Lake not found') + '</h1><p class="lead" style="margin-top:10px"><a href="/">' + tx('Tilbake til kartet', 'Back to the map') + '</a></p></div>'; return; }
-  if (SE) renderSE(v); else render(v);
+  if (SE) renderSE(v); else if (FIN) renderFI(v); else render(v);
 }).catch(function () { main.innerHTML = '<div class="miss">' + tx('Klarte ikke å laste vannet.', 'Could not load the lake.') + '</div>'; });
 
 function median(a) { var s = a.slice().sort(function (x, y) { return x - y; }), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; }
@@ -291,42 +294,121 @@ function renderSE(v) {
   if (kl) h += '<div class="berggrunn"><span class="kalkprikk" style="background:' + (KALK_FARGE[kl] || '#ccc') + '"></span>' + tx('Berggrunn: ', 'Bedrock: ') + '<b>' + esc(EN ? KALK_EN[kl] : KALK_NO[kl]) + '</b>' +
     (!EN && v.berg[1] ? ' · ' + esc(v.berg[1].charAt(0).toUpperCase() + v.berg[1].slice(1)) : '') +
     '<span class="kilde">' + tx('SGU (1:50 000–1:250 000), kalkklasse satt av HatchWatch etter NGUs inndeling', 'SGU (1:50,000–1:250,000), lime class set by HatchWatch after NGU\'s scheme') + '</span></div>';
-  h += '<div class="hero">' +
-    '<div class="stat"><div class="k">' + tx('Isgang', 'Ice-out') + '</div><div class="v">' + tx('Kommer', 'Coming') + '</div><div class="s">' + tx('Fra satellitt, som i Norge.', 'From satellite, as in Norway.') + '</div></div>' +
-    '<div class="stat"><div class="k">' + tx('Middeldyp', 'Mean depth') + '</div><div class="v">' + (v.dyp ? tx('ca. ', 'about ') + num(v.dyp, v.dyp < 10 ? 1 : 0) + ' m' : '–') + '</div><div class="s">' + tx('Beregnet, ikke loddet.', 'Modelled, not sounded.') + '</div></div>' +
+  // Målt isgang fra SMHI (s7_isgang_smhi.py, 2026-10-17): «vanlig» = midtverdi av år fra 1991 (minst fem)
+  var isA = (v.is_smhi && v.is_smhi.aar) || {}, isAar = Object.keys(isA).map(Number).sort(function (a, b) { return a - b; });
+  var nyIs = isAar.filter(function (y) { return y >= 1991; }), isg = {};
+  nyIs.forEach(function (y) { isg[y] = [isA[y], 0]; });
+  var ly = nyIs.length ? nyIs[nyIs.length - 1] : null;
+  var med = nyIs.length >= 5 ? Math.round(median(nyIs.map(function (y) { return isA[y]; }))) : null;
+  var dypTxt = v.dyp ? tx('ca. ', 'about ') + num(v.dyp, v.dyp < 3 ? 1 : 0) + ' m' : '–';
+  h += '<div class="hero">' + (ly
+    ? '<div class="stat"><div class="k">' + tx('Isgang ', 'Ice-out ') + ly + '</div><div class="v water">' + fmt(ly, isA[ly]) + '</div><div class="s">' + tx('Målt av SMHI.', 'Measured by SMHI.') + '</div></div>' +
+      '<div class="stat"><div class="k">' + tx('Vanlig isgang', 'Usual ice-out') + '</div><div class="v">' + (med != null ? fmt(ly, med) : '–') + '</div><div class="s">' + (med != null ? tx('midtverdi for ' + nyIs.length + ' år', 'median of ' + nyIs.length + ' years') : tx('for få år ennå', 'too few years yet')) + '</div></div>'
+    : '<div class="stat"><div class="k">' + tx('Isgang', 'Ice-out') + '</div><div class="v">' + tx('Kommer', 'Coming') + '</div><div class="s">' + tx('Fra satellitt, som i Norge.', 'From satellite, as in Norway.') + '</div></div>' +
+      '<div class="stat"><div class="k">' + tx('Middeldyp', 'Mean depth') + '</div><div class="v">' + dypTxt + '</div><div class="s">' + tx('Beregnet, usikkert.', 'Modelled, uncertain.') + '</div></div>') +
     '</div>';
-  h += '<div class="card"><h2>' + tx('Klekking', 'Hatch') + '</h2><p class="lead">' + tx('Svenske vann er nye i HatchWatch. Isgang og klekkeanslag kommer når satellittdatoene for Sverige er regnet ut.', 'Swedish lakes are new in HatchWatch. Ice-out and hatch estimates will come once the satellite dates for Sweden are worked out.') + '</p></div>';
+  h += '<div class="card"><h2>' + tx('Klekking', 'Hatch') + '</h2><p class="lead">' + (ly
+    ? tx('Svenske vann er nye i HatchWatch. Klekkeanslag kommer.', 'Swedish lakes are new in HatchWatch. Hatch estimates are coming.')
+    : tx('Svenske vann er nye i HatchWatch. Isgang og klekkeanslag kommer når satellittdatoene for Sverige er regnet ut.', 'Swedish lakes are new in HatchWatch. Ice-out and hatch estimates will come once the satellite dates for Sweden are worked out.')) + '</p></div>';
+  if (nyIs.length >= 2) {
+    var forste = isAar[0];
+    h += '<div class="card"><h2>' + tx('Isgang år for år', 'Ice-out year by year') + '</h2>' +
+      '<p class="lead">' + tx('Datoen isen gikk, målt av SMHIs observatører ved ' + esc(v.is_smhi.st) + '.', 'The date the ice went out, observed by SMHI at ' + esc(v.is_smhi.st) + '.') + '</p>' +
+      yrsSvg(isg, nyIs, med, ly) +
+      '<p class="note">' + tx('SMHI (Islossning, CC BY 4.0). Viser år fra 1991; målingene her går tilbake til ' + forste + ' (' + isAar.length + ' år). Vintre der isen gikk før nyttår er ikke med.',
+                           'SMHI (ice break-up, CC BY 4.0). Shows years from 1991; measurements here go back to ' + forste + ' (' + isAar.length + ' years). Winters when the ice went out before New Year are left out.') + '</p></div>';
+  }
   h += '<div class="card"><h2>' + tx('Registrerte arter', 'Recorded species') + '</h2><div id="fisk"></div>' + arterHtml(v.arter) + '</div>';
+  // Snø (punkt 6) og dybde: målt dybdekart hos SMHI der det finnes, ellers bare HydroLAKES' beregning
+  h += '<div class="card" id="snoCard"><h2>' + tx('Snø ved vannet', 'Snow at the lake') + '</h2><div id="sno" class="skel">' + tx('Henter snødata…', 'Fetching snow data…') + '</div></div>';
+  h += '<div class="card"><h2>' + tx('Dybde', 'Depth') + '</h2>' +
+    '<p class="lead">' + tx('Middeldyp ', 'Mean depth ') + '<b>' + dypTxt + '</b>. ' +
+    tx('Tallet er beregnet ut fra terrenget rundt vannet (HydroLAKES), ikke målt. I vår test mot NVEs målte dyp i Norge bommet beregningen typisk med rundt en tredjedel.', 'The figure is modelled from the terrain around the lake (HydroLAKES), not measured. In our test against measured depths in Norway, it was typically off by about a third.') + '</p>' +
+    (v.smhi ? '<div class="row2"><a class="hw-btn ghost" href="https://vattenwebb.smhi.se/svarwebb/rest/downloadmap/' + encodeURIComponent(v.smhi) + '" target="_blank" rel="noopener">' + tx('Last ned målt dybdekart (SMHI)', 'Download measured depth map (SMHI)') + '</a></div>' +
+      '<p class="note">' + tx('Dybdekartet kommer fra SMHIs damm- och sjöregister (zip med bilde eller pdf). Kvaliteten varierer fra kart til kart.', 'The depth map comes from SMHI\'s dam and lake register (zip with image or pdf). Quality varies from map to map.') + '</p>' : '') +
+    '</div>';
   h += '<div class="card"><h2>' + tx('Kart', 'Map') + '</h2><div id="mini"></div><div class="row2"><a class="hw-btn primary" href="/?vann=se' + ID + '">' + tx('Vis i kartet', 'Show on the map') + '</a></div></div>';
-  h += '<p class="note">' + tx('Vann og middeldyp: HydroLAKES (beregnet dyp). Navn: OpenStreetMap. Arter og fisk: Artportalen (SLU Artdatabanken) via GBIF. Berggrunn: SGU. Kart: OpenStreetMap. <a href="/om.html#kilder">Alle kilder</a>',
-    'Lake and mean depth: HydroLAKES (modelled depth). Names: OpenStreetMap. Species and fish: Artportalen (SLU Swedish Species Information Centre) via GBIF. Bedrock: Geological Survey of Sweden (SGU). Map: OpenStreetMap. <a href="/om.html#kilder">All sources</a>') + '</p>';
+  h += '<p class="note">' + tx('Vann og beregnet dyp: HydroLAKES. Navn: OpenStreetMap og SMHI. Isgang og dybdekart: SMHI. Snø: ERA5-Land (Copernicus) via Open-Meteo. Arter og fisk: Artportalen (SLU Artdatabanken) via GBIF. Berggrunn: SGU. Kart: OpenStreetMap. <a href="/om.html#kilder">Alle kilder</a>',
+    'Lake and modelled depth: HydroLAKES. Names: OpenStreetMap and SMHI. Ice-out and depth maps: SMHI. Snow: ERA5-Land (Copernicus) via Open-Meteo. Species and fish: Artportalen (SLU Swedish Species Information Centre) via GBIF. Bedrock: Geological Survey of Sweden (SGU). Map: OpenStreetMap. <a href="/om.html#kilder">All sources</a>') + '</p>';
   main.innerHTML = h;
   miniMapSE(v);
   favOppsett(navn);
   visFisk(v.fisk || []);
+  hentSnoSE(v);
 }
-function miniMapSE(v) {
+// Finsk vann (2026-10-17): som det svenske, men dypet er målt og isgangen notert av Sykes observatører
+function renderFI(v) {
+  var navn = v.navn || tx('Navnløst vann', 'Unnamed lake');
+  document.title = navn + ' — HatchWatch';
+  var h = '<div class="hw-eyebrow gold">' + tx('Vann · Finland', 'Lake · Finland') + '</div>';
+  h += '<h1>' + esc(navn) + '</h1>';
+  h += '<div class="sub">' + [v.moh != null ? v.moh + ' ' + MOH : '', num(v.ha, v.ha < 100 ? 1 : 0) + ' ha'].filter(Boolean).join(' · ') + '</div>';
+  // Notert isgang fra Syke (finland/skript/f4_isgang_syke.py): «vanlig» = midtverdi av år fra 1991 (minst fem)
+  var isA = (v.is_syke && v.is_syke.aar) || {}, isAar = Object.keys(isA).map(Number).sort(function (a, b) { return a - b; });
+  var nyIs = isAar.filter(function (y) { return y >= 1991; }), isg = {};
+  nyIs.forEach(function (y) { isg[y] = [isA[y], 0]; });
+  var ly = nyIs.length ? nyIs[nyIs.length - 1] : null;
+  var med = nyIs.length >= 5 ? Math.round(median(nyIs.map(function (y) { return isA[y]; }))) : null;
+  var m = function (x) { return num(x, x < 10 ? 1 : 0) + ' m'; };
+  var dypStat = v.dyp != null
+    ? '<div class="stat"><div class="k">' + tx('Middeldyp', 'Mean depth') + '</div><div class="v">' + m(v.dyp) + '</div><div class="s">' + (v.dmax != null ? tx('Målt. Største dyp ' + m(v.dmax) + '.', 'Measured. Max depth ' + m(v.dmax) + '.') : tx('Målt.', 'Measured.')) + '</div></div>'
+    : v.dmax != null ? '<div class="stat"><div class="k">' + tx('Største dyp', 'Max depth') + '</div><div class="v">' + m(v.dmax) + '</div><div class="s">' + tx('Målt.', 'Measured.') + '</div></div>'
+    : '<div class="stat"><div class="k">' + tx('Dyp', 'Depth') + '</div><div class="v">–</div><div class="s">' + tx('Ikke målt.', 'Not measured.') + '</div></div>';
+  h += '<div class="hero">' + (ly
+    ? '<div class="stat"><div class="k">' + tx('Isgang ', 'Ice-out ') + ly + '</div><div class="v water">' + fmt(ly, isA[ly]) + '</div><div class="s">' + tx('Notert av Syke.', 'Observed by Syke.') + '</div></div>' +
+      '<div class="stat"><div class="k">' + tx('Vanlig isgang', 'Usual ice-out') + '</div><div class="v">' + (med != null ? fmt(ly, med) : '–') + '</div><div class="s">' + (med != null ? tx('midtverdi for ' + nyIs.length + ' år', 'median of ' + nyIs.length + ' years') : tx('for få år ennå', 'too few years yet')) + '</div></div>'
+    : '<div class="stat"><div class="k">' + tx('Isgang', 'Ice-out') + '</div><div class="v">' + tx('Kommer', 'Coming') + '</div><div class="s">' + tx('Fra satellitt, som i Norge.', 'From satellite, as in Norway.') + '</div></div>' + dypStat) +
+    '</div>';
+  h += '<div class="card"><h2>' + tx('Klekking', 'Hatch') + '</h2><p class="lead">' + (ly
+    ? tx('Finske vann er nye i HatchWatch. Klekkeanslag kommer.', 'Finnish lakes are new in HatchWatch. Hatch estimates are coming.')
+    : tx('Finske vann er nye i HatchWatch. Isgang og klekkeanslag kommer når satellittdatoene for Finland er regnet ut.', 'Finnish lakes are new in HatchWatch. Ice-out and hatch estimates will come once the satellite dates for Finland are worked out.')) + '</p></div>';
+  if (nyIs.length >= 2) {
+    var forste = isAar[0];
+    h += '<div class="card"><h2>' + tx('Isgang år for år', 'Ice-out year by year') + '</h2>' +
+      '<p class="lead">' + tx('Datoen isen gikk, notert av Sykes observatører ved ' + esc(v.is_syke.st) + '.', 'The date the ice went out, observed by Syke at ' + esc(v.is_syke.st) + '.') + '</p>' +
+      yrsSvg(isg, nyIs, med, ly) +
+      '<p class="note">' + tx('Syke (jäänlähtö, CC BY 4.0): datoen isen var borte fra hele synsfeltet til observatøren. Viser år fra 1991; noteringene her går tilbake til ' + forste + ' (' + isAar.length + ' år).',
+                           'Syke (ice break-up, CC BY 4.0): the date the ice was gone from the observer\'s whole view. Shows years from 1991; the records here go back to ' + forste + ' (' + isAar.length + ' years).') + '</p></div>';
+  }
+  h += '<div class="card"><h2>' + tx('Registrerte arter', 'Recorded species') + '</h2><div id="fisk"></div>' + arterHtml(v.arter) + '</div>';
+  h += '<div class="card" id="snoCard"><h2>' + tx('Snø ved vannet', 'Snow at the lake') + '</h2><div id="sno" class="skel">' + tx('Henter snødata…', 'Fetching snow data…') + '</div></div>';
+  h += '<div class="card"><h2>' + tx('Dybde', 'Depth') + '</h2><p class="lead">' + (v.dyp != null || v.dmax != null
+    ? [v.dyp != null ? tx('Middeldyp <b>' + m(v.dyp) + '</b>', 'Mean depth <b>' + m(v.dyp) + '</b>') : '', v.dmax != null ? tx('største dyp <b>' + m(v.dmax) + '</b>', 'max depth <b>' + m(v.dmax) + '</b>') : ''].filter(Boolean).join(', ').replace(/^./, function (c) { return c.toUpperCase(); }) + '. ' +
+      tx('Tallene er målt (loddet) og kommer fra Sykes innsjøregister.', 'The figures are measured (sounded) and come from Syke\'s lake register.')
+    : tx('Sykes innsjøregister har ikke målt dybde for dette vannet.', 'Syke\'s lake register has no measured depth for this lake.')) + '</p></div>';
+  h += '<div class="card"><h2>' + tx('Kart', 'Map') + '</h2><div id="mini"></div><div class="row2"><a class="hw-btn primary" href="/?vann=fi' + ID + '">' + tx('Vis i kartet', 'Show on the map') + '</a></div></div>';
+  h += '<p class="note">' + tx('Vann, navn, målt dyp og isgang: Syke (Finlands miljøinstitutt, CC BY 4.0). Snø: ERA5-Land (Copernicus) via Open-Meteo. Arter og fisk: Laji.fi (FinBIF), Syke og Luke m.fl. via GBIF. Kart: OpenStreetMap. <a href="/om.html#kilder">Alle kilder</a>',
+    'Lake, names, measured depth and ice-out: Syke (Finnish Environment Institute, CC BY 4.0). Snow: ERA5-Land (Copernicus) via Open-Meteo. Species and fish: Laji.fi (FinBIF), Syke, Luke and others via GBIF. Map: OpenStreetMap. <a href="/om.html#kilder">All sources</a>') + '</p>';
+  main.innerHTML = h;
+  miniMapSE(v, true);
+  favOppsett(navn);
+  visFisk(v.fisk || []);
+  hentSnoSE(v);
+}
+// Minikart for svenske og finske vann (fi = true: finland.pmtiles), OpenFreeMap under — Kartverket dekker ikke dem
+function miniMapSE(v, fi) {
   if (!window.maplibregl || v.lat == null) { var m = document.getElementById('mini'); if (m) m.style.display = 'none'; return; }
   var protocol = new pmtiles.Protocol(); maplibregl.addProtocol('pmtiles', protocol.tile);
+  var lag = fi ? 'vann_fi' : 'vann_se';
   var map = new maplibregl.Map({
     container: 'mini', interactive: false, attributionControl: false,
     preserveDrawingBuffer: /^(localhost|127\.0\.0\.1)$/.test(location.hostname),
     center: [v.lon, v.lat], zoom: v.ha > 2000 ? 9.5 : v.ha > 300 ? 11 : v.ha > 60 ? 12.3 : 13.3,
     style: {
       version: 8, glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
-      sources: { omt: { type: 'vector', url: 'https://tiles.openfreemap.org/planet' }, se: { type: 'vector', url: 'pmtiles://' + location.origin + '/data/kart/sverige.pmtiles' } },
+      sources: { omt: { type: 'vector', url: 'https://tiles.openfreemap.org/planet' }, se: { type: 'vector', url: 'pmtiles://' + location.origin + '/data/kart/' + (fi ? 'finland' : 'sverige') + '.pmtiles' } },
       layers: [
         { id: 'bg', type: 'background', paint: { 'background-color': '#f4f1e8' } },
         { id: 'wood', type: 'fill', source: 'omt', 'source-layer': 'landcover', filter: ['==', ['get', 'class'], 'wood'], paint: { 'fill-color': '#dce9cf' } },
         { id: 'water', type: 'fill', source: 'omt', 'source-layer': 'water', paint: { 'fill-color': '#bfe3f2' } },
         { id: 'road', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 9, filter: ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'minor', 'track']]], paint: { 'line-color': '#c9b9a0', 'line-width': 1 } },
-        { id: 'dette-kant2', type: 'line', source: 'se', 'source-layer': 'vann_se', filter: ['==', ['get', 'id'], ID], paint: { 'line-color': '#0b1418', 'line-width': 4 } },
-        { id: 'dette-kant', type: 'line', source: 'se', 'source-layer': 'vann_se', filter: ['==', ['get', 'id'], ID], paint: { 'line-color': '#f2b84b', 'line-width': 2.5 } },
+        { id: 'dette-kant2', type: 'line', source: 'se', 'source-layer': lag, filter: ['==', ['get', 'id'], ID], paint: { 'line-color': '#0b1418', 'line-width': 4 } },
+        { id: 'dette-kant', type: 'line', source: 'se', 'source-layer': lag, filter: ['==', ['get', 'id'], ID], paint: { 'line-color': '#f2b84b', 'line-width': 2.5 } },
         { id: 'navn', type: 'symbol', source: 'omt', 'source-layer': 'water_name', layout: { 'text-field': ['get', 'name'], 'text-font': ['Noto Sans Italic'], 'text-size': 11 }, paint: { 'text-color': '#1f6f9f', 'text-halo-color': '#ffffff', 'text-halo-width': 1.3 } }
       ]
     }
   });
-  map.addControl(new maplibregl.AttributionControl({ compact: true, customAttribution: 'HydroLAKES · OpenStreetMap' }));
+  map.addControl(new maplibregl.AttributionControl({ compact: true, customAttribution: (fi ? 'Syke' : 'HydroLAKES') + ' · OpenStreetMap' }));
 }
 
 // ═══ FISK (2026-10-15, Stian: «alle registrerte fiskearter, vis siste funndato») ═══
@@ -348,7 +430,7 @@ function visFisk(seListe) {
       }).join('') + '</div>';
     }
     h += '<p class="note">' + (liste.length ? tx('Årstallet er siste registrerte funn. ', 'The year is the latest record. ') : tx('Ingen fiskefunn er koblet til dette vannet ennå. ', 'No fish records are linked to this lake yet. ')) +
-      (harOrret || SE ? '' : tx('Ørret finnes i de fleste norske vann, selv om ingen har registrert den her.', 'Brown trout lives in most Norwegian lakes, even if nobody has recorded it here.')) + '</p></div>';
+      (harOrret || SE || FIN ? '' : tx('Ørret finnes i de fleste norske vann, selv om ingen har registrert den her.', 'Brown trout lives in most Norwegian lakes, even if nobody has recorded it here.')) + '</p></div>';
     el.innerHTML = h;
   }).catch(function () {});
 }
@@ -400,7 +482,7 @@ function hentBerggrunn(v) {
 // {vatnlnr: [maksdyp_m, middeldyp_m, oppmålt_år, pdf, ekvidistanse_m, digitale_koter 0/1]}.
 // Digitale koter vises i kartet (forsiden og minikartet) rett fra NVEs WMS; de andre har bare PDF.
 var NVE_WMS = 'https://kart.nve.no/enterprise/services/Innsjodatabase2/MapServer/WMSServer?service=WMS&version=1.3.0&request=GetMap&styles=&format=image/png&transparent=true&crs=EPSG:3857&width=256&height=256&bbox={bbox-epsg-3857}&layers=';
-var dybdeP = SE ? Promise.resolve(null) : fetch('/data/kart/dybde.json').then(function (r) { return r.ok ? r.json() : {}; }).then(function (j) { return j[String(ID)] || null; }).catch(function () { return null; });
+var dybdeP = SE || FIN ? Promise.resolve(null) : fetch('/data/kart/dybde.json').then(function (r) { return r.ok ? r.json() : {}; }).then(function (j) { return j[String(ID)] || null; }).catch(function () { return null; });
 function dm(x) { return EN ? String(Math.round(x * 10) / 10) : String(Math.round(x * 10) / 10).replace('.', ','); }
 function visDybde() {
   dybdeP.then(function (d) {
@@ -458,31 +540,50 @@ function hentSno(v) {
     .then(function (j) {
       var serie = {}, d0 = new Date(YEAR - 5, 0, 1);
       (j.Data || []).forEach(function (val, i) { if (val !== j.NoDataValue && val != null) { var d = new Date(d0); d.setDate(d.getDate() + i); serie[ymd(d)] = val; } });
-      var naa = serie[ymd(igaar)];
-      var aar = [], h = '';
-      for (var y = YEAR - 5; y <= YEAR; y++) aar.push({ y: y, r: snofriDag(serie, y) });
-      var tidligere = aar.filter(function (a) { return a.y < YEAR && a.r.doy; }).map(function (a) { return a.r.doy; });
-      var vanlig = tidligere.length >= 3 ? Math.round(median(tidligere)) : null;
-      var iaar = aar[aar.length - 1].r, ifjor = aar[aar.length - 2].r;
-      if (aar.every(function (a) { return a.r.ingen; })) {
-        h = '<p class="lead">' + tx('Lite eller ingen snø i ruta rundt vannet de siste vintrene.', 'Little or no snow in the grid cell around the lake in recent winters.') + '</p>';
-      } else {
-        var mnd = TODAY.getMonth();
-        if (naa != null && naa >= 1 && mnd <= 6) h += '<div class="hero" style="margin-top:8px"><div class="stat"><div class="k">' + tx('Snødybde nå', 'Snow depth now') + '</div><div class="v">' + Math.round(naa) + '<small>cm</small></div><div class="s">' + tx('modellert for ruta', 'modelled for the grid cell') + '</div></div>' +
-          (vanlig ? '<div class="stat"><div class="k">' + tx('Snøen går vanligvis', 'Snow usually gone') + '</div><div class="v">' + fmt(YEAR, vanlig) + '</div><div class="s">' + tx('midtverdi siste vintre', 'median of recent winters') + '</div></div>' : '') + '</div>';
-        var linjer = [];
-        if (iaar.doy) linjer.push(tx('Snøen gikk ved vannet <b>' + fmt(YEAR, iaar.doy) + '</b> i år', 'The snow was gone at the lake on <b>' + fmt(YEAR, iaar.doy) + '</b> this year'));
-        else if (iaar.ligger && mnd <= 6) linjer.push(tx('Snøen ligger fortsatt', 'The snow is still lying'));
-        if (ifjor.doy) linjer.push(tx('i fjor ' + fmt(YEAR - 1, ifjor.doy), 'last year ' + fmt(YEAR - 1, ifjor.doy)));
-        if (vanlig && !(naa != null && naa >= 1 && mnd <= 6)) linjer.push(tx('vanligvis ' + fmt(YEAR, vanlig), 'usually ' + fmt(YEAR, vanlig)));
-        if (linjer.length) { var s = linjer.join(', '); h += '<p class="lead">' + s.charAt(0).toUpperCase() + s.slice(1) + '.</p>'; }
-      }
       var hoydeNote = j.Altitude != null && v.moh != null && Math.abs(j.Altitude - v.moh) > 100
         ? tx(' Ruta ligger i snitt på ' + j.Altitude + ' moh, vannet på ' + v.moh + ' moh, så snøen ved selve vannet kan avvike.', ' The grid cell averages ' + j.Altitude + ' m, the lake is at ' + v.moh + ' m, so snow at the lake itself may differ.') : '';
-      h += '<p class="note">' + tx('seNorge (NVE og MET): modellert snødybde i et rutenett på 1 × 1 km.', 'seNorge (NVE and MET): modelled snow depth on a 1 × 1 km grid.') + hoydeNote + '</p>';
-      el.className = ''; el.innerHTML = h;
+      tegnSno(el, serie, serie[ymd(igaar)], tx('seNorge (NVE og MET): modellert snødybde i et rutenett på 1 × 1 km.', 'seNorge (NVE and MET): modelled snow depth on a 1 × 1 km grid.') + hoydeNote);
     })
     .catch(function () { el.className = ''; el.innerHTML = '<p class="lead">' + tx('Fikk ikke hentet snødata akkurat nå.', 'Could not fetch snow data right now.') + '</p>'; });
+}
+// Svenske vann (2026-10-17, Stian «kjør» punkt 6): seNorge dekker bare Norge, så snødybden kommer fra ERA5-Land
+// (Copernicus) via Open-Meteo: daglig snitt, rutenett ca. 9 × 9 km, noen dagers forsinkelse.
+function hentSnoSE(v) {
+  var el = document.getElementById('sno'); if (!el) return;
+  var igaar = new Date(TODAY); igaar.setDate(igaar.getDate() - 1);
+  fetch('https://archive-api.open-meteo.com/v1/archive?latitude=' + v.lat.toFixed(4) + '&longitude=' + v.lon.toFixed(4) + '&start_date=' + (YEAR - 5) + '-01-01&end_date=' + ymd(igaar) + '&daily=snow_depth_mean&models=era5_land&timezone=Europe%2FBerlin')
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function (j) {
+      var d = j.daily || {}, serie = {}, siste = null;
+      (d.time || []).forEach(function (t, i) { var x = d.snow_depth_mean[i]; if (x != null) { serie[t] = Math.round(x * 1000) / 10; siste = t; } });
+      // «nå» = siste døgn med data, hvis det er under en uke gammelt
+      var naa = siste && (TODAY - new Date(siste)) / 864e5 <= 7 ? serie[siste] : null;
+      tegnSno(el, serie, naa, tx('ERA5-Land (Copernicus) via Open-Meteo: modellert snødybde i et grovt rutenett (ca. 9 × 9 km), så snøen ved selve vannet kan avvike.', 'ERA5-Land (Copernicus) via Open-Meteo: modelled snow depth on a coarse grid (about 9 × 9 km), so snow at the lake itself may differ.'));
+    })
+    .catch(function () { el.className = ''; el.innerHTML = '<p class="lead">' + tx('Fikk ikke hentet snødata akkurat nå.', 'Could not fetch snow data right now.') + '</p>'; });
+}
+// Felles visning for snøkortet (seNorge i Norge, ERA5-Land i Sverige). serie: { 'YYYY-MM-DD': cm }
+function tegnSno(el, serie, naa, kilde) {
+  var aar = [], h = '';
+  for (var y = YEAR - 5; y <= YEAR; y++) aar.push({ y: y, r: snofriDag(serie, y) });
+  var tidligere = aar.filter(function (a) { return a.y < YEAR && a.r.doy; }).map(function (a) { return a.r.doy; });
+  var vanlig = tidligere.length >= 3 ? Math.round(median(tidligere)) : null;
+  var iaar = aar[aar.length - 1].r, ifjor = aar[aar.length - 2].r;
+  if (aar.every(function (a) { return a.r.ingen; })) {
+    h = '<p class="lead">' + tx('Lite eller ingen snø i ruta rundt vannet de siste vintrene.', 'Little or no snow in the grid cell around the lake in recent winters.') + '</p>';
+  } else {
+    var mnd = TODAY.getMonth();
+    if (naa != null && naa >= 1 && mnd <= 6) h += '<div class="hero" style="margin-top:8px"><div class="stat"><div class="k">' + tx('Snødybde nå', 'Snow depth now') + '</div><div class="v">' + Math.round(naa) + '<small>cm</small></div><div class="s">' + tx('modellert for ruta', 'modelled for the grid cell') + '</div></div>' +
+      (vanlig ? '<div class="stat"><div class="k">' + tx('Snøen går vanligvis', 'Snow usually gone') + '</div><div class="v">' + fmt(YEAR, vanlig) + '</div><div class="s">' + tx('midtverdi siste vintre', 'median of recent winters') + '</div></div>' : '') + '</div>';
+    var linjer = [];
+    if (iaar.doy) linjer.push(tx('Snøen gikk ved vannet <b>' + fmt(YEAR, iaar.doy) + '</b> i år', 'The snow was gone at the lake on <b>' + fmt(YEAR, iaar.doy) + '</b> this year'));
+    else if (iaar.ligger && mnd <= 6) linjer.push(tx('Snøen ligger fortsatt', 'The snow is still lying'));
+    if (ifjor.doy) linjer.push(tx('i fjor ' + fmt(YEAR - 1, ifjor.doy), 'last year ' + fmt(YEAR - 1, ifjor.doy)));
+    if (vanlig && !(naa != null && naa >= 1 && mnd <= 6)) linjer.push(tx('vanligvis ' + fmt(YEAR, vanlig), 'usually ' + fmt(YEAR, vanlig)));
+    if (linjer.length) { var s = linjer.join(', '); h += '<p class="lead">' + s.charAt(0).toUpperCase() + s.slice(1) + '.</p>'; }
+  }
+  h += '<p class="note">' + kilde + '</p>';
+  el.className = ''; el.innerHTML = h;
 }
 
 // ═══ MINE VANN OG VARSLER (2026-10-14) ═══
@@ -808,7 +909,7 @@ function yrsSvg(isg, years, med, ly) {
     var r = isg[yy], cx = L + cw * i + cw / 2, w = (r[1] || 0) / 2;
     if (w) s += '<line class="iv" x1="' + cx + '" x2="' + cx + '" y1="' + y(r[0] - w) + '" y2="' + y(r[0] + w) + '"/>';
     s += '<circle class="pt' + (yy === ly ? ' cur' : '') + '" cx="' + cx + '" cy="' + y(r[0]) + '" r="5.5"><title>' + yy + ': ' + fmt(yy, r[0]) + (w ? ' ±' + Math.max(1, Math.round(w)) + ' d' : '') + '</title></circle>';
-    s += '<text x="' + cx + '" y="' + (H + 14) + '" text-anchor="middle">' + String(yy).slice(2) + '</text>';
+    if (n <= 12 || yy % 5 === 0) s += '<text x="' + cx + '" y="' + (H + 14) + '" text-anchor="middle">' + String(yy).slice(2) + '</text>';   // lange serier (SMHI): hvert 5. år
   });
   return s + '</svg>' + (med != null ? '<div class="note" style="margin-top:4px">' + tx('Stiplet linje: vanlig isgang (midtverdi).', 'Dashed line: usual ice-out (median).') + '</div>' : '');
 }
@@ -825,7 +926,8 @@ function arterHtml(list) {
       return '<span class="sp' + (KEY_SPECIES.indexOf(x[0]) >= 0 ? ' key' : '') + '" title="' + esc(x[0]) + ' · ' + x[2] + tx(' funn, sist ', ' records, last ') + (x[3] || '–') + '">' + artsnavn(x[0], x[5]) + '</span>';
     }).join('') + '</div></div>';
   });
-  return h + '<p class="note">' + (SE ? tx('Artportalen (SLU Artdatabanken) via GBIF. ', 'Artportalen (SLU Swedish Species Information Centre) via GBIF. ') : '') + tx((SE ? '' : 'Artsdatabanken via GBIF. ') + 'Registrert betyr at minst ett funn er koblet til vannet, ikke at arten sikkert finnes der i dag. Gull er arter som er viktige for fluefiske.', (SE ? '' : 'Artsdatabanken via GBIF. ') + 'Recorded means at least one record is linked to the lake, not that the species is surely there today. Gold marks species that matter for fly fishing.') + '</p>';
+  return h + '<p class="note">' + (SE ? tx('Artportalen (SLU Artdatabanken) via GBIF. ', 'Artportalen (SLU Swedish Species Information Centre) via GBIF. ') : '') +
+    (FIN ? tx('Laji.fi (FinBIF), Syke og Luke m.fl. via GBIF. ', 'Laji.fi (FinBIF), Syke, Luke and others via GBIF. ') : '') + tx((SE || FIN ? '' : 'Artsdatabanken via GBIF. ') + 'Registrert betyr at minst ett funn er koblet til vannet, ikke at arten sikkert finnes der i dag. Gull er arter som er viktige for fluefiske.', (SE ? '' : 'Artsdatabanken via GBIF. ') + 'Recorded means at least one record is linked to the lake, not that the species is surely there today. Gold marks species that matter for fly fishing.') + '</p>';
 }
 
 function miniMap(v) {

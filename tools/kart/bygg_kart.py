@@ -8,6 +8,8 @@ Bygger kartdata for det nye HatchWatch-kartet (MapLibre).
   python tools/kart/bygg_kart.py elver      # bare elvedata (laksesidene)
   python tools/kart/bygg_kart.py vann       # bare vannsidene (isgang + arter per vann; kjøres også av isgang/arter)
   python tools/kart/bygg_kart.py dybde      # bare dybdekart-tabellen fra NVE (data/kart/dybde.json)
+  python tools/kart/bygg_kart.py finland    # finske vann (bygg_finland.py): fi/vann/*.json, fi/navn.json, finland.pmtiles
+                                            # («finland-vann» = bare JSON-filene, sekunder)
   python tools/kart/bygg_kart.py isgang-lokal  # GitHub-jobben isgang-gee: fylkesfilene fra disk, bytter bare isgangen
                                                # i vannfilene (ingen geojson/shapely). Jobben EIER isgang_*.json og
                                                # vann/*.json i repoet; deploy_now.py laster dem bare opp første gang.
@@ -451,7 +453,7 @@ def bygg_vann():
     print(f"vann: {len(vann_js['features'])} vann i {VANN_GRUPPER} filer, snitt {tot // VANN_GRUPPER // 1024} kB per fil")
 
 
-def bygg_sverige():
+def bygg_sverige(fliser=True):
     """Svenske vann (2026-10-17, Stian: «publiser Sverige allerede nå»). Leser sverige/data (s1–s4) og skriver:
     data/kart/se/vann/<hylak_id % 64>.json  {id: {navn, moh, ha, dyp, lat, lon, arter, fisk}}
         arter = [[latin, gruppe d/v/m/s/a, funn, siste_år, sikker, norsk]] (samme form som norske arter)
@@ -496,12 +498,42 @@ def bygg_sverige():
     if os.path.exists(bfil):
         for r in csv.DictReader(open(bfil, encoding="utf-8-sig"), delimiter=";"):
             berg[int(r["hylak_id"])] = [int(r["klasse"]), r["bergart_no"]]
+    # Dybdekart hos SMHI (s6_dybdekart.py): SJOID, vi lenker til SMHIs nedlasting
+    smhi = {}
+    dfil = os.path.join(sv, "smhi_dybdekart_se.csv")
+    if os.path.exists(dfil):
+        for r in csv.DictReader(open(dfil, encoding="utf-8-sig"), delimiter=";"):
+            smhi[int(r["hylak_id"])] = r["sjoid"]
+    # Målt isgang fra SMHI (s7_isgang_smhi.py): {"st": målepunkt, "aar": {år: dag i året}}. Flere målepunkter i samme
+    # vann: det med flest år fra 1991 (deretter flest år totalt).
+    is_smhi = {}
+    ifil = os.path.join(sv, "isgang_smhi_se.csv")
+    if os.path.exists(ifil):
+        per = collections.defaultdict(lambda: collections.defaultdict(dict))
+        navn_st = {}
+        for r in csv.DictReader(open(ifil, encoding="utf-8-sig"), delimiter=";"):
+            per[int(r["hylak_id"])][r["stasjon_id"]][int(r["aar"])] = int(r["dag"])
+            navn_st[r["stasjon_id"]] = r["stasjon"]
+        for hid, st in per.items():
+            sid = max(st, key=lambda s: (sum(1 for y in st[s] if y >= 1991), len(st[s])))
+            is_smhi[hid] = {"st": navn_st[sid].title(), "aar": {str(y): d for y, d in sorted(st[sid].items())}}
     grupper = [dict() for _ in range(VANN_GRUPPER)]
     for hid, a in attr.items():
         rec = {"navn": a["navn"] or "", "moh": round(float(a["hoyde_m"])) if a["hoyde_m"] else None, "ha": float(a["areal_ha"]),
                "dyp": round(float(a["middeldyp_m"]), 1) if a["middeldyp_m"] else None, "lat": float(a["lat"]), "lon": float(a["lon"])}
         if hid in berg:
             rec["berg"] = berg[hid]
+        if hid in smhi:
+            rec["smhi"] = smhi[hid]
+        if hid in is_smhi:
+            rec["is_smhi"] = is_smhi[hid]
+            # SMHIs navn har riktige svenske bokstaver («Tornetrask» → «Torneträsk»), og gir navn til navnløse vann
+            # når målepunktet bare heter som sjøen (ett ord; «Allgunnen Lagan» = sjø + elv brukes ikke)
+            import unicodedata
+            fold = lambda s: "".join(c for c in unicodedata.normalize("NFKD", s.lower()) if not unicodedata.combining(c))
+            st = is_smhi[hid]["st"]
+            if (rec["navn"] and fold(rec["navn"]) == fold(st)) or (not rec["navn"] and " " not in st):
+                rec["navn"] = st
         if arter.get(hid):
             rec["arter"] = sorted(arter[hid], key=lambda x: -x[2])
         if fisk.get(hid):
@@ -513,6 +545,20 @@ def bygg_sverige():
         with open(os.path.join(mappe, f"{i}.json"), "w", encoding="utf-8") as fh:
             json.dump(g, fh, ensure_ascii=False, separators=(",", ":"))
     print(f"sverige: {len(attr)} vann i {VANN_GRUPPER} filer, {sum(1 for h in attr if arter.get(h))} med insekter, {sum(1 for h in attr if fisk.get(h))} med fisk")
+    # Søk (2026-10-17): navngitte svenske vann [navn, id, lat·1e4, lon·1e4, ha], størst først
+    navn = sorted(([r["navn"], int(hid), round(r["lat"] * 1e4), round(r["lon"] * 1e4), round(r["ha"])]
+                   for g in grupper for hid, r in g.items() if r["navn"]), key=lambda x: -x[4])
+    with open(os.path.join(OUT, "se", "navn.json"), "w", encoding="utf-8") as fh:
+        json.dump(navn, fh, ensure_ascii=False, separators=(",", ":"))
+    # Dagboka (2026-10-17): nærmeste svenske vann, samme flate form som vannpunkt.json [id, lat·1e4, lon·1e4, ...]
+    flat = []
+    for hid, a in attr.items():
+        flat += [hid, round(float(a["lat"]) * 1e4), round(float(a["lon"]) * 1e4)]
+    with open(os.path.join(OUT, "se", "vannpunkt.json"), "w", encoding="utf-8") as fh:
+        json.dump(flat, fh, separators=(",", ":"))
+    print(f"  se/navn.json: {len(navn)} navn; se/vannpunkt.json: {len(flat) // 3} vann")
+    if not fliser:
+        return
 
     # Kartfliser (samme oppskrift som bygg_fliser, egen fil så den norske ikke må bygges på nytt)
     R = 6378137.0
@@ -881,10 +927,16 @@ if __name__ == "__main__":
         bygg_vann()
     if hva in ("alt", "vann", "punkt"):
         bygg_punkt()
-    if hva == "sverige":               # svenske vann (sverige/data fra sverige/skript/s1–s5)
+    if hva == "sverige":               # svenske vann (sverige/data fra sverige/skript/s1–s6)
         bygg_sverige()
+    if hva == "sverige-vann":          # bare vannfilene, søk og punkter (sekunder; ingen kartfliser)
+        bygg_sverige(fliser=False)
     if hva in ("sverige", "sverige-kalk"):   # kalk i berggrunnen, Sverige (s5_berggrunn.py)
         bygg_sverige_kalk()
+    if hva in ("finland", "finland-vann"):   # finske vann (finland/data fra finland/skript/f1–f5), egen fil bygg_finland.py
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import bygg_finland
+        bygg_finland.bygg(fliser=hva == "finland")
     if hva in ("alt", "elver"):
         bygg_elver()
     if hva in ("alt", "fliser"):

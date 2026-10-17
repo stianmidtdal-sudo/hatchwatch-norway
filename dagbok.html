@@ -159,23 +159,45 @@ function avstand(la1, lo1, la2, lo2) {
   const a = Math.sin(dla / 2) ** 2 + Math.cos(la1 * r) * Math.cos(la2 * r) * Math.sin(dlo / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(a));
 }
+// Svenske og finske vann (2026-10-17, Stian «kjør» / «KJØR FINLAND»): data/kart/<land>/vannpunkt.json og
+// <land>/vann/<id % 64>.json. Et utenlandsk vann har land: 'se' eller 'fi' (ID-ene er HydroLAKES- og Syke-nummer og
+// kan kollidere med NVEs). Nøkkel i lister og favoritter: «se<id>» / «fi<id>». Norske vann har ingen land.
+const LAND = {
+  se: { navn: () => tx('Sverige', 'Sweden'), inne: (lat, lon) => lat > 55 && lat < 69.3 && lon > 10.5 && lon < 24.5 },
+  fi: { navn: () => 'Finland', inne: (lat, lon) => lat > 59.4 && lat < 70.1 && lon > 19 && lon < 31.6 }
+};
+const punktLandP = {}, grupperLand = {};
+function punkterLand(land) { return punktLandP[land] || (punktLandP[land] = fetch(`/data/kart/${land}/vannpunkt.json`).then((r) => r.ok ? r.json() : Promise.reject()).catch((e) => { delete punktLandP[land]; throw e; })); }
+function vannRecLand(land, id) {
+  const g = id % 64, k = land + g;
+  return (grupperLand[k] || (grupperLand[k] = fetch(`/data/kart/${land}/vann/${g}.json`).then((r) => r.ok ? r.json() : Promise.reject()).catch((e) => { delete grupperLand[k]; throw e; })))
+    .then((j) => j[String(id)] || null);
+}
+const vannRecFor = (v) => v.land ? vannRecLand(v.land, v.id) : vannRec(v.id);
+const vKey = (v) => v ? (v.land ? v.land + v.id : String(v.id)) : '';
 async function naereVann(lat, lon) {
-  const f = await punkter(), kand = [];
-  for (let i = 0; i < f.length; i += 3) {
-    const la = f[i + 1] / 1e4, lo = f[i + 2] / 1e4;
-    if (Math.abs(la - lat) > 0.06 || Math.abs(lo - lon) > 0.12) continue;
-    kand.push({ id: f[i], d: avstand(lat, lon, la, lo) });
+  const kand = [];
+  const samle = (f, land) => {
+    for (let i = 0; i < f.length; i += 3) {
+      const la = f[i + 1] / 1e4, lo = f[i + 2] / 1e4;
+      if (Math.abs(la - lat) > 0.06 || Math.abs(lo - lon) > 0.12) continue;
+      kand.push({ id: f[i], land, d: avstand(lat, lon, la, lo) });
+    }
+  };
+  samle(await punkter(), '');
+  for (const land of Object.keys(LAND)) {
+    if (LAND[land].inne(lat, lon)) { try { samle(await punkterLand(land), land); } catch (e) { /* uten nett: bare norske */ } }
   }
   kand.sort((a, b) => a.d - b.d);
   const ut = [];
   for (const k of kand.slice(0, 6)) {
     if (k.d > 5000) break;
-    const v = await vannRec(k.id);
-    if (v) ut.push({ id: k.id, navn: v.navn || '', moh: v.moh, ha: v.ha, kommune: v.kommune, lat: v.lat, lon: v.lon, avst: Math.round(k.d) });
+    const v = await (k.land ? vannRecLand(k.land, k.id) : vannRec(k.id));
+    if (v) ut.push(Object.assign({ id: k.id, navn: v.navn || '', moh: v.moh, ha: v.ha, kommune: k.land ? LAND[k.land].navn() : v.kommune, lat: v.lat, lon: v.lon, avst: Math.round(k.d) }, k.land ? { land: k.land } : {}));
   }
   return ut;
 }
-function vannNavn(v) { return v ? (v.navn || tx('Vann uten navn', 'Unnamed lake') + ' (NVE ' + v.id + ')') : ''; }
+function vannNavn(v) { return v ? (v.navn || tx('Vann uten navn', 'Unnamed lake') + (v.land ? '' : ' (NVE ' + v.id + ')')) : ''; }
 
 // ── Vær (open-meteo) ─────────────────────────────────────────────────
 const RETN = EN ? ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] : ['N', 'NØ', 'Ø', 'SØ', 'S', 'SV', 'V', 'NV'];
@@ -218,6 +240,7 @@ function vaerTekst(w) {
 }
 
 // ── Berggrunn (NGU, samme spørring som vannsiden) ──────────────────────
+const KALK_NO = { 1: 'Svært kalkfattig', 2: 'Kalkfattig', 3: 'Intermediær', 4: 'Kalkrik', 5: 'Svært kalkrik' };
 const KALK_EN = { 1: 'Very lime-poor', 2: 'Lime-poor', 3: 'Intermediate', 4: 'Lime-rich', 5: 'Very lime-rich' };
 async function hentBerg(lat, lon) {
   const x = lon * 20037508.34 / 180, y = Math.log(Math.tan((90 + lat) * Math.PI / 360)) * 6378137, r = 50;
@@ -283,9 +306,16 @@ async function berik(id) {
       try { const w = await hentVaer(k.lat, k.lon, e.t); e = oppdater(id, (x) => { x.vaer = w; }); vis(id); } catch (err) {}
     }
     if (k && !e.berg) {
-      try { const b = await hentBerg(k.lat, k.lon); e = oppdater(id, (x) => { x.berg = b; }); vis(id); } catch (err) {}
+      try {
+        let b;
+        if (e.vann && e.vann.land) {   // svensk vann: SGU-bergart med vår kalkklasse fra vannfila (finske har ingen ennå)
+          const v = await vannRecLand(e.vann.land, e.vann.id), kl = v && v.berg && v.berg[0];
+          b = kl ? { kl, tekst: KALK_NO[kl], bergart: v.berg[1] || '' } : { kl: null };
+        } else b = await hentBerg(k.lat, k.lon);
+        e = oppdater(id, (x) => { x.berg = b; }); vis(id);
+      } catch (err) {}
     }
-    if (e.vann && (!e.modell || e.modell.vannId !== e.vann.id)) {
+    if (e.vann && !e.vann.land && (!e.modell || e.modell.vannId !== e.vann.id)) {   // modellen bare for norske vann
       try {
         const v = await vannRec(e.vann.id);
         if (v) {
@@ -303,7 +333,7 @@ async function berik(id) {
     }
   } finally { pagaar.delete(id); }
 }
-function mangler(e) { return (e.pos && !e.vannSjekket) || (koord(e) && (!e.vaer || !e.berg)) || (e.vann && !e.modell); }
+function mangler(e) { return (e.pos && !e.vannSjekket) || (koord(e) && (!e.vaer || !e.berg)) || (e.vann && !e.vann.land && !e.modell); }
 function berikAlle() { les().filter(mangler).forEach((e) => berik(e.id)); }
 
 // ── Bilder (2026-10-17, Stian) ───────────────────────────────────────
@@ -455,12 +485,15 @@ function arkHtml(e) {
     const ig = isgangTekst(e), f = faser(e);
     if (ig) auto.push(`<div class="rad"><span>${tx('Isgang', 'Ice-out')}</span><span>${ig}</span></div>`);
     if (f.length) auto.push(`<div class="rad"><span>${tx('Modellen', 'Model')}</span><span>${f.map((x) => `${x.navn} <b>${x.tekst}</b>`).join(' · ')}${e.modell.spinner ? ` · ${tx('spinnerfall i kveld', 'spinner fall tonight')} <b>${Math.round(e.modell.spinner * 100)} %</b>` : ''}<br><span class="liten">${tx('Anslag fra modellen, ikke observert. Gjelder bare arter som finnes i vannet.', 'Model estimates, not observations. Only apply to species that live in the lake.')}</span></span></div>`);
+    else if (e.vann.land === 'se') auto.push(`<div class="rad"><span>${tx('Modellen', 'Model')}</span><span>${tx('Anslag for svenske vann kommer.', 'Estimates for Swedish lakes are coming.')}</span></div>`);
+    else if (e.vann.land === 'fi') auto.push(`<div class="rad"><span>${tx('Modellen', 'Model')}</span><span>${tx('Anslag for finske vann kommer.', 'Estimates for Finnish lakes are coming.')}</span></div>`);
     else if (!e.modell) auto.push(`<div class="rad"><span>${tx('Modellen', 'Model')}</span><span>${tx('regner …', 'working …')}</span></div>`);
   } else if (e.vannSjekket && e.pos) auto.push(`<div class="liten">${tx('Ingen vann med data innen 1,5 km. Modellens anslag krever et vann.', 'No lake with data within 1.5 km. Model estimates need a lake.')}</div>`);
 
-  const valg = (e.naer || []).map((v) => `<option value="${v.id}"${e.vann && e.vann.id === v.id ? ' selected' : ''}>${esc(vannNavn(v))} (${v.avst < 1000 ? v.avst + ' m' : tall(v.avst / 1000) + ' km'})</option>`);
+  const valgt = vKey(e.vann);
+  const valg = (e.naer || []).map((v) => `<option value="${vKey(v)}"${valgt === vKey(v) ? ' selected' : ''}>${esc(vannNavn(v))} (${v.avst < 1000 ? v.avst + ' m' : tall(v.avst / 1000) + ' km'})</option>`);
   let favs = []; try { favs = JSON.parse(localStorage.getItem('hw_vann_favs') || '[]'); } catch (x) {}
-  const favValg = favs.filter((f) => !(e.naer || []).some((v) => v.id === +f.id)).map((f) => `<option value="${+f.id}"${e.vann && e.vann.id === +f.id ? ' selected' : ''}>${esc(f.navn || f.id)} (${tx('favoritt', 'favourite')})</option>`);
+  const favValg = favs.filter((f) => /^(se|fi)?\d+$/.test(String(f.id)) && !(e.naer || []).some((v) => vKey(v) === String(f.id))).map((f) => `<option value="${String(f.id)}"${valgt === String(f.id) ? ' selected' : ''}>${esc(f.navn || f.id)} (${tx('favoritt', 'favourite')})</option>`);
   const vannVelger = valg.length || favValg.length ? `<div class="felt"><label class="hw-eyebrow" for="fVann">${tx('Vann', 'Lake')}</label><select id="fVann"><option value="">${tx('Ikke et vann i lista', 'Not a lake in the list')}</option>${valg.join('')}${favValg.join('')}</select></div>` : '';
   const fiskRad = (f, i) => `<div class="fisk" data-i="${i}">
       <input type="text" list="fiskeliste" data-k="art" value="${esc(f.art)}" placeholder="${tx('Art', 'Species')}" aria-label="${tx('Art', 'Species')}">
@@ -471,7 +504,7 @@ function arkHtml(e) {
       <label class="ut"><input type="checkbox" data-k="ut"${f.ut ? ' checked' : ''}>${tx('Satt ut', 'Released')}</label>
     </div>`;
   const meld = e.vann && (e.obs.includes('klekking') || e.obs.includes('spinnerfall'))
-    ? `<a class="hw-btn ghost" href="/observasjon.html?vann=${e.vann.id}&navn=${encodeURIComponent(e.vann.navn || '')}${e.vann.moh != null ? '&moh=' + e.vann.moh : ''}">${tx('Meld til HatchWatch', 'Report to HatchWatch')}</a>` : '';
+    ? `<a class="hw-btn ghost" href="/observasjon.html?${e.vann.land ? '' : 'vann=' + e.vann.id + '&'}navn=${encodeURIComponent(e.vann.navn || '')}${e.vann.moh != null ? '&moh=' + e.vann.moh : ''}">${tx('Meld til HatchWatch', 'Report to HatchWatch')}</a>` : '';
   return `<div class="grep"></div>
     <div class="ark-hode"><h2 id="arkTittel">${tx('Logg', 'Log')}</h2><button class="lukk" type="button" id="arkLukk" aria-label="${tx('Lukk', 'Close')}">×</button></div>
     <div class="auto">${auto.join('')}</div>
@@ -509,7 +542,8 @@ function vis(id) {
 async function fyllFiskeliste(e) {
   const std = EN ? ['Brown trout', 'Arctic char', 'Grayling', 'Salmon', 'Pike', 'Perch', 'Whitefish'] : ['Ørret', 'Røye', 'Harr', 'Laks', 'Gjedde', 'Abbor', 'Sik'];
   let navn = [];
-  if (e && e.vann && !EN) { try { const r = await fetch(`/data/kart/fisk/${e.vann.id % 64}.json`); if (r.ok) { const j = await r.json(); navn = (j[String(e.vann.id)] || []).map((x) => x[1]).filter(Boolean); } } catch (x) {} }
+  if (e && e.vann && !EN && e.vann.land) { try { const v = await vannRecLand(e.vann.land, e.vann.id); navn = ((v && v.fisk) || []).map((x) => x[1]).filter(Boolean); } catch (x) {} }
+  else if (e && e.vann && !EN) { try { const r = await fetch(`/data/kart/fisk/${e.vann.id % 64}.json`); if (r.ok) { const j = await r.json(); navn = (j[String(e.vann.id)] || []).map((x) => x[1]).filter(Boolean); } } catch (x) {} }
   $('fiskeliste').innerHTML = [...new Set(navn.concat(std))].map((n) => `<option value="${esc(n)}">`).join('');
 }
 
@@ -547,11 +581,12 @@ $('ark').addEventListener('change', (ev) => {
     oppdater(id, (x) => { x.t = fraLokalInput(el.value); x.vaer = null; x.modell = null; });
     vis(id); berik(id);
   } else if (el.id === 'fVann') {
-    const vid = +el.value;
-    const e = hent(id), kjent = (e.naer || []).find((v) => v.id === vid);
-    const sett = (v) => { oppdater(id, (x) => { const gammelt = vannNavn(x.vann); x.vann = v; x.modell = null; if (!x.pos) { x.vaer = null; x.berg = null; } if (!x.sted || x.sted === gammelt) x.sted = v ? vannNavn(v) : ''; }); vis(id); fyllFiskeliste(hent(id)); berik(id); };
+    const key = el.value, land = /^(se|fi)\d/.test(key) ? key.slice(0, 2) : '', vid = +(land ? key.slice(2) : key);
+    const e = hent(id), kjent = (e.naer || []).find((v) => vKey(v) === key);
+    const sett = (v) => { oppdater(id, (x) => { const gammelt = vannNavn(x.vann); x.vann = v; x.modell = null; x.berg = null; if (!x.pos) { x.vaer = null; } if (!x.sted || x.sted === gammelt) x.sted = v ? vannNavn(v) : ''; }); vis(id); fyllFiskeliste(hent(id)); berik(id); };
     if (!vid) sett(null);
     else if (kjent) sett(kjent);
+    else if (land) vannRecLand(land, vid).then((v) => v && sett({ id: vid, land, navn: v.navn || '', moh: v.moh, ha: v.ha, kommune: LAND[land].navn(), lat: v.lat, lon: v.lon })).catch(() => {});
     else vannRec(vid).then((v) => v && sett({ id: vid, navn: v.navn || '', moh: v.moh, ha: v.ha, kommune: v.kommune, lat: v.lat, lon: v.lon })).catch(() => {});
   } else if (el.id === 'fBildeInn' && el.files && el.files.length) {
     const filer = [...el.files]; el.value = '';
@@ -585,13 +620,13 @@ function csv() {
   const fd = (e, k) => { const f = faser(e).find((x) => x.navn === k); return f ? f.tekst : ''; };
   const md = (e, k) => e.modell && e.modell[k] != null ? datoTekst(e.modell.S, e.modell[k], EN) : '';
   const hode = EN
-    ? ['Date', 'Time', 'Place', 'Lake', 'Lake ID (NVE)', 'Municipality', 'Altitude (m)', 'Area (ha)', 'Latitude', 'Longitude', 'GPS accuracy (m)', 'Temp (°C)', 'Wind (m/s)', 'Gusts (m/s)', 'Wind from', 'Cloud (%)', 'Precip (mm/h)', 'Humidity (%)', 'Pressure (hPa)', 'Pressure change 3 h (hPa)', 'Sunset', 'Bedrock', 'Ice-out', 'Ice-out source', 'Days since ice-out', 'Model: marginata start', 'Model: marginata', 'Model: vespertina', 'Model: vulgata start', 'Model: vulgata', 'Model: grandis from', 'Model: spinner fall chance tonight (%)', 'Seen', 'Insects', 'Fish caught', 'Catch', 'Notes', 'Photos']
-    : ['Dato', 'Tid', 'Sted', 'Vann', 'Vann-ID (NVE)', 'Kommune', 'Moh', 'Areal (ha)', 'Breddegrad', 'Lengdegrad', 'GPS-nøyaktighet (m)', 'Temp (°C)', 'Vind (m/s)', 'Vindkast (m/s)', 'Vind fra', 'Skydekke (%)', 'Nedbør (mm/t)', 'Luftfuktighet (%)', 'Lufttrykk (hPa)', 'Trykkendring 3 t (hPa)', 'Solnedgang', 'Berggrunn', 'Isgang', 'Isgang kilde', 'Dager siden isgang', 'Modell: marginata start', 'Modell: marginata', 'Modell: vespertina', 'Modell: vulgata start', 'Modell: vulgata', 'Modell: grandis fra', 'Modell: spinnerfall-sjanse kveld (%)', 'Observert', 'Insekter', 'Antall fisk', 'Fangst', 'Notat', 'Bilder'];
+    ? ['Date', 'Time', 'Place', 'Lake', 'Lake ID (NVE; se = Sweden)', 'Municipality', 'Altitude (m)', 'Area (ha)', 'Latitude', 'Longitude', 'GPS accuracy (m)', 'Temp (°C)', 'Wind (m/s)', 'Gusts (m/s)', 'Wind from', 'Cloud (%)', 'Precip (mm/h)', 'Humidity (%)', 'Pressure (hPa)', 'Pressure change 3 h (hPa)', 'Sunset', 'Bedrock', 'Ice-out', 'Ice-out source', 'Days since ice-out', 'Model: marginata start', 'Model: marginata', 'Model: vespertina', 'Model: vulgata start', 'Model: vulgata', 'Model: grandis from', 'Model: spinner fall chance tonight (%)', 'Seen', 'Insects', 'Fish caught', 'Catch', 'Notes', 'Photos']
+    : ['Dato', 'Tid', 'Sted', 'Vann', 'Vann-ID (NVE; se = Sverige)', 'Kommune', 'Moh', 'Areal (ha)', 'Breddegrad', 'Lengdegrad', 'GPS-nøyaktighet (m)', 'Temp (°C)', 'Vind (m/s)', 'Vindkast (m/s)', 'Vind fra', 'Skydekke (%)', 'Nedbør (mm/t)', 'Luftfuktighet (%)', 'Lufttrykk (hPa)', 'Trykkendring 3 t (hPa)', 'Solnedgang', 'Berggrunn', 'Isgang', 'Isgang kilde', 'Dager siden isgang', 'Modell: marginata start', 'Modell: marginata', 'Modell: vespertina', 'Modell: vulgata start', 'Modell: vulgata', 'Modell: grandis fra', 'Modell: spinnerfall-sjanse kveld (%)', 'Observert', 'Insekter', 'Antall fisk', 'Fangst', 'Notat', 'Bilder'];
   const rader = les().filter((e) => valgtAar === 'alle' || oslo(e.t).aar === valgtAar).sort((a, b) => a.t.localeCompare(b.t)).map((e) => {
     const o = oslo(e.t), v = e.vann || {}, w = e.vaer || {}, k = koord(e) || {}, m = e.modell;
     const L = doy(o.dato);
     const fangst = e.fangst.map((f) => [`${f.antall || 1} ${f.art || ''}`.trim(), f.lengde ? f.lengde + ' cm' : '', f.flue, f.ut ? tx('satt ut', 'released') : ''].filter(Boolean).join(' ')).join(' | ');
-    return [o.dato, o.hhmm, e.sted, e.vann ? vannNavn(e.vann) : '', v.id || '', v.kommune || '', v.moh == null ? '' : v.moh, num(v.ha, 0),
+    return [o.dato, o.hhmm, e.sted, e.vann ? vannNavn(e.vann) : '', e.vann ? vKey(e.vann) : '', v.kommune || '', v.moh == null ? '' : v.moh, num(v.ha, 0),
       k.lat == null ? '' : num(k.lat, 5), k.lon == null ? '' : num(k.lon, 5), e.pos ? e.pos.acc : '',
       num(w.temp), num(w.vind), num(w.kast), retning(w.retn), w.sky == null ? '' : Math.round(w.sky), num(w.nedbor), w.fukt == null ? '' : Math.round(w.fukt), w.trykk || '', num(w.trend), w.sol || '',
       bergTekst(e.berg), md(e, 'isg'), m && m.isg != null ? (m.isgSat ? tx('satellitt', 'satellite') : tx('anslått', 'estimated')) : '', m && m.isg != null && L >= m.isg ? L - m.isg : '',

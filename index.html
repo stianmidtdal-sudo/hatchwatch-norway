@@ -768,7 +768,7 @@ map.on('load', function () {
     'circle-stroke-width': ['case', ['boolean', ['feature-state', 'sel'], false], 3, 1.5] } });
   // Sverige (2026-10-17, Stian): egne fliser (data/kart/sverige.pmtiles, bygg_kart.py sverige). Ingen isgang ennå;
   // vannene får en vanlig, lys vannblå (SE_BLA, Stian: «grått så rart ut»), lysere enn «isfritt» så de ikke leses
-  // som isgangdata. Kartverket dekker ikke Sverige, derfor egne vannavn fra z11.
+  // som isgangdata. Vannavn i Sverige kommer fra OSM-detaljlaget (tu-d-vannavn), som også gir små vann.
   var SE_BLA = '#7fc4e6';
   map.addSource('se', { type: 'vector', url: (window.hwOff ? 'hwpm://' : 'pmtiles://') + location.origin + DATA + 'sverige.pmtiles', attribution: 'HydroLAKES', promoteId: { vann_se: 'id', vannpunkt_se: 'id' } });
   map.addLayer({ id: 'se-fill', type: 'fill', source: 'se', 'source-layer': 'vann_se', paint: { 'fill-color': SE_BLA, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 5, 0.9, 9, 0.8, 10.5, 0] } });
@@ -778,9 +778,16 @@ map.on('load', function () {
     'circle-radius': ['interpolate', ['linear'], ['zoom'], 9, 3.5, 12, 5.5, 15, 7],
     'circle-stroke-color': ['case', ['boolean', ['feature-state', 'sel'], false], '#f2b84b', '#0b1418'],
     'circle-stroke-width': ['case', ['boolean', ['feature-state', 'sel'], false], 3, 1.5] } });
-  map.addLayer({ id: 'se-navn', type: 'symbol', source: 'se', 'source-layer': 'vann_se', minzoom: 11, filter: ['!=', ['coalesce', ['get', 'navn'], ''], ''],
-    layout: { 'text-field': ['get', 'navn'], 'text-font': ['Noto Sans Italic'], 'text-size': ['interpolate', ['linear'], ['zoom'], 11, 10.5, 15, 13], 'text-max-width': 8 },
-    paint: { 'text-color': '#1f6f9f', 'text-halo-color': '#ffffff', 'text-halo-width': 1.3 } });
+  // Finland (2026-10-17, Stian «KJØR FINLAND»): data/kart/finland.pmtiles (bygg_kart.py finland ← finland/skript).
+  // Sykes innsjøer >= 10 ha, samme lyse blå som Sverige (ingen satellittisgang ennå).
+  map.addSource('fi', { type: 'vector', url: (window.hwOff ? 'hwpm://' : 'pmtiles://') + location.origin + DATA + 'finland.pmtiles', attribution: 'Syke', promoteId: { vann_fi: 'id', vannpunkt_fi: 'id' } });
+  map.addLayer({ id: 'fi-fill', type: 'fill', source: 'fi', 'source-layer': 'vann_fi', paint: { 'fill-color': SE_BLA, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 5, 0.9, 9, 0.8, 10.5, 0] } });
+  map.addLayer({ id: 'fi-line', type: 'line', source: 'fi', 'source-layer': 'vann_fi', paint: { 'line-color': '#f2b84b', 'line-width': 2.5, 'line-opacity': ['case', ['boolean', ['feature-state', 'sel'], false], 1, 0] } });
+  map.addLayer({ id: 'fi-punkt', type: 'circle', source: 'fi', 'source-layer': 'vannpunkt_fi', minzoom: 9, paint: {
+    'circle-color': SE_BLA,
+    'circle-radius': ['interpolate', ['linear'], ['zoom'], 9, 3.5, 12, 5.5, 15, 7],
+    'circle-stroke-color': ['case', ['boolean', ['feature-state', 'sel'], false], '#f2b84b', '#0b1418'],
+    'circle-stroke-width': ['case', ['boolean', ['feature-state', 'sel'], false], 3, 1.5] } });
   map.addLayer({ id: 'laks-glow', type: 'line', source: 'hw', 'source-layer': 'laks', layout: { 'line-cap': 'round', 'line-join': 'round', visibility: 'none' }, paint: { 'line-color': laksColor(), 'line-opacity': ['case', ['>=', ['coalesce', ['feature-state', 'k'], 0], 3], 0.35, 0], 'line-width': ['interpolate', ['linear'], ['zoom'], 5, 6, 14, 16], 'line-blur': 4 } });
   map.addLayer({ id: 'laks-line', type: 'line', source: 'hw', 'source-layer': 'laks', layout: { 'line-cap': 'round', 'line-join': 'round', visibility: 'none' }, paint: { 'line-color': laksColor(), 'line-width': ['interpolate', ['linear'], ['zoom'], 5, ['case', ['boolean', ['feature-state', 'sel'], false], 4, 1.6], 14, ['case', ['boolean', ['feature-state', 'sel'], false], 9, 5]] } });
   map.addLayer({ id: 'laks-hit', type: 'line', source: 'hw', 'source-layer': 'laks', layout: { visibility: 'none' }, paint: { 'line-color': '#000', 'line-opacity': 0, 'line-width': 18 } });
@@ -844,6 +851,16 @@ map.on('load', function () {
       openLakeSE(seId); history.replaceState(null, '', '/');
     }).catch(function () {});
   }
+  // /?vann=fi<id> (finsk vann)
+  if (/^fi\d+$/.test(vparam)) {
+    var fiId = +vparam.slice(2);
+    fetch(DATA + 'fi/vann/' + (fiId % 64) + '.json').then(function (r) { return r.json(); }).then(function (d) {
+      var v = d[String(fiId)]; if (!v) return;
+      if (mode !== 'flue') { mode = 'flue'; applyMode(); }
+      map.jumpTo({ center: [v.lon, v.lat], zoom: v.ha > 2000 ? 10 : v.ha > 300 ? 11.5 : 13, offset: sheetOffset() });
+      openLakeFI(fiId); history.replaceState(null, '', '/');
+    }).catch(function () {});
+  }
   var vid = parseInt(vparam, 10);
   if (vid) fetch(DATA + 'vann/' + (vid % 64) + '.json').then(function (r) { return r.json(); }).then(function (d) {
     var v = d[String(vid)]; if (!v) return;
@@ -897,6 +914,9 @@ function onMapClick(e) {
     // Svenske vann (2026-10-17): flaten (usynlig fra z10,5, men trykkbar) eller prikken
     var sv = map.getLayer('se-fill') && (map.queryRenderedFeatures(e.point, { layers: ['se-fill'] })[0] || map.queryRenderedFeatures(box, { layers: ['se-punkt'] })[0]);
     if (sv) { openLakeSE(sv.properties.id); return; }
+    // Finske vann (2026-10-17), samme måte
+    var fv = map.getLayer('fi-fill') && (map.queryRenderedFeatures(e.point, { layers: ['fi-fill'] })[0] || map.queryRenderedFeatures(box, { layers: ['fi-punkt'] })[0]);
+    if (fv) { openLakeFI(fv.properties.id); return; }
   }
   closeSheet();
 }
@@ -1076,6 +1096,8 @@ function leggTilTurkart() {
     // Sverige på oversiktsnivå (2026-10-17): OSM-skog og bre fra z9 slått sammen ned til z3 (tools/kart/se_skog.py →
     // sverige.pmtiles lag skog_se), ellers er Sverige bare gult når man zoomer ut. Fra z9,5 tar tu-skog over.
     { id: 'se-skog', type: 'fill', source: 'se', 'source-layer': 'skog_se', maxzoom: 9.5, paint: { 'fill-color': kv(['case', ['==', ['get', 'k'], 2], '#ffffff', '#d2e67c'], ['case', ['==', ['get', 'k'], 2], '#ffffff', '#d2e096'], 7.5) } },
+    // Finland (2026-10-17): samme, finland.pmtiles lag skog_fi (finland/skript/f5_skog.py, klippet mot skog_se)
+    { id: 'fi-skog', type: 'fill', source: 'fi', 'source-layer': 'skog_fi', maxzoom: 9.5, paint: { 'fill-color': kv(['case', ['==', ['get', 'k'], 2], '#ffffff', '#d2e67c'], ['case', ['==', ['get', 'k'], 2], '#ffffff', '#d2e096'], 7.5) } },
     { id: 'tu-vann', type: 'fill', source: 'omt', 'source-layer': 'water', paint: { 'fill-color': kv('#e0fefe', ['case', ['==', ['get', 'class'], 'ocean'], '#9ae2ff', '#e0fefe'], 9.5) } },   // zoom må stå øverst i uttrykket
     { id: 'tu-vei', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 7, filter: ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary', 'secondary']]], paint: { 'line-color': '#d2232a', 'line-opacity': 0.75, 'line-width': ['interpolate', ['linear'], ['zoom'], 7, 0.6, 14, 2.5] } },
     { id: 'tu-grense', type: 'line', source: 'omt', 'source-layer': 'boundary', filter: ['all', ['==', ['get', 'admin_level'], 2], ['!=', ['get', 'maritime'], 1]], paint: { 'line-color': '#be5abe', 'line-opacity': 0.55, 'line-width': ['interpolate', ['linear'], ['zoom'], 4, 0.7, 10, 1.4] } },   // tynnere (2026-10-17, Stian: «veldig tykk»)
@@ -1091,7 +1113,7 @@ function leggTilTurkart() {
     { id: 'tu-d-bekk', type: 'line', source: 'omt', 'source-layer': 'waterway', minzoom: 10, paint: { 'line-color': '#3fa9df', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.6, 15, 2] } },
     { id: 'tu-d-vei', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 10, filter: ['in', ['get', 'class'], ['literal', ['tertiary', 'minor', 'service']]], paint: { 'line-color': '#7a7a7a', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.5, 15, 2.2] } },
     { id: 'tu-d-traktor', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 11, filter: ['==', ['get', 'class'], 'track'], paint: { 'line-color': '#555555', 'line-width': 1.2, 'line-dasharray': [3, 2] } },
-    { id: 'tu-d-sti', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 11, filter: ['==', ['get', 'class'], 'path'], paint: { 'line-color': '#2b2b2b', 'line-width': 1, 'line-dasharray': [2, 2] } },
+    { id: 'tu-d-sti', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 11, filter: ['==', ['get', 'class'], 'path'], paint: { 'line-color': '#d0342c', 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 0.9, 16, 1.8], 'line-dasharray': [2, 1.6] } },   // Kartverkets røde stifarge (2026-10-17)
     { id: 'tu-d-vannavn', type: 'symbol', source: 'omt', 'source-layer': 'water_name', minzoom: 11, layout: { 'text-field': NAVN, 'text-font': ['Noto Sans Italic'], 'text-size': 12 }, paint: { 'text-color': '#1f6f9f', 'text-halo-color': '#ffffff', 'text-halo-width': 1.2 } },
     { id: 'tu-d-sted', type: 'symbol', source: 'omt', 'source-layer': 'place', minzoom: 10, filter: ['in', ['get', 'class'], ['literal', ['village', 'hamlet', 'isolated_dwelling', 'locality']]], layout: { 'text-field': NAVN, 'text-font': ['Noto Sans Regular'], 'text-size': 11.5 }, paint: { 'text-color': '#2a2a2a', 'text-halo-color': '#ffffff', 'text-halo-width': 1.2 } },
     { id: 'tu-d-topp', type: 'symbol', source: 'omt', 'source-layer': 'mountain_peak', minzoom: 11,
@@ -1143,7 +1165,7 @@ function leggTilTurkart() {
     layout: { visibility: 'none', 'text-field': tx('gapahuk', 'shelter'), 'text-font': ['Noto Sans Italic'], 'text-size': 10.5 },
     paint: { 'text-color': '#6b4a1f', 'text-halo-color': '#ffffff', 'text-halo-width': 1.6 } }, 'loc-cluster');
 }
-var TUR_ADKOMST = ['tur-p', 'tur-p-txt', 'tur-bom', 'tur-gapahuk', 'nve-lodd', 'tu-land', 'tu-skog', 'se-skog', 'tu-is', 'tu-vann', 'tu-vei', 'tu-grense', 'tu-sted'];
+var TUR_ADKOMST = ['tur-p', 'tur-p-txt', 'tur-bom', 'tur-gapahuk', 'nve-lodd', 'tu-land', 'tu-skog', 'se-skog', 'fi-skog', 'tu-is', 'tu-vann', 'tu-vei', 'tu-grense', 'tu-sted'];
 function applyKartlag() {
   var tur = KARTLAG === 'tur';
   document.body.classList.toggle('kart-tur', tur);   // lyst grensesnitt over kartet og kontur rundt merket
@@ -1154,6 +1176,9 @@ function applyKartlag() {
   map.setLayoutProperty('kv-topo', 'visibility', tur ? 'visible' : 'none');
   map.setLayoutProperty('kv-tur', 'visibility', tur ? 'visible' : 'none');
   TUR_ADKOMST.forEach(function (id) { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', tur ? 'visible' : 'none'); });
+  // OSM-detaljene (stier, bekker, småveier, myr, navn) også på nett (2026-10-17, Stian «kjør»): i Norge ligger de
+  // under Kartverket-kartet og synes ikke; i Sverige og utlandet gir de stiene som ellers manglet.
+  TU_DETALJ.forEach(function (id) { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', tur ? 'visible' : 'none'); });
   STANDARD_LAG.forEach(function (id) { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', tur ? 'none' : 'visible'); });
   map.setPaintProperty('bg', 'background-color', tur ? '#e0fefe' : C.land);
   applyBakgrunn();   // Turkart eller Satellitt (må komme etter at kv-topo og navnelagene er satt over)
@@ -1174,7 +1199,7 @@ function applyKartlag() {
   map.setPaintProperty('vann-fill', 'fill-opacity', tur ? (flue ? ['interpolate', ['linear'], ['zoom'], 5, 0.9, 9, 0.8, 10.5, 0] : 0) : 0.92);
   map.setPaintProperty('vann-line', 'line-opacity', tur ? ['case', ['boolean', ['feature-state', 'sel'], false], 1, 0] : 1);
   map.setLayoutProperty('vann-punkt', 'visibility', tur && flue ? 'visible' : 'none');
-  ['se-fill', 'se-line', 'se-punkt', 'se-navn'].forEach(function (id) { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', flue ? 'visible' : 'none'); });
+  ['se-fill', 'se-line', 'se-punkt', 'fi-fill', 'fi-line', 'fi-punkt'].forEach(function (id) { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', flue ? 'visible' : 'none'); });
 }
 // ═══ KART UTEN NETT (2026-10-16, Stian «kjør») ═══
 // Nedlasting og lagring ligger i kart-offline.js (window.hwOff). Her: stilbyttet når nettet er borte, menyen
@@ -1185,7 +1210,7 @@ function settUtenNett(paa) {
   utenNett = paa;
   document.body.classList.toggle('uten-nett', paa);
   if (!map.getLayer('kv-topo')) return;
-  TU_DETALJ.forEach(function (id) { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', paa ? 'visible' : 'none'); });
+  // OSM-detaljene er alltid på (applyKartlag); uten nett blir de synlige i Norge også når kv-topo begrenses.
   // Kartverket bare der vi har lov å lagre (flis-z11 = kartzoom under 10,5); innover tar OpenStreetMap-detaljene over
   map.setLayerZoomRange('kv-topo', 0, paa ? 10.5 : 24);
 }
@@ -1298,6 +1323,11 @@ function settSeSel(id, paa) {
   if (!map.getSource('se')) return;
   map.setFeatureState({ source: 'se', sourceLayer: 'vann_se', id: id }, { sel: paa });
   map.setFeatureState({ source: 'se', sourceLayer: 'vannpunkt_se', id: id }, { sel: paa });
+}
+function settFiSel(id, paa) {
+  if (!map.getSource('fi')) return;
+  map.setFeatureState({ source: 'fi', sourceLayer: 'vann_fi', id: id }, { sel: paa });
+  map.setFeatureState({ source: 'fi', sourceLayer: 'vannpunkt_fi', id: id }, { sel: paa });
 }
 
 // ═══ AVSTANDSMÅLING OG HØYDEPROFIL (2026-10-14) ═══
@@ -1781,9 +1811,11 @@ function setSel(next) {
   if (sel && sel.kind === 'lake') settVannSel(sel.id, false);
   if (sel && sel.kind === 'river') map.setFeatureState({ source: 'hw', sourceLayer: 'laks', id: sel.id }, { sel: false });
   if (sel && sel.kind === 'se') settSeSel(sel.id, false);
+  if (sel && sel.kind === 'fi') settFiSel(sel.id, false);
   sel = next;
   if (sel && sel.kind === 'lake') settVannSel(sel.id, true);
   if (sel && sel.kind === 'se') settSeSel(sel.id, true);
+  if (sel && sel.kind === 'fi') settFiSel(sel.id, true);
   if (sel && sel.kind === 'river') map.setFeatureState({ source: 'hw', sourceLayer: 'laks', id: sel.id }, { sel: true });
   updLocs();
 }
@@ -1869,6 +1901,7 @@ shFav.addEventListener('click', function () {
   else if (sel.kind === 'river') { var e = ELVER && ELVER[sel.id]; toggleElvFav(sel.id, e ? e.navn : sel.id); this.classList.toggle('on', isElvFav(sel.id)); }
   else if (sel.kind === 'lake') { toggleVannFav(sel.id, (sel.f && sel.f.properties.navn) || String(sel.id)); this.classList.toggle('on', isVannFav(sel.id)); }
   else if (sel.kind === 'se') { toggleVannFav('se' + sel.id, sel.navn || ('se' + sel.id)); this.classList.toggle('on', isVannFav('se' + sel.id)); }
+  else if (sel.kind === 'fi') { toggleVannFav('fi' + sel.id, sel.navn || ('fi' + sel.id)); this.classList.toggle('on', isVannFav('fi' + sel.id)); }
 });
 
 // Vann: lite kort med isgang og anslag; arter, år for år og forklaring ligger på vannsiden (vann.html)
@@ -1992,7 +2025,9 @@ function openLakeSE(id) {
     document.getElementById('shName').textContent = v.navn || tx('Navnløst vann', 'Unnamed lake');
     document.getElementById('shSub').textContent = (v.moh != null ? v.moh + ' ' + MOH + ' · ' : '') + (v.ha != null ? Math.round(v.ha) + ' ha · ' : '') + tx('Sverige', 'Sweden');
     var rute = function (k, val, s) { return '<div class="vk-rute"><span>' + k + '</span><b>' + val + '</b><span>' + s + '</span></div>'; };
-    var dyp = v.dyp ? (EN ? String(v.dyp) : String(v.dyp).replace('.', ',')) + ' m' : '–';
+    // HydroLAKES-dypet bommer typisk med en tredjedel (sverige/data/RAPPORT_DYP.md), så hele meter over 3 m
+    var dypTall = v.dyp ? (v.dyp >= 3 ? String(Math.round(v.dyp)) : String(v.dyp)) : null;
+    var dyp = dypTall ? (EN ? dypTall : dypTall.replace('.', ',')) + ' m' : '–';
     var fisk = (v.fisk || []).slice().sort(function (a, b) {
       var ka = VK_GULL.indexOf(a[0]) >= 0 ? VK_GULL.indexOf(a[0]) : 9, kb = VK_GULL.indexOf(b[0]) >= 0 ? VK_GULL.indexOf(b[0]) : 9;
       return ka - kb || b[2] - a[2];
@@ -2001,17 +2036,84 @@ function openLakeSE(id) {
     var arter = (v.arter || []).map(function (a) { return a[0]; });
     var ins = VK_INSEKT.filter(function (x) { return arter.indexOf(x[0]) >= 0; });
     var kk = v.berg && v.berg[0] ? KALK_KLASSER[v.berg[0] - 1] : null;
+    // Målt isgang fra SMHI (2026-10-17): siste år og, med minst fem år fra 1991, vanlig isgang og spennet
+    var isA = (v.is_smhi && v.is_smhi.aar) || {}, isAar = Object.keys(isA).map(Number).sort(function (a, b) { return a - b; });
+    var sisteIs = isAar.length && isAar[isAar.length - 1] >= 1991 ? isAar[isAar.length - 1] : null;
+    var nyIs = isAar.filter(function (y) { return y >= 1991; }), isDgr = nyIs.map(function (y) { return isA[y]; }).sort(function (a, b) { return a - b; }), nIs = isDgr.length;
+    var medIs = nIs >= 5 ? (nIs % 2 ? isDgr[(nIs - 1) / 2] : Math.round((isDgr[nIs / 2 - 1] + isDgr[nIs / 2]) / 2)) : null;
+    var dybdekart = v.smhi ? '<a href="https://vattenwebb.smhi.se/svarwebb/rest/downloadmap/' + encodeURIComponent(v.smhi) + '" target="_blank" rel="noopener" style="color:var(--hw-water)">' + tx('Last ned', 'Download') + '</a>' : '';
     shExtra.innerHTML = '<div class="vk-ruter">' +
-      rute(tx('Isgang', 'Ice-out'), tx('Kommer', 'Coming'), tx('fra satellitt', 'from satellite')) +
+      (sisteIs ? rute(tx('Isgang ', 'Ice-out ') + sisteIs, fmtDoy(sisteIs, isA[sisteIs]), tx('målt (SMHI)', 'measured (SMHI)'))
+               : rute(tx('Isgang', 'Ice-out'), tx('Kommer', 'Coming'), tx('fra satellitt', 'from satellite'))) +
       rute(tx('Berggrunn', 'Bedrock'), kk ? (EN ? kk[2] : kk[1]) : '–', kk && !EN ? esc(v.berg[1]) : 'SGU') +
-      '</div><div class="vk-ruter" style="grid-template-columns:1fr;margin-top:6px">' +
-      rute(tx('Middeldyp', 'Mean depth'), v.dyp ? tx('ca. ', 'about ') + dyp : '–', tx('beregnet, ikke loddet', 'modelled, not sounded')) +
+      (medIs != null ? rute(tx('Vanlig isgang', 'Usual ice-out'), tx('ca. ', 'about ') + fmtDoy(YEAR, medIs), nyIs[0] + '–' + nyIs[nIs - 1]) +
+        rute(tx('Tidligst–senest', 'Earliest–latest'), shortDoy(YEAR, isDgr[0]) + ' – ' + shortDoy(YEAR, isDgr[nIs - 1]), nIs + tx(' år', ' years')) : '') +
+      '</div><div class="vk-ruter" style="margin-top:6px' + (dybdekart ? '' : ';grid-template-columns:1fr') + '">' +
+      rute(tx('Middeldyp', 'Mean depth'), v.dyp ? tx('ca. ', 'about ') + dyp : '–', tx('beregnet, usikkert', 'modelled, uncertain')) +
+      (dybdekart ? rute(tx('Dybdekart', 'Depth map'), dybdekart, tx('målt, fra SMHI', 'measured, from SMHI')) : '') +
       '</div>' +
       '<div class="vk-lab">' + tx('Fisk', 'Fish') + '</div><div class="vk-chips">' +
       (fisk.length ? fisk.slice(0, 4).map(function (f) { return '<span>' + fnavn(f) + '</span>'; }).join('') + (fisk.length > 4 ? '<span>+' + (fisk.length - 4) + '</span>' : '') : '<span>' + tx('Ingen registrert', 'None recorded') + '</span>') + '</div>' +
       '<div class="vk-lab">' + tx('Insekter funnet her', 'Insects found here') + '</div><div class="vk-chips">' +
       (ins.length ? ins.map(function (x) { return '<span class="ja">' + (EN ? x[3] : x[2]) + '</span>'; }).join('') : '<span>' + tx('Ingen registrert ennå', 'None recorded yet') + '</span>') + '</div>' +
-      '<div class="note" style="margin-top:10px">' + tx('Svenske vann er nye på kartet. Isgang og klekkeanslag kommer.', 'Swedish lakes are new on the map. Ice-out and hatch estimates are coming.') + '</div>';
+      '<div class="note" style="margin-top:10px">' + (sisteIs ? tx('Svenske vann er nye på kartet. Klekkeanslag kommer.', 'Swedish lakes are new on the map. Hatch estimates are coming.')
+        : tx('Svenske vann er nye på kartet. Isgang og klekkeanslag kommer.', 'Swedish lakes are new on the map. Ice-out and hatch estimates are coming.')) + '</div>';
+  });
+}
+// Finsk vann (2026-10-17, Stian «KJØR FINLAND»). data/kart/fi/vann/<id % 64>.json (bygg_kart.py finland): Sykes
+// innsjøregister (målt middeldyp og største dyp), notert isgang fra Syke (is_syke), artsfunn via GBIF.
+var VK_FI = {};
+function openLakeFI(id) {
+  id = +id;
+  setSel({ kind: 'fi', id: id });
+  document.getElementById('shName').textContent = '…';
+  document.getElementById('shSub').textContent = 'Finland';
+  document.getElementById('shEye').innerHTML = '';
+  document.getElementById('shBig').innerHTML = '';
+  document.getElementById('shLine').innerHTML = '';
+  shExtra.innerHTML = '';
+  shFav.style.display = ''; shFav.classList.toggle('on', isVannFav('fi' + id)); shFav.setAttribute('aria-label', tx('Legg til i favoritter', 'Add to favourites'));
+  shOpen.style.display = ''; shOpen.textContent = tx('Åpne vannet', 'Open the lake');
+  shOpen.setAttribute('href', '/vann.html?id=fi' + id);
+  showSheet();
+  vkJson(DATA + 'fi/vann/' + (id % 64) + '.json', VK_FI, id % 64).then(function (g) {
+    if (!sel || sel.kind !== 'fi' || sel.id !== id) return;
+    var v = g[String(id)] || {};
+    var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+    sel.navn = v.navn || '';
+    document.getElementById('shName').textContent = v.navn || tx('Navnløst vann', 'Unnamed lake');
+    document.getElementById('shSub').textContent = (v.moh != null ? v.moh + ' ' + MOH + ' · ' : '') + (v.ha != null ? Math.round(v.ha) + ' ha · ' : '') + 'Finland';
+    var rute = function (k, val, s) { return '<div class="vk-rute"><span>' + k + '</span><b>' + val + '</b><span>' + s + '</span></div>'; };
+    var meter = function (x) { var t = x >= 10 ? String(Math.round(x)) : String(Math.round(x * 10) / 10); return (EN ? t : t.replace('.', ',')) + ' m'; };
+    var fisk = (v.fisk || []).slice().sort(function (a, b) {
+      var ka = VK_GULL.indexOf(a[0]) >= 0 ? VK_GULL.indexOf(a[0]) : 9, kb = VK_GULL.indexOf(b[0]) >= 0 ? VK_GULL.indexOf(b[0]) : 9;
+      return ka - kb || b[2] - a[2];
+    });
+    var fnavn = function (f) { var n = EN ? VK_FISK_EN[f[0]] : f[1]; return n ? esc(n.charAt(0).toUpperCase() + n.slice(1)) : '<i>' + esc(f[0]) + '</i>'; };
+    var arter = (v.arter || []).map(function (a) { return a[0]; });
+    var ins = VK_INSEKT.filter(function (x) { return arter.indexOf(x[0]) >= 0; });
+    // Notert isgang fra Syke: siste år og, med minst fem år fra 1991, vanlig isgang og spennet (samme regel som SMHI)
+    var isA = (v.is_syke && v.is_syke.aar) || {}, isAar = Object.keys(isA).map(Number).sort(function (a, b) { return a - b; });
+    var sisteIs = isAar.length && isAar[isAar.length - 1] >= 1991 ? isAar[isAar.length - 1] : null;
+    var nyIs = isAar.filter(function (y) { return y >= 1991; }), isDgr = nyIs.map(function (y) { return isA[y]; }).sort(function (a, b) { return a - b; }), nIs = isDgr.length;
+    var medIs = nIs >= 5 ? (nIs % 2 ? isDgr[(nIs - 1) / 2] : Math.round((isDgr[nIs / 2 - 1] + isDgr[nIs / 2]) / 2)) : null;
+    // Dyp er målt (Sykes innsjøregister), ikke beregnet som i Sverige
+    var dypRute = v.dyp != null ? rute(tx('Middeldyp', 'Mean depth'), meter(v.dyp), v.dmax != null ? tx('målt · største ', 'measured · max ') + meter(v.dmax) : tx('målt (Syke)', 'measured (Syke)'))
+      : v.dmax != null ? rute(tx('Største dyp', 'Max depth'), meter(v.dmax), tx('målt (Syke)', 'measured (Syke)'))
+      : rute(tx('Dyp', 'Depth'), '–', tx('ikke målt', 'not measured'));
+    shExtra.innerHTML = '<div class="vk-ruter">' +
+      (sisteIs ? rute(tx('Isgang ', 'Ice-out ') + sisteIs, fmtDoy(sisteIs, isA[sisteIs]), tx('notert (Syke)', 'observed (Syke)'))
+               : rute(tx('Isgang', 'Ice-out'), tx('Kommer', 'Coming'), tx('fra satellitt', 'from satellite'))) +
+      dypRute +
+      (medIs != null ? rute(tx('Vanlig isgang', 'Usual ice-out'), tx('ca. ', 'about ') + fmtDoy(YEAR, medIs), nyIs[0] + '–' + nyIs[nIs - 1]) +
+        rute(tx('Tidligst–senest', 'Earliest–latest'), shortDoy(YEAR, isDgr[0]) + ' – ' + shortDoy(YEAR, isDgr[nIs - 1]), nIs + tx(' år', ' years')) : '') +
+      '</div>' +
+      '<div class="vk-lab">' + tx('Fisk', 'Fish') + '</div><div class="vk-chips">' +
+      (fisk.length ? fisk.slice(0, 4).map(function (f) { return '<span>' + fnavn(f) + '</span>'; }).join('') + (fisk.length > 4 ? '<span>+' + (fisk.length - 4) + '</span>' : '') : '<span>' + tx('Ingen registrert', 'None recorded') + '</span>') + '</div>' +
+      '<div class="vk-lab">' + tx('Insekter funnet her', 'Insects found here') + '</div><div class="vk-chips">' +
+      (ins.length ? ins.map(function (x) { return '<span class="ja">' + (EN ? x[3] : x[2]) + '</span>'; }).join('') : '<span>' + tx('Ingen registrert ennå', 'None recorded yet') + '</span>') + '</div>' +
+      '<div class="note" style="margin-top:10px">' + (sisteIs ? tx('Finske vann er nye på kartet. Klekkeanslag kommer.', 'Finnish lakes are new on the map. Hatch estimates are coming.')
+        : tx('Finske vann er nye på kartet. Isgang og klekkeanslag kommer.', 'Finnish lakes are new on the map. Ice-out and hatch estimates are coming.')) + '</div>';
   });
 }
 function centroid(g) {
@@ -2085,13 +2187,59 @@ function renderHits(v) {
     var k = (n.kommuner && n.kommuner[0] && n.kommuner[0].kommunenavn) || '';
     return '<button class="hit" type="button" data-place="' + i + '"><span><b>' + n['skrivemåte'] + '</b><small>' + k + '</small></span><span class="t">' + (n.navneobjekttype || '') + '</span></button>';
   }).join('');
+  var seTreff = seSok(v);
+  if (seTreff.length) html += '<div class="hit-head">' + tx('Svenske vann', 'Swedish lakes') + '</div>' + seTreff.map(function (x) {
+    return '<button class="hit" type="button" data-se="' + x[1] + '"><span><b>' + escHtml(x[0]) + '</b><small>' + tx('Sverige', 'Sweden') + ' · ' + x[4] + ' ha</small></span><span class="t">' + tx('Vann', 'Lake') + '</span></button>';
+  }).join('');
+  var fiTreff = navnSok(FI_NAVN, v);
+  if (fiTreff.length) html += '<div class="hit-head">' + tx('Finske vann', 'Finnish lakes') + '</div>' + fiTreff.map(function (x) {
+    return '<button class="hit" type="button" data-fi="' + x[1] + '"><span><b>' + escHtml(x[0]) + '</b><small>Finland · ' + x[4] + ' ha</small></span><span class="t">' + tx('Vann', 'Lake') + '</span></button>';
+  }).join('');
   hits.innerHTML = html || '<div class="hit-empty">' + tx('Ingen treff ennå…', 'No match yet…') + '</div>';
   hits.classList.add('open');
+}
+// Svenske vann i søket (2026-10-17, Stian «kjør»): data/kart/se/navn.json [navn, id, lat·1e4, lon·1e4, ha], størst
+// først, lastes første gang noen søker. Norske bokstaver finner svenske navn (ø/ö → o, æ/ä → a, å → a).
+var SE_NAVN = null, seLaster = false;
+function seNorm(s) { return String(s).toLowerCase().replace(/[øö]/g, 'o').replace(/[æäå]/g, 'a').normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+function escHtml(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function seSok(v) { return navnSok(SE_NAVN, v); }
+// Felles for svenske og finske navnelister (samme form): først navn som begynner med søket, så navn som inneholder det
+function navnSok(L, v) {
+  if (!L || v.length < 2) return [];
+  var q = seNorm(v), forst = [], inni = [];
+  for (var i = 0; i < L.length && forst.length < 5; i++) {
+    var n = L[i][5];
+    if (n.indexOf(q) === 0) forst.push(L[i]);
+    else if (inni.length < 5 && n.indexOf(q) > 0) inni.push(L[i]);
+  }
+  return forst.concat(inni).slice(0, 5);
+}
+function seLastNavn(v) {
+  if (SE_NAVN || seLaster) return;
+  seLaster = true;
+  fetch(DATA + 'se/navn.json').then(function (r) { return r.json(); }).then(function (d) {
+    d.forEach(function (x) { x[5] = seNorm(x[0]); });
+    SE_NAVN = d;
+    var nv = qIn.value.trim(); if (nv.length >= 2) renderHits(nv);
+  }).catch(function () { seLaster = false; });
+}
+// Finske vann i søket (2026-10-17): data/kart/fi/navn.json, samme form og normalisering som de svenske
+var FI_NAVN = null, fiLaster = false;
+function fiLastNavn(v) {
+  if (FI_NAVN || fiLaster) return;
+  fiLaster = true;
+  fetch(DATA + 'fi/navn.json').then(function (r) { return r.json(); }).then(function (d) {
+    d.forEach(function (x) { x[5] = seNorm(x[0]); });
+    FI_NAVN = d;
+    var nv = qIn.value.trim(); if (nv.length >= 2) renderHits(nv);
+  }).catch(function () { fiLaster = false; });
 }
 qIn.addEventListener('input', function () {
   var v = qIn.value.trim();
   clearTimeout(qTimer); qPlaces = [];
   if (v.length < 1) { hits.classList.remove('open'); return; }
+  seLastNavn(v); fiLastNavn(v);
   renderHits(v);
   if (v.length < 2) return;
   qTimer = setTimeout(function () {
@@ -2105,6 +2253,20 @@ hits.addEventListener('click', function (e) {
   var b = e.target.closest('.hit'); if (!b) return;
   if (b.hasAttribute('data-loc')) return goTo(byId(b.getAttribute('data-loc')));
   hits.classList.remove('open'); qIn.blur();
+  if (b.hasAttribute('data-se')) {
+    var sid = +b.getAttribute('data-se'), sx = SE_NAVN.filter(function (x) { return x[1] === sid; })[0];
+    qIn.value = sx[0];
+    if (mode !== 'flue') { mode = 'flue'; applyMode(); }
+    map.flyTo({ center: [sx[3] / 1e4, sx[2] / 1e4], zoom: sx[4] > 2000 ? 10 : sx[4] > 300 ? 11.5 : 13, speed: 1.6, offset: sheetOffset() });
+    openLakeSE(sid); return;
+  }
+  if (b.hasAttribute('data-fi')) {
+    var fid = +b.getAttribute('data-fi'), fx = FI_NAVN.filter(function (x) { return x[1] === fid; })[0];
+    qIn.value = fx[0];
+    if (mode !== 'flue') { mode = 'flue'; applyMode(); }
+    map.flyTo({ center: [fx[3] / 1e4, fx[2] / 1e4], zoom: fx[4] > 2000 ? 10 : fx[4] > 300 ? 11.5 : 13, speed: 1.6, offset: sheetOffset() });
+    openLakeFI(fid); return;
+  }
   if (b.hasAttribute('data-elv')) {
     var el = ELVER[b.getAttribute('data-elv')]; qIn.value = el.navn;
     if (mode !== 'laks') { mode = 'laks'; applyMode(); }
