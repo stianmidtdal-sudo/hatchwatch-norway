@@ -472,10 +472,18 @@ def bygg_sverige():
             fisk[hid].append([r["art"], norsk.get(r["art"], ""), int(r["funn"]), siste, int(r["sikker"]), 0])
         else:
             arter[hid].append([r["art"], ORDEN_KODE.get(r["orden"], "a"), int(r["funn"]), siste, int(r["sikker"]), norsk.get(r["art"], "")])
+    # Berggrunn (s5_berggrunn.py): SGU-bergart med NGU-kalkklasse 1–5 (0 = ukjent), norsk bergartsnavn
+    berg = {}
+    bfil = os.path.join(sv, "berggrunn_per_vann_se.csv")
+    if os.path.exists(bfil):
+        for r in csv.DictReader(open(bfil, encoding="utf-8-sig"), delimiter=";"):
+            berg[int(r["hylak_id"])] = [int(r["klasse"]), r["bergart_no"]]
     grupper = [dict() for _ in range(VANN_GRUPPER)]
     for hid, a in attr.items():
         rec = {"navn": a["navn"] or "", "moh": round(float(a["hoyde_m"])) if a["hoyde_m"] else None, "ha": float(a["areal_ha"]),
                "dyp": round(float(a["middeldyp_m"]), 1) if a["middeldyp_m"] else None, "lat": float(a["lat"]), "lon": float(a["lon"])}
+        if hid in berg:
+            rec["berg"] = berg[hid]
         if arter.get(hid):
             rec["arter"] = sorted(arter[hid], key=lambda x: -x[2])
         if fisk.get(hid):
@@ -561,6 +569,71 @@ def bygg_sverige():
                     "vector_layers": [{"id": "vann_se", "fields": {"id": "Number", "navn": "String", "ha": "Number", "moh": "Number"}, "minzoom": MINZ, "maxzoom": MAXZ},
                                       {"id": "vannpunkt_se", "fields": {"id": "Number", "ha": "Number"}, "minzoom": PUNKT_MINZ, "maxzoom": MAXZ}]})
     print(f"sverige.pmtiles: {len(tiles_out)} fliser, {os.path.getsize(path) / 1e6:.1f} MB ({time.time() - t0:.0f} s)")
+
+
+def bygg_sverige_kalk():
+    """Kalk i berggrunnen, Sverige (2026-10-17): data/kart/sverige_kalk.pmtiles, lag kalk_se med egenskap k = NGU-klasse
+    1–5. Fra sverige/data/kalk_se.wkb.gz (s5_berggrunn.py: SGU-bergart → NGU 2020-003 tabell 6). Egen fil, så den bare
+    lastes når kalklaget er slått på. Flater med samme klasse slås sammen per flis, så kartet ikke får sømmer."""
+    import mapbox_vector_tile, mercantile, shapely, pickle, numpy as np
+    from shapely.geometry import box
+    from shapely.strtree import STRtree
+    from pmtiles.writer import Writer
+    from pmtiles.tile import zxy_to_tileid, TileType, Compression
+    R = 6378137.0
+    def til_merc(c):
+        lat = np.clip(c[:, 1], -85.0511, 85.0511)
+        return np.column_stack([R * np.radians(c[:, 0]), R * np.log(np.tan(np.pi / 4 + np.radians(lat) / 2))])
+    t0 = time.time()
+    rader = pickle.load(gzip.open(os.path.join(ROOT, "sverige", "data", "kalk_se.wkb.gz"), "rb"))
+    flater = [(k, shapely.transform(shapely.from_wkb(w), til_merc)) for k, w in rader]
+    print(f"kalk: {len(flater)} flater ({time.time() - t0:.0f} s)")
+    MINZ, MAXZ = 5, 11
+    bounds_ll = (10.5, 55.0, 24.5, 69.2)
+    tiles_out = {}
+    for z in range(MINZ, MAXZ + 1):
+        px = 2 * math.pi * R / (256 * 2 ** z)
+        tol, min_areal = px * 0.8, (px * 2.5) ** 2
+        fz = [(k, g.simplify(tol, preserve_topology=True)) for k, g in flater if g.area >= min_areal]
+        fz = [(k, g) for k, g in fz if not g.is_empty]
+        tre = STRtree([g for _, g in fz])
+        n = 0
+        for t in mercantile.tiles(*bounds_ll, zooms=[z]):
+            b = mercantile.xy_bounds(t)
+            pad = (b.right - b.left) * 4 / 256.0
+            tb = box(b.left - pad, b.bottom - pad, b.right + pad, b.top + pad)
+            per_k = collections.defaultdict(list)
+            for i in tre.query(tb, predicate="intersects"):
+                k, g = fz[i]
+                c = g.intersection(tb)
+                if not c.is_empty:
+                    per_k[k].append(c)
+            feats = []
+            for k, deler in sorted(per_k.items()):
+                u = shapely.union_all(deler)
+                if u.geom_type == "GeometryCollection":
+                    u = shapely.union_all([x for x in u.geoms if x.geom_type in ("Polygon", "MultiPolygon")])
+                if u.is_empty or u.geom_type not in ("Polygon", "MultiPolygon"):
+                    continue
+                feats.append({"geometry": u, "properties": {"k": k}})
+            if not feats:
+                continue
+            data = mapbox_vector_tile.encode([{"name": "kalk_se", "features": feats}], default_options={"quantize_bounds": (b.left, b.bottom, b.right, b.top), "extents": 4096, "y_coord_down": False})
+            tiles_out[zxy_to_tileid(z, t.x, t.y)] = gzip.compress(data, 9)
+            n += 1
+        print(f"  z{z}: {n} fliser, {len(fz)} flater ({time.time() - t0:.0f} s)")
+    path = os.path.join(OUT, "sverige_kalk.pmtiles")
+    with open(path, "wb") as fh:
+        w = Writer(fh)
+        for tid in sorted(tiles_out):
+            w.write_tile(tid, tiles_out[tid])
+        w.finalize({"tile_type": TileType.MVT, "tile_compression": Compression.GZIP, "min_zoom": MINZ, "max_zoom": MAXZ,
+                    "min_lon_e7": int(bounds_ll[0] * 1e7), "min_lat_e7": int(bounds_ll[1] * 1e7),
+                    "max_lon_e7": int(bounds_ll[2] * 1e7), "max_lat_e7": int(bounds_ll[3] * 1e7),
+                    "center_zoom": 5, "center_lon_e7": int(16 * 1e7), "center_lat_e7": int(62 * 1e7)},
+                   {"name": "HatchWatch kalk Sverige", "attribution": "SGU (CC0), klasser etter NGU",
+                    "vector_layers": [{"id": "kalk_se", "fields": {"k": "Number"}, "minzoom": MINZ, "maxzoom": MAXZ}]})
+    print(f"sverige_kalk.pmtiles: {len(tiles_out)} fliser, {os.path.getsize(path) / 1e6:.1f} MB ({time.time() - t0:.0f} s)")
 
 
 def bygg_punkt():
@@ -749,8 +822,10 @@ if __name__ == "__main__":
         bygg_vann()
     if hva in ("alt", "vann", "punkt"):
         bygg_punkt()
-    if hva == "sverige":               # svenske vann (sverige/data fra sverige/skript/s1–s4)
+    if hva == "sverige":               # svenske vann (sverige/data fra sverige/skript/s1–s5)
         bygg_sverige()
+    if hva in ("sverige", "sverige-kalk"):   # kalk i berggrunnen, Sverige (s5_berggrunn.py)
+        bygg_sverige_kalk()
     if hva in ("alt", "elver"):
         bygg_elver()
     if hva in ("alt", "fliser"):

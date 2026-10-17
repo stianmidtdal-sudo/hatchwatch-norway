@@ -286,6 +286,11 @@ function renderSE(v) {
   var h = '<div class="hw-eyebrow gold">' + tx('Vann · Sverige', 'Lake · Sweden') + '</div>';
   h += '<h1>' + esc(navn) + '</h1>';
   h += '<div class="sub">' + [v.moh != null ? v.moh + ' ' + MOH : '', num(v.ha, v.ha < 100 ? 1 : 0) + ' ha'].filter(Boolean).join(' · ') + '</div>';
+  // Berggrunn: SGU-bergart, kalkklassen er HatchWatchs oversettelse etter NGUs tabell (s5_berggrunn.py)
+  var kl = v.berg && v.berg[0];
+  if (kl) h += '<div class="berggrunn"><span class="kalkprikk" style="background:' + (KALK_FARGE[kl] || '#ccc') + '"></span>' + tx('Berggrunn: ', 'Bedrock: ') + '<b>' + esc(EN ? KALK_EN[kl] : KALK_NO[kl]) + '</b>' +
+    (!EN && v.berg[1] ? ' · ' + esc(v.berg[1].charAt(0).toUpperCase() + v.berg[1].slice(1)) : '') +
+    '<span class="kilde">' + tx('SGU (1:50 000–1:250 000), kalkklasse satt av HatchWatch etter NGUs inndeling', 'SGU (1:50,000–1:250,000), lime class set by HatchWatch after NGU\'s scheme') + '</span></div>';
   h += '<div class="hero">' +
     '<div class="stat"><div class="k">' + tx('Isgang', 'Ice-out') + '</div><div class="v">' + tx('Kommer', 'Coming') + '</div><div class="s">' + tx('Fra satellitt, som i Norge.', 'From satellite, as in Norway.') + '</div></div>' +
     '<div class="stat"><div class="k">' + tx('Middeldyp', 'Mean depth') + '</div><div class="v">' + (v.dyp ? tx('ca. ', 'about ') + num(v.dyp, v.dyp < 10 ? 1 : 0) + ' m' : '–') + '</div><div class="s">' + tx('Beregnet, ikke loddet.', 'Modelled, not sounded.') + '</div></div>' +
@@ -293,8 +298,8 @@ function renderSE(v) {
   h += '<div class="card"><h2>' + tx('Klekking', 'Hatch') + '</h2><p class="lead">' + tx('Svenske vann er nye i HatchWatch. Isgang og klekkeanslag kommer når satellittdatoene for Sverige er regnet ut.', 'Swedish lakes are new in HatchWatch. Ice-out and hatch estimates will come once the satellite dates for Sweden are worked out.') + '</p></div>';
   h += '<div class="card"><h2>' + tx('Registrerte arter', 'Recorded species') + '</h2><div id="fisk"></div>' + arterHtml(v.arter) + '</div>';
   h += '<div class="card"><h2>' + tx('Kart', 'Map') + '</h2><div id="mini"></div><div class="row2"><a class="hw-btn primary" href="/?vann=se' + ID + '">' + tx('Vis i kartet', 'Show on the map') + '</a></div></div>';
-  h += '<p class="note">' + tx('Vann og middeldyp: HydroLAKES (beregnet dyp). Navn: OpenStreetMap. Arter og fisk: Artportalen (SLU Artdatabanken) via GBIF. Kart: OpenStreetMap. <a href="/om.html#kilder">Alle kilder</a>',
-    'Lake and mean depth: HydroLAKES (modelled depth). Names: OpenStreetMap. Species and fish: Artportalen (SLU Swedish Species Information Centre) via GBIF. Map: OpenStreetMap. <a href="/om.html#kilder">All sources</a>') + '</p>';
+  h += '<p class="note">' + tx('Vann og middeldyp: HydroLAKES (beregnet dyp). Navn: OpenStreetMap. Arter og fisk: Artportalen (SLU Artdatabanken) via GBIF. Berggrunn: SGU. Kart: OpenStreetMap. <a href="/om.html#kilder">Alle kilder</a>',
+    'Lake and mean depth: HydroLAKES (modelled depth). Names: OpenStreetMap. Species and fish: Artportalen (SLU Swedish Species Information Centre) via GBIF. Bedrock: Geological Survey of Sweden (SGU). Map: OpenStreetMap. <a href="/om.html#kilder">All sources</a>') + '</p>';
   main.innerHTML = h;
   miniMapSE(v);
   favOppsett(navn);
@@ -370,6 +375,7 @@ function visOfa() {
 // NGU BerggrunnOkologiWMS, GetFeatureInfo på laget Kalkinnhold_N250 i vannets punkt. Gir NGUs kalkklasse
 // (1 svært kalkfattig … 5 svært kalkrik) og bergartene. Kartet er i 1:250 000, så det er grovt.
 var KALK_FARGE = { 1: '#ffe6c8', 2: '#fad2be', 3: '#c2d69a', 4: '#64c8ff', 5: '#0064e6' };
+var KALK_NO = { 1: 'Svært kalkfattig', 2: 'Kalkfattig', 3: 'Intermediær', 4: 'Kalkrik', 5: 'Svært kalkrik' };
 var KALK_EN = { 1: 'Very lime-poor', 2: 'Lime-poor', 3: 'Intermediate', 4: 'Lime-rich', 5: 'Very lime-rich' };
 function hentBerggrunn(v) {
   var el = document.getElementById('berggrunn'); if (!el || v.lat == null) return;

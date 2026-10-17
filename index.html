@@ -766,13 +766,15 @@ map.on('load', function () {
     'circle-radius': ['interpolate', ['linear'], ['zoom'], 9, 3.5, 12, 5.5, 15, 7],
     'circle-stroke-color': ['case', ['boolean', ['feature-state', 'sel'], false], '#f2b84b', '#0b1418'],
     'circle-stroke-width': ['case', ['boolean', ['feature-state', 'sel'], false], 3, 1.5] } });
-  // Sverige (2026-10-17, Stian): egne fliser (data/kart/sverige.pmtiles, bygg_kart.py sverige). Ingen isgang ennå, så
-  // vannene har samme grå som «uten satellittdata». Kartverket dekker ikke Sverige, derfor egne vannavn fra z11.
+  // Sverige (2026-10-17, Stian): egne fliser (data/kart/sverige.pmtiles, bygg_kart.py sverige). Ingen isgang ennå;
+  // vannene får en vanlig, lys vannblå (SE_BLA, Stian: «grått så rart ut»), lysere enn «isfritt» så de ikke leses
+  // som isgangdata. Kartverket dekker ikke Sverige, derfor egne vannavn fra z11.
+  var SE_BLA = '#7fc4e6';
   map.addSource('se', { type: 'vector', url: (window.hwOff ? 'hwpm://' : 'pmtiles://') + location.origin + DATA + 'sverige.pmtiles', attribution: 'HydroLAKES', promoteId: { vann_se: 'id', vannpunkt_se: 'id' } });
-  map.addLayer({ id: 'se-fill', type: 'fill', source: 'se', 'source-layer': 'vann_se', paint: { 'fill-color': ISFARGE.ingen, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 5, 0.9, 9, 0.8, 10.5, 0] } });
+  map.addLayer({ id: 'se-fill', type: 'fill', source: 'se', 'source-layer': 'vann_se', paint: { 'fill-color': SE_BLA, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 5, 0.9, 9, 0.8, 10.5, 0] } });
   map.addLayer({ id: 'se-line', type: 'line', source: 'se', 'source-layer': 'vann_se', paint: { 'line-color': '#f2b84b', 'line-width': 2.5, 'line-opacity': ['case', ['boolean', ['feature-state', 'sel'], false], 1, 0] } });
   map.addLayer({ id: 'se-punkt', type: 'circle', source: 'se', 'source-layer': 'vannpunkt_se', minzoom: 9, paint: {
-    'circle-color': ISFARGE.ingen,
+    'circle-color': SE_BLA,
     'circle-radius': ['interpolate', ['linear'], ['zoom'], 9, 3.5, 12, 5.5, 15, 7],
     'circle-stroke-color': ['case', ['boolean', ['feature-state', 'sel'], false], '#f2b84b', '#0b1418'],
     'circle-stroke-width': ['case', ['boolean', ['feature-state', 'sel'], false], 3, 1.5] } });
@@ -1037,7 +1039,7 @@ function kalkForklaring() {
 function settKalk(paa) {
   KALK = paa;
   try { localStorage.setItem('hw_kalk', paa ? '1' : '0'); } catch (e) {}
-  if (map.getLayer('ngu-kalk')) map.setLayoutProperty('ngu-kalk', 'visibility', paa ? 'visible' : 'none');
+  ['ngu-kalk', 'se-kalk'].forEach(function (id) { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', paa ? 'visible' : 'none'); });
   document.getElementById('kalkBryter').checked = paa;
   paintScrub();   // tegnforklaringen
 }
@@ -1073,7 +1075,7 @@ function leggTilTurkart() {
     { id: 'tu-is', type: 'fill', source: 'omt', 'source-layer': 'landcover', filter: ['in', ['get', 'class'], ['literal', ['ice', 'glacier']]], paint: { 'fill-color': '#ffffff' } },
     { id: 'tu-vann', type: 'fill', source: 'omt', 'source-layer': 'water', paint: { 'fill-color': kv('#e0fefe', ['case', ['==', ['get', 'class'], 'ocean'], '#9ae2ff', '#e0fefe'], 9.5) } },   // zoom må stå øverst i uttrykket
     { id: 'tu-vei', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 7, filter: ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary', 'secondary']]], paint: { 'line-color': '#d2232a', 'line-opacity': 0.75, 'line-width': ['interpolate', ['linear'], ['zoom'], 7, 0.6, 14, 2.5] } },
-    { id: 'tu-grense', type: 'line', source: 'omt', 'source-layer': 'boundary', filter: ['all', ['==', ['get', 'admin_level'], 2], ['!=', ['get', 'maritime'], 1]], paint: { 'line-color': '#be5abe', 'line-width': ['interpolate', ['linear'], ['zoom'], 4, 1.2, 10, 2.5] } },
+    { id: 'tu-grense', type: 'line', source: 'omt', 'source-layer': 'boundary', filter: ['all', ['==', ['get', 'admin_level'], 2], ['!=', ['get', 'maritime'], 1]], paint: { 'line-color': '#be5abe', 'line-opacity': 0.55, 'line-width': ['interpolate', ['linear'], ['zoom'], 4, 0.7, 10, 1.4] } },   // tynnere (2026-10-17, Stian: «veldig tykk»)
     { id: 'tu-sted', type: 'symbol', source: 'omt', 'source-layer': 'place', minzoom: 5, filter: ['in', ['get', 'class'], ['literal', ['city', 'town']]], layout: { 'text-field': ['coalesce', ['get', 'name:nb'], ['get', 'name:no'], ['get', 'name:latin'], ['get', 'name']], 'text-font': ['Noto Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 5, 10, 10, 13] }, paint: { 'text-color': '#3a3a3a', 'text-halo-color': '#ffffff', 'text-halo-width': 1.2 } }
   ];
   under.forEach(function (l) { l.layout = Object.assign({ visibility: 'none' }, l.layout || {}); map.addLayer(l, 'kv-topo'); });
@@ -1103,6 +1105,12 @@ function leggTilTurkart() {
   map.addSource('eox-sat', { type: 'raster', tileSize: 256, maxzoom: 14, tiles: ['https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/{z}/{y}/{x}.jpg'] });
   map.addLayer({ id: 'eox-sat', type: 'raster', source: 'eox-sat', layout: { visibility: 'none' } }, 'vann-fill');
   map.addLayer({ id: 'ngu-kalk', type: 'raster', source: 'ngu-kalk', layout: { visibility: KALK ? 'visible' : 'none' }, paint: { 'raster-opacity': 0.6 } }, 'vann-fill');
+  // Kalk i Sverige (2026-10-17): SGUs berggrunn (CC0) med NGUs klasser satt av oss (sverige/skript/s5_berggrunn.py),
+  // egne fliser data/kart/sverige_kalk.pmtiles. Samme farger og gjennomsiktighet som NGU-laget.
+  map.addSource('se-kalk', { type: 'vector', url: (window.hwOff ? 'hwpm://' : 'pmtiles://') + location.origin + DATA + 'sverige_kalk.pmtiles',
+    attribution: tx('Berggrunn Sverige: SGU', 'Bedrock Sweden: SGU') });
+  map.addLayer({ id: 'se-kalk', type: 'fill', source: 'se-kalk', 'source-layer': 'kalk_se', layout: { visibility: KALK ? 'visible' : 'none' },
+    paint: { 'fill-color': ['match', ['get', 'k'], 1, KALK_KLASSER[0][0], 2, KALK_KLASSER[1][0], 3, KALK_KLASSER[2][0], 4, KALK_KLASSER[3][0], KALK_KLASSER[4][0]], 'fill-opacity': 0.6, 'fill-antialias': false } }, 'vann-fill');
   // Flere kartlag (2026-10-16, Stian): eiendomsgrenser (Kartverket Matrikkelkart WMS, åpne data CC BY 4.0),
   // verneområder (Miljødirektoratet, NLOD) og svekket is (NVE SvekketIs1, NLOD). Av/på i kartlagmenyen (hw_overlegg).
   Object.keys(OVERLEGG).forEach(function (k) {
@@ -1989,8 +1997,11 @@ function openLakeSE(id) {
     var fnavn = function (f) { var n = EN ? VK_FISK_EN[f[0]] : f[1]; return n ? esc(n.charAt(0).toUpperCase() + n.slice(1)) : '<i>' + esc(f[0]) + '</i>'; };
     var arter = (v.arter || []).map(function (a) { return a[0]; });
     var ins = VK_INSEKT.filter(function (x) { return arter.indexOf(x[0]) >= 0; });
+    var kk = v.berg && v.berg[0] ? KALK_KLASSER[v.berg[0] - 1] : null;
     shExtra.innerHTML = '<div class="vk-ruter">' +
       rute(tx('Isgang', 'Ice-out'), tx('Kommer', 'Coming'), tx('fra satellitt', 'from satellite')) +
+      rute(tx('Berggrunn', 'Bedrock'), kk ? (EN ? kk[2] : kk[1]) : '–', kk && !EN ? esc(v.berg[1]) : 'SGU') +
+      '</div><div class="vk-ruter" style="grid-template-columns:1fr;margin-top:6px">' +
       rute(tx('Middeldyp', 'Mean depth'), v.dyp ? tx('ca. ', 'about ') + dyp : '–', tx('beregnet, ikke loddet', 'modelled, not sounded')) +
       '</div>' +
       '<div class="vk-lab">' + tx('Fisk', 'Fish') + '</div><div class="vk-chips">' +
