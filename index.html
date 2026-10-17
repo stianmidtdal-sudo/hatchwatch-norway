@@ -413,7 +413,7 @@
     <button id="maalBtn" type="button" aria-label="Lag tur og mål avstand" title="Lag tur og mål avstand"><svg viewBox="0 0 24 24"><path d="M3 17L17 3l4 4L7 21z"/><path d="M7 13l2 2M10 10l2 2M13 7l2 2"/></svg></button>
     <!-- Insektgjenkjenner (2026-10-17, Stian): erstatter opptaksknappen (#sporBtn). GPS-opptak i nettleseren stopper når
          skjermen låses, så knappen ble lite brukt. Lagrede turer, GPX og deling i kart-tur.js er uendret (koden tåler at knappen mangler). -->
-    <button id="insektBtn" type="button" aria-label="Hva er dette insektet? Ta bilde" title="Hva er dette insektet? Ta bilde" onclick="location.href='/insekt.html'"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.6"/></svg></button>
+    <button id="insektBtn" type="button" aria-label="Hvilket insekt er dette? Ta bilde" title="Hvilket insekt er dette? Ta bilde" onclick="location.href='/insekt.html'"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.6"/></svg></button>
     <button id="tegnBtn" type="button" aria-label="Tegnforklaring" title="Tegnforklaring"><svg viewBox="0 0 24 24"><circle cx="6" cy="7" r="1.8"/><circle cx="6" cy="12" r="1.8"/><circle cx="6" cy="17" r="1.8"/><path d="M11 7h8M11 12h8M11 17h8"/></svg></button>
     <button id="zin" aria-label="Zoom inn">+</button>
     <button id="zout" aria-label="Zoom ut">−</button>
@@ -766,6 +766,19 @@ map.on('load', function () {
     'circle-radius': ['interpolate', ['linear'], ['zoom'], 9, 3.5, 12, 5.5, 15, 7],
     'circle-stroke-color': ['case', ['boolean', ['feature-state', 'sel'], false], '#f2b84b', '#0b1418'],
     'circle-stroke-width': ['case', ['boolean', ['feature-state', 'sel'], false], 3, 1.5] } });
+  // Sverige (2026-10-17, Stian): egne fliser (data/kart/sverige.pmtiles, bygg_kart.py sverige). Ingen isgang ennå, så
+  // vannene har samme grå som «uten satellittdata». Kartverket dekker ikke Sverige, derfor egne vannavn fra z11.
+  map.addSource('se', { type: 'vector', url: (window.hwOff ? 'hwpm://' : 'pmtiles://') + location.origin + DATA + 'sverige.pmtiles', attribution: 'HydroLAKES', promoteId: { vann_se: 'id', vannpunkt_se: 'id' } });
+  map.addLayer({ id: 'se-fill', type: 'fill', source: 'se', 'source-layer': 'vann_se', paint: { 'fill-color': ISFARGE.ingen, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 5, 0.9, 9, 0.8, 10.5, 0] } });
+  map.addLayer({ id: 'se-line', type: 'line', source: 'se', 'source-layer': 'vann_se', paint: { 'line-color': '#f2b84b', 'line-width': 2.5, 'line-opacity': ['case', ['boolean', ['feature-state', 'sel'], false], 1, 0] } });
+  map.addLayer({ id: 'se-punkt', type: 'circle', source: 'se', 'source-layer': 'vannpunkt_se', minzoom: 9, paint: {
+    'circle-color': ISFARGE.ingen,
+    'circle-radius': ['interpolate', ['linear'], ['zoom'], 9, 3.5, 12, 5.5, 15, 7],
+    'circle-stroke-color': ['case', ['boolean', ['feature-state', 'sel'], false], '#f2b84b', '#0b1418'],
+    'circle-stroke-width': ['case', ['boolean', ['feature-state', 'sel'], false], 3, 1.5] } });
+  map.addLayer({ id: 'se-navn', type: 'symbol', source: 'se', 'source-layer': 'vann_se', minzoom: 11, filter: ['!=', ['coalesce', ['get', 'navn'], ''], ''],
+    layout: { 'text-field': ['get', 'navn'], 'text-font': ['Noto Sans Italic'], 'text-size': ['interpolate', ['linear'], ['zoom'], 11, 10.5, 15, 13], 'text-max-width': 8 },
+    paint: { 'text-color': '#1f6f9f', 'text-halo-color': '#ffffff', 'text-halo-width': 1.3 } });
   map.addLayer({ id: 'laks-glow', type: 'line', source: 'hw', 'source-layer': 'laks', layout: { 'line-cap': 'round', 'line-join': 'round', visibility: 'none' }, paint: { 'line-color': laksColor(), 'line-opacity': ['case', ['>=', ['coalesce', ['feature-state', 'k'], 0], 3], 0.35, 0], 'line-width': ['interpolate', ['linear'], ['zoom'], 5, 6, 14, 16], 'line-blur': 4 } });
   map.addLayer({ id: 'laks-line', type: 'line', source: 'hw', 'source-layer': 'laks', layout: { 'line-cap': 'round', 'line-join': 'round', visibility: 'none' }, paint: { 'line-color': laksColor(), 'line-width': ['interpolate', ['linear'], ['zoom'], 5, ['case', ['boolean', ['feature-state', 'sel'], false], 4, 1.6], 14, ['case', ['boolean', ['feature-state', 'sel'], false], 9, 5]] } });
   map.addLayer({ id: 'laks-hit', type: 'line', source: 'hw', 'source-layer': 'laks', layout: { visibility: 'none' }, paint: { 'line-color': '#000', 'line-opacity': 0, 'line-width': 18 } });
@@ -818,7 +831,18 @@ map.on('load', function () {
       return loadIceYear(iceYear);
     }).then(applyIce);
   // /?vann=<vatnlnr> (fra vannsiden): fly til vannet og åpne kortet
-  var vid = parseInt(new URLSearchParams(location.search).get('vann'), 10);
+  // /?vann=se<id> (svensk vann fra vannsiden eller Favoritter)
+  var vparam = new URLSearchParams(location.search).get('vann') || '';
+  if (/^se\d+$/.test(vparam)) {
+    var seId = +vparam.slice(2);
+    fetch(DATA + 'se/vann/' + (seId % 64) + '.json').then(function (r) { return r.json(); }).then(function (d) {
+      var v = d[String(seId)]; if (!v) return;
+      if (mode !== 'flue') { mode = 'flue'; applyMode(); }
+      map.jumpTo({ center: [v.lon, v.lat], zoom: v.ha > 2000 ? 10 : v.ha > 300 ? 11.5 : 13, offset: sheetOffset() });
+      openLakeSE(seId); history.replaceState(null, '', '/');
+    }).catch(function () {});
+  }
+  var vid = parseInt(vparam, 10);
   if (vid) fetch(DATA + 'vann/' + (vid % 64) + '.json').then(function (r) { return r.json(); }).then(function (d) {
     var v = d[String(vid)]; if (!v) return;
     if (mode !== 'flue') { mode = 'flue'; applyMode(); }
@@ -868,6 +892,9 @@ function onMapClick(e) {
                     .filter(function (f) { return f.properties.vatnlnr === pk.properties.vatnlnr; })[0];
     }
     if (v) { openLake(v); return; }
+    // Svenske vann (2026-10-17): flaten (usynlig fra z10,5, men trykkbar) eller prikken
+    var sv = map.getLayer('se-fill') && (map.queryRenderedFeatures(e.point, { layers: ['se-fill'] })[0] || map.queryRenderedFeatures(box, { layers: ['se-punkt'] })[0]);
+    if (sv) { openLakeSE(sv.properties.id); return; }
   }
   closeSheet();
 }
@@ -1136,6 +1163,7 @@ function applyKartlag() {
   map.setPaintProperty('vann-fill', 'fill-opacity', tur ? (flue ? ['interpolate', ['linear'], ['zoom'], 5, 0.9, 9, 0.8, 10.5, 0] : 0) : 0.92);
   map.setPaintProperty('vann-line', 'line-opacity', tur ? ['case', ['boolean', ['feature-state', 'sel'], false], 1, 0] : 1);
   map.setLayoutProperty('vann-punkt', 'visibility', tur && flue ? 'visible' : 'none');
+  ['se-fill', 'se-line', 'se-punkt', 'se-navn'].forEach(function (id) { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', flue ? 'visible' : 'none'); });
 }
 // ═══ KART UTEN NETT (2026-10-16, Stian «kjør») ═══
 // Nedlasting og lagring ligger i kart-offline.js (window.hwOff). Her: stilbyttet når nettet er borte, menyen
@@ -1254,6 +1282,11 @@ map.on('moveend', function () { if (document.getElementById('lagValg').classList
 function settVannSel(id, paa) {
   map.setFeatureState({ source: 'hw', sourceLayer: 'vann', id: id }, { sel: paa });
   map.setFeatureState({ source: 'hw', sourceLayer: 'vannpunkt', id: id }, { sel: paa });
+}
+function settSeSel(id, paa) {
+  if (!map.getSource('se')) return;
+  map.setFeatureState({ source: 'se', sourceLayer: 'vann_se', id: id }, { sel: paa });
+  map.setFeatureState({ source: 'se', sourceLayer: 'vannpunkt_se', id: id }, { sel: paa });
 }
 
 // ═══ AVSTANDSMÅLING OG HØYDEPROFIL (2026-10-14) ═══
@@ -1736,8 +1769,10 @@ function uncOf(l) { return l.unc || DEFAULT_UNC; }
 function setSel(next) {
   if (sel && sel.kind === 'lake') settVannSel(sel.id, false);
   if (sel && sel.kind === 'river') map.setFeatureState({ source: 'hw', sourceLayer: 'laks', id: sel.id }, { sel: false });
+  if (sel && sel.kind === 'se') settSeSel(sel.id, false);
   sel = next;
   if (sel && sel.kind === 'lake') settVannSel(sel.id, true);
+  if (sel && sel.kind === 'se') settSeSel(sel.id, true);
   if (sel && sel.kind === 'river') map.setFeatureState({ source: 'hw', sourceLayer: 'laks', id: sel.id }, { sel: true });
   updLocs();
 }
@@ -1822,6 +1857,7 @@ shFav.addEventListener('click', function () {
   if (sel.kind === 'loc') { toggleFav(sel.id); this.classList.toggle('on', isFav(sel.id)); }
   else if (sel.kind === 'river') { var e = ELVER && ELVER[sel.id]; toggleElvFav(sel.id, e ? e.navn : sel.id); this.classList.toggle('on', isElvFav(sel.id)); }
   else if (sel.kind === 'lake') { toggleVannFav(sel.id, (sel.f && sel.f.properties.navn) || String(sel.id)); this.classList.toggle('on', isVannFav(sel.id)); }
+  else if (sel.kind === 'se') { toggleVannFav('se' + sel.id, sel.navn || ('se' + sel.id)); this.classList.toggle('on', isVannFav('se' + sel.id)); }
 });
 
 // Vann: lite kort med isgang og anslag; arter, år for år og forklaring ligger på vannsiden (vann.html)
@@ -1919,6 +1955,49 @@ function fyllVannkort(id, p, pt) {
     var k = b.kl ? KALK_KLASSER[b.kl - 1] : null;
     sett('vkBerg', k ? (EN ? k[2] : k[1]) : '–');
     sett('vkBergart', k ? (b.art && !EN ? esc(b.art.toLowerCase()) : 'NGU') : tx('ukjent', 'unknown'));
+  });
+}
+// Svensk vann (2026-10-17, Stian: «publisere Sverige allerede nå … uten isgang og prediksjoner»). Data fra
+// data/kart/se/vann/<id % 64>.json (bygg_kart.py sverige): HydroLAKES-vann, artsfunn fra Artportalen/SLU via GBIF.
+var VK_SE = {};
+function openLakeSE(id) {
+  id = +id;
+  setSel({ kind: 'se', id: id });
+  document.getElementById('shName').textContent = '…';
+  document.getElementById('shSub').textContent = tx('Sverige', 'Sweden');
+  document.getElementById('shEye').innerHTML = '';
+  document.getElementById('shBig').innerHTML = '';
+  document.getElementById('shLine').innerHTML = '';
+  shExtra.innerHTML = '';
+  shFav.style.display = ''; shFav.classList.toggle('on', isVannFav('se' + id)); shFav.setAttribute('aria-label', tx('Legg til i favoritter', 'Add to favourites'));
+  shOpen.style.display = ''; shOpen.textContent = tx('Åpne vannet', 'Open the lake');
+  shOpen.setAttribute('href', '/vann.html?id=se' + id);
+  showSheet();
+  vkJson(DATA + 'se/vann/' + (id % 64) + '.json', VK_SE, id % 64).then(function (g) {
+    if (!sel || sel.kind !== 'se' || sel.id !== id) return;
+    var v = g[String(id)] || {};
+    var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+    sel.navn = v.navn || '';
+    document.getElementById('shName').textContent = v.navn || tx('Navnløst vann', 'Unnamed lake');
+    document.getElementById('shSub').textContent = (v.moh != null ? v.moh + ' ' + MOH + ' · ' : '') + (v.ha != null ? Math.round(v.ha) + ' ha · ' : '') + tx('Sverige', 'Sweden');
+    var rute = function (k, val, s) { return '<div class="vk-rute"><span>' + k + '</span><b>' + val + '</b><span>' + s + '</span></div>'; };
+    var dyp = v.dyp ? (EN ? String(v.dyp) : String(v.dyp).replace('.', ',')) + ' m' : '–';
+    var fisk = (v.fisk || []).slice().sort(function (a, b) {
+      var ka = VK_GULL.indexOf(a[0]) >= 0 ? VK_GULL.indexOf(a[0]) : 9, kb = VK_GULL.indexOf(b[0]) >= 0 ? VK_GULL.indexOf(b[0]) : 9;
+      return ka - kb || b[2] - a[2];
+    });
+    var fnavn = function (f) { var n = EN ? VK_FISK_EN[f[0]] : f[1]; return n ? esc(n.charAt(0).toUpperCase() + n.slice(1)) : '<i>' + esc(f[0]) + '</i>'; };
+    var arter = (v.arter || []).map(function (a) { return a[0]; });
+    var ins = VK_INSEKT.filter(function (x) { return arter.indexOf(x[0]) >= 0; });
+    shExtra.innerHTML = '<div class="vk-ruter">' +
+      rute(tx('Isgang', 'Ice-out'), tx('Kommer', 'Coming'), tx('fra satellitt', 'from satellite')) +
+      rute(tx('Middeldyp', 'Mean depth'), v.dyp ? tx('ca. ', 'about ') + dyp : '–', tx('beregnet, ikke loddet', 'modelled, not sounded')) +
+      '</div>' +
+      '<div class="vk-lab">' + tx('Fisk', 'Fish') + '</div><div class="vk-chips">' +
+      (fisk.length ? fisk.slice(0, 4).map(function (f) { return '<span>' + fnavn(f) + '</span>'; }).join('') + (fisk.length > 4 ? '<span>+' + (fisk.length - 4) + '</span>' : '') : '<span>' + tx('Ingen registrert', 'None recorded') + '</span>') + '</div>' +
+      '<div class="vk-lab">' + tx('Insekter funnet her', 'Insects found here') + '</div><div class="vk-chips">' +
+      (ins.length ? ins.map(function (x) { return '<span class="ja">' + (EN ? x[3] : x[2]) + '</span>'; }).join('') : '<span>' + tx('Ingen registrert ennå', 'None recorded yet') + '</span>') + '</div>' +
+      '<div class="note" style="margin-top:10px">' + tx('Svenske vann er nye på kartet. Isgang og klekkeanslag kommer.', 'Swedish lakes are new on the map. Ice-out and hatch estimates are coming.') + '</div>';
   });
 }
 function centroid(g) {

@@ -433,6 +433,136 @@ def bygg_vann():
     print(f"vann: {len(vann_js['features'])} vann i {VANN_GRUPPER} filer, snitt {tot // VANN_GRUPPER // 1024} kB per fil")
 
 
+def bygg_sverige():
+    """Svenske vann (2026-10-17, Stian: «publiser Sverige allerede nå»). Leser sverige/data (s1–s4) og skriver:
+    data/kart/se/vann/<hylak_id % 64>.json  {id: {navn, moh, ha, dyp, lat, lon, arter, fisk}}
+        arter = [[latin, gruppe d/v/m/s/a, funn, siste_år, sikker, norsk]] (samme form som norske arter)
+        fisk  = [[latin, norsk, funn, siste_år, sikker, 0]] (samme form som data/kart/fisk; norske navn fra de norske filene)
+        dyp   = HydroLAKES' beregnede middeldyp (modell, ikke loddet)
+    data/kart/sverige.pmtiles  lag vann_se (omriss, id/navn/ha/moh) og vannpunkt_se (ett punkt per vann, z8+).
+    Ingen isgang ennå (venter på Earth Engine-kvoten)."""
+    import mapbox_vector_tile, mercantile, shapely, numpy as np
+    from shapely.geometry import shape, box
+    from shapely.strtree import STRtree
+    from pmtiles.writer import Writer
+    from pmtiles.tile import zxy_to_tileid, TileType, Compression
+    sv = os.path.join(ROOT, "sverige", "data")
+    gj = json.load(open(os.path.join(sv, "sjoar_se.geojson"), encoding="utf-8"))
+    attr = {int(r["hylak_id"]): r for r in csv.DictReader(open(os.path.join(sv, "sjoar_se.csv"), encoding="utf-8-sig"), delimiter=";")}
+    # Norske fiskenavn fra de norske filene (samme arter går igjen)
+    norsk = {}
+    fdir = os.path.join(OUT, "fisk")
+    for fn in (os.listdir(fdir) if os.path.isdir(fdir) else []):
+        for liste in json.load(open(os.path.join(fdir, fn), encoding="utf-8")).values():
+            for f in liste:
+                if f[1]:
+                    norsk.setdefault(f[0], f[1])
+    # Norske insektnavn fra de norske vannfilene (arter[5], der de finnes)
+    vdir = os.path.join(OUT, "vann")
+    for fn in (os.listdir(vdir) if os.path.isdir(vdir) else []):
+        for v in json.load(open(os.path.join(vdir, fn), encoding="utf-8")).values():
+            for a in v.get("arter") or []:
+                if len(a) > 5 and a[5]:
+                    norsk.setdefault(a[0], a[5])
+    ORDEN_KODE = {"Ephemeroptera": "d", "Trichoptera": "v", "Amphipoda": "m", "Notostraca": "s"}
+    arter, fisk = collections.defaultdict(list), collections.defaultdict(list)
+    for r in csv.DictReader(open(os.path.join(sv, "arter_per_vann_se.csv"), encoding="utf-8-sig"), delimiter=";"):
+        hid, siste = int(r["hylak_id"]), int(r["siste_aar"]) if r["siste_aar"] else None
+        if r["gruppe"] == "fisk":
+            fisk[hid].append([r["art"], norsk.get(r["art"], ""), int(r["funn"]), siste, int(r["sikker"]), 0])
+        else:
+            arter[hid].append([r["art"], ORDEN_KODE.get(r["orden"], "a"), int(r["funn"]), siste, int(r["sikker"]), norsk.get(r["art"], "")])
+    grupper = [dict() for _ in range(VANN_GRUPPER)]
+    for hid, a in attr.items():
+        rec = {"navn": a["navn"] or "", "moh": round(float(a["hoyde_m"])) if a["hoyde_m"] else None, "ha": float(a["areal_ha"]),
+               "dyp": round(float(a["middeldyp_m"]), 1) if a["middeldyp_m"] else None, "lat": float(a["lat"]), "lon": float(a["lon"])}
+        if arter.get(hid):
+            rec["arter"] = sorted(arter[hid], key=lambda x: -x[2])
+        if fisk.get(hid):
+            rec["fisk"] = sorted(fisk[hid], key=lambda x: -x[2])
+        grupper[hid % VANN_GRUPPER][str(hid)] = rec
+    mappe = os.path.join(OUT, "se", "vann")
+    os.makedirs(mappe, exist_ok=True)
+    for i, g in enumerate(grupper):
+        with open(os.path.join(mappe, f"{i}.json"), "w", encoding="utf-8") as fh:
+            json.dump(g, fh, ensure_ascii=False, separators=(",", ":"))
+    print(f"sverige: {len(attr)} vann i {VANN_GRUPPER} filer, {sum(1 for h in attr if arter.get(h))} med insekter, {sum(1 for h in attr if fisk.get(h))} med fisk")
+
+    # Kartfliser (samme oppskrift som bygg_fliser, egen fil så den norske ikke må bygges på nytt)
+    R = 6378137.0
+    def til_merc(geom):
+        def f(c):
+            lat = np.clip(c[:, 1], -85.0511, 85.0511)
+            return np.column_stack([R * np.radians(c[:, 0]), R * np.log(np.tan(np.pi / 4 + np.radians(lat) / 2))])
+        return shapely.transform(geom, f)
+    vann = []
+    for f in gj["features"]:
+        hid = f["properties"]["hylak_id"]; a = attr.get(hid)
+        if not a:
+            continue
+        g = til_merc(shape(f["geometry"]))
+        if not g.is_valid:
+            g = g.buffer(0)
+        vann.append((g, {"id": hid, "navn": a["navn"] or "", "ha": float(a["areal_ha"]), "moh": round(float(a["hoyde_m"])) if a["hoyde_m"] else None}))
+    PUNKT_MINZ, MINZ, MAXZ = 8, 3, 12
+    punkter = [(g.representative_point(), {"id": p["id"], "ha": p["ha"]}) for g, p in vann]
+    tre_p = STRtree([g for g, _ in punkter])
+    def min_ha(z):
+        return {3: 3000, 4: 1500, 5: 600, 6: 200, 7: 60, 8: 20}.get(z, 0)
+    bounds_ll = (10.5, 55.0, 24.5, 69.2)
+    tiles_out, t0 = {}, time.time()
+    for z in range(MINZ, MAXZ + 1):
+        tol = (2 * math.pi * R / (256 * 2 ** z)) * 0.6
+        vz = [(g.simplify(tol, preserve_topology=True), p) for g, p in vann if p["ha"] >= min_ha(z)]
+        vz = [(g, p) for g, p in vz if not g.is_empty]
+        tre_v = STRtree([g for g, _ in vz]) if vz else None
+        n = 0
+        for t in mercantile.tiles(*bounds_ll, zooms=[z]):
+            b = mercantile.xy_bounds(t)
+            pad = (b.right - b.left) * 8 / 256.0
+            tb = box(b.left - pad, b.bottom - pad, b.right + pad, b.top + pad)
+            lag = []
+            if tre_v is not None:
+                feats = []
+                for i in tre_v.query(tb, predicate="intersects"):
+                    g, p = vz[i]
+                    c = g.intersection(tb)
+                    if c.geom_type == "GeometryCollection":
+                        polys = [x for x in c.geoms if x.geom_type in ("Polygon", "MultiPolygon")]
+                        if not polys:
+                            continue
+                        c = shapely.union_all(polys)
+                    if c.is_empty or c.geom_type not in ("Polygon", "MultiPolygon"):
+                        continue
+                    feats.append({"geometry": c, "properties": {k: v for k, v in p.items() if v is not None}, "id": p["id"]})
+                if feats:
+                    lag.append({"name": "vann_se", "features": feats})
+            if z >= PUNKT_MINZ:
+                tb0 = box(b.left, b.bottom, b.right, b.top)
+                feats = [{"geometry": punkter[i][0], "properties": punkter[i][1], "id": punkter[i][1]["id"]} for i in tre_p.query(tb0, predicate="intersects")]
+                if feats:
+                    lag.append({"name": "vannpunkt_se", "features": feats})
+            if not lag:
+                continue
+            data = mapbox_vector_tile.encode(lag, default_options={"quantize_bounds": (b.left, b.bottom, b.right, b.top), "extents": 4096, "y_coord_down": False})
+            tiles_out[zxy_to_tileid(z, t.x, t.y)] = gzip.compress(data, 9)
+            n += 1
+        print(f"  z{z}: {n} fliser, {len(vz)} vann  ({time.time() - t0:.0f} s)")
+    path = os.path.join(OUT, "sverige.pmtiles")
+    with open(path, "wb") as fh:
+        w = Writer(fh)
+        for tid in sorted(tiles_out):
+            w.write_tile(tid, tiles_out[tid])
+        w.finalize({"tile_type": TileType.MVT, "tile_compression": Compression.GZIP, "min_zoom": MINZ, "max_zoom": MAXZ,
+                    "min_lon_e7": int(bounds_ll[0] * 1e7), "min_lat_e7": int(bounds_ll[1] * 1e7),
+                    "max_lon_e7": int(bounds_ll[2] * 1e7), "max_lat_e7": int(bounds_ll[3] * 1e7),
+                    "center_zoom": 5, "center_lon_e7": int(16 * 1e7), "center_lat_e7": int(62 * 1e7)},
+                   {"name": "HatchWatch Sverige", "attribution": "HydroLAKES (CC BY 4.0) · OpenStreetMap",
+                    "vector_layers": [{"id": "vann_se", "fields": {"id": "Number", "navn": "String", "ha": "Number", "moh": "Number"}, "minzoom": MINZ, "maxzoom": MAXZ},
+                                      {"id": "vannpunkt_se", "fields": {"id": "Number", "ha": "Number"}, "minzoom": PUNKT_MINZ, "maxzoom": MAXZ}]})
+    print(f"sverige.pmtiles: {len(tiles_out)} fliser, {os.path.getsize(path) / 1e6:.1f} MB ({time.time() - t0:.0f} s)")
+
+
 def bygg_punkt():
     """Fangstdagboka (2026-10-16): nærmeste vann fra GPS. Flat liste [vatnlnr, lat·1e4, lon·1e4, ...] fra vann/*.json."""
     flat = []
@@ -619,6 +749,8 @@ if __name__ == "__main__":
         bygg_vann()
     if hva in ("alt", "vann", "punkt"):
         bygg_punkt()
+    if hva == "sverige":               # svenske vann (sverige/data fra sverige/skript/s1–s4)
+        bygg_sverige()
     if hva in ("alt", "elver"):
         bygg_elver()
     if hva in ("alt", "fliser"):

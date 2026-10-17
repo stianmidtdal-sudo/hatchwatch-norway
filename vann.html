@@ -137,7 +137,12 @@ function fmtRange(year, a, b) {
 function haversine(a, b, c, d) { var R = 6371, t = Math.PI / 180, x = (c - a) * t, y = (d - b) * t, h = Math.sin(x / 2) * Math.sin(x / 2) + Math.cos(a * t) * Math.cos(c * t) * Math.sin(y / 2) * Math.sin(y / 2); return 2 * R * Math.asin(Math.sqrt(h)); }
 var TODAY = new Date(); TODAY.setHours(0, 0, 0, 0);
 var YEAR = TODAY.getFullYear();
-var ID = parseInt(new URLSearchParams(location.search).get('id'), 10);
+// Svenske vann (2026-10-17): ?id=se<hylak_id>, data i /data/kart/se/vann/ (bygg_kart.py sverige). Ingen isgang,
+// klekking, snø, berggrunn eller varsler ennå — bare arter, fisk og beregnet middeldyp.
+var ID_PARAM = new URLSearchParams(location.search).get('id') || '';
+var SE = /^se\d+$/.test(ID_PARAM);
+var ID = SE ? +ID_PARAM.slice(2) : parseInt(ID_PARAM, 10);
+var FAV_ID = SE ? 'se' + ID : ID;
 var GRUPPER = 64;   // samme som VANN_GRUPPER i tools/kart/bygg_kart.py
 
 // HatchWatch-lokasjonene (samme som forsiden) for «nærmeste klekkeprognose»
@@ -181,10 +186,10 @@ var KEY_SPECIES = ['Ephemera vulgata', 'Ephemera danica', 'Leptophlebia marginat
 
 var main = document.getElementById('main');
 if (!ID) main.innerHTML = '<div class="miss">' + tx('Mangler vann.', 'No lake given.') + ' <a href="/">' + tx('Til kartet', 'To the map') + '</a></div>';
-else fetch('/data/kart/vann/' + (ID % GRUPPER) + '.json').then(function (r) { return r.json(); }).then(function (d) {
+else fetch('/data/kart/' + (SE ? 'se/' : '') + 'vann/' + (ID % GRUPPER) + '.json').then(function (r) { return r.json(); }).then(function (d) {
   var v = d[String(ID)];
   if (!v) { main.innerHTML = '<div class="miss"><h1 style="font-size:24px">' + tx('Fant ikke vannet', 'Lake not found') + '</h1><p class="lead" style="margin-top:10px"><a href="/">' + tx('Tilbake til kartet', 'Back to the map') + '</a></p></div>'; return; }
-  render(v);
+  if (SE) renderSE(v); else render(v);
 }).catch(function () { main.innerHTML = '<div class="miss">' + tx('Klarte ikke å laste vannet.', 'Could not load the lake.') + '</div>'; });
 
 function median(a) { var s = a.slice().sort(function (x, y) { return x - y; }), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; }
@@ -274,15 +279,60 @@ function render(v) {
   visFisk();
 }
 
+// Svensk vann: samme oppbygning som det norske, men bare det vi har data for nå
+function renderSE(v) {
+  var navn = v.navn || tx('Navnløst vann', 'Unnamed lake');
+  document.title = navn + ' — HatchWatch';
+  var h = '<div class="hw-eyebrow gold">' + tx('Vann · Sverige', 'Lake · Sweden') + '</div>';
+  h += '<h1>' + esc(navn) + '</h1>';
+  h += '<div class="sub">' + [v.moh != null ? v.moh + ' ' + MOH : '', num(v.ha, v.ha < 100 ? 1 : 0) + ' ha'].filter(Boolean).join(' · ') + '</div>';
+  h += '<div class="hero">' +
+    '<div class="stat"><div class="k">' + tx('Isgang', 'Ice-out') + '</div><div class="v">' + tx('Kommer', 'Coming') + '</div><div class="s">' + tx('Fra satellitt, som i Norge.', 'From satellite, as in Norway.') + '</div></div>' +
+    '<div class="stat"><div class="k">' + tx('Middeldyp', 'Mean depth') + '</div><div class="v">' + (v.dyp ? tx('ca. ', 'about ') + num(v.dyp, v.dyp < 10 ? 1 : 0) + ' m' : '–') + '</div><div class="s">' + tx('Beregnet, ikke loddet.', 'Modelled, not sounded.') + '</div></div>' +
+    '</div>';
+  h += '<div class="card"><h2>' + tx('Klekking', 'Hatch') + '</h2><p class="lead">' + tx('Svenske vann er nye i HatchWatch. Isgang og klekkeanslag kommer når satellittdatoene for Sverige er regnet ut.', 'Swedish lakes are new in HatchWatch. Ice-out and hatch estimates will come once the satellite dates for Sweden are worked out.') + '</p></div>';
+  h += '<div class="card"><h2>' + tx('Registrerte arter', 'Recorded species') + '</h2><div id="fisk"></div>' + arterHtml(v.arter) + '</div>';
+  h += '<div class="card"><h2>' + tx('Kart', 'Map') + '</h2><div id="mini"></div><div class="row2"><a class="hw-btn primary" href="/?vann=se' + ID + '">' + tx('Vis i kartet', 'Show on the map') + '</a></div></div>';
+  h += '<p class="note">' + tx('Vann og middeldyp: HydroLAKES (beregnet dyp). Navn: OpenStreetMap. Arter og fisk: Artportalen (SLU Artdatabanken) via GBIF. Kart: OpenStreetMap. <a href="/om.html#kilder">Alle kilder</a>',
+    'Lake and mean depth: HydroLAKES (modelled depth). Names: OpenStreetMap. Species and fish: Artportalen (SLU Swedish Species Information Centre) via GBIF. Map: OpenStreetMap. <a href="/om.html#kilder">All sources</a>') + '</p>';
+  main.innerHTML = h;
+  miniMapSE(v);
+  favOppsett(navn);
+  visFisk(v.fisk || []);
+}
+function miniMapSE(v) {
+  if (!window.maplibregl || v.lat == null) { var m = document.getElementById('mini'); if (m) m.style.display = 'none'; return; }
+  var protocol = new pmtiles.Protocol(); maplibregl.addProtocol('pmtiles', protocol.tile);
+  var map = new maplibregl.Map({
+    container: 'mini', interactive: false, attributionControl: false,
+    preserveDrawingBuffer: /^(localhost|127\.0\.0\.1)$/.test(location.hostname),
+    center: [v.lon, v.lat], zoom: v.ha > 2000 ? 9.5 : v.ha > 300 ? 11 : v.ha > 60 ? 12.3 : 13.3,
+    style: {
+      version: 8, glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
+      sources: { omt: { type: 'vector', url: 'https://tiles.openfreemap.org/planet' }, se: { type: 'vector', url: 'pmtiles://' + location.origin + '/data/kart/sverige.pmtiles' } },
+      layers: [
+        { id: 'bg', type: 'background', paint: { 'background-color': '#f4f1e8' } },
+        { id: 'wood', type: 'fill', source: 'omt', 'source-layer': 'landcover', filter: ['==', ['get', 'class'], 'wood'], paint: { 'fill-color': '#dce9cf' } },
+        { id: 'water', type: 'fill', source: 'omt', 'source-layer': 'water', paint: { 'fill-color': '#bfe3f2' } },
+        { id: 'road', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 9, filter: ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'minor', 'track']]], paint: { 'line-color': '#c9b9a0', 'line-width': 1 } },
+        { id: 'dette-kant2', type: 'line', source: 'se', 'source-layer': 'vann_se', filter: ['==', ['get', 'id'], ID], paint: { 'line-color': '#0b1418', 'line-width': 4 } },
+        { id: 'dette-kant', type: 'line', source: 'se', 'source-layer': 'vann_se', filter: ['==', ['get', 'id'], ID], paint: { 'line-color': '#f2b84b', 'line-width': 2.5 } },
+        { id: 'navn', type: 'symbol', source: 'omt', 'source-layer': 'water_name', layout: { 'text-field': ['get', 'name'], 'text-font': ['Noto Sans Italic'], 'text-size': 11 }, paint: { 'text-color': '#1f6f9f', 'text-halo-color': '#ffffff', 'text-halo-width': 1.3 } }
+      ]
+    }
+  });
+  map.addControl(new maplibregl.AttributionControl({ compact: true, customAttribution: 'HydroLAKES · OpenStreetMap' }));
+}
+
 // ═══ FISK (2026-10-15, Stian: «alle registrerte fiskearter, vis siste funndato») ═══
 // data/kart/fisk/<id % 64>.json (bygg_kart.py fisk ← i3_fisk.py): GBIF-funn koblet til vannet med samme regler
 // som insektene. [latin, norsk, funn, siste år, sikker, innført]. Ørret meldes sjelden inn, så vi sier at den
 // finnes i de fleste vann selv om den ikke står her (samme tanke som «gjelder bare hvis arten finnes»).
 var FISK_GULL = ['Salmo trutta', 'Salvelinus alpinus', 'Thymallus thymallus', 'Salmo salar'];
-function visFisk() {
+function visFisk(seListe) {
   var el = document.getElementById('fisk'); if (!el) return;
-  fetch('/data/kart/fisk/' + (ID % 64) + '.json').then(function (r) { return r.ok ? r.json() : {}; }).then(function (j) {
-    var liste = j[String(ID)] || [];
+  (seListe ? Promise.resolve(null) : fetch('/data/kart/fisk/' + (ID % 64) + '.json').then(function (r) { return r.ok ? r.json() : {}; })).then(function (j) {
+    var liste = seListe || j[String(ID)] || [];
     var harOrret = liste.some(function (f) { return f[0] === 'Salmo trutta'; });
     var h = '<div class="grp fiskgrp"><div class="hw-eyebrow">' + tx('Fisk', 'Fish') + (liste.length ? ' · ' + liste.length : '') + '</div>';
     if (liste.length) {
@@ -293,7 +343,7 @@ function visFisk() {
       }).join('') + '</div>';
     }
     h += '<p class="note">' + (liste.length ? tx('Årstallet er siste registrerte funn. ', 'The year is the latest record. ') : tx('Ingen fiskefunn er koblet til dette vannet ennå. ', 'No fish records are linked to this lake yet. ')) +
-      (harOrret ? '' : tx('Ørret finnes i de fleste norske vann, selv om ingen har registrert den her.', 'Brown trout lives in most Norwegian lakes, even if nobody has recorded it here.')) + '</p></div>';
+      (harOrret || SE ? '' : tx('Ørret finnes i de fleste norske vann, selv om ingen har registrert den her.', 'Brown trout lives in most Norwegian lakes, even if nobody has recorded it here.')) + '</p></div>';
     el.innerHTML = h;
   }).catch(function () {});
 }
@@ -344,7 +394,7 @@ function hentBerggrunn(v) {
 // {vatnlnr: [maksdyp_m, middeldyp_m, oppmålt_år, pdf, ekvidistanse_m, digitale_koter 0/1]}.
 // Digitale koter vises i kartet (forsiden og minikartet) rett fra NVEs WMS; de andre har bare PDF.
 var NVE_WMS = 'https://kart.nve.no/enterprise/services/Innsjodatabase2/MapServer/WMSServer?service=WMS&version=1.3.0&request=GetMap&styles=&format=image/png&transparent=true&crs=EPSG:3857&width=256&height=256&bbox={bbox-epsg-3857}&layers=';
-var dybdeP = fetch('/data/kart/dybde.json').then(function (r) { return r.ok ? r.json() : {}; }).then(function (j) { return j[String(ID)] || null; }).catch(function () { return null; });
+var dybdeP = SE ? Promise.resolve(null) : fetch('/data/kart/dybde.json').then(function (r) { return r.ok ? r.json() : {}; }).then(function (j) { return j[String(ID)] || null; }).catch(function () { return null; });
 function dm(x) { return EN ? String(Math.round(x * 10) / 10) : String(Math.round(x * 10) / 10).replace('.', ','); }
 function visDybde() {
   dybdeP.then(function (d) {
@@ -439,10 +489,10 @@ var NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.
 function pushStottet() { return NATIVE || ('serviceWorker' in navigator && 'PushManager' in window); }
 function getPrefs() { try { return JSON.parse(localStorage.getItem('hw_notif_prefs')) || { triggers: {} }; } catch (e) { return { triggers: {} }; } }
 function getVannFavs() { try { var x = JSON.parse(localStorage.getItem('hw_vann_favs') || '[]'); return Array.isArray(x) ? x : []; } catch (e) { return []; } }
-function erFav() { return getVannFavs().some(function (x) { return x.id === ID; }); }
+function erFav() { return getVannFavs().some(function (x) { return x.id === FAV_ID; }); }
 function settFav(paa, navn) {
-  var f = getVannFavs().filter(function (x) { return x.id !== ID; });
-  if (paa) f.push({ id: ID, navn: navn });
+  var f = getVannFavs().filter(function (x) { return x.id !== FAV_ID; });
+  if (paa) f.push({ id: FAV_ID, navn: navn });
   try { localStorage.setItem('hw_vann_favs', JSON.stringify(f)); } catch (e) {}
 }
 function favOppsett(navn) {
@@ -769,7 +819,7 @@ function arterHtml(list) {
       return '<span class="sp' + (KEY_SPECIES.indexOf(x[0]) >= 0 ? ' key' : '') + '" title="' + esc(x[0]) + ' · ' + x[2] + tx(' funn, sist ', ' records, last ') + (x[3] || '–') + '">' + artsnavn(x[0], x[5]) + '</span>';
     }).join('') + '</div></div>';
   });
-  return h + '<p class="note">' + tx('Artsdatabanken via GBIF. Registrert betyr at minst ett funn er koblet til vannet, ikke at arten sikkert finnes der i dag. Gull er arter som er viktige for fluefiske.', 'Artsdatabanken via GBIF. Recorded means at least one record is linked to the lake, not that the species is surely there today. Gold marks species that matter for fly fishing.') + '</p>';
+  return h + '<p class="note">' + (SE ? tx('Artportalen (SLU Artdatabanken) via GBIF. ', 'Artportalen (SLU Swedish Species Information Centre) via GBIF. ') : '') + tx((SE ? '' : 'Artsdatabanken via GBIF. ') + 'Registrert betyr at minst ett funn er koblet til vannet, ikke at arten sikkert finnes der i dag. Gull er arter som er viktige for fluefiske.', (SE ? '' : 'Artsdatabanken via GBIF. ') + 'Recorded means at least one record is linked to the lake, not that the species is surely there today. Gold marks species that matter for fly fishing.') + '</p>';
 }
 
 function miniMap(v) {

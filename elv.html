@@ -56,7 +56,8 @@ svg.ssb text.v { fill: var(--hw-fg-2); font-size: 10.5px; }
 svg.ssb polyline.vekt { fill: none; stroke: var(--hw-fg); stroke-width: 2; stroke-linejoin: round; }
 svg.ssb circle.vekt { fill: var(--hw-bg-2); stroke: var(--hw-fg); stroke-width: 1.8; }
 svg.ssb line.akse { stroke: var(--hw-line); }
-svg.ssb text.kg { fill: var(--hw-fg-2); }
+svg.ssb text.kg { fill: var(--hw-fg-2); font-size: 8px; }
+svg.ssb text.aar { font-size: 7.5px; letter-spacing: -.02em; }
 .legendrow i.linje { width: 14px; height: 2px; background: var(--hw-fg); border-radius: 1px; }
 .ssbtab { overflow-x: auto; margin-top: 10px; }
 .ssbtab table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
@@ -321,7 +322,7 @@ function ssbKort(rader) {
   rader.forEach(function (r, i) {
     var hgt = Math.max(r[1] ? 2 : 0, (H - TOPP) * r[1] / maks), x = L + i * bw + bw * 0.14, y = H - hgt;
     svg += '<rect class="' + (i === rader.length - 1 ? 'b siste' : 'b') + '" x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + (bw * 0.72).toFixed(1) + '" height="' + hgt.toFixed(1) + '"><title>' + r[0] + ': ' + fmt(r[1]) + tx(' laks', ' salmon') + (r[2] != null ? ', ' + kg(r[2]) : '') + '</title></rect>';
-    if (i % 2 === 0 || i === rader.length - 1) svg += '<text x="' + midt(i).toFixed(1) + '" y="' + (H + 13) + '" text-anchor="middle">' + String(r[0]).slice(2) + '</text>';
+    svg += '<text class="aar" x="' + midt(i).toFixed(1) + '" y="' + (H + 12) + '" text-anchor="middle">' + r[0] + '</text>';
   });
   // Snittvekt: bare sesonger med fangst (stengte år gir ingen vekt)
   var vp = rader.map(function (r, i) { return r[1] > 0 && r[2] != null ? { i: i, v: r[2] } : null; }).filter(Boolean);

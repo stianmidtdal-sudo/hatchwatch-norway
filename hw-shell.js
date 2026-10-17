@@ -74,7 +74,7 @@
   } : {
     map: 'Kart', season: 'Sesong', fav: 'Favoritter', logbook: 'Dagbok', menu: 'Meny', close: 'Lukk', nav: 'Hovednavigasjon',
     obs: 'Meld observasjon', obsSub: 'Så du klekking? Det gjør modellen bedre.',
-    insekt: 'Hva er dette insektet?', insektSub: 'Ta bilde, få svar',
+    insekt: 'Hvilket insekt er dette?', insektSub: 'Ta bilde, få svar',
     notif: 'Varsler', notifSub: 'Klekking, spinnerfall, stokkmaur · push',
     articles: 'Artikler', articlesSub: 'Døgnfluer, spinnerfall, stokkmaur',
     ofa: 'OFA settefisk', ofaSub: 'Utsett i Nordmarka 2021–2025',
